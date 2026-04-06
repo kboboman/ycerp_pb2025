@@ -1,0 +1,297 @@
+﻿$PBExportHeader$d_mpsfcworkman_t10.srd
+$PBExportComments$생산성분석
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=136 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=sfc_date dbname="sfc_date" )
+ column=(type=char(255) updatewhereclause=yes name=work_grp dbname="work_grp" )
+ column=(type=decimal(4) updatewhereclause=yes name=calc_qty dbname="calc_qty" )
+ column=(type=decimal(6) updatewhereclause=yes name=calc_time dbname="calc_time" )
+ column=(type=decimal(6) updatewhereclause=yes name=noruntime dbname="noruntime" )
+ column=(type=decimal(6) updatewhereclause=yes name=calctime dbname="calctime" )
+ column=(type=long updatewhereclause=yes name=man_cnt dbname="man_cnt" )
+ column=(type=decimal(6) updatewhereclause=yes name=com_man dbname="com_man" )
+ column=(type=decimal(6) updatewhereclause=yes name=com_time dbname="com_time" )
+ column=(type=decimal(1) updatewhereclause=yes name=com_manrate dbname="com_manrate" )
+ column=(type=decimal(1) updatewhereclause=yes name=com_timerate dbname="com_timerate" )
+ column=(type=char(23) updatewhereclause=yes name=work_date dbname="work_date" )
+ retrieve="SELECT sfc_date     = a.sfc_date
+     , work_grp     = a.work_grp
+     , calc_qty     = a.calc_qty
+     , calc_time    = a.calc_time
+     , noruntime    = a.noruntime
+     , calctime     = a.calctime
+     , man_cnt      = a.man_cnt
+     , com_man      = (case when a.man_cnt = 0 then 0.0 else a.calc_qty / a.man_cnt  end)
+     , com_time     = (case when a.calctime= 0 then 0.0 else a.calc_qty / a.calctime end)
+     , com_manrate  = 0.0
+     , com_timerate = 0.0
+     , work_date    = a.work_date
+  FROM (
+       SELECT sfc_date     = a.sfc_date
+            , work_grp     = a.work_grp
+            , calc_qty     = max(a.calc_qty)
+            , calc_time    = max(a.calctime)
+            , noruntime    = max(a.noruntime)
+            , calctime     = max(a.calctime) - max(a.noruntime)
+            , man_cnt      = max(a.man_cnt)
+            , com_man      = isnull(max(a.calc_qty) / max(a.man_cnt),  0.0)
+            , com_time     = isnull(max(a.calc_qty) / max(a.calctime) - max(a.noruntime), 0.0)
+            , com_manrate  = 0.0
+            , com_timerate = 0.0
+            , work_date    = (case when :as_sdate <> '' then :as_sdate + ' ~~ ' + :as_edate else space(23) end)
+       
+         FROM (
+              SELECT sfc_date   = a.sfc_date
+                   , work_grp   = replace(replace(b.work_name,'[',''),']','')
+                   , calc_qty   = sum(a.calc_qty)
+                   , noruntime  = 0
+                   , calctime   = 0
+                   , man_cnt    = 0
+                FROM (
+                     SELECT sfc_date   = (case when :as_month = 'Y' then convert(char(08),a.sfc_date,111) + '01'
+                                               else convert(char(10),a.sfc_date,111)
+                                          end)
+                          , wc_no      = a.wc_no                
+                          , wcno_grp   = left(a.wc_no,1) + '00'
+                          , work_name  = b.work_name     
+                          , cust_name  = isnull(a.cust_name,'')
+                          , scene_desc = isnull(d.scene_desc,'')
+                          , qa         = a.assembly_qa     
+                          , uom        = a.uom                  
+                          , item_no    = a.assembly   
+                          , item_name  = c.item_name         
+                          , overtime   = isnull(replace(m.overtime,'N',''),'')
+                          , make_qty   = a.make_qty
+                          , calc_qty   = (case when left(a.wc_no,1) = 'P' OR left(a.wc_no,1) = 'B' then  /* 도장, 절곡 */
+                                                    isnull(DBO.UF_GetItemCalc_PUB( a.wc_no, a.assembly, a.assembly_qa, a.make_qty ),0)
+                                               else floor(DBO.UF_GETQTY(a.assembly, a.assembly_qa, a.uom, a.make_qty))
+                                          end)
+              
+                          , sale_no    = a.sale_no
+                          , order_no   = a.order_no
+                          , color      = (SELECT color_lname FROM color WHERE color_code = a.color)
+                          , saledetrem = (SELECT rem FROM saledet WHERE order_no = a.sale_no AND seq_no = a.seq_no)
+                       FROM sfcday    a with (nolock)
+                            LEFT OUTER JOIN mpsorder  m with (nolock) ON a.mpsorder_order = m.order_no
+                            LEFT OUTER JOIN wc        b with (nolock) ON a.wc_no      = b.work_no
+                            LEFT OUTER JOIN groupitem c with (nolock) ON a.assembly   = c.item_no
+                            LEFT OUTER JOIN scene     d with (nolock) ON a.scene_code = d.scene_code
+                      WHERE ( convert(char(10),a.sfc_date,111)   BETWEEN :as_sdate AND :as_edate ) 
+                        AND ((:as_areano = '%'      AND a.area_no IN ('S0001','B0001') AND left(a.wc_no,1) <> 'Y') OR
+                             (:as_areano = 'S0001'  AND a.area_no  =  'S0001'          AND left(a.wc_no,1) <> 'Y')
+                            )
+                        AND ( a.wc_no      LIKE :as_wcno + '%' ) 
+       
+                     UNION ALL
+       
+                     SELECT sfc_date   = (case when :as_month = 'Y' then convert(char(08),a.sfc_date,111) + '01'
+                                               else convert(char(10),a.sfc_date,111)
+                                          end)
+                          , wc_no      = a.wc_no                
+                          , wcno_grp   = left(a.wc_no,1) + '00'
+                          , work_name  = b.work_name     
+                          , cust_name  = isnull(a.cust_name,'')
+                          , scene_desc = isnull(d.scene_desc,'')
+                          , qa         = a.assembly_qa     
+                          , uom        = a.uom                  
+                          , item_no    = a.assembly   
+                          , item_name  = c.item_name         
+                          , overtime   = isnull(replace(m.overtime,'N',''),'')
+                          , make_qty   = a.make_qty
+                          , calc_qty   = dbo.UF_GETYSPM2(a.assembly, a.assembly_qa, a.make_qty)
+              
+                          , sale_no    = a.sale_no
+                          , order_no   = a.order_no
+                          , color      = (SELECT color_lname FROM color WHERE color_code = a.color)
+                          , saledetrem = (SELECT rem FROM saledet WHERE order_no = a.sale_no AND seq_no = a.seq_no)
+                       FROM sfcday    a with (nolock)
+                            LEFT OUTER JOIN mpsorder  m with (nolock) ON a.mpsorder_order = m.order_no
+                            LEFT OUTER JOIN wc        b with (nolock) ON a.wc_no      = b.work_no
+                            LEFT OUTER JOIN groupitem c with (nolock) ON a.assembly   = c.item_no
+                            LEFT OUTER JOIN scene     d with (nolock) ON a.scene_code = d.scene_code
+                      WHERE ( convert(char(10),a.sfc_date,111)   BETWEEN :as_sdate AND :as_edate ) 
+                        AND ((:as_wcno = 'Y' OR :as_wcno = '%') AND left(a.wc_no,1) = 'Y' ) /* YSP사업장(B0001)은 'S0001'로 넘겨줌 */
+                        AND EXISTS ( SELECT item_no FROM itemcalc WHERE item_no = a.assembly )
+       
+                     ) A
+                     LEFT OUTER JOIN maketop10  I with (nolock) ON a.wcno_grp = i.work_no AND a.item_no = i.item_no  
+                     LEFT OUTER JOIN wc         B with (nolock) ON a.wcno_grp = b.work_no
+               GROUP BY a.sfc_date, replace(replace(b.work_name,'[',''),']','')
+              
+              UNION ALL
+              
+              SELECT work_day   = a.work_day
+                   , work_nm    = a.work_nm 
+                   , calc_qty   = 0
+                   , noruntime  = 0
+                   , calctime   = 0
+                   , man_cnt    = count(a.name_kor)
+                FROM (
+                     SELECT DISTINCT work_day   = a.work_day
+                          , work_nm    = a.work_nm  
+                          , name_kor   = a.name_kor
+                          , day_labor  = a.day_labor
+                       FROM (       
+                            SELECT name_kor   = a.name_kor
+                                 , work_day   = a.work_day
+                                 , work_nm    = a.work_nm  
+                                 , day_labor  = sum(a.day_labor)
+                              FROM ( /* 근무신청서(일용,야근) */
+                                   SELECT name_kor   = s.name_kor
+                                        , work_day   = (case when :as_month = 'Y' then convert(char(08),s.work_day,111) + '01'
+                                                             else convert(char(10),s.work_day,111)
+                                                        end)
+                                        , work_nm    = s.work_nm 
+                                        , day_labor  = (case when s.day_labor = 'Y' then 1 else 0 end)
+                                        , overtime   = (case when convert(char(8),s.work_stime,108) > '17:30:00' then 1 else 0 end)
+                                     FROM sfcworkman S
+                                          LEFT OUTER JOIN (
+                                               SELECT DISTINCT team_cd, team_nm FROM v_insabase
+                                          ) V ON s.work_no = v.team_cd
+                                    WHERE ((:as_teamno  = '%' AND s.work_no LIKE :as_teamno) OR
+                                           (:as_teamno <> '%' AND s.work_no    = :as_teamno)
+                                          )
+                                      AND ( s.work_day  between :as_sdate AND :as_edate )
+                                      AND ( s.absent  IS NULL ) /* 결근 */
+                                 ) A
+                             GROUP BY a.name_kor, a.work_day, a.work_nm
+                          ) A
+                   ) A
+               GROUP BY a.work_day, a.work_nm
+              
+              UNION ALL
+              
+              SELECT work_day   = a.work_day
+                   , work_nm    = a.work_nm  
+                   , calc_qty   = 0
+                   , noruntime  = 0
+                   , calctime   = sum(a.calctime)
+                   , man_cnt    = 0
+                FROM (       
+                     SELECT work_day   = a.work_day
+                          , work_nm    = a.work_nm  
+                          , name_kor   = a.name_kor
+                          , work_stime = a.work_stime 
+                          , work_etime = a.work_etime 
+                          , man_type   = a.man_type 
+                          , overtime   = a.overtime
+                          , day_sawon  = a.day_sawon
+                          , day_labor  = a.day_labor
+                          , calctime   = a.time3
+                       FROM (
+                            SELECT work_no    = s.work_no   
+                                 , name_kor   = s.name_kor
+                                 , work_day   = (case when :as_month = 'Y' then convert(char(08),s.work_day,111) + '01'
+                                                      else convert(char(10),s.work_day,111)
+                                                 end)
+                                 , work_nm    = s.work_nm 
+                                 , work_stime = s.work_stime 
+                                 , work_etime = s.work_etime 
+                                 , man_type   = s.man_type 
+                                 , day_sawon  = (case when s.day_labor = 'Y' then 0 else 1 end)
+                                 , day_labor  = (case when s.day_labor = 'Y' then 1 else 0 end)
+                                 , time1      = datediff(mi, s.work_stime, s.work_etime)                    /* TIMECARD     */
+                                 , time2      = (datediff(mi, s.work_stime, s.work_etime) - 90.0)           /* 휴계시간공제 */
+                                 , time3      = (case when convert(char(8),s.work_stime,108) <= '12:00:00' AND
+                                                           convert(char(8),s.work_etime,108) >= '13:00:00'  
+                                                           then (datediff(mi, s.work_stime, s.work_etime) - 60.0) / 60.0    /* 1시간공제 */
+                                                      else datediff(mi, s.work_stime, s.work_etime) / 60.0                  /* 순수시간 */
+                                                 end)
+                                 , overtime   = (case when convert(char(8),s.work_stime,108) > '17:30:00' then 1 else 0 end)
+                              FROM sfcworkman S
+                                   LEFT OUTER JOIN (
+                                        SELECT DISTINCT team_cd, team_nm FROM v_insabase
+                                   ) V ON s.work_no = v.team_cd
+                             WHERE ((:as_teamno  = '%' AND s.work_no LIKE :as_teamno) OR
+                                    (:as_teamno <> '%' AND s.work_no    = :as_teamno)
+                                   )
+                               AND ( s.work_day  between :as_sdate AND :as_edate )
+                               AND ( s.absent  IS NULL ) /* 결근 */
+                          ) A
+                   ) A
+               GROUP BY a.work_day, a.work_nm
+              
+              UNION ALL
+              
+              SELECT work_day   = a.work_day   
+                   , work_nm    = a.work_nm
+                   , calc_qty   = 0
+                   , noruntime  = sum(a.noruntime)
+                   , calctime   = 0
+                   , man_cnt    = 0
+                FROM (
+                     SELECT work_day   = (case when :as_month = 'Y' then convert(char(08),a.work_day,111) + '01'
+                                               else convert(char(10),a.work_day,111)
+                                          end)
+                          , work_nm    = replace(replace(wc.work_name,'[',''),']','')
+                          , calc_qty   = 0
+                          , noruntime  = (datepart(hh,work_etime)*60 + datepart(mi,work_etime)) * work_man / 60.0  
+                          , calctime   = 0
+                          , man_cnt    = 0
+                       FROM sfcworkmachine A
+                            LEFT OUTER JOIN wc        ON a.wc_no   = wc.work_no
+                            LEFT OUTER JOIN login   L ON a.user_id = l.user_id
+                            LEFT OUTER JOIN (
+                                 SELECT item_cd, item_nm, bigo, type 
+                                   FROM codemst 
+                                  WHERE type IN ('비가동시간', '준가동시간') AND use_yn = 'Y'
+                            ) C ON a.cat2 = c.item_cd AND a.wc_no = c.bigo
+                      WHERE ((:as_areano  = '%' AND a.area_no LIKE '%' ) OR  
+                             (:as_areano <> '%' AND a.area_no   IN ('S0001','B0001') ) 
+                            )
+                        AND ((:as_wcno    = '%' AND a.wc_no   LIKE '%' ) OR
+                             (:as_wcno   <> '%' AND a.wc_no   LIKE :as_wcno + '%')
+                            )
+                        AND ( a.work_day  between :as_sdate AND :as_edate )
+                     ) A
+                 GROUP BY a.work_day, a.work_nm
+            ) A
+        WHERE ((:as_keyjob   = '%' AND a.work_grp LIKE :as_keyjob) OR
+               (:as_keyjob  <> '%' AND a.work_grp NOT IN ('스리타','프레스','공무','출고','일반관리'))
+              )
+        GROUP BY a.sfc_date, a.work_grp
+       ) A
+" arguments=(("as_areano", string),("as_wcno", string),("as_teamno", string),("as_sdate", string),("as_edate", string),("as_month", string),("as_keyjob", string))  sort="work_grp A sfc_date A " )
+text(band=header alignment="2" text="인원" border="6" color="33554432" x="1563" y="8" height="120" width="334" html.valueishtml="0"  name=man_cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실적" border="6" color="33554432" x="1038" y="8" height="120" width="517" html.valueishtml="0"  name=calc_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="인당
+생산증감율" border="6" color="33554432" x="3625" y="8" height="120" width="334" html.valueishtml="0"  name=com_manrate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="시간당생산량" border="6" color="33554432" x="3968" y="8" height="120" width="512" html.valueishtml="0"  name=com_time_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="시간당
+생산증감율" border="6" color="33554432" x="4489" y="8" height="120" width="334" html.valueishtml="0"  name=com_timerate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="120" width="247" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="0" x="265" y="8" height="120" width="338" html.valueishtml="0"  name=work_grp_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업일" border="6" color="0" x="613" y="8" height="120" width="416" html.valueishtml="0"  name=sfc_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="인당생산량" border="6" color="33554432" x="3109" y="8" height="120" width="507" html.valueishtml="0"  name=com_man_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="총시간" border="6" color="0" x="2674" y="8" height="120" width="425" html.valueishtml="0"  name=calctime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="28310782" )
+text(band=header alignment="2" text="비,준가동
+시간" border="6" color="33554432" x="2336" y="8" height="120" width="329" html.valueishtml="0"  name=noruntime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="투입시간" border="6" color="33554432" x="1906" y="8" height="120" width="421" html.valueishtml="0"  name=calc_time_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="247" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="265" y="8" height="72" width="338" format="[general]" html.valueishtml="0"  name=work_grp visible="1" edit.limit=255 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="1563" y="8" height="72" width="334" format="#,##0" html.valueishtml="0"  name=man_cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1038" y="8" height="72" width="517" format="#,##0.0" html.valueishtml="0"  name=calc_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="613" y="8" height="72" width="416" format="[General]" html.valueishtml="0"  name=sfc_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="3109" y="8" height="72" width="507" format="#,##0.0" html.valueishtml="0"  name=com_man visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( com_manrate < 0.0, rgb(255, 0, 0), rgb(0, 0, 0) )" x="3625" y="8" height="72" width="334" format="0.0%" html.valueishtml="0"  name=com_manrate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="3968" y="8" height="72" width="512" format="#,##0.0" html.valueishtml="0"  name=com_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2674" y="8" height="72" width="425" format="#,##0.0" html.valueishtml="0"  name=calctime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2336" y="8" height="72" width="329" format="#,##0.0" html.valueishtml="0"  name=noruntime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1906" y="8" height="72" width="421" format="#,##0.0" html.valueishtml="0"  name=calc_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( com_timerate < 0.0, rgb(255, 0, 0), rgb(0, 0, 0) )" x="4489" y="8" height="72" width="334" format="0.0%" html.valueishtml="0"  name=com_timerate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="68" width="247" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( work_grp for all distinct work_grp )"border="0" color="33554432" x="265" y="8" height="68" width="338" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( sfc_date for all distinct sfc_date )"border="0" color="33554432" x="613" y="8" height="68" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( calc_qty for all )"border="0" color="33554432" x="1038" y="8" height="68" width="517" format="#,##0.0" html.valueishtml="0"  name=tcalc_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( man_cnt for all )"border="0" color="33554432" x="1563" y="8" height="68" width="334" format="[GENERAL]" html.valueishtml="0"  name=tman_cnt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( noruntime for all )"border="0" color="33554432" x="2336" y="8" height="68" width="329" format="#,##0.0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( calc_time for all )"border="0" color="33554432" x="1906" y="8" height="68" width="421" format="#,##0.0" html.valueishtml="0"  name=tcalc_time visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( calctime for all )"border="0" color="33554432" x="2674" y="8" height="68" width="425" format="#,##0.0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="tcalc_qty / tman_cnt"border="0" color="33554432" x="3109" y="8" height="68" width="507" format="#,##0.0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="tcalc_qty / tcalc_time"border="0" color="33554432" x="3968" y="8" height="68" width="512" format="#,##0.0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

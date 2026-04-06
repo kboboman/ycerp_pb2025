@@ -1,0 +1,150 @@
+﻿$PBExportHeader$gf_dwtitle2ddlb.srf
+global type gf_dwtitle2ddlb from function_object
+end type
+
+forward prototypes
+global subroutine gf_dwtitle2ddlb (datawindow arg_dw, dropdownlistbox arg_ddlb, dropdownlistbox arg_dwtitles)
+end prototypes
+
+global subroutine gf_dwtitle2ddlb (datawindow arg_dw, dropdownlistbox arg_ddlb, dropdownlistbox arg_dwtitles);/*
+  GF_DWTitle2ddlb( dw_2, ddlb_fld, ddlb_dwtitles )
+
+  Function Name : GF_DWTitle2ddlb (Datawindow 제목을 dropdownlistbox로 복사)
+       Argument : arg_dw(datawindow), ddlb_fld(dropdownlistbox), ddlb_dwtitles(dropdownlistbox)
+    Return Type : None
+*/
+string ls_objects[], ls_objectx[], ls_objecty[], ls_objectt[], ls_band, ls_value, ls_dwstyle, ls_type
+string ls_column[],  ls_columnx[], ls_columny[], ls_columnt[]
+string ls_column_name[], ls_colname_split[], ls_nullarray[]
+
+long	 ll_datawindows, ll_columns, ii, idx, ll_visible
+
+if isnull(arg_dw.Object.DataWindow.Processing) then 
+	RETURN
+else
+	choose case arg_dw.Object.DataWindow.Processing
+		case "0"
+			ls_dwstyle = "Form" // (Default) Form, group, query, or tabular
+		case "1"
+			ls_dwstyle = "Grid"
+		case "2"
+			ls_dwstyle = "Label"
+		case "3"
+			ls_dwstyle = "Graph"
+		case "4"			
+			//-----------------------------------------------------------------------------
+			// 크로스탭 형식일 때에는 StaticMode를 설정해야 필드 접근가능.
+			//-----------------------------------------------------------------------------
+			ls_dwstyle = "Crosstab"
+			if arg_dw.rowcount() > 0 then
+				arg_dw.object.DataWindow.CrossTab.StaticMode = "Yes"
+			end if
+			
+		case "5"
+			ls_dwstyle = "Composite"
+		case "6"
+			ls_dwstyle = "OLE"
+		case "7"
+			ls_dwstyle = "RichText"
+	end choose
+	ls_dwstyle = arg_dw.Object.DataWindow.Processing 
+end if
+
+// DataWindow All Objects
+ll_columns = 0
+ll_datawindows = GF_SPLIT(arg_dw.Describe("datawindow.objects"), "~t", ls_objects)
+for ii = 1 to ll_datawindows
+   ls_type        = lower(arg_dw.describe(ls_objects[ii] + ".type" ))
+	ls_band        = lower(arg_dw.Describe(ls_objects[ii] + ".band"))
+	ll_visible     = long(arg_dw.Describe( ls_objects[ii] + ".visible" ))
+	
+	if ll_visible = 1 then
+		choose case ls_dwstyle
+			//case "4"		// "Crosstab"
+
+			case "4", "1"		// "Grid"
+				choose case ls_band
+					case "header", "header[2]"				
+						ls_objectt[UpperBound(ls_objectt[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".text" )
+						ls_objectx[UpperBound(ls_objectx[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".x" )
+					
+					case "detail"
+						ls_column[UpperBound(ls_column[])   + 1] = arg_dw.Describe( ls_objects[ii] + ".name" )
+						ls_columnx[UpperBound(ls_columnx[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".x" )
+				end choose
+				
+			case "0"		// "Form"
+				choose case ls_band
+					case "header", "header[2]"				
+						ls_objectt[UpperBound(ls_objectt[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".text" )
+						ls_objectx[UpperBound(ls_objectx[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".x" )
+						ls_objecty[UpperBound(ls_objecty[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".y" )
+					
+					case "detail"
+						ls_column[UpperBound(ls_column[])   + 1] = arg_dw.Describe( ls_objects[ii] + ".name" )
+						ls_columnx[UpperBound(ls_columnx[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".x" )
+						ls_columny[UpperBound(ls_columny[]) + 1] = arg_dw.Describe( ls_objects[ii] + ".y" )
+				end choose
+		end choose
+	end if
+next
+
+for ii = 1 to UpperBound(ls_columnx)
+	for idx = 1 to UpperBound(ls_objectx)
+		choose case ls_dwstyle
+			case "4", "1"		// "Crosstab", "Grid"
+				if ls_columnx[ii] = ls_objectx[idx] then
+					ls_columnt[ii] = ls_objectt[idx]
+					exit
+				end if
+
+			case "0"		// "From"
+				if ls_columnx[ii] = ls_objectx[idx] AND ls_columny[ii] = ls_objecty[idx] then
+					ls_columnt[ii] = ls_objectt[idx]
+					exit
+				end if
+		end choose
+	next
+next
+
+ls_column_name = ls_nullarray	; ls_colname_split = ls_nullarray // 배열 초기화
+arg_ddlb.reset() ; arg_dwtitles.reset()
+for ii = 1 to UpperBound(ls_columnt)
+	if ls_columnt[ii] = "" then
+	else
+		ls_value = string(long(ls_columnx[ii]),"00000") + "|" + ls_columnt[ii] + "|" + ls_column[ii]
+	   arg_ddlb.AddItem( ls_value )
+      arg_dwtitles.AddItem( ls_value )
+	end if
+next
+
+arg_ddlb.sorted     = true  // COLUMN명 정렬
+arg_dwtitles.sorted = true  // COLUMN명 정렬
+
+for ii = 1 to arg_ddlb.TotalItems()
+	GF_SPLIT( arg_ddlb.Text(ii), "|", ls_colname_split )
+	ls_column_name[ii]  = ls_colname_split[2]
+next
+
+arg_ddlb.reset()
+arg_ddlb.sorted = false
+for ii = 1 to UpperBound(ls_column_name)
+	if ls_column_name[ii] = "" then
+	else
+	   arg_ddlb.AddItem( ls_column_name[ii] )
+	end if
+next
+
+
+//long   li_Loop
+//string ls_ColName, lsa_ColNames[]
+//
+//for li_Loop = 1 to arg_dw.object.datawindow.column.count
+//	ls_ColName = arg_dw.Describe("#" + String( ll_Loop ) + ".Name")
+//	if long( arg_dw.Describe( ls_ColName + ".Visible") ) > 0 then
+//		lsa_ColNames[UpperBound(lsa_ColNames[]) + 1] = ls_ColName
+//	end if
+//next
+
+end subroutine
+

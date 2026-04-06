@@ -1,0 +1,135 @@
+﻿$PBExportHeader$d_oiteam_outamt.srd
+$PBExportComments$미출고현황(매출조직도)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=180 color="536870912" )
+summary(height=84 color="15780518" )
+footer(height=0 color="16777215" )
+detail(height=84 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(20) updatewhereclause=yes name=area dbname="area" )
+ column=(type=char(20) updatewhereclause=yes name=sector dbname="sector" )
+ column=(type=char(20) updatewhereclause=yes name=team dbname="team" )
+ column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(20) updatewhereclause=yes name=login_user_name dbname="user_name" )
+ column=(type=char(10) updatewhereclause=yes name=login_rank dbname="rank" )
+ column=(type=decimal(9) updatewhereclause=yes name=pre_yinv dbname="pre_yinv" )
+ column=(type=decimal(9) updatewhereclause=yes name=top10_pre_yinv dbname="top10_pre_yinv" )
+ retrieve="  SELECT seq         = o.seq                     /* 순서       */  
+       , area        = o.area                    /* 권역       */
+       , sector      = o.sector                  /* 본부       */
+       , team        = o.team                    /* 팀         */
+       , user_id     = o.user_id                 /* 담당자     */
+       , user_name   = o.user_name               /* 담당자명   */
+       , rank        = o.rank                    /* 직책       */
+       , pre_yinv    = z.un_outamt               /* 미출고현황 */
+		 , top10_pre_yinv	= zz.un_outamt				 /* 미출고현황(전략제품) */
+    FROM (
+			SELECT salesman  = a.salesman
+				  , un_outamt = sum(a.un_outamt)
+			  FROM (
+					 SELECT salesman  = c.salesman
+							, cust_no   = a.cust_no             
+							, cust_name = c.cust_name
+							, un_outamt = dbo.uf_getqty(b.item_no, b.qa ,b.uom,( b.order_qty - b.rlse_qty ) ) * b.price
+						FROM sale      A   
+							  LEFT OUTER JOIN saledet   B ON a.order_no = b.order_no
+							  LEFT OUTER JOIN customer  C ON a.cust_no  = c.cust_no
+					  WHERE ( b.order_qty        > b.rlse_qty  )
+						 AND ( a.open_close       = 'O'           )
+						 AND ( a.due_date   BETWEEN DateAdd(day, - 30, :ad_date) AND DateAdd(day, 30, :ad_date) )
+						 AND ( c.salesman      LIKE :as_salesman  )
+					 ) A
+			 GROUP BY a.salesman
+         ) Z
+			LEFT OUTER JOIN (
+									SELECT salesman  = a.salesman
+										  , un_outamt = sum(a.un_outamt)
+									  FROM (
+											 SELECT salesman  = c.salesman
+													, cust_no   = a.cust_no             
+													, cust_name = c.cust_name
+													, un_outamt = dbo.uf_getqty(b.item_no, b.qa ,b.uom,( b.order_qty - b.rlse_qty ) ) * b.price
+												FROM sale      A   
+													  LEFT OUTER JOIN saledet   B ON a.order_no = b.order_no
+                                                                     INNER JOIN itemtop10 G ON B.item_no = G.item_no and G.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y')
+													  LEFT OUTER JOIN customer  C ON a.cust_no  = c.cust_no
+											  WHERE ( b.order_qty        > b.rlse_qty  )
+												 AND ( a.open_close       = 'O'           )
+												 AND ( a.due_date   BETWEEN DateAdd(day, - 30, :ad_date) AND DateAdd(day, 30, :ad_date) )
+												 AND ( c.salesman      LIKE :as_salesman  )
+											 ) A
+									 GROUP BY a.salesman
+									) ZZ ON Z.salesman = ZZ.salesman
+         LEFT OUTER JOIN (
+              SELECT DISTINCT seq= a.seq          /* 순서       */
+                   , area        = a.area         /* 권역       */
+                   , sector      = a.sector       /* 본부       */
+                   , team        = a.team         /* 팀         */
+                   , user_id     = a.user_id      /* 담당자     */
+                   , user_name   = a.user_name    /* 담당자명   */
+                   , rank        = a.rank         /* 직책       */
+                FROM (
+                     SELECT seq         = a.seq          /* 순서       */
+                          , area        = a.area         /* 권역       */
+                          , sector      = a.sector       /* 본부       */
+                          , team        = a.team         /* 팀         */
+                          , user_id     = a.user_id      /* 담당자     */
+                          , user_name   = a.user_name    /* 담당자명   */
+                          , rank        = a.rank         /* 직책       */
+       
+                       FROM UF_MyMembers( :as_salesman ) M 
+                            LEFT OUTER JOIN opeom_org A ON m.user_id = a.user_id
+       
+                     UNION ALL
+                     /* 내부업체(insite) */
+                     SELECT seq         = a.seq          /* 순서       */
+                          , area        = a.area         /* 권역       */
+                          , sector      = a.sector       /* 본부       */
+                          , team        = a.team         /* 팀         */
+                          , user_id     = a.user_id      /* 담당자     */
+                          , user_name   = a.user_name    /* 담당자명   */
+                          , rank        = a.rank         /* 직책       */
+                       FROM opeom_org A  
+                      WHERE (a.user_id     = 'insite')
+                        AND (:as_salesman  = '%' OR :as_salesman = dbo.UF_INSITE() )
+                     ) A
+         ) O  ON o.user_id = z.salesman
+   WHERE o.seq  IS NOT NULL
+   ORDER BY o.seq
+" arguments=(("as_salesman", string),("ad_date", date))  sort="seq A " )
+group(level=1 header.height=4 trailer.height=84 by=("area" ) header.color="536870912" trailer.color="12639424" )
+group(level=2 header.height=0 trailer.height=80 by=("sector" ) header.color="536870912" trailer.color="12632256" )
+group(level=3 header.height=0 trailer.height=80 by=("team" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="869" y="12" height="160" width="512" html.valueishtml="0"  name=t_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="6" color="0" x="1390" y="12" height="160" width="512" html.valueishtml="0"  name=top10_pre_yinv_t visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="6" color="33554432" x="434" y="12" height="160" width="425" html.valueishtml="0"  name=t_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="6" color="33554432" x="9" y="12" height="160" width="416" html.valueishtml="0"  name=t_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담  당" border="0" color="33554432" x="434" y="64" height="60" width="425" html.valueishtml="0"  name=t_29 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구 분" border="0" color="33554432" x="9" y="64" height="60" width="416" html.valueishtml="0"  name=team_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="미출고집계" border="0" color="8388736" x="869" y="64" height="60" width="512" html.valueishtml="0"  name=pre_yinv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전체금액" border="0" color="8388736" x="869" y="64" height="60" width="512" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전략제품금액" border="0" color="8388736" x="1390" y="64" height="60" width="512" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="12" height="60" width="416" format="[general]" html.valueishtml="0"  name=team visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="0" expression=" login_user_name  + ~" ~" +   login_rank "border="0" color="33554432" x="434" y="12" height="60" width="425" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="869" y="12" height="60" width="512" format="#,##0" html.valueishtml="0"  name=pre_yinv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="1390" y="12" height="60" width="512" format="#,##0" html.valueishtml="0"  name=top10_pre_yinv visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.3 alignment="1" text="소 " border="0" color="33554432" x="9" y="8" height="64" width="416" html.valueishtml="0"  name=t_16 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.3 alignment="0" text=" 계" border="0" color="33554432" x="434" y="8" height="64" width="425" html.valueishtml="0"  name=t_44 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum(pre_yinv for group 3)"border="0" color="33554432" x="869" y="8" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_30 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum(top10_pre_yinv for group 3)"border="0" color="33554432" x="1390" y="8" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" sector + ~" ~""border="0" color="33554432" x="9" y="8" height="64" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_31 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="0" text=" 계" border="0" color="0" x="434" y="8" height="64" width="425" html.valueishtml="0"  name=t_40 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum(  pre_yinv  for group 2 )"border="0" color="33554432" x="869" y="8" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(  top10_pre_yinv for group 2 )"border="0" color="33554432" x="1390" y="8" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" area + ~" ~""border="0" color="33554432" x="9" y="12" height="64" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_32 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="0" text=" 합계" border="0" color="33554432" x="434" y="12" height="64" width="425" html.valueishtml="0"  name=t_28 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  pre_yinv  for group 1 )"border="0" color="33554432" x="869" y="12" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  top10_pre_yinv for group 1 )"border="0" color="33554432" x="1390" y="12" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~" 총  합 ~""border="0" color="33554432" x="9" y="12" height="64" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_33 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="0" text=" 계" border="0" color="0" x="434" y="12" height="64" width="425" html.valueishtml="0"  name=t_31 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(pre_yinv for all)"border="0" color="33554432" x="869" y="12" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(top10_pre_yinv for all)"border="0" color="33554432" x="1390" y="12" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="team")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,170 @@
+﻿$PBExportHeader$d_mpsfcday_t3.srd
+$PBExportComments$생산일보조회_보고서(일자별)(1998/05/08,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=area_no dbname="area_no" )
+ column=(type=char(10) updatewhereclause=yes name=wc_no dbname="wc_no" )
+ column=(type=char(40) updatewhereclause=yes name=wc_name dbname="wc_name" )
+ column=(type=char(10) updatewhereclause=yes name=sfc_date dbname="sfc_date" )
+ column=(type=char(10) updatewhereclause=yes name=sfcday_item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=sfcday_qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=sfcday_uom dbname="uom" )
+ column=(type=decimal(1) updatewhereclause=yes name=ot dbname="ot" )
+ column=(type=decimal(4) updatewhereclause=yes name=sumqty1 dbname="sumqty1" )
+ column=(type=decimal(4) updatewhereclause=yes name=sumqty2 dbname="sumqty2" )
+ column=(type=decimal(0) updatewhereclause=yes name=getqty1 dbname="getqty1" )
+ column=(type=decimal(0) updatewhereclause=yes name=getqty2 dbname="getqty2" )
+ column=(type=decimal(1) updatewhereclause=yes name=alltime dbname="alltime" )
+ column=(type=decimal(1) updatewhereclause=yes name=daytime dbname="daytime" )
+ column=(type=decimal(1) updatewhereclause=yes name=overtime dbname="overtime" )
+ column=(type=decimal(18) updatewhereclause=yes name=orate1 dbname="orate1" )
+ column=(type=decimal(18) updatewhereclause=yes name=orate2 dbname="orate2" )
+ column=(type=decimal(18) updatewhereclause=yes name=orate3 dbname="orate3" )
+ column=(type=char(10) updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=char(10) updatewhereclause=yes name=edate dbname="edate" )
+ retrieve="  SELECT area_no   = a.area_no
+       , wc_no     = a.wc_no
+       , wc_name   = a.wc_name   
+       , sfc_date  = a.sfc_date  
+       , item_no   = a.item_no   
+       , item_name = a.item_name 
+       , qa        = a.qa        
+       , uom       = a.uom       
+       , ot        = a.overtime
+       , sumqty1   = a.sumqty1   
+       , sumqty2   = a.sumqty2   
+       , getqty1   = a.getqty1   
+       , getqty2   = a.getqty2   
+       , alltime   = a.alltime   
+       , daytime   = a.daytime   
+       , overtime  = a.overtime  
+       , orate1    = (a.getqty1 / a.daytime  / 60)
+       , orate2    = (a.getqty2 / a.overtime / 60)
+       , orate3    = (a.getqty1 + a.getqty2) / (a.daytime + a.overtime) / 60
+       , sdate     = a.sdate     
+       , edate     = a.edate     
+    FROM (
+         SELECT area_no   = a.area_no
+              , wc_no     = a.wc_no
+              , wc_name   = a.wc_name   
+              , sfc_date  = a.sfc_date  
+              , item_no   = a.item_no   
+              , item_name = a.item_name 
+              , qa        = a.qa        
+              , uom       = a.uom       
+              , ot        = a.overtime
+              , alltime   = isnull(b.all_time,0)
+              , daytime   = isnull(b.daytime,0)  
+              , overtime  = isnull(b.overtime,0)  
+              , sumqty1   = (case when a.overtime = '' then a.sum_qty   else 0           end)
+              , sumqty2   = (case when a.overtime = '' then 0           else a.sum_qty   end)
+              , getqty1   = (case when a.overtime = '' then a.uf_getqty else 0           end)
+              , getqty2   = (case when a.overtime = '' then 0           else a.uf_getqty end)
+              , sdate     = a.sdate     
+              , edate     = a.edate     
+           FROM (
+                SELECT area_no   = a.area_no
+                     , wc_no     = a.wc_no
+                     , wc_name   = rtrim(b.work_name + space(30))         
+                     , sfc_date  = convert(char(10),a.sfc_date,111)
+                     , item_no   = a.assembly                         
+                     , item_name = c.item_name                     
+                     , qa        = a.assembly_qa                      
+                     , uom       = a.uom                              
+                     , overtime  = isnull(m.overtime,'')
+                     , sum_qty   = sum(a.make_qty)                 
+                     , uf_getqty = FLOOR(DBO.UF_GETQTY(a.assembly, a.assembly_qa, a.uom, sum(a.make_qty)))
+                     , sdate     = convert(char(10),min(a.sfc_date),111)
+                     , edate     = convert(char(10),max(a.sfc_date),111)
+                  FROM sfcday  a 
+                       LEFT OUTER JOIN mpsorder  m  ON a.mpsorder_order = m.order_no
+                       LEFT OUTER JOIN wc        b  ON a.wc_no     = b.work_no
+                       LEFT OUTER JOIN groupitem c  ON a.assembly  = c.item_no
+                 WHERE ( b.work_name        LIKE :as_wc + '%' ) 
+                   AND ( convert(char(10),a.sfc_date,111)  BETWEEN :as_start AND :as_end ) 
+                   AND ( a.area_no             = :as_area ) 
+                 GROUP BY a.area_no
+                        , a.wc_no
+                        , b.work_name
+                        , convert(char(10),a.sfc_date,111)
+                        , a.assembly   
+                        , c.item_name
+                        , a.assembly_qa
+                        , a.uom
+                        , m.overtime
+                ) A
+                LEFT OUTER JOIN sfcdaywork  B  ON a.area_no  = b.area_no
+                                              AND a.sfc_date = b.sfc_date
+                                              AND a.wc_no    = b.wc_no
+         ) A
+" arguments=(("as_wc", string),("as_start", string),("as_end", string),("as_area", string))  sort="wc_name A sfc_date A item_name A sfcday_qa A " )
+group(level=1 header.height=0 trailer.height=72 by=("sfc_date" ) header.color="536870912" trailer.color="12639424" )
+group(level=2 header.height=0 trailer.height=0 by=("" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="782" y="8" height="60" width="1198" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1989" y="8" height="60" width="681" html.valueishtml="0"  name=sfcday_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="작업장" border="6" color="0" x="9" y="8" height="60" width="334" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="일자" border="6" color="0" x="352" y="8" height="60" width="421" html.valueishtml="0"  name=sfc_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2679" y="8" height="60" width="165" html.valueishtml="0"  name=sfcday_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="야간" border="6" color="0" x="2853" y="8" height="60" width="155" html.valueishtml="0"  name=ot_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="생산량(주)" border="6" color="128" x="3017" y="8" height="60" width="389" html.valueishtml="0"  name=sumqty1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="생산량(야)" border="6" color="0" x="3415" y="8" height="60" width="370" html.valueishtml="0"  name=sumqty2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="환산(주간)" border="6" color="128" x="3794" y="8" height="60" width="384" html.valueishtml="0"  name=getqty1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="환산(야간)" border="6" color="0" x="4187" y="8" height="60" width="379" html.valueishtml="0"  name=getqty2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="시간(주)" border="6" color="128" x="4576" y="8" height="60" width="334" html.valueishtml="0"  name=daytime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="시간(야)" border="6" color="0" x="4919" y="8" height="60" width="325" html.valueishtml="0"  name=overtime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산성(계)" border="6" color="0" x="5966" y="8" height="60" width="366" html.valueishtml="0"  name=t_9 visible="1"  font.face="바탕체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산성(주)" border="6" color="128" x="5253" y="8" height="60" width="347" html.valueishtml="0"  name=t_2 visible="1"  font.face="바탕체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산성(야)" border="6" color="0" x="5609" y="8" height="60" width="347" html.valueishtml="0"  name=t_4 visible="1"  font.face="바탕체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="128" x="3017" y="4" height="60" width="389" format="#,##0" html.valueishtml="0"  name=sumqty1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="3415" y="4" height="60" width="370" format="#,##0" html.valueishtml="0"  name=sumqty2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="128" x="3794" y="4" height="60" width="384" format="#,##0" html.valueishtml="0"  name=getqty1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="4187" y="4" height="60" width="379" format="#,##0" html.valueishtml="0"  name=getqty2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="128" x="4576" y="4" height="60" width="334" format="[general]" html.valueishtml="0"  name=daytime visible="1" editmask.mask="00.0" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0" x="2853" y="4" height="60" width="155" format="[general]" html.valueishtml="0"  name=ot visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0" x="2679" y="4" height="60" width="165" format="[general]" html.valueishtml="0"  name=sfcday_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="1989" y="4" height="60" width="681" format="[general]" html.valueishtml="0"  name=sfcday_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="352" y="4" height="60" width="421" format="[general]" html.valueishtml="0"  name=sfc_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="334" format="[general]" html.valueishtml="0"  name=wc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="782" y="4" height="60" width="1198" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="0" x="4919" y="4" height="60" width="325" format="[general]" html.valueishtml="0"  name=overtime visible="1" editmask.mask="00.0" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="128" x="5253" y="4" height="60" width="347" format="#,##0.00" html.valueishtml="0"  name=orate1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="바탕체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="0" x="5609" y="4" height="60" width="347" format="#,##0.00" html.valueishtml="0"  name=orate2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="바탕체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="0" x="5966" y="4" height="60" width="366" format="#,##0.00" html.valueishtml="0"  name=orate3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="바탕체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum( sumqty2 for group 1)"border="0" color="0" x="3415" y="8" height="60" width="370" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( getqty1 for group 1)"border="0" color="0" x="3794" y="8" height="60" width="384" format="#,##0" html.valueishtml="0"  name=tot_getqty1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( getqty2 for group 1)"border="0" color="0" x="4187" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=tot_getqty2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="2" expression="sum( daytime for group 1 distinct daytime)"border="0" color="0" x="4576" y="8" height="60" width="334" format="00.0" html.valueishtml="0"  name=tot_daytime visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( sumqty1 for group 1)"border="0" color="0" x="3017" y="8" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="2679" y="8" height="60" width="165" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="2853" y="8" height="60" width="155" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="0" expression=" wc_name "border="0" color="0" x="9" y="8" height="60" width="334" format="[GENERAL]" html.valueishtml="0"  name=compute_21 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="2" expression=" sfc_date"border="0" color="0" x="352" y="8" height="60" width="421" format="[GENERAL]" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="2" expression="sum( overtime for group 1 distinct overtime)"border="0" color="0" x="4919" y="8" height="60" width="325" format="00.0" html.valueishtml="0"  name=tot_overtime visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="( tot_getqty1 + tot_getqty2 ) / ( tot_daytime + tot_overtime ) / 60"border="0" color="0" x="5966" y="8" height="60" width="366" format="#,##0.00" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="tot_getqty2 / tot_overtime / 60"border="0" color="0" x="5609" y="8" height="60" width="347" format="#,##0.00" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="tot_getqty1 / tot_daytime / 60"border="0" color="0" x="5253" y="8" height="60" width="347" format="#,##0.00" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="64" width="334" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( sumqty2 for all) "border="0" color="0" x="3415" y="4" height="64" width="370" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( getqty1 for all) "border="0" color="0" x="3794" y="4" height="64" width="384" format="#,##0" html.valueishtml="0"  name=all_getqty1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( getqty2 for all) "border="0" color="0" x="4187" y="4" height="64" width="379" format="#,##0" html.valueishtml="0"  name=all_getqty2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( daytime for all distinct wc_no, sfc_date, daytime)"border="0" color="0" x="4576" y="4" height="64" width="334" format="#,#00.0" html.valueishtml="0"  name=all_daytime visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( sumqty1 for all) "border="0" color="0" x="3017" y="4" height="64" width="389" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=footer alignment="2" text="합계" border="0" color="0" x="352" y="4" height="64" width="421" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="2" text="" border="0" color="0" x="2679" y="4" height="64" width="165" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="2" text="" border="0" color="0" x="2853" y="4" height="64" width="155" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( overtime for all distinct wc_no, sfc_date, overtime)"border="0" color="0" x="4919" y="4" height="64" width="325" format="#,#00.0" html.valueishtml="0"  name=all_overtime visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="all_getqty1 / all_daytime / 60"border="0" color="0" x="5253" y="4" height="64" width="347" format="#,##0.00" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="all_getqty2 / all_overtime / 60"border="0" color="0" x="5609" y="4" height="64" width="347" format="#,##0.00" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="( all_getqty1 + all_getqty2 ) / ( all_daytime + all_overtime ) / 60"border="0" color="0" x="5966" y="4" height="64" width="366" format="#,##0.00" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="~"품목수: ~" + count( item_name for all distinct  item_name )  + ~" 개~""border="0" color="0" x="782" y="4" height="64" width="1198" format="[General]" html.valueishtml="0"  name=compute_23 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="~"규격수: ~" + count( sfcday_qa for all distinct item_name, sfcday_qa )  + ~" 개~""border="0" color="0" x="1989" y="4" height="64" width="681" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="~"품목수: ~" + count( item_name for group 1 distinct  item_name ) + ~" 개~""border="0" color="0" x="782" y="8" height="60" width="1198" format="[General]" html.valueishtml="0"  name=compute_22 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="~"규격수: ~" + count( sfcday_qa for group 1 distinct sfcday_qa )  + ~" 개~""border="0" color="0" x="1989" y="8" height="60" width="681" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="wc_name	sfc_date	sfcday_qa")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

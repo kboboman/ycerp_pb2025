@@ -1,0 +1,55 @@
+﻿$PBExportHeader$gf_routnext.srf
+$PBExportComments$다음공정찾기(현공정,품목,규격)
+global type gf_routnext from function_object
+end type
+
+forward prototypes
+global function string gf_routnext (string as_workno, string as_itemno, string as_qa)
+end prototypes
+
+global function string gf_routnext (string as_workno, string as_itemno, string as_qa);string ls_worknm
+
+SELECT next_rout  = (case when a.op = 1 then a.wcnm2
+                          when a.op = 2 then a.wcnm3
+                          when a.op = 3 then '출고'
+                          else ''
+                     end)
+  INTO :ls_worknm
+  FROM (
+       SELECT item_no   = b.item_no
+            , qa        = b.qa
+            , op        = max(b.op         )
+            , opmax     = max(b.operation  )
+            , wc1       = max(b.wc_no1     )
+            , wc2       = max(b.wc_no2     )
+            , wc3       = max(b.wc_no3     )
+       
+            , wcnm1     = max(b.wc_nm1     )
+            , wcnm2     = max(b.wc_nm2     )
+            , wcnm3     = max(b.wc_nm3     )
+         FROM (
+              SELECT a.item_no
+                   , a.qa
+                   , op         = (case when :as_workno = a.wc_no then a.operation else 0 end)
+                   , operation  = a.operation
+                   , wc_no1     = (case when a.operation = 1 then a.wc_no     else '' end)
+                   , wc_no2     = (case when a.operation = 2 then a.wc_no     else '' end)
+                   , wc_no3     = (case when a.operation = 3 then a.wc_no     else '' end)
+       
+                   , wc_nm1     = (case when a.operation = 1 then a.work_name else '' end)
+                   , wc_nm2     = (case when a.operation = 2 then a.work_name else '' end)
+                   , wc_nm3     = (case when a.operation = 3 then a.work_name else '' end)
+                FROM (
+                     SELECT r.item_no, r.qa, r.operation, r.wc_no, wc.work_name
+                       FROM rout R with (nolock) 
+                            LEFT OUTER JOIN wc with (nolock) ON r.wc_no = wc.work_no
+                      WHERE r.item_no = :as_itemno AND r.qa = :as_qa
+                     ) a
+              ) b
+        GROUP BY b.item_no, b.qa
+       ) A;
+
+RETURN ls_worknm
+
+end function
+

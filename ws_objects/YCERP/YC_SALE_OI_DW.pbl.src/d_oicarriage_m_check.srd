@@ -1,0 +1,109 @@
+﻿$PBExportHeader$d_oicarriage_m_check.srd
+$PBExportComments$운송차량관리(2001/03/15,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=68 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(8) updatewhereclause=yes name=car_carriage_car_status dbname="car_status" )
+ column=(type=char(8) updatewhereclause=yes name=yymmdd dbname="yymmdd" )
+ column=(type=char(8) update=yes updatewhereclause=yes key=yes name=cardate dbname="car_carriage.cardate" )
+ column=(type=long update=yes updatewhereclause=yes key=yes name=car_seq dbname="car_carriage.car_seq" )
+ column=(type=char(4) updatewhereclause=yes name=customer_cust_no dbname="customer.cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(11) update=yes updatewhereclause=yes key=yes name=a_scene_code dbname="car_carriage.scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=owner_reg dbname="car_carriage.owner_reg" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=owner_name dbname="car_carriage.owner_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=business dbname="car_carriage.business" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=jongmok dbname="car_carriage.jongmok" values="개별화물	개별화물/트럭	트럭/화물운송	화물운송/화물	화물/개별용달	개별용달/" )
+ column=(type=char(60) update=yes updatewhereclause=yes name=owner_addr dbname="car_carriage.owner_addr" )
+ column=(type=char(13) update=yes updatewhereclause=yes name=owner_tel dbname="car_carriage.owner_tel" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=owner_bank_no dbname="car_carriage.owner_bank_no" )
+ column=(type=char(40) update=yes updatewhereclause=yes name=owner_bank_master dbname="car_carriage.owner_bank_master" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=owner_bank_name dbname="car_carriage.owner_bank_name" )
+ column=(type=char(20) updatewhereclause=yes name=driver_name dbname="car_carriage.driver_name" )
+ column=(type=char(12) updatewhereclause=yes name=car_no dbname="car_carriage.car_no" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=car_cust_name dbname="car_carriage.car_cust_name" )
+ column=(type=char(14) updatewhereclause=yes name=car_carriage_do_no dbname="car_carriage.do_no" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=carriage_length dbname="car_carriage.carriage_length" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=slip_yn dbname="car_carriage.slip_yn" values="	Y/	N" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=tax_yn dbname="car_carriage.tax_yn" values="	Y/	N" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=receipt_yn dbname="car_carriage.receipt_yn" values="	Y/	N" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=shipamt_yn dbname="car_carriage.shipamt_yn" values="	Y/	N" )
+ column=(type=decimal(0) updatewhereclause=yes name=st_car_amt dbname="car_carriage.st_car_amt" )
+ column=(type=decimal(0) updatewhereclause=yes name=ship_amount dbname="car_carriage.ship_amount" )
+ column=(type=char(180) updatewhereclause=yes name=order_no dbname="order_no" )
+ retrieve="SELECT (case when a.car_status = '03' then '작성전'
+                        when  a.car_status = '04' then  '엑셀작성'
+                end) car_status,
+              substring(a.cardate,5,4) yymmdd,
+		   a.cardate,
+              a.car_seq,
+              c.cust_no,
+              c.cust_name, 
+              a.scene_code,
+              b.scene_desc,
+              a.owner_reg, 
+              a.owner_name, 
+              a.business, 
+              a.jongmok, 
+              a.owner_addr, 
+              a.owner_tel, 
+              a.owner_bank_no,               
+              a.owner_bank_master,
+              a.owner_bank_name,
+              a.driver_name,
+              a.car_no,
+              a.car_cust_name,
+		    a.do_no,
+		    a.carriage_length,
+              a.slip_yn,
+              a.tax_yn,
+              a.receipt_yn,
+              a.shipamt_yn,
+		   a.st_car_amt,
+		   a.ship_amount,
+		   dbo.uf_get_dosaleno(a.do_no) order_no
+FROM car_carriage a inner join scene b on a.scene_code = b.scene_code
+                                     inner join customer c on b.cust_no = c.cust_no
+							inner join do d on a.do_no = d.do_no
+where convert(char(8),d.do_date,112) between :ls_fr_date  and :ls_to_date
+    and a.car_status in ( '03', '04' )
+    and a.do_no is not null" update="car_carriage" updatewhere=0 updatekeyinplace=no arguments=(("ls_fr_date", string),("ls_to_date", string))  sort="yymmdd A scene_scene_desc A car_no A " )
+text(band=header alignment="2" text="SEQ" border="6" color="0" x="9" y="4" height="56" width="110" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="배차일" border="6" color="0" x="128" y="4" height="56" width="187" html.valueishtml="0"  name=a_cardate_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="325" y="4" height="56" width="631" html.valueishtml="0"  name=c_cust_name_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="965" y="4" height="56" width="1038" html.valueishtml="0"  name=b_scene_desc_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="2011" y="8" height="56" width="1275" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="송장번호" border="6" color="0" x="3296" y="8" height="52" width="402" html.valueishtml="0"  name=car_carriage_do_no_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="차량번호" border="6" color="0" x="3707" y="4" height="56" width="375" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="톤수" border="6" color="0" x="4087" y="4" height="56" width="411" html.valueishtml="0"  name=car_carriage_carriage_length_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+compute(band=detail alignment="2" expression="getrow()"border="2" color="0" x="9" y="4" height="72" width="110" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="2" color="0" x="965" y="4" height="72" width="1038" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="2" color="0" x="325" y="4" height="72" width="631" format="[general]" html.valueishtml="0"  name=customer_cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="0" x="128" y="4" height="72" width="187" format="[general]" html.valueishtml="0"  name=yymmdd visible="1" editmask.mask="XX/XX" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=29 alignment="0" tabsequence=32766 border="2" color="0" x="2011" y="4" height="72" width="1275" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="2" color="0" x="3296" y="4" height="72" width="402" format="[general]" html.valueishtml="0"  name=car_carriage_do_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="2" color="0" x="3707" y="4" height="72" width="375" format="[general]" html.valueishtml="0"  name=car_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=22 alignment="0" tabsequence=32766 border="2" color="0" x="4091" y="4" height="72" width="407" format="[general]" html.valueishtml="0"  name=carriage_length visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+compute(band=footer alignment="2" expression="rowcount()"border="2" color="0" x="9" y="8" height="64" width="110" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="2" color="0" x="4507" y="4" height="72" width="219" format="[general]" html.valueishtml="0"  name=owner_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="차주" border="6" color="0" x="4507" y="4" height="56" width="219" html.valueishtml="0"  name=a_owner_name_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="2" color="0" x="4736" y="4" height="72" width="379" format="[general]" html.valueishtml="0"  name=owner_tel visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="차주전화번호" border="6" color="0" x="4736" y="4" height="56" width="379" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="ERP등록가" border="6" color="0" x="5125" y="4" height="56" width="302" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="집행운임" border="6" color="0" x="5435" y="4" height="56" width="302" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="전표" border="6" color="0" x="5751" y="4" height="56" width="361" html.valueishtml="0"  name=car_carriage_slip_yn_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="세금계산서도착유무" border="6" color="0" x="6126" y="4" height="56" width="489" html.valueishtml="0"  name=car_carriage_tax_yn_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="인수증회수유무" border="6" color="0" x="6624" y="4" height="56" width="379" html.valueishtml="0"  name=car_carriage_receipt_yn_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+text(band=header alignment="2" text="운임지불유무" border="6" color="0" x="7013" y="4" height="56" width="398" html.valueishtml="0"  name=car_carriage_shipamt_yn_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="134217730~trgb(103,153,255)" )
+column(band=detail id=23 alignment="2" tabsequence=10 border="4" color="0" x="5755" y="4" height="72" width="357" format="[general]" html.valueishtml="0"  name=slip_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="15793151" )
+column(band=detail id=24 alignment="2" tabsequence=20 border="4" color="0" x="6130" y="4" height="72" width="485" format="[general]" html.valueishtml="0"  name=tax_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="15793151" )
+column(band=detail id=25 alignment="2" tabsequence=30 border="4" color="0" x="6629" y="4" height="72" width="375" format="[general]" html.valueishtml="0"  name=receipt_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="15793151" )
+column(band=detail id=26 alignment="2" tabsequence=40 border="4" color="0" x="7017" y="4" height="72" width="393" format="[general]" html.valueishtml="0"  name=shipamt_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="15793151" )
+column(band=detail id=27 alignment="1" tabsequence=32766 border="2" color="0" x="5125" y="4" height="72" width="302" format="#,##0" html.valueishtml="0"  name=st_car_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=28 alignment="1" tabsequence=32766 border="2" color="0" x="5435" y="4" height="72" width="302" format="#,##0" html.valueishtml="0"  name=ship_amount visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

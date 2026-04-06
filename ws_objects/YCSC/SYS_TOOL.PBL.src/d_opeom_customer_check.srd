@@ -1,0 +1,61 @@
+﻿$PBExportHeader$d_opeom_customer_check.srd
+$PBExportComments$판매거래처와 OPEOM CHECK(1998/02/23 - 김구현)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes key=yes name=customer_cust_no dbname="customer.cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=customer_bill_amount dbname="customer.bill_amount" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=customer_balance_amt dbname="customer.balance_amt" )
+ column=(type=decimal(2) updatewhereclause=yes name=balance_amt2 dbname="balance_amt2" )
+ column=(type=long updatewhereclause=yes name=cyear dbname="cyear" )
+ column=(type=decimal(2) updatewhereclause=yes name=eom_amt dbname="eom_amt" )
+ retrieve="  SELECT customer.cust_no       
+       , customer.cust_name     
+       , customer.bill_amount   
+       , customer.balance_amt   
+       , balance_amt2 = ( customer.balance_amt 
+                        - (SELECT isnull(sum(inv_01  + inv_02  + inv_03  + inv_04  + inv_05  + inv_06 
+                                           + inv_07  + inv_08  + inv_09  + inv_10  + inv_11  + inv_12 
+                                           - coll_01 - coll_02 - coll_03 - coll_04 - coll_05 - coll_06 
+                                           - coll_07 - coll_08 - coll_09 - coll_10 - coll_11 - coll_12), 0) 
+                             FROM opeom A
+                            WHERE ( customer.cust_no         = A.cust_no ) 
+                              AND ( datepart(year, eom_year) > :ai_year  )
+                           )
+                        )
+       , cyear        = datepart(year, eom_year) 
+       , eom_amt      = isnull((balbf_amount 
+                      + inv_01 + inv_02 + inv_03 + inv_04 + inv_05 + inv_06 
+                      + inv_07 + inv_08 + inv_09 + inv_10 + inv_11 + inv_12 
+                      - coll_01 - coll_02 - coll_03 - coll_04 - coll_05 - coll_06 
+                      - coll_07 - coll_08 - coll_09 - coll_10 - coll_11 - coll_12 ),0)  
+    FROM customer,   
+         opeom  
+   WHERE ( customer.cust_no         *= opeom.cust_no ) 
+     AND ( datepart(year, eom_year)  = :ai_year      ) 
+" update="customer" updatewhere=0 updatekeyinplace=no arguments=(("ai_year", number))  sort="customer_cust_name A " )
+text(band=header alignment="2" text="년도" border="6" color="0" x="9" y="8" height="60" width="215" html.valueishtml="0"  name=cyear_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="판매거래처" border="6" color="0" x="233" y="8" height="60" width="448" html.valueishtml="0"  name=customer_cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="690" y="8" height="60" width="1015" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="미수금액" border="6" color="0" x="1714" y="8" height="60" width="553" html.valueishtml="0"  name=customer_balance_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="OPEOM AMT" border="6" color="0" x="2277" y="8" height="60" width="608" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="BALANCE AMT2" border="6" color="0" x="2894" y="8" height="60" width="553" html.valueishtml="0"  name=balance_amt2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="어음미결금액" border="6" color="0" x="3456" y="8" height="60" width="517" html.valueishtml="0"  name=customer_bill_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="215" format="[general]" html.valueishtml="0"  name=cyear visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="233" y="8" height="60" width="448" format="[general]" html.valueishtml="0"  name=customer_cust_no  tag="판매거래처코드" visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="690" y="8" height="60" width="1015" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=4 alignment="1" tabsequence=10 border="0" color="0~tIF( customer_balance_amt <> eom_amt ,RGB(255,0,0),RGB(0,0,0))" x="1714" y="8" height="60" width="553" format="#,##0" html.valueishtml="0"  name=customer_balance_amt  tag="미수금액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="1" tabsequence=20 border="0" color="0" x="2277" y="8" height="60" width="608" format="#,##0" html.valueishtml="0"  name=eom_amt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="2894" y="8" height="60" width="553" format="#,##0" html.valueishtml="0"  name=balance_amt2 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="0" x="3456" y="8" height="60" width="517" format="#,##0" html.valueishtml="0"  name=customer_bill_amount  tag="어음미결금액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="233" y="8" height="64" width="448" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  customer_balance_amt )"border="0" color="0" x="1714" y="8" height="64" width="553" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  eom_amt )"border="0" color="0" x="2277" y="8" height="64" width="608" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  balance_amt2 )"border="0" color="0" x="2894" y="8" height="64" width="553" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  customer_bill_amount )"border="0" color="0" x="3456" y="8" height="64" width="517" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

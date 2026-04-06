@@ -1,0 +1,342 @@
+﻿$PBExportHeader$d_oiissuereq_s_sum_list_back.srd
+$PBExportComments$출고의뢰현황품목별수주번호별(조원석 2017.11.17)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=60 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=a_accept_area dbname="itemfav.ACCEPT_AREA" )
+ column=(type=char(20) updatewhereclause=yes name=area_area_name dbname="area.AREA_NAME" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="itemfav.item_name" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="itemfav.uom" )
+ column=(type=decimal(2) updatewhereclause=yes name=order_qty dbname="itemfav.order_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=acc_qty dbname="itemfav.acc_qty" )
+ column=(type=char(14) updatewhereclause=yes name=sale_no dbname="itemfav.sale_no" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="itemfav.seq_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="itemfav.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="itemfav.scene_desc" )
+ column=(type=datetime updatewhereclause=yes name=sys_date dbname="itemfav.sys_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=user_id dbname="itemfav.user_id" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=item_no dbname="itemfav.item_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=qa dbname="itemfav.qa" )
+ column=(type=decimal(2) updatewhereclause=yes name=stock_qty dbname="STOCK_QTY" )
+ retrieve="SELECT distinct
+                  A.ACCEPT_AREA,
+                  AREA.AREA_NAME,
+                  a.item_name,
+                  a.uom,              
+                  a.order_qty,
+                  a.acc_qty,
+                  a.sale_no,
+                  a.seq_no,
+                  a.cust_name,
+                  a.scene_desc,
+                  a.sys_date,
+                  itemfav.user_id,
+                  itemfav.item_no,
+                  itemfav.qa,
+                  isnull(b.STOCK_QTY,0) STOCK_QTY
+FROM itemfav inner join
+  (
+  		  SELECT
+               issuereqdet.req_date    
+  		       , issuereqdet.salesman 
+  		       , issuereq.accept_user
+				 , issuereq.accept_area
+  		       , issuereqdet.req_seq          
+  		       , issuereqdet.req_flag
+  		       , issuereqdet.seq              
+  		       , issuereqdet.cust_no
+  		       , issuereqdet.scene_code 
+  		       , scene.scene_desc              
+  		       , issuereqdet.add_scene               
+  		       , saledet.item_no
+  		       , groupitem.item_name 
+  		       , issuereqdet.issue_flag   
+  		       , issuereqdet.issue_schedule   
+  		       , issuereqdet.ship_flag        
+  		       , issuereqdet.ship_case        
+  		       , issuereqdet.tel              
+  		       , issuereqdet.rem              
+/*  		       , issuereqdet.sys_date              */
+  		       , issuereq.confirm_flag        
+  		       , customer.cust_name           
+	           , issuereqdet.sale_no
+             , issuereq.sys_date
+  		       , saledet.seq_no              
+  		       , saledet.qa          
+  		       , saledet.uom                   
+  		       , saledet.order_qty
+  		       , saledet.price                      
+  		       , saledet.acc_qty  
+  		       , saledet.saledet_text   
+  		       , saledet.action   
+  		       , saledet.sol_qty   
+  		       , saledet.loc_no   
+  		       , saledet.issue_qty   
+  		       , saledet.rlse_date   
+  		       , saledet.rlse_qty          
+        FROM issuereqdet left outer join issuereq on issuereqdet.req_date  = issuereq.req_date
+                                                                               AND issuereqdet.salesman  = issuereq.salesman 
+                                                                               AND issuereqdet.req_seq   = issuereq.req_seq  
+              left outer join saledet on issuereqdet.sale_no = saledet.order_no              
+              left outer join sale on issuereqdet.sale_no = sale.order_no
+              left outer join scene on  issuereqdet.scene_code = scene.scene_code 
+              left outer join customer on issuereqdet.cust_no = customer.cust_no                            
+              inner join login a on issuereqdet.salesman = a.user_id
+              inner join login b on  issuereq.accept_user = b.user_id
+              inner join groupitem on saledet.item_no = groupitem.item_no
+   WHERE issuereqdet.req_date  = :as_reqdate + ' 00:00:00'
+     and issuereq.confirm_flag = 'Y'   
+     and issuereq.accept_area like replace(:as_area, '', '%')
+     and issuereq.accept_user like replace(:as_location, '', '%')
+     and issuereqdet.salesman like replace(:as_salesman, '', '%')
+) A 
+ON ITEMFAV.ITEM_NO =A.ITEM_NO AND ITEMFAV.qa = A.qa
+left outer join (
+							
+								SELECT area.area_no
+											 , item_no    = A.item_no
+													 , qa         = A.qa                                              																																			 
+													 , sum( isnull(A.before_qty,0) + isnull(aa.make_qty,0) -
+																	 isnull(aa.ship_qty,0) +
+																	 isnull(aa.ret_qty,0) +
+																	 isnull(aa.etc_qty,0)
+														  ) stock_qty
+												 FROM item_batchstock A 
+															 LEFT OUTER JOIN 
+															(
+							
+																					 /* 생산입고 */
+							
+																					  SELECT loc_no     = s.loc_no
+																									  , wc_no      = rtrim(s.wc_no)
+																									  , batchdate  = convert(char(10), s.sfc_date, 111)
+																									  , item_no    = s.assembly
+																									  , qa         = s.assembly_qa
+																									  , before_qty = 0 
+																									  , make_qty   = sum(s.make_qty)
+																									  , ship_qty   = 0
+																									  , ret_qty    = 0
+																									  , etc_qty    = 0
+																								  FROM sfcday S WITH (NOLOCK)
+																										 LEFT OUTER JOIN wc  W WITH (NOLOCK) ON s.wc_no   = w.work_no
+																										 inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on s.assembly = itemfav.item_no and s.assembly_qa = itemfav.qa
+																								 WHERE s.sfc_date  between :as_reqdate + ' 00:00:00.000' AND :as_reqdate + ' 23:59:59.999'
+																								 group by s.loc_no, rtrim(s.wc_no), convert(char(10), s.sfc_date, 111), s.assembly, s.assembly_qa
+																			 
+														  
+																									  UNION ALL
+																							 
+																									  /* 가공입고 */
+																						
+																									 SELECT loc_no  = d.loc_no
+																											, wc_no      = null
+																											, batchdate  = convert(char(10),h.insp_date,111)
+																											, d.item_no
+																											, qa         = d.qa     
+																											, before_qty = 0
+																											, make_qty   = sum(isnull(d.rcpt_qty, 0))
+																											, ship_qty   = 0
+																											, ret_qty    = 0
+																											, etc_qty    = 0
+																										FROM inspdet D WITH (NOLOCK)
+																											  LEFT OUTER JOIN insp  H WITH (NOLOCK) ON d.insp_no = h.insp_no
+																											  inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on d.item_no = itemfav.item_no and d.qa = itemfav.qa
+																									  WHERE    h.insp_date = :as_reqdate + ' 00:00:00.000'
+																									  group by d.loc_no, convert(char(10),h.insp_date,111), d.item_no, d.qa
+																						
+																	
+																									  UNION ALL
+																									  
+																									  /* 정상출고 */
+																								
+																										SELECT loc_no     = a.loc_no
+																											  , wc_no      = null
+																											  , do_date    = convert(char(10),b.do_date,111)
+																											  , a.item_no
+																											  , qa         = a.qa      
+																											  , BEFORE_QTY = 0
+																											  , MAKE_QTY = 0
+																											  , ship_qty   = sum(isnull(a.ship_qty,0))
+																											  , ret_qty    = 0
+																											  , etc_qty    = 0
+																										  FROM dodet  A with(nolock)
+																										  inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on a.item_no = itemfav.item_no and a.qa = itemfav.qa
+																												 LEFT OUTER JOIN do  B WITH (NOLOCK) ON a.do_no   = b.do_no                                                                                                                                  
+																										 WHERE b.do_date  = :as_reqdate + ' 00:00:00.000'
+																											AND a.ship_qty > 0     /* 반품정리시 -수량 발생함 */
+																											AND b.ewol    <> 'Y'   /* 송장이월 SKIP */
+																											group by a.loc_no, convert(char(10),b.do_date,111), a.item_no, a.qa
+																										 
+																											 UNION ALL
+																	
+																									  /* 대체출고,입고 */
+																									/*출고*/
+																											 SELECT loc_no     = d.src_loc
+																													, wc_no      = null
+																													, alter_date = convert(char(10),d.alter_date,111)
+																													, d.src_item item_no
+																													, qa         = d.src_qa   
+																													, before_qty = 0
+																													, make_qty = 0
+																													, ship_qty = sum( isnull(d.src_qty, 0))
+																													, ret_qty   = 0   
+																													, etc_qty  = 0
+																												FROM itemalter D WITH (NOLOCK)
+																												inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on d.src_item = itemfav.item_no and d.src_qa = itemfav.qa
+																											  WHERE d.alter_date  = :as_reqdate + ' 00:00:00'
+																												 AND d.issue_flag  = 'Y'
+																												 group by d.src_loc, convert(char(10),d.alter_date,111), d.src_item, d.src_qa
+																												 
+																											 UNION ALL
+																											 /*입고*/
+																											 SELECT loc_no      = d.tar_loc
+																													, wc_no       = null
+																													, alter_date  = convert(char(10),d.alter_date,111)
+																													, d.tar_item item_no
+																													, qa          = d.tar_qa   
+																													, before_qty = 0
+																													, make_qty = sum(isnull(d.tar_qty, 0))
+																													, ship_qty = 0
+																													, ret_qty    = 0
+																													, issue_qty   = 0
+																												FROM itemalter D WITH (NOLOCK)
+																												inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on d.tar_item = itemfav.item_no and d.tar_qa = itemfav.qa
+																											  WHERE d.alter_date  = :as_reqdate + ' 00:00:00'
+																											  group by d.tar_loc, convert(char(10),d.alter_date,111), d.tar_item, d.tar_qa                                                                                                                                
+																							  UNION ALL
+							
+																							  /* 요청출고,입고 */
+																							  /*출고*/
+																								  SELECT loc_no     = a.loc_no   
+																										 , wc_no      = null
+																										 , rlse_date  = convert(char(10),a.rlse_date,111)   
+																										 , a.item_no
+																										 , qa         = a.qa   
+																										 , before_qty = 0
+																										 , make_qty = 0
+																										 , ship_qty = sum(isnull(a.rlse_qty,0)) 
+																										 , ret_qty   = 0   
+																										 , etc_qty  = 0
+																									 FROM ask_det A WITH (NOLOCK)
+																										  inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on a.item_no = itemfav.item_no and a.qa = itemfav.qa
+																											LEFT OUTER JOIN ask_head B WITH (NOLOCK) ON a.ask_no = b.ask_no
+																									WHERE a.rlse_date  between :as_reqdate + ' 00:00:00.000' AND :as_reqdate + ' 23:59:59.999'
+																									group by a.loc_no,  convert(char(10),a.rlse_date,111)   , a.item_no, a.qa
+																									  
+																								  UNION ALL
+																								  /*입고*/ 
+																								  SELECT loc_no     = b.ask_loc   
+																										 , wc_no      = null
+																										 , rlse_date  = convert(char(10),a.rlse_date,111)   
+																										 , a.item_no
+																										 , qa         = a.qa   
+																										 , before_qty = 0
+																										 , make_qty = sum(isnull(a.rlse_qty,0))
+																										 , ship_qty = 0
+																										 , ret_qty   =  0
+																										 , etc_qty  = 0
+																									 FROM ask_det A WITH (NOLOCK)
+																										  inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on a.item_no = itemfav.item_no and a.qa = itemfav.qa
+																											LEFT OUTER JOIN ask_head B ON a.ask_no = b.ask_no
+																									WHERE a.rlse_date  between :as_reqdate + ' 00:00:00.000' AND :as_reqdate + ' 23:59:59.999'
+																									group by b.ask_loc,  convert(char(10),a.rlse_date,111)   , a.item_no,  a.qa
+																	 
+																		  
+																								 UNION ALL
+							
+																								 /* 이동출고,입고 */                                                      
+																									  /*출고*/                                                             
+																								  SELECT loc_no     = b.src_loc                                          
+																										 , wc_no      = null                                              
+																										 , move_date  = convert(char(10),b.move_date,111)                 
+																										 , a.item_no
+																										 , qa         = a.qa             
+																										 , before_qty = 0
+																										 , make_qty = 0
+																										 , ship_qty = sum(isnull(a.move_qty,0))
+																										 , ret_qty   = 0                                                 
+																										 , etc_qty  = 0
+																									 FROM itemmovedet A WITH (NOLOCK)  
+																											inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on a.item_no = itemfav.item_no and a.qa = itemfav.qa
+																											LEFT OUTER JOIN itemmove B WITH (NOLOCK) ON a.move_no = b.move_no
+																									WHERE b.move_date between :as_reqdate + ' 00:00:00.000' AND :as_reqdate + ' 23:59:59.999'      
+																								  group by b.src_loc,convert(char(10),b.move_date,111),a.item_no,a.qa                                              
+																								  UNION ALL                                                             
+																								  /*입고*/                                                              
+																								  SELECT loc_no     = b.tar_loc                                         
+																										 , wc_no      = null                                              
+																										 , move_date  = convert(char(10),b.move_date,111)                 
+																										 , a.item_no
+																										 , qa         = a.qa      
+																										 , before_qty = 0
+																										 , make_qty = sum(isnull(a.move_qty ,0))
+																										 , ship_qty = 0
+																										 , ret_qty   = 0
+																										 , etc_qty  = 0                                                 
+																									 FROM itemmovedet A WITH (NOLOCK)                 
+																										  inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on a.item_no = itemfav.item_no and a.qa = itemfav.qa
+																											LEFT OUTER JOIN itemmove B ON a.move_no = b.move_no              
+																									WHERE b.move_date  between :as_reqdate + ' 00:00:00.000' AND :as_reqdate + ' 23:59:59.999'       
+																									group by b.tar_loc, convert(char(10),b.move_date,111)  , a.item_no, a.qa
+										  ) AA ON A.LOC_NO = AA.LOC_NO AND A.ITEM_NO = AA.ITEM_NO AND A.QA = AA.QA  AND A.batchdate = AA.batchdate
+									  inner join (select item_no, qa from itemfav where user_id = '출고의뢰') itemfav on A.item_no = itemfav.item_no and A.qa = itemfav.qa
+									  inner join AREA ON  A.loc_no = area.def_loc
+									  inner join groupitem on A.item_no = groupitem.item_no
+									WHERE A.batchdate = :as_reqdate
+									group by area.area_no
+									, a.item_no
+									, a.qa  
+
+                ) B ON ITEMFAV.ITEM_NO = B.ITEM_NO AND ITEMFAV.QA = B.QA AND A.accept_area = B.AREA_NO
+inner join AREA ON A.ACCEPT_AREA = AREA.AREA_NO                           
+WHERE ITEMFAV.USER_ID = '출고의뢰'
+order by itemfav.item_no, itemfav.qa" arguments=(("as_area", string),("as_location", string),("as_salesman", string),("as_reqdate", string))  sort="item_name A qa A area_area_name A cust_name A scene_desc A sale_no A seq_no A " )
+group(level=1 header.height=0 trailer.height=68 by=("item_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="4" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사업장" border="6" color="0" x="178" y="4" height="60" width="494" html.valueishtml="0"  name=area_area_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="batch재고량" border="6" color="0" x="7278" y="4" height="60" width="494" html.valueishtml="0"  name=stock_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명코드" border="6" color="0" x="681" y="4" height="60" width="370" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품목명" border="6" color="0" x="1061" y="4" height="60" width="923" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1993" y="4" height="60" width="617" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2619" y="4" height="60" width="183" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문량" border="6" color="0" x="2811" y="4" height="60" width="494" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="환산량" border="6" color="0" x="3314" y="4" height="60" width="494" html.valueishtml="0"  name=acc_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="3817" y="4" height="60" width="466" html.valueishtml="0"  name=sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주순번" border="6" color="0" x="4293" y="4" height="60" width="242" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래선명" border="6" color="0" x="4544" y="4" height="60" width="745" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="5298" y="4" height="60" width="1262" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="확정시각" border="6" color="0" x="6569" y="4" height="60" width="699" html.valueishtml="0"  name=sys_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="0" height="68" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="178" y="0" height="76" width="494" format="[general]" html.valueishtml="0"  name=area_area_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0" x="7278" y="0" height="68" width="494" format="[general]" html.valueishtml="0"  name=stock_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="2811" y="0" height="68" width="494" format="[general]" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="3314" y="0" height="68" width="494" format="[general]" html.valueishtml="0"  name=acc_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0" x="681" y="0" height="68" width="370" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1061" y="0" height="68" width="923" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="0" x="1993" y="0" height="68" width="617" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="2619" y="0" height="68" width="183" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="3817" y="0" height="68" width="466" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0" x="4293" y="0" height="68" width="242" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="4544" y="0" height="68" width="745" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="5298" y="0" height="68" width="1262" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0" x="6569" y="0" height="68" width="699" format="yyyy/mm/dd hh:mm:ss" html.valueishtml="0"  name=sys_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="9" y="0" height="68" width="160" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="7278" y="0" height="68" width="494" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="item_name + '계'"border="0" color="0" x="1061" y="0" height="68" width="923" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="3817" y="0" height="68" width="466" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="4293" y="0" height="68" width="242" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="4544" y="0" height="68" width="745" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="2" expression="max( uom for group 1)"border="0" color="0" x="2619" y="0" height="68" width="183" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="1993" y="0" height="68" width="617" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(acc_qty for group 1)"border="0" color="0" x="3314" y="0" height="68" width="494" format="#,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(order_qty for group 1)"border="0" color="0" x="2811" y="0" height="68" width="494" format="#,##0.00" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="5298" y="0" height="68" width="1262" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="6569" y="0" height="68" width="699" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="0" expression="max( item_no for group 1)"border="0" color="0" x="681" y="0" height="68" width="370" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="0" text="" border="0" color="0" x="178" y="0" height="68" width="494" html.valueishtml="0"  name=t_10 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="178" y="12" height="72" width="494" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

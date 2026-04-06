@@ -1,0 +1,203 @@
+﻿$PBExportHeader$d_mpwcremains_r.srd
+$PBExportComments$작업장별 수주잔량
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=84 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=calc_sum dbname="calc_sum" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=calc_qty dbname="calc_qty" )
+ retrieve="SELECT 
+	 work_name  = isnull(a.work_name, '총합계')
+	,calc_sum   = a.calc_qty
+	,item_name  = (
+						case	when b.work_name IS NULL then ''
+								else (case when b.item_name IS NULL then '소계' else b.item_name end)
+					  	end)
+	,calc_qty   = b.calc_qty
+FROM 
+	(
+	SELECT 
+		 work_name  = a.work_name        
+		,calc_qty   = sum(a.calc_qty)
+	FROM 
+		(
+		SELECT 
+          routtempnew.wc_no
+			,work_name  = wc.work_name   
+			,routtempnew.work_date   
+			,routtempnew.item_no   
+			,item_name1 = (case when routtempnew.item_no = 'NO_ITEM' then 'NO_ITEM' else g1.item_name end )   
+			,routtempnew.qa   
+			,color_name = color.color_name   
+			,routtempnew.uom   
+			,routtempnew.order_qty   
+			,calc_qty  = dbo.uf_getqty(routtempnew.assy_item, routtempnew.assy_qa, routtempnew.uom, routtempnew.plan_qty)         
+		FROM 
+			routtempnew  with(nolock) 
+				LEFT OUTER JOIN sale with(nolock)        ON routtempnew.sale_no    = sale.order_no and ( sale.order_date >= DateADD(month, -12 ,getdate()) )  and ( sale.open_close = 'O' )
+				LEFT OUTER JOIN groupitem G1 with(nolock) ON routtempnew.item_no    = g1.item_no
+				LEFT OUTER JOIN groupitem  with(nolock)  ON routtempnew.assy_item  = groupitem.item_no
+				LEFT OUTER JOIN color  with(nolock)      ON routtempnew.item_color = color.color_code
+				LEFT OUTER JOIN wc      with(nolock)    ON routtempnew.wc_no      = wc.work_no
+		WHERE 
+			( routtempnew.work_date    >= DateADD(month, -6 ,getdate()) ) 
+		AND 
+			( routtempnew.process_flag <> 'C' )
+		AND 
+			( routtempnew.plan_flag     = 'N' )
+		AND 
+			( routtempnew.area_no       = :as_area )
+		AND 
+			( routtempnew.wc_no        <> 'F18'    ) 
+		AND 
+			( routtempnew.napgi_date          >= DateADD(month, -6 ,getdate()) ) 
+		AND
+			(routtempnew.order_qty <> isnull(dbo.uf_getdosumqty(routtempnew.sale_no, routtempnew.seq_no),0) or isnull(routtempnew.order_qty,0) = 0)  
+		AND 
+			((:as_workname   = '%') OR	(:as_workname  <> '%'  AND wc.work_name LIKE :as_workname ))
+		UNION ALL
+		SELECT 
+			 routtempnew.wc_no
+			,work_name  = wc.work_name   
+			,routtempnew.work_date   
+			,routtempnew.item_no   
+			,item_name1 = (case when routtempnew.item_no = 'NO_ITEM' then 'NO_ITEM' else g1.item_name end )   
+			,routtempnew.qa   
+			,color_name = color.color_name   
+			,routtempnew.uom   
+			,routtempnew.order_qty   
+			,calc_qty  = dbo.uf_getqty(routtempnew.assy_item, routtempnew.assy_qa, routtempnew.uom, routtempnew.plan_qty )         
+		FROM 
+			routtempnew   with(nolock)
+				LEFT OUTER JOIN sale     with(nolock)    ON routtempnew.sale_no    = sale.order_no and ( sale.order_date >= DateADD(month, -12 ,getdate()) ) and ( sale.open_close = 'O' )
+				LEFT OUTER JOIN groupitem G1 with(nolock) ON routtempnew.item_no    = g1.item_no
+				LEFT OUTER JOIN groupitem  with(nolock)  ON routtempnew.assy_item  = groupitem.item_no
+				LEFT OUTER JOIN color        with(nolock) ON routtempnew.item_color = color.color_code
+				LEFT OUTER JOIN wc           with(nolock) ON routtempnew.wc_no      = wc.work_no
+				INNER JOIN sfcday       with(nolock) ON routtempnew.wc_no = sfcday.wc_no	and routtempnew.sale_no = sfcday.sale_no and routtempnew.item_no = sfcday.item_no and routtempnew.qa = sfcday.qa and routtempnew.seq_no = sfcday.seq_no
+																													AND  ( sfcday.wc_no like 'F%' )
+																													AND ( sfcday.sfc_date >= getdate() )                                                  
+																													AND ( sfcday.sale_no is null )   
+		WHERE 
+			( routtempnew.work_date    >= getdate() )
+		AND 
+			( routtempnew.process_flag <> 'C' )
+		AND 
+			( routtempnew.plan_flag     = 'Y' )
+		AND 
+			( routtempnew.area_no       = :as_area )
+		AND 
+			( routtempnew.wc_no        <> 'F18'    )
+			AND ( routtempnew.wc_no        LIKE 'F%'    )
+		AND 
+			( routtempnew.napgi_date          >= DateADD(month, -6 ,getdate()) ) 
+		AND
+			(routtempnew.order_qty <> isnull(dbo.uf_getdosumqty(routtempnew.sale_no, routtempnew.seq_no),0) or isnull(routtempnew.order_qty,0) = 0) 
+		AND 
+			((:as_workname   = '%') OR (:as_workname  <> '%'  AND wc.work_name LIKE :as_workname ))) A
+		GROUP BY a.work_name
+	) A	LEFT OUTER JOIN	(
+									SELECT 
+										 work_name  = a.work_name        
+										,item_name  = a.item_name1
+										,calc_qty   = sum(a.calc_qty)
+									FROM 
+										(
+											SELECT 
+												 routtempnew.wc_no
+												,work_name  = wc.work_name   
+												,routtempnew.work_date   
+												,routtempnew.item_no   
+												,item_name1 = (case when routtempnew.item_no = 'NO_ITEM' then 'NO_ITEM' else g1.item_name end )   
+												,routtempnew.qa   
+												,color_name = color.color_name   
+												,routtempnew.uom   
+												,routtempnew.order_qty   
+												,calc_qty  = dbo.uf_getqty(routtempnew.assy_item, routtempnew.assy_qa, routtempnew.uom, routtempnew.plan_qty)         
+											FROM 
+												routtempnew   with(nolock)
+													LEFT OUTER JOIN sale   with(nolock)      ON routtempnew.sale_no    = sale.order_no and ( sale.order_date >= DateADD(month, -12 ,getdate()) )  and ( sale.open_close = 'O' )
+													LEFT OUTER JOIN groupitem G1 with(nolock) ON routtempnew.item_no    = g1.item_no
+													LEFT OUTER JOIN groupitem  with(nolock)   ON routtempnew.assy_item  = groupitem.item_no
+													LEFT OUTER JOIN color   with(nolock)     ON routtempnew.item_color = color.color_code
+													LEFT OUTER JOIN wc       with(nolock)    ON routtempnew.wc_no      = wc.work_no
+											WHERE 
+												( routtempnew.work_date    >= DateADD(month, -6 ,getdate()) ) 
+											AND 
+												( routtempnew.process_flag <> 'C' )
+											AND 
+												( routtempnew.plan_flag     = 'N' )
+											AND 	
+												( routtempnew.area_no       = :as_area )
+											AND 
+												( routtempnew.wc_no        <> 'F18'    ) 
+											AND 
+												( routtempnew.napgi_date          >= DateADD(month, -6 ,getdate()) ) 
+											AND
+												(routtempnew.order_qty <> isnull(dbo.uf_getdosumqty(routtempnew.sale_no, routtempnew.seq_no),0) or isnull(routtempnew.order_qty,0) = 0) 
+											AND 
+												((:as_workname   = '%') OR (:as_workname  <> '%'  AND wc.work_name LIKE :as_workname ))
+											UNION ALL
+											SELECT 
+												 routtempnew.wc_no
+												,work_name  = wc.work_name   
+												,routtempnew.work_date   
+												,routtempnew.item_no   
+												,item_name1 = (case when routtempnew.item_no = 'NO_ITEM' then 'NO_ITEM' else g1.item_name end )   
+												,routtempnew.qa   
+												,color_name = color.color_name   
+												,routtempnew.uom   
+												,routtempnew.order_qty   
+												,calc_qty  = dbo.uf_getqty(routtempnew.assy_item, routtempnew.assy_qa, routtempnew.uom, routtempnew.plan_qty )         
+											FROM 
+												routtempnew   with(nolock)
+													LEFT OUTER JOIN sale    with(nolock)     ON routtempnew.sale_no    = sale.order_no	and ( sale.order_date >= DateADD(month, -12 ,getdate()) )  and ( sale.open_close = 'O' )
+													LEFT OUTER JOIN groupitem G1 with(nolock)  ON routtempnew.item_no    = g1.item_no
+													LEFT OUTER JOIN groupitem   with(nolock)  ON routtempnew.assy_item  = groupitem.item_no
+													LEFT OUTER JOIN color        with(nolock) ON routtempnew.item_color = color.color_code
+													LEFT OUTER JOIN wc            with(nolock) ON routtempnew.wc_no      = wc.work_no
+													INNER JOIN sfcday       with(nolock) ON routtempnew.wc_no = sfcday.wc_no 	and routtempnew.sale_no = sfcday.sale_no and routtempnew.item_no = sfcday.item_no and routtempnew.qa = sfcday.qa and routtempnew.seq_no = sfcday.seq_no
+																																						AND  ( sfcday.wc_no like 'F%' )
+																																						AND ( sfcday.sfc_date >= getdate() )                                                  
+																																						AND ( sfcday.sale_no is null )   	
+											WHERE 
+												( routtempnew.work_date    >= getdate() )
+											AND 
+												( routtempnew.process_flag <> 'C' )
+											AND 
+												( routtempnew.plan_flag     = 'Y' )
+											AND 
+												( routtempnew.area_no       = :as_area )
+											AND 
+												( routtempnew.wc_no        <> 'F18'    )
+											AND 
+												( routtempnew.wc_no        LIKE 'F%'    )
+											AND 
+												( routtempnew.napgi_date >= DateADD(month, -6 ,getdate()) ) 
+											AND
+												(routtempnew.order_qty <> isnull(dbo.uf_getdosumqty(routtempnew.sale_no, routtempnew.seq_no),0) or isnull(routtempnew.order_qty,0) = 0)
+											AND 
+												((:as_workname   = '%') OR (:as_workname  <> '%'  AND wc.work_name LIKE :as_workname ))) A
+											GROUP BY a.work_name, a.item_name1 WITH ROLLUP) B ON a.work_name = b.work_name         " arguments=(("as_area", string),("as_workname", string))  sort="work_name A item_name A " )
+text(band=header alignment="2" text="환산수량" border="6" color="33554432" x="2857" y="8" height="68" width="594" html.valueishtml="0"  name=calc_qty_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="68" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="33554432" x="270" y="8" height="68" width="576" html.valueishtml="0"  name=work_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="1467" y="8" height="68" width="1381" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="총물량" border="6" color="33554432" x="855" y="8" height="68" width="603" html.valueishtml="0"  name=calc_sum_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="72" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2857" y="4" height="72" width="594" format="#,##0.00" html.valueishtml="0"  name=calc_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), if ( item_name = ~"소계~",  rgb(198, 224, 180), if ( work_name = ~"총합계~", rgb(128, 128, 128), rgb(255, 255, 255) ) ) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="270" y="4" height="72" width="576" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), if ( item_name = ~"소계~",  rgb(198, 224, 180), if ( work_name = ~"총합계~", rgb(128, 128, 128), rgb(255, 255, 255) ) ) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1467" y="4" height="72" width="1381" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), if ( item_name = ~"소계~",  rgb(198, 224, 180), if ( work_name = ~"총합계~", rgb(128, 128, 128), rgb(255, 255, 255) ) ) )" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="855" y="4" height="72" width="603" format="#,##0.00 " html.valueishtml="0"  name=calc_sum visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), if ( item_name = ~"소계~",  rgb(198, 224, 180), if ( work_name = ~"총합계~", rgb(128, 128, 128), rgb(255, 255, 255) ) ) )" )
+compute(band=footer alignment="1" expression="sum( calc_qty for all ) / 2"border="0" color="33554432" x="2857" y="4" height="72" width="594" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="72" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( work_name for all DISTINCT work_name )"border="0" color="33554432" x="270" y="4" height="72" width="576" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( calc_sum for all DISTINCT work_name, calc_sum )"border="0" color="33554432" x="855" y="4" height="72" width="603" format="#,##0.00 " html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( item_name for all DISTINCT item_name )"border="0" color="33554432" x="1467" y="4" height="72" width="1381" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="work_name	calc_sum")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,26 @@
+﻿$PBExportHeader$gf_getfitting_loc.srf
+global type gf_getfitting_loc from function_object
+end type
+
+forward prototypes
+global function string gf_getfitting_loc (string as_item_no, string as_qa)
+end prototypes
+
+global function string gf_getfitting_loc (string as_item_no, string as_qa);string ls_loc_no
+
+select top 1 loc_no 	into :ls_loc_no
+from (
+	select loc_no = isnull(loc_no,'')
+	from item_fitting
+	where item_no = :as_item_no
+	and	qa = :as_qa
+	union
+	select top 1 loc_no = ''
+	from item_fitting
+	) as tb_a
+order by 1 desc;
+
+return ls_loc_no
+
+end function
+

@@ -1,0 +1,87 @@
+﻿$PBExportHeader$d_mpsfcday_use1.srq
+$PBExportComments$생산실적 및 자재사용
+       SELECT A.WC_NO               AS 'WC_NO'
+            , B.WORK_NAME           AS 'WORK_NAME'
+            , CONVERT(CHAR(10),A.SFC_DATE,111)  AS 'CDATE'
+            , A.ASSEMBLY            AS 'ITEM_NO'
+            , C.ITEM_NAME           AS 'ITEM_NAME'
+            , A.ASSEMBLY_QA         AS 'QA'
+            , A.UOM                 AS 'UOM'
+--            , SUM(A.MAKE_QTY)       AS 'SUM_QTY'
+            , A.MAKE_QTY            AS 'SUM_QTY'
+            , 0                     AS 'SUM_RET'
+            , 0                     AS 'SUM_REM'
+            -- SELECT TITLE_ID, PRICE, FLOOR(PRICE) '버림', CEILING(PRICE) '올림', ROUND(PRICE,0) '첫째자리에서 반올림'  8.12, 6.72
+--            , FLOOR(DBO.UF_GETQTY(A.ASSEMBLY, A.ASSEMBLY_QA, A.UOM, SUM(A.MAKE_QTY)))  AS 'UF_GETQTY'
+            , FLOOR(DBO.UF_GETQTY(A.ASSEMBLY, A.ASSEMBLY_QA, A.UOM, A.MAKE_QTY))  AS 'UF_GETQTY'
+            , '1.실적'              AS 'CATEGORY'
+         FROM SFCDAY    A,   
+              WC        B,   
+              GROUPITEM C 
+        WHERE ( A.WC_NO              = B.WORK_NO ) 
+          AND ( A.ASSEMBLY           = C.ITEM_NO ) 
+          AND ( A.SFC_DATE     BETWEEN :AS_DATE AND :AE_DATE )
+          AND ( A.AREA_NO         LIKE :AS_AREA )    
+          AND ( A.WC_NO           LIKE :AS_WCNO )
+--        GROUP BY A.WC_NO, B.WORK_NAME, CONVERT(CHAR(10),A.SFC_DATE,111), A.ASSEMBLY, C.ITEM_NAME, A.ASSEMBLY_QA, A.UOM
+       ---------------         
+       UNION 
+       ---------------                         
+       -- 일자별 사용자재 --
+       SELECT AA.WC_NO              AS 'WC_NO'
+            , AA.WORK_NAME          AS 'WORK_NAME'
+            , CONVERT(CHAR(10),AA.CDATA,111)   AS 'CDATA'
+            , AA.ITEM_NO            AS 'ITEM_NO'
+            , AA.ITEM_NAME          AS 'ITEM_NAME'
+            , AA.QA                 AS 'QA'
+            , AA.UOM                AS 'UOM'
+            , SUM(AA.SUM_QTY)       AS 'SUM_QTY'
+            , SUM(AA.SUM_RET)       AS 'SUM_RET'
+            , SUM(AA.SUM_REM)       AS 'SUM_REM'
+            , 0                     AS 'UF_GETQTY'
+            , '2.투입'              AS 'CATEGORY'
+         FROM (
+              SELECT A.WC_NO              AS WC_NO 
+                   , C.WORK_NAME          AS WORK_NAME  
+                   , A.USE_DATE           AS CDATA   
+                   , A.ITEM_NO            AS ITEM_NO
+                   , B.ITEM_NAME          AS ITEM_NAME
+                   , A.QA                 AS QA
+                   , A.UOM                AS UOM
+                   , SUM(A.USE_QTY)       AS SUM_QTY
+                   , 0                    AS SUM_RET 
+                   , SUM(A.USE_QTY)       AS SUM_REM
+                FROM SFCUSE    A,  
+                     GROUPITEM B,   
+                     WC        C
+               WHERE ( A.ITEM_NO           = B.ITEM_NO )   
+                 AND ( A.WC_NO             = C.WORK_NO )           
+                 AND ( A.AREA_NO        LIKE :AS_AREA  )           
+                 AND ( A.WC_NO          LIKE :AS_WCNO  )
+                 AND ( A.USE_DATE    BETWEEN :AS_DATE AND :AE_DATE )
+               GROUP BY A.WC_NO, C.WORK_NAME, A.USE_DATE, A.ITEM_NO, B.ITEM_NAME, A.QA, A.UOM
+                
+              UNION
+       
+              SELECT A.WC_NO              AS WC_NO   
+                   , C.WORK_NAME          AS WORK_NAME
+                   , A.RET_DATE           AS CDATA   
+                   , A.ITEM_NO            AS ITEM_NO
+                   , B.ITEM_NAME          AS ITEM_NAME   
+                   , A.QA                 AS QA          
+                   , A.UOM                AS UOM         
+                   , 0                    AS SUM_QTY
+                   , SUM(A.RET_QTY)       AS SUM_RET
+                   , 0 - SUM(A.RET_QTY)   AS SUM_REM
+                FROM SFCRET    A,  
+                     GROUPITEM B,   
+                     WC        C
+               WHERE ( A.ITEM_NO           = B.ITEM_NO )   
+                 AND ( A.WC_NO             = C.WORK_NO )           
+                 AND ( A.AREA_NO        LIKE :AS_AREA  )           
+                 AND ( A.WC_NO          LIKE :AS_WCNO  )
+                 AND ( A.RET_DATE    BETWEEN :AS_DATE AND :AE_DATE )
+               GROUP BY A.WC_NO, C.WORK_NAME, A.RET_DATE, A.ITEM_NO, B.ITEM_NAME, A.QA, A.UOM
+            ) AA
+        GROUP BY AA.WC_NO, AA.WORK_NAME, AA.CDATA, AA.ITEM_NO, AA.ITEM_NAME, AA.QA, AA.UOM
+ ARG(NAME = "AS_AREA" TYPE = string)  ARG(NAME = "AS_WCNO" TYPE = string)  ARG(NAME = "AS_DATE" TYPE = date)  ARG(NAME = "AE_DATE" TYPE = date)

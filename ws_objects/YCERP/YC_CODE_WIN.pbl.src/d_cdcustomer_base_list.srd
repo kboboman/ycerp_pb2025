@@ -1,0 +1,57 @@
+﻿$PBExportHeader$d_cdcustomer_base_list.srd
+$PBExportComments$거래처_이력카드 export
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=거래처명 dbname="거래처명" )
+ column=(type=char(10) updatewhereclause=yes name=담당자 dbname="담당자" )
+ column=(type=char(20) updatewhereclause=yes name=구분 dbname="구분" )
+ column=(type=long updatewhereclause=yes name=순서 dbname="순서" )
+ column=(type=char(50) updatewhereclause=yes name=구분내용 dbname="구분내용" )
+ column=(type=long updatewhereclause=yes name=seq dbname="SEQ" )
+ column=(type=char(10) updatewhereclause=yes name=적용일 dbname="적용일" )
+ column=(type=char(4099) updatewhereclause=no name=내용 dbname="내용" )
+ column=(type=datetime updatewhereclause=yes name=등록일자 dbname="등록일자" )
+ retrieve="  SELECT '거래처명' = d.cust_name
+       , '담당자'   = c.user_name
+       , '구분'     = (case when a.item_cd = '100' then '기본사항'
+                           when a.item_cd = '200' then '거래조건'
+                           when a.item_cd = '300' then '거래동향'
+                           else a.item_cd
+                      end)
+       , '순서'     = a.sort
+       , '구분내용' = b.item_nm
+       , 'SEQ'      = a.seq
+       , '적용일'   = isnull(convert(char(10),a.idate,111),'')
+       , '내용'     = a.bigo
+       , '등록일자' = a.input_date
+    FROM customer_base a
+         LEFT OUTER JOIN codemst  b ON a.item_cd = b.item_cd AND a.sort = b.sort AND b.type = '거래처_이력카드'
+         LEFT OUTER JOIN login    c ON a.iuser   = c.user_id
+         LEFT OUTER JOIN customer d ON a.cust_no = d.cust_no
+   WHERE ( convert(char(10),a.input_date,111) BETWEEN :as_sdate AND :as_edate )
+   ORDER BY c.user_name, a.item_cd, a.sort, a.seq desc
+" arguments=(("as_sdate", string),("as_edate", string)) )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="480" format="[general]" html.valueishtml="0"  name=거래처명 visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="498" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=담당자 visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="859" y="8" height="72" width="311" format="[general]" html.valueishtml="0"  name=구분 visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1179" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=순서 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1573" y="8" height="72" width="599" format="[general]" html.valueishtml="0"  name=구분내용 visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2181" y="8" height="72" width="206" format="[general]" html.valueishtml="0"  name=seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="2395" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=적용일 visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="2757" y="8" height="72" width="667" format="[general]" html.valueishtml="0"  name=내용 visible="1" edit.limit=4099 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3433" y="8" height="72" width="704" format="[shortdate] [time]" html.valueishtml="0"  name=등록일자 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="9" y="8" height="60" width="480" html.valueishtml="0"  name=거래처명_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="498" y="8" height="60" width="352" html.valueishtml="0"  name=담당자_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="859" y="8" height="60" width="311" html.valueishtml="0"  name=구분_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순서" border="6" color="33554432" x="1179" y="8" height="60" width="384" html.valueishtml="0"  name=순서_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분내용" border="6" color="33554432" x="1573" y="8" height="60" width="599" html.valueishtml="0"  name=구분내용_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Seq" border="6" color="33554432" x="2181" y="8" height="60" width="206" html.valueishtml="0"  name=seq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="적용일" border="6" color="33554432" x="2395" y="8" height="60" width="352" html.valueishtml="0"  name=적용일_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="내용" border="6" color="33554432" x="2757" y="8" height="60" width="667" html.valueishtml="0"  name=내용_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등록일자" border="6" color="33554432" x="3433" y="8" height="60" width="704" html.valueishtml="0"  name=등록일자_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,66 @@
+﻿$PBExportHeader$d_scene_unit_gab.srd
+$PBExportComments$단가수정범위가 벗어난건 출력(22.3.16 조원석)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 1 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=300 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=do_no dbname="do_no" )
+ column=(type=long updatewhereclause=yes name=oi_no dbname="oi_no" )
+ column=(type=decimal(4) updatewhereclause=yes name=price_org dbname="price_org" )
+ column=(type=decimal(2) updatewhereclause=yes name=price dbname="price" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_name dbname="scene_name" )
+ retrieve="select   a.do_no,
+            a.oi_no,
+            a.price_org,
+            a.price,
+		  a.item_no,
+		  a.qa,
+		  a.item_name,
+             a.cust_name,
+             a.scene_name
+from 
+(    
+   SELECT a.do_no, 
+                   a.oi_no, 
+                   a.price price_org,               
+                   b.price price, 
+                   a.item_no,
+                   a.qa,
+                   f.item_name,
+                   (case when b.price <= 2000 then 0.4
+                             when b.price > 2000 and b.price <= 5000 then 0.3
+                             when b.price > 5000 then 0.2
+                      end ) rate,
+                   e.cust_name,
+                   d.scene_desc scene_name
+      FROM dodet a with(nolock) inner join dodet_temp b with(nolock) on a.do_no = b.do_no and a.oi_no = b.oi_no and b.ip = :as_ipaddress
+                                                     inner join do c with(nolock) on a.do_no = c.do_no
+                                                     inner join scene d with(nolock) on c.cust_no = d.cust_no and c.spot_code = d.scene_code
+                                                     inner join customer e with(nolock) on c.cust_no = e.cust_no
+                                                     inner join groupitem f with(nolock) on a.item_no = f.item_no
+  ) a
+  where a.price_org < a.price  - (a.price * a.rate) or a.price_org > a.price + (a.price * a.rate);" arguments=(("as_ipaddress", string)) )
+compute(band=header alignment="2" expression="'< ' + cust_name + ' 단가 범위 벗어난 항목 리스트 >'"border="0" color="33554432" x="1303" y="36" height="124" width="2377" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-13" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="2" background.color="16777215" )
+compute(band=header alignment="1" expression="page() + ' / ' + pageCount()"border="0" color="33554432" x="4389" y="104" height="92" width="448" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="송장번호" border="2" color="33554432" x="1403" y="208" height="84" width="530" html.valueishtml="0"  name=do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="순번" border="2" color="33554432" x="1947" y="208" height="84" width="219" html.valueishtml="0"  name=do_cash_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="품명" border="2" color="33554432" x="2181" y="208" height="84" width="1134" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="규격" border="2" color="33554432" x="3328" y="208" height="84" width="635" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="수정단가" border="2" color="33554432" x="3977" y="208" height="84" width="421" html.valueishtml="0"  name=do_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="기존단가" border="2" color="33554432" x="4411" y="208" height="84" width="421" html.valueishtml="0"  name=c_calc_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="현장명" border="2" color="33554432" x="14" y="208" height="84" width="1376" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217732" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="1403" y="0" height="76" width="530" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="1947" y="4" height="72" width="219" format="[general]" html.valueishtml="0"  name=oi_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="2" color="33554432" x="2181" y="4" height="72" width="1134" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="2" color="33554432" x="3328" y="4" height="72" width="635" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="2" color="33554432" x="3977" y="4" height="72" width="421" format="#,###" html.valueishtml="0"  name=price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="2" color="33554432" x="4411" y="4" height="72" width="421" format="#,###" html.valueishtml="0"  name=price_org visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="2" color="33554432" x="14" y="4" height="72" width="1376" format="[general]" html.valueishtml="0"  name=scene_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

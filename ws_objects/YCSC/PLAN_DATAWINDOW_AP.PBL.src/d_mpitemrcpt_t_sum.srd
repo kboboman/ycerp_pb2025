@@ -1,0 +1,236 @@
+﻿$PBExportHeader$d_mpitemrcpt_t_sum.srd
+$PBExportComments$품목별 재고 조회_상세(1998/05/12,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="536870912" )
+summary(height=0 color="553648127" )
+footer(height=76 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=inaudit_loc_no dbname="loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=loc_name dbname="loc_name" )
+ column=(type=char(10) updatewhereclause=yes name=inaudit_inaudit_item dbname="inaudit_item" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=item_uom dbname="uom" )
+ column=(type=char(10) updatewhereclause=yes name=inaudit_date dbname="inaudit_date" )
+ column=(type=decimal(4) updatewhereclause=yes name=ewol_qty dbname="ewol_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=inaudit_rcpt_qty dbname="rcpt_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=issue_qty dbname="issue_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=item_qoh dbname="qoh" )
+ column=(type=decimal(4) updatewhereclause=yes name=make_qty dbname="make_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=intemp_qty dbname="intemp_qty" )
+ retrieve="  SELECT aa.loc_no         
+       , aa.loc_name      
+       , aa.inaudit_item   
+       , aa.item_name         
+       , aa.qa             
+       , aa.uom               
+       , aa.inaudit_date
+       , aa.ewol_qty
+       , aa.rcpt_qty
+       , aa.issue_qty
+       , aa.qoh
+       , make_qty   = isnull(bb.make_qty, 0)
+       , intemp_qty = isnull(cc.intemp_qty,0)
+    FROM (
+                       SELECT aa.loc_no         
+                            , aa.loc_name      
+                            , aa.inaudit_item   
+                            , aa.item_name         
+                            , aa.qa             
+                            , aa.uom               
+                            , inaudit_date = aa.inaudit_date
+                            , ewol_qty = isnull((case when eoy.qoh    is not null then eoy.qoh    else 0 end ),0)
+                                             + isnull((case when eoday.eqoh is not null then eoday.eqoh else 0 end ),0)
+                            , rcpt_qty = (aa.rcpt_qty)
+                            , issue_qty= (aa.issue_qty)
+                            , qoh      = isnull((case when eoy.qoh    is not null then eoy.qoh    else 0 end ),0)
+                                          + isnull((case when eoday.eqoh is not null then eoday.eqoh else 0 end ),0)
+                                          + aa.rcpt_qty
+                                          - aa.issue_qty
+                         FROM (
+                                                SELECT inaudit_date = convert(char(10), inaudit.inaudit_date, 111)
+                                                             , inaudit.inaudit_item   
+                                                             , item.item_name         
+                                                             , inaudit.qa             
+                                                             , item.uom               
+                                                             , inaudit.loc_no         
+                                                             , location.loc_name      
+                                                             , rcpt_qty = sum(inaudit.rcpt_qty)
+                                                             , issue_qty= sum(inaudit.issue_qty)
+                                                             , qoh      = sum(item.qoh)
+                                                  FROM inaudit   
+                                                     , item   
+                                                     , iotype   
+                                                     , location
+                                                     , (
+                                                        SELECT cust_no, cust_name FROM customer
+                                                        UNION
+                                                        SELECT loc_no,  loc_name  FROM location
+                                                       ) e
+                                                 WHERE ( inaudit.qa               = item.qa             ) 
+                                                   and ( inaudit.inaudit_item     = item.item_no        ) 
+                                                   and ( inaudit.inaudit_type     = iotype.inaudit_type ) 
+                                                   and ( inaudit.loc_no           = location.loc_no     ) 
+                                                   and ( inaudit.destination      = e.cust_no           ) 
+                                                   and ( ( inaudit.inaudit_item    like :as_itemno ) AND  
+                                                            ( inaudit.qa              like :as_qa     ) AND  
+                                                            ( item.source             like :as_source ) AND  
+                                                            ( location.loc_name       like :as_loc    ) AND  
+                                                            ( convert(char(10),inaudit.inaudit_date,111) between :as_from and :as_to ) 
+                                                           )    
+                                                   and not ( inaudit.inaudit_item      like 'PZZZ%' )
+                                                 GROUP BY convert(char(10), inaudit.inaudit_date, 111)
+                                                     , inaudit.inaudit_item   
+                                                     , item.item_name         
+                                                     , inaudit.qa             
+                                                     , item.uom               
+                                                     , inaudit.loc_no         
+                                                     , location.loc_name      
+                                     ) aa 
+                                     left outer join (
+                                                                       select item_no, qa, loc_no, qoh  
+                                                                         from ineoym  
+                                                                        WHERE cyear = convert(char(4), datepart(year, :as_from))
+                                                                          and cmon  = right('00' + convert(char(2),dateadd(month, -1, :as_from)),2)
+                                                                       union
+                                                                       select item_no = '', qa = '', loc_no = '', qoh = 0 
+                                                            ) eoy on aa.loc_no           = eoy.loc_no          
+                                                                      and    aa.inaudit_item   = eoy.item_no
+                                                                      and    aa.qa                  = eoy.qa
+                                      left outer join (
+                                                                         select item_no, qa, loc_no, eqoh = (sum(rcpt_qty) - sum(issue_qty))
+                                                                           from ineoday
+                                                                          WHERE cdate = replace(:as_from,'/','')
+                                                                          group by item_no, qa, loc_no
+                                                                         union
+                                                                         select item_no = '', qa = '', loc_no = '', eqoh = 0 
+                                                            ) eoday on  aa.loc_no          = eoday.loc_no
+                                                                       and aa.inaudit_item  = eoday.item_no
+                                                                       and aa.qa                  = rtrim(eoday.qa )       
+                ) AA 
+      left outer join (
+                                    /* 작업일보 등록 */
+                                   SELECT aa.loc_no 
+                                                 , aa.loc_name
+                                                 , aa.sfc_date
+                                                 , aa.item_no
+                                                 , aa.item_name
+                                                 , aa.qa
+                                                 , aa.uom 
+                                                 , make_qty  = sum(aa.make_qty)
+                                     FROM (
+                                                                  SELECT sfcday.loc_no 
+                                                                                , location.loc_name
+                                                                                , sfc_date = convert(char(10),sfcday.sfc_date,111)
+                                                                                , item_no      = (case when sfcday.item_no = 'NO_ITEM' then sfcday.assembly     else sfcday.item_no end)
+                                                                                , item_name    = (case when gb.item_name is null       then groupitem.item_name else gb.item_name   end)
+                                                                                , qa           = (case when sfcday.qa      = 'NO_QA'   then sfcday.assembly_qa  else sfcday.qa      end)
+                                                                                , sfcday.uom 
+                                                                                , sfcday.plan_qty 
+                                                                                , sfcday.make_qty 
+                                                                                , scrap_qty    = isnull(sfcday.scrap_qty, 0)
+                                                                                , type   = (case when sfcday.type = 'P' then '진행'
+                                                                                                 when sfcday.type = 'C' then '완료'
+                                                                                                 when sfcday.type = 'N' then '취소'
+                                                                                                 else ''
+                                                                                            end)
+                                                                             FROM sfcday left outer join sfcuse on sfcday.order_no  = sfcuse.order_no
+                                                                                                     left outer join groupitem on sfcday.assembly = groupitem.item_no
+                                                                                                     left outer join scene on sfcday.scene_code = scene.scene_code
+                                                                                                     left outer join  wc on sfcday.wc_no = wc.work_no
+                                                                                                    left outer join groupitem gb on sfcday.item_no = gb.item_no
+                                                                                                    left outer join location on sfcday.loc_no = location.loc_no
+                                                                            WHERE ( convert(char(10),sfcday.sfc_date,111)     between :as_from and :as_to ) 
+                                                   ) aa
+                                             group by aa.loc_no 
+                                                    , aa.loc_name
+                                                    , aa.sfc_date
+                                                    , aa.item_no
+                                                    , aa.item_name
+                                                    , aa.qa
+                                                    , aa.uom 
+                                  /* order by aa.loc_no, aa.sfc_date, aa.wc_no */
+                            ) BB on  aa.loc_no        = bb.loc_no  
+                              AND  aa.inaudit_item = bb.item_no
+                              AND  aa.qa                 = bb.qa
+                              AND  aa.uom              = bb.uom
+                              AND  aa.inaudit_date  = bb.sfc_date
+
+      left outer join (
+                                        /* 가입고 조회 */
+                               SELECT aa.loc_no
+                                             , aa.intemp_date
+                                             , aa.item_no  
+                                             , aa.item_name   
+                                             , aa.qa             
+                                             , aa.uom 
+                                             , intemp_qty  = sum(aa.qty)
+                                          FROM (
+                                                                   SELECT intemp_date  = convert(char(10),intemp.intemp_date, 111)
+                                                                        , intemp.loc_no
+                                                                        , intemp.item_no  
+                                                                        , groupitem.item_name   
+                                                                        , intemp.qa             
+                                                                        , groupitem.uom   
+                                                                        , intemp.qty
+                                                                     FROM intemp      
+                                                                        , groupitem   
+                                                                        , login  
+                                                                        , intempflag
+                                                                    WHERE ( intemp.item_no            = groupitem.item_no ) 
+                                                                      AND ( intemp.user_id            = login.user_id     ) 
+                                                                      AND ( intemp.flag               = intempflag.flag   ) 
+                                                                      AND ( intemp.loc_no          like :as_loc           )
+                                                                      AND ( intemp.intemp_date  between :as_from  and :as_to )              
+                                                                      AND NOT ( intemp.item_no     like 'PZZZ%' )
+                                                       ) AA
+                                 GROUP BY aa.loc_no
+                                        , aa.intemp_date
+                                        , aa.item_no
+                                        , aa.item_name
+                                        , aa.qa
+                                        , aa.uom 
+                             ) CC on  aa.loc_no    = cc.loc_no
+                             AND  aa.inaudit_item  = cc.item_no
+                             AND  aa.qa                  = cc.qa      
+                             AND  aa.uom               = cc.uom     
+                             AND  aa.inaudit_date   = cc.intemp_date
+" arguments=(("as_itemno", string),("as_qa", string),("as_source", string),("as_loc", string),("as_from", string),("as_to", string)) )
+group(level=1 header.height=0 trailer.height=72 by=("loc_name" ) header.color="536870912" trailer.color="15780518" )
+group(level=2 header.height=0 trailer.height=76 by=("loc_name" , "item_name" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="567" y="8" height="60" width="768" html.valueishtml="0"  name=item_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1344" y="8" height="60" width="681" html.valueishtml="0"  name=inaudit_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고수량" border="6" color="0" x="3026" y="8" height="60" width="416" html.valueishtml="0"  name=inaudit_rcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고수량" border="6" color="0" x="3451" y="8" height="60" width="421" html.valueishtml="0"  name=issue_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="저장소" border="6" color="0" x="9" y="8" height="60" width="549" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2034" y="8" height="60" width="160" html.valueishtml="0"  name=item_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입출고일자" border="6" color="0" x="2203" y="8" height="60" width="375" html.valueishtml="0"  name=inaudit_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전일수량" border="6" color="0" x="2587" y="8" height="60" width="430" html.valueishtml="0"  name=ewol_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="재고" border="6" color="0" x="3881" y="8" height="60" width="521" html.valueishtml="0"  name=item_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업일보" border="6" color="0" x="4411" y="8" height="60" width="421" html.valueishtml="0"  name=make_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가입고" border="6" color="0" x="4841" y="8" height="60" width="421" html.valueishtml="0"  name=intemp_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="567" y="8" height="60" width="768" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="1344" y="8" height="60" width="681" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="3026" y="8" height="60" width="416" format="#,##0.00" html.valueishtml="0"  name=inaudit_rcpt_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="3451" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=issue_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="549" format="[general]" html.valueishtml="0"  name=loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="2034" y="8" height="60" width="160" format="[general]" html.valueishtml="0"  name=item_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="2203" y="8" height="60" width="375" format="[general]" html.valueishtml="0"  name=inaudit_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="2587" y="8" height="60" width="430" format="#,##0.00" html.valueishtml="0"  name=ewol_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="3881" y="8" height="60" width="521" format="#,##0.00 " html.valueishtml="0"  name=item_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="4411" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=make_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="4841" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=intemp_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(  inaudit_rcpt_qty for group 2 )"border="0" color="0" x="3026" y="8" height="60" width="416" format="#,##0.00" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( issue_qty  for group 2 )"border="0" color="0" x="3451" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( item_qoh  for group 2 )"border="0" color="0" x="3881" y="8" height="60" width="521" format="#,##0.00 " html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( make_qty   for group 2 )"border="0" color="0" x="4411" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( intemp_qty    for group 2 )"border="0" color="0" x="4841" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( issue_qty  for group 1 )"border="0" color="0" x="3451" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( item_qoh  for group 1 )"border="0" color="0" x="3881" y="8" height="60" width="521" format="#,##0.00 " html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(  inaudit_rcpt_qty  for group 1 )"border="0" color="0" x="3026" y="8" height="60" width="416" format="#,##0.00" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( make_qty   for group 1 )"border="0" color="0" x="4411" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( intemp_qty    for group 1 )"border="0" color="0" x="4841" y="8" height="60" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="/* count(  location_loc_name  for all ) */"border="0" color="0" x="9" y="8" height="60" width="549" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

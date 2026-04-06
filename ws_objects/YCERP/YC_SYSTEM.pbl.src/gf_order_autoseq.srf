@@ -1,0 +1,58 @@
+﻿$PBExportHeader$gf_order_autoseq.srf
+global type gf_order_autoseq from function_object
+end type
+
+forward prototypes
+global function integer gf_order_autoseq (string ag_orderno)
+end prototypes
+
+global function integer gf_order_autoseq (string ag_orderno);DEC  lc_ret
+Long  ll_cnt, ll_max
+
+SetNull(lc_ret)
+
+SELECT  Count(order_no)
+  INTO  :ll_cnt
+  FROM  Saledet_Auseq
+ WHERE  Order_no  =  :ag_orderno;
+ 
+IF  ll_cnt  =  0  THEN
+
+	INSERT INTO Saledet_Auseq(order_no, seq_no) Values (:ag_orderno, 1);
+
+	IF  SQLCA.SQLcode  <> 0  THEN
+		Messagebox('확인','Order_no에 따른 자동 순번을 업데이트 하는 도중 에러가 발생하였습니다.')
+		Rollback Using SQLCA;
+		Return -1
+	ELSE
+		Commit Using SQLCA;
+	END IF
+
+	lc_ret  =  1
+
+ELSE
+	SELECT  Max(seq_no)+1
+	  INTO  :ll_max
+	  FROM  Saledet_Auseq
+	 WHERE  ORDER_NO  =  :ag_orderno;
+	 
+	UPDATE  Saledet_Auseq  SET seq_no = :ll_max WHERE  ORDER_NO  =  :ag_orderno;
+
+	IF  SQLCA.SQLcode  <> 0  THEN
+		Messagebox('확인','Order_no에 따른 자동 순번을 업데이트 하는 도중 에러가 발생하였습니다.')
+		Rollback Using SQLCA;
+		Return -1
+	ELSE
+		Commit Using SQLCA;
+	END IF
+	
+	SELECT  Seq_no
+	  INTO  :lc_ret
+	  FROM  Saledet_Auseq
+	 WHERE  Order_no  =  :ag_orderno;
+END IF
+
+
+Return lc_ret
+end function
+

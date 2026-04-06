@@ -1,0 +1,84 @@
+﻿$PBExportHeader$d_oiscenerep_grpsum_all.srd
+$PBExportComments$프로젝트별 자재투입현황 DISPLAY
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="79741120" )
+summary(height=0 color="16777215" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=project_name dbname="project_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=do_spot_code dbname="spot_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_total dbname="do_total" )
+ retrieve="  SELECT project_name = a.project_name
+       , user_name    = a.user_name
+       , cust_no      = a.cust_no
+       , cust_name    = a.cust_name
+       , spot_code    = a.spot_code    
+       , scene_desc   = a.scene_desc    
+       , do_total     = SUM(a.do_cash)      
+    FROM (
+         SELECT project_name = scene_grp.project_name
+              , user_name  = login.user_name
+              , cust_no    = do.cust_no
+              , cust_name  = customer.cust_name
+              , spot_code  = do.spot_code   
+              , scene_desc = scene.scene_desc   
+              , do_no      = do.do_no   
+              , do_cash    = do.do_cash
+           FROM scene_grpdtl
+              , scene_grp
+              , do      
+              , scene   
+              , customer  
+              , login
+          WHERE ((:as_project   = '%') OR
+                 (:as_project  <> '%' AND scene_grpdtl.project = :as_project)
+                )
+            AND ( scene_grpdtl.project    = scene_grp.project )
+            AND ( scene_grpdtl.scene_code = do.spot_code )
+            AND ( do.cust_no    = scene.cust_no     )   
+            AND ( do.spot_code  = scene.scene_code  )   
+            AND ( do.cust_no    = customer.cust_no  )   
+            AND ( customer.salesman = login.user_id )
+            AND ( do.spot_code IS NOT NULL          )    
+            AND ( do.do_date       BETWEEN :ad_sdate AND :ad_edate )
+            AND ( customer.salesman   LIKE :as_salesman )
+        ) A
+  GROUP BY a.project_name
+         , a.user_name
+         , a.cust_no
+         , a.cust_name
+         , a.spot_code    
+         , a.scene_desc    
+" arguments=(("as_project", string),("ad_sdate", date),("ad_edate", date),("as_salesman", string))  sort="project_name A user_name A cust_name A scene_desc A " )
+group(level=1 header.height=0 trailer.height=80 by=("project_name" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="68" width="165" html.valueishtml="0"  name=t_52 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="금액" border="6" color="0" x="3872" y="8" height="68" width="686" html.valueishtml="0"  name=do_do_total_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="1632" y="8" height="68" width="1015" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="2656" y="8" height="68" width="1207" html.valueishtml="0"  name=scene_scene_desc_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="1294" y="8" height="68" width="329" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="프로젝트명" border="6" color="0" x="183" y="8" height="68" width="1102" html.valueishtml="0"  name=project_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="3872" y="4" height="68" width="686" format="#,##0" html.valueishtml="0"  name=do_do_total visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1632" y="4" height="68" width="1015" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="2656" y="4" height="68" width="1207" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="1294" y="4" height="68" width="329" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="183" y="4" height="68" width="1102" format="[general]" html.valueishtml="0"  name=project_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="0" expression=" project_name "border="0" color="0" x="183" y="8" height="68" width="1102" format="[GENERAL]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="count( user_name for group 1 DISTINCT user_name )"border="0" color="0" x="1294" y="8" height="68" width="329" format="[General]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="count( cust_name for group 1 DISTINCT cust_name )"border="0" color="0" x="1632" y="8" height="68" width="1015" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="count( scene_desc for group 1 DISTINCT cust_name, scene_desc )"border="0" color="0" x="2656" y="8" height="68" width="1207" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( do_do_total for group 1 )"border="0" color="0" x="3872" y="8" height="68" width="686" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( do_do_total for all )"border="0" color="0" x="3872" y="4" height="68" width="686" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( cust_name for all DISTINCT cust_name )"border="0" color="0" x="1632" y="4" height="68" width="1015" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( scene_desc for all DISTINCT cust_name, scene_desc )"border="0" color="0" x="2656" y="4" height="68" width="1207" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( user_name for all DISTINCT user_name )"border="0" color="0" x="1294" y="4" height="68" width="329" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( project_name for all DISTINCT project_name )"border="0" color="0" x="183" y="4" height="68" width="1102" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="project_name	user_name	cust_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

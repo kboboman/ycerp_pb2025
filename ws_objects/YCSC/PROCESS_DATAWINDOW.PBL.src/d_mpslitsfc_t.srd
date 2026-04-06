@@ -1,0 +1,97 @@
+﻿$PBExportHeader$d_mpslitsfc_t.srd
+$PBExportComments$스리팅입고내역조회(전체)(2001/05/08,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="12639424" )
+detail(height=72 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=flag dbname="flag" values="외주	O/사내	I/" )
+ column=(type=datetime updatewhereclause=yes name=in_date dbname="in_date" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=coilsfcday_qa dbname="qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=coilsfcday_unit_qty dbname="unit_qty" )
+ column=(type=long updatewhereclause=yes name=coilsfcday_cnt dbname="cnt" )
+ column=(type=datetime updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=datetime updatewhereclause=yes name=edate dbname="edate" )
+ column=(type=char(20) updatewhereclause=yes name=lot_no dbname="lot_no" )
+ column=(type=char(30) updatewhereclause=yes name=des dbname="des" )
+ retrieve="  SELECT flag = 'I',
+			in_date = coilsfcday.sfc_date,   
+         groupitem.item_name,   
+         qa = coilsfcday.qa,   
+         unit_qty = coilsfcday.unit_qty,   
+         cnt = coilsfcday.cnt,   
+         sdate = convert(smalldatetime, :ad_start, 111),   
+         edate = convert(smalldatetime, :ad_end, 111),   
+         lot_no = coilsfcday.coil_no,   
+         des = location.loc_name  
+    FROM coilsfcday left outer join location on   coilsfcday.loc_no = location.loc_no
+                                  inner join groupitem on coilsfcday.item_no = groupitem.item_no
+   WHERE ( ( coilsfcday.sfc_date between :ad_start and :ad_end ) )    
+
+  UNION ALL
+  SELECT DISTINCT flag = 'O',
+			insp.insp_date,   
+         groupitem.item_name,   
+         inspdet.qa,   
+         inspdet.unit_qty,   
+         inspdet.cnt,   
+         sdate = convert(smalldatetime, :ad_start, 111),   
+         edate = convert(smalldatetime, :ad_end, 111),   
+         inspdet.coil_no,   
+         supp.supp_name 
+    FROM insp with(nolock)  inner join inspdet with(nolock) on insp.insp_no = inspdet.insp_no
+                          inner join supp with(nolock) on  insp.supp_no = supp.supp_no 
+                          inner join coilmst with(nolock) on   inspdet.coil_no = coilmst.coil_no
+                                                                            and inspdet.item_no = coilmst.item_no
+                          inner join groupitem with(nolock) on  inspdet.item_no = groupitem.item_no
+        			            inner join pur with(nolock) on inspdet.pur_no = pur.order_no
+   WHERE ( insp.insp_date between :ad_start and :ad_end  ) AND  
+         ( pur.subcon = 'N' ) AND     
+         ( coilmst.flag = 'S' )   
+
+  UNION ALL
+  SELECT flag = 'O',
+			in_date = insp.insp_date,   
+         groupitem.item_name,   
+         qa = inspdet.qa,   
+         unit_qty = inspdet.unit_qty,   
+         cnt = inspdet.cnt,   
+         sdate = convert(smalldatetime, :ad_start, 111),   
+         edate = convert(smalldatetime, :ad_end, 111),   
+         lot_no = inspdet.coil_no,   
+         des = supp.supp_name 
+    FROM insp with(nolock)  inner join inspdet with(nolock) on insp.insp_no = inspdet.insp_no
+                                       inner join groupitem with(nolock) on  inspdet.item_no = groupitem.item_no
+                                       inner join supp with(nolock) on  insp.supp_no = supp.supp_no 
+                                       inner join pur with(nolock) on inspdet.pur_no = pur.order_no         
+   WHERE ( ( insp.insp_date between :ad_start and :ad_end ) AND  
+                     ( pur.subcon = 'C' ) )   " arguments=(("ad_start", date),("ad_end", date))  sort="in_date A groupitem_item_name A mid( coilsfcday_qa, 5, 6) A coilsfcday_qa A coilsfcday_unit_qty A " )
+group(level=1 header.height=80 trailer.height=68 by=("in_date" ) header.color="15780518" trailer.color="79741120" )
+group(level=2 header.height=0 trailer.height=76 by=("groupitem_item_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="품    명" border="6" color="0" x="9" y="8" height="60" width="1024" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1042" y="8" height="60" width="631" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단중" border="6" color="0" x="1682" y="8" height="60" width="297" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수량" border="6" color="0" x="1989" y="8" height="60" width="183" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="총중량" border="6" color="0" x="2181" y="8" height="60" width="315" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="로트번호" border="6" color="0" x="2505" y="8" height="60" width="453" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="작업위치" border="6" color="0" x="2967" y="8" height="60" width="389" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="" border="6" color="0" x="3365" y="8" height="60" width="64" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=header.1 alignment="0" expression=" in_date "border="0" color="0" x="9" y="12" height="60" width="1024" format="yyyy/mm/dd 일자" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="1024" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1042" y="4" height="60" width="631" format="[general]" html.valueishtml="0"  name=coilsfcday_qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="1682" y="4" height="60" width="297" format="#,##0" html.valueishtml="0"  name=coilsfcday_unit_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="1989" y="4" height="60" width="183" format="#,##0" html.valueishtml="0"  name=coilsfcday_cnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" coilsfcday_unit_qty  *  coilsfcday_cnt "border="0" color="0" x="2181" y="4" height="60" width="315" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="2505" y="4" height="60" width="453" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="2967" y="4" height="60" width="389" format="[general]" html.valueishtml="0"  name=des visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="3365" y="4" height="60" width="64" format="[general]" html.valueishtml="0"  name=flag visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="sum( coilsfcday_unit_qty  *  coilsfcday_cnt  for group 2)"border="0" color="0" x="2181" y="8" height="60" width="315" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=trailer.2 alignment="0" text="소 계 =" border="0" color="0" x="1682" y="8" height="60" width="297" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( coilsfcday_unit_qty  *  coilsfcday_cnt  for group 1)"border="0" color="0" x="2181" y="4" height="60" width="315" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="일 계 =" border="0" color="0" x="1042" y="4" height="60" width="631" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( coilsfcday_unit_qty  *  coilsfcday_cnt  for all)"border="0" color="0" x="2181" y="4" height="60" width="315" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="groupitem_item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

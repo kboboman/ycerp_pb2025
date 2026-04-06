@@ -1,0 +1,97 @@
+﻿$PBExportHeader$d_scaning_m.srd
+$PBExportComments$공정스캔
+release 8;
+datawindow(units=0 timer_interval=1 color=67108864 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=180 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=184 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes key=yes name=work_no dbname="work_no" )
+ column=(type=datetime update=yes updatewhereclause=yes key=yes name=scan_date dbname="scan_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=scan_no dbname="scan_no" )
+ column=(type=long update=yes updatewhereclause=yes name=scan_qty dbname="scan_qty" )
+ column=(type=char(14) update=yes updatewhereclause=yes name=sale_no dbname="sale_no" )
+ column=(type=long update=yes updatewhereclause=yes name=seq_no dbname="seq_no" )
+ column=(type=char(4) update=yes updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(11) update=yes updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=decimal(2) updatewhereclause=yes name=order_qty dbname="order_qty" )
+ column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N" )
+ column=(type=char(1) updatewhereclause=yes name=updateqty dbname="updateqty" )
+ column=(type=char(10) updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ retrieve="  SELECT work_no    = routscan.work_no
+       , scan_date  = routscan.scan_date
+       , scan_no    = routscan.scan_no
+       , scan_qty   = routscan.scan_qty
+       , sale_no    = routscan.sale_no
+       , seq_no     = routscan.seq_no
+       , cust_no    = routscan.cust_no
+       , scene_code = routscan.scene_code
+       , item_no    = routscan.item_no
+       , qa         = routscan.qa
+       , user_id    = routscan.user_id
+       , order_qty  = (SELECT order_qty FROM saledet WHERE order_no = routscan.sale_no AND seq_no = routscan.seq_no )
+       , chk        = 'N'
+       , updateqty  = 'Y'
+       , work_name  = wc.work_name
+       , user_name  = l.user_name
+       , cust_name  = c.cust_name
+       , scene_desc = s.scene_desc
+       , item_name  = g.item_name
+    FROM routscan
+         LEFT OUTER JOIN (
+              SELECT work_no, work_name FROM wc
+              UNION ALL
+              SELECT 'NCT1', 'PEGA'
+              UNION ALL
+              SELECT 'NCT2', 'EM'
+         ) wc ON routscan.work_no  = wc.work_no     
+         LEFT OUTER JOIN customer  C  ON routscan.cust_no    = c.cust_no
+         LEFT OUTER JOIN scene     S  ON routscan.scene_code = s.scene_code
+         LEFT OUTER JOIN groupitem G  ON routscan.item_no    = g.item_no
+         LEFT OUTER JOIN login     L  ON routscan.user_id    = l.user_id
+   WHERE routscan.scan_date between :adt_sdate AND :adt_edate
+     AND routscan.work_no   = :as_wcno
+" update="routscan" updatewhere=1 updatekeyinplace=no arguments=(("as_wcno", string),("adt_sdate", datetime),("adt_edate", datetime))  sort="scan_date A " )
+text(band=header alignment="2" text="스캔일자" border="6" color="33554432" x="183" y="4" height="72" width="677" html.valueishtml="0"  name=scan_date_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="33554432" x="878" y="4" height="72" width="361" html.valueishtml="0"  name=work_name_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="바코드" border="6" color="33554432" x="183" y="92" height="72" width="677" html.valueishtml="0"  name=scan_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수량" border="6" color="33554432" x="878" y="92" height="72" width="361" html.valueishtml="0"  name=scan_qty_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="4" height="72" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="33554432" x="2098" y="4" height="72" width="731" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="2098" y="92" height="72" width="731" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="선택" border="6" color="33554432" x="9" y="92" height="72" width="155" html.valueishtml="0"  name=chk_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=header x1="9" y1="176" x2="4347" y2="176"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="128"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="수주번호" border="6" color="33554432" x="1257" y="4" height="72" width="603" html.valueishtml="0"  name=sale_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순번" border="6" color="33554432" x="1879" y="4" height="72" width="201" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="1257" y="92" height="72" width="823" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장" border="6" color="33554432" x="2848" y="4" height="72" width="1175" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업자" border="6" color="33554432" x="4041" y="4" height="72" width="302" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문수량" border="6" color="33554432" x="4041" y="92" height="72" width="302" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=13 alignment="2" tabsequence=30 border="0" color="33554432" x="9" y="92" height="72" width="155" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="4" color="33554432" x="9" y="4" height="72" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=detail alignment="2" text="◀" border="0" color="33554432" x="4357" y="8" height="156" width="261" html.valueishtml="0"  name=t_2 visible="1~tif ( getrow() = currentrow(), 1, 0 )"  font.face="굴림체" font.height="-28" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=detail x1="9" y1="176" x2="4347" y2="176"  name=l_2 visible="1" pen.style="0" pen.width="14" pen.color="8421376"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="9" y1="84" x2="4347" y2="84"  name=l_3 visible="1" pen.style="2" pen.width="5" pen.color="134217741"  background.mode="2" background.color="12632256" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="183" y="4" height="72" width="677" format="yy/mm/dd hh:mm:ss" html.valueishtml="0"  name=scan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=3 alignment="2" tabsequence=10 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="183" y="92" height="72" width="677" format="[general]" html.valueishtml="0" protect="0~tif ( isRowNew(), 0, 1 )"  name=scan_no visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="28310782~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="878" y="4" height="72" width="361" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1257" y="4" height="72" width="603" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2098" y="4" height="72" width="731" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2848" y="4" height="72" width="1175" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="4041" y="4" height="72" width="302" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1879" y="4" height="72" width="201" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1257" y="92" height="72" width="823" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=4 alignment="2" tabsequence=20 border="0" color="33554432" x="878" y="92" height="72" width="361" format="#,##0" html.valueishtml="0" protect="0~tif (updateqty = 'Y', 0, 1 )"  name=scan_qty visible="1" editmask.mask="###,##0" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="12639424~tif ( getrow() = currentRow(), rgb(215, 228, 188), rgb(255,255,255))" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2098" y="92" height="72" width="731" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="4041" y="92" height="72" width="302" format="#,##0" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="80" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( scan_qty for all )"border="0" color="33554432" x="878" y="4" height="80" width="361" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

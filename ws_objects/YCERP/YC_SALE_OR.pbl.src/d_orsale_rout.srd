@@ -1,0 +1,138 @@
+﻿$PBExportHeader$d_orsale_rout.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=168 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(14) updatewhereclause=yes name=order_no dbname="order_no" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=decimal(2) updatewhereclause=yes name=order_qty dbname="order_qty" )
+ column=(type=long updatewhereclause=yes name=op1 dbname="op1" )
+ column=(type=char(10) updatewhereclause=yes name=wc1 dbname="wc1" )
+ column=(type=char(10) updatewhereclause=yes name=wc1_nm dbname="wc1_nm" )
+ column=(type=char(1) updatewhereclause=yes name=wc1_date dbname="wc1_date" )
+ column=(type=long updatewhereclause=yes name=op2 dbname="op2" )
+ column=(type=char(10) updatewhereclause=yes name=wc2 dbname="wc2" )
+ column=(type=char(10) updatewhereclause=yes name=wc2_nm dbname="wc2_nm" )
+ column=(type=char(1) updatewhereclause=yes name=wc2_date dbname="wc2_date" )
+ column=(type=long updatewhereclause=yes name=op3 dbname="op3" )
+ column=(type=char(10) updatewhereclause=yes name=wc3 dbname="wc3" )
+ column=(type=char(10) updatewhereclause=yes name=wc3_nm dbname="wc3_nm" )
+ column=(type=char(1) updatewhereclause=yes name=wc3_date dbname="wc3_date" )
+ retrieve="  SELECT cust_name  = c.cust_name
+       , scene_desc = s.scene_desc
+       , order_no   = a.order_no
+       , seq_no     = a.seq_no
+       , item_no    = a.item_no
+       , item_name  = g.item_name
+       , qa         = saledet.qa
+       , order_qty  = saledet.order_qty
+       , op1        = a.op1
+       , wc1        = a.wc1
+       , wc1_nm     = wc1.work_name
+       , wc1_date   = ''
+       , op2        = a.op2
+       , wc2        = a.wc2
+       , wc2_nm     = wc2.work_name
+       , wc2_date   = ''
+       , op3        = a.op3
+       , wc3        = a.wc3
+       , wc3_nm     = wc3.work_name
+       , wc3_date   = ''
+    FROM (
+         SELECT cust_no    = a.cust_no
+              , scene_code = a.scene_code
+              , order_no   = a.order_no
+              , seq_no     = a.seq_no
+              , item_no    = a.item_no
+              , qa         = a.qa
+              , op1        = max(a.op1)
+              , wc1        = max(a.wc1)
+              , op2        = max(a.op2)
+              , wc2        = max(a.wc2)
+              , op3        = max(a.op3)
+              , wc3        = max(a.wc3)
+           FROM (
+                SELECT cust_no    = a.cust_no
+                     , scene_code = a.scene_code
+                     , order_no   = a.order_no
+                     , seq_no     = a.seq_no
+                     , item_no    = a.item_no
+                     , qa         = a.qa
+                     , op1        = (case when a.operation = 1 then a.operation end)
+                     , wc1        = (case when a.operation = 1 then a.wc_no     end)
+                     , op2        = (case when a.operation = 2 then a.operation end)
+                     , wc2        = (case when a.operation = 2 then a.wc_no     end)
+                     , op3        = (case when a.operation = 3 then a.operation end)
+                     , wc3        = (case when a.operation = 3 then a.wc_no     end)
+                  FROM (
+                       SELECT cust_no    = saledet.cust_no
+                            , scene_code = saledet.scene_code
+                            , order_no   = saledet.order_no
+                            , seq_no     = saledet.seq_no
+                            , item_no    = saledet.item_no
+                            , qa         = saledet.qa
+                            , operation  = rout.operation
+                            , wc_no      = rout.wc_no
+                         FROM (SELECT cust_no, scene_code, order_no = saledet.order_no, seq_no, item_no, qa = left(saledet.qa,13) + 'X00000'
+                                 FROM saledet 
+                                      LEFT OUTER JOIN sale ON saledet.order_no = sale.order_no
+                                WHERE ( saledet.order_no = :as_orderno )
+                              ) saledet
+                              LEFT OUTER JOIN rout ON saledet.item_no = rout.item_no AND saledet.qa = rout.qa
+                       ) A
+                ) A
+          GROUP BY a.cust_no, a.scene_code, a.order_no, a.seq_no, a.item_no, a.qa
+         ) A
+         LEFT OUTER JOIN saledet     ON a.order_no = saledet.order_no AND a.seq_no = saledet.seq_no
+         LEFT OUTER JOIN wc      wc1 ON a.wc1 = wc1.work_no
+         LEFT OUTER JOIN wc      wc2 ON a.wc2 = wc2.work_no
+         LEFT OUTER JOIN wc      wc3 ON a.wc3 = wc3.work_no
+         LEFT OUTER JOIN groupitem G ON a.item_no    = g.item_no
+         LEFT OUTER JOIN sale        ON a.order_no   = sale.order_no
+         LEFT OUTER JOIN customer  C ON a.cust_no    = c.cust_no
+         LEFT OUTER JOIN scene     S ON a.scene_code = s.scene_code
+" arguments=(("as_orderno", string)) )
+column(band=header id=1 alignment="0" tabsequence=32766 border="0" color="0" x="270" y="8" height="68" width="594" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=header id=2 alignment="0" tabsequence=32766 border="0" color="0" x="1042" y="8" height="68" width="1024" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="9" y="8" height="68" width="251" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장" border="6" color="33554432" x="873" y="8" height="68" width="160" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="92" height="68" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="33554432" x="270" y="92" height="68" width="594" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순번" border="6" color="33554432" x="873" y="92" height="68" width="160" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="1042" y="92" height="68" width="1024" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="2075" y="92" height="68" width="773" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문수량" border="6" color="33554432" x="2857" y="92" height="68" width="421" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="OP1" border="6" color="33554432" x="3287" y="92" height="68" width="160" html.valueishtml="0"  name=op1_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="1)공정" border="6" color="33554432" x="3456" y="92" height="68" width="338" html.valueishtml="0"  name=wc1_nm_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="1)일자" border="6" color="33554432" x="3803" y="92" height="68" width="338" html.valueishtml="0"  name=wc1_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="OP2" border="6" color="33554432" x="4151" y="92" height="68" width="160" html.valueishtml="0"  name=op2_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="2)공정" border="6" color="33554432" x="4320" y="92" height="68" width="343" html.valueishtml="0"  name=wc2_nm_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="2)일자" border="6" color="33554432" x="4672" y="92" height="68" width="338" html.valueishtml="0"  name=wc2_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="OP3" border="6" color="33554432" x="5019" y="92" height="68" width="155" html.valueishtml="0"  name=op3_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="3)공정" border="6" color="33554432" x="5184" y="92" height="68" width="343" html.valueishtml="0"  name=wc3_nm_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="3)일자" border="6" color="33554432" x="5536" y="92" height="68" width="334" html.valueishtml="0"  name=wc3_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="873" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1042" y="8" height="72" width="1024" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="3287" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=op1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="3456" y="8" height="72" width="338" format="[general]" html.valueishtml="0"  name=wc1_nm visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="4320" y="8" height="72" width="343" format="[general]" html.valueishtml="0"  name=wc2_nm visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="270" y="8" height="72" width="594" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2075" y="8" height="72" width="773" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2857" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="4151" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=op2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="5019" y="8" height="72" width="155" format="[general]" html.valueishtml="0"  name=op3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432" x="5184" y="8" height="72" width="343" format="[general]" html.valueishtml="0"  name=wc3_nm visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="3803" y="8" height="72" width="338" format="[general]" html.valueishtml="0"  name=wc1_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="4672" y="8" height="72" width="338" format="[general]" html.valueishtml="0"  name=wc2_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="5536" y="8" height="72" width="334" format="[general]" html.valueishtml="0"  name=wc3_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="68" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

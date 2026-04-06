@@ -1,0 +1,34 @@
+﻿$PBExportHeader$gf_split.srf
+global type gf_split from function_object
+end type
+
+forward prototypes
+global function integer gf_split (string sstring, string sseparator, ref string soutputarray[])
+end prototypes
+
+global function integer gf_split (string sstring, string sseparator, ref string soutputarray[]);/**************************************************************
+Powerbuilder 6.5 / 7.0
+
+long gf_Split( readonly string sString, readonly string sSeparator, reference string sOutputArray[] )
+
+This function parses string to array depending on the string separator. The count of items parsed is returned.
+
+****************************************************************/
+long lPosEnd, lPosStart = 1, lSeparatorLen, lCounter = 1
+
+IF UpperBound(sOutputArray) > 0 THEN sOutputArray = {""}
+lSeparatorLen = LenA(sSeparator)
+
+lPosEnd = PosA (sString, sSeparator, 1)
+
+DO WHILE lPosEnd > 0
+     sOutputArray[lCounter] = MidA (sString, lPosStart, lPosEnd - lPosStart)
+     lPosStart = lPosEnd + lSeparatorLen
+     lPosEnd = PosA (sString, sSeparator, lPosStart)
+     lCounter++
+LOOP
+
+sOutputArray[lCounter] = RightA (sString, LenA(sString) - lPosStart + 1)
+RETURN lCounter
+end function
+

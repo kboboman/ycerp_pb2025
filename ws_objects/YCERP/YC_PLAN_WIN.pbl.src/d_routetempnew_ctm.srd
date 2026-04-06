@@ -1,0 +1,55 @@
+﻿$PBExportHeader$d_routetempnew_ctm.srd
+$PBExportComments$월간
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=72 color="536870912" )
+header[2](height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=work_no dbname="work_no" )
+ column=(type=char(20) updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=number updatewhereclause=yes name=cqty dbname="cqty" )
+ retrieve="  SELECT work_no      = h.work_no
+       , work_name    = h.work_name                                                      
+       , napgi_mm     = convert(char(5),a.napgi_date,11)
+       , cqty         = (case when datalength(rtrim(a.qa)) <> 19 then 0                  
+                              else round(dbo.uf_getqty(a.assy_item, a.assy_qa, a.uom, a.order_qty),2,1) 
+                         end)                                                            
+    FROM routtempnew A
+         LEFT OUTER JOIN sale      B ON a.sale_no    = b.order_no
+         INNER JOIN wc             H ON a.wc_no      = h.work_no   
+   WHERE ( b.open_close     = 'O'                          )                      
+     AND ( a.process_flag  <> 'C'                          )                      
+     AND ( a.work_date     >= DATEadd(year,-1, getdate() ) )      
+     AND ( b.order_date    >= DATEadd(year,-1, getdate() ) )         
+     AND ( a.napgi_date    >= '2013/04/01'                 )                        
+     AND ( h.work_no     LIKE :as_wcno                     )
+   ORDER BY h.work_type, h.area_no, h.work_no, h.use_yn
+" arguments=(("as_wcno", string))  sort="work_no A work_name A " )
+group(level=1 header.height=0 trailer.height=0 by=("work_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="2" text="년월" border="0" color="33554432" x="613" y="8" height="60" width="334" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[1] alignment="2" text="납기일자" border="0" color="33554432" x="265" y="8" height="60" width="338" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[1] alignment="2" text="환산" border="0" color="33554432" x="9" y="8" height="60" width="247" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="1" text="합계" border="0" color="33554432" x="955" y="8" height="60" width="379" html.valueishtml="0"  name=grand_sum_cqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="1" text="@napgi_mm" border="0" color="33554432" x="613" y="8" height="60" width="334" html.valueishtml="0"  name=cqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="0" text="작업장명" border="0" color="33554432" x="265" y="8" height="60" width="338" html.valueishtml="0"  name=work_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="0" text="작업장" border="0" color="33554432" x="9" y="8" height="60" width="247" html.valueishtml="0"  name=work_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=work_no visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="265" y="4" height="72" width="338" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="613" y="4" height="72" width="334" format="#,##0" html.valueishtml="0"  name=cqty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="955" y="4" height="72" width="379" format="#,##0" html.valueishtml="0"  name=grand_sum_cqty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="1" expression="~"합계~""border="0" color="33554432" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="1" expression="sum(cqty for group 1)"border="0" color="33554432" x="613" y="4" height="72" width="334" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_cqty for group 1)"border="0" color="33554432" x="955" y="4" height="72" width="379" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=summary alignment="0" expression="~"합계~""border="0" color="33554432" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(cqty for all )"border="0" color="33554432" x="613" y="4" height="72" width="334" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=summary alignment="1" expression="sum(grand_sum_cqty for all )"border="0" color="33554432" x="955" y="4" height="72" width="379" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="0" expression="compute_4"border="0" color="33554432" x="9" y="4" height="72" width="247" format="[General]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="compute_6"border="0" color="33554432" x="955" y="4" height="72" width="379" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="compute_5"border="0" color="33554432" x="613" y="4" height="72" width="334" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="0" text="" border="0" color="33554432" x="265" y="4" height="72" width="338" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "napgi_mm" rows = "work_no, work_name" values = "sum(cqty for crosstab)" sourcenames = "work_no, work_name, napgi_mm, cqty")
+sparse(names="work_no")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,71 @@
+﻿$PBExportHeader$d_orsale_purdet.srd
+$PBExportComments$수주물품발주조회
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=156 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=68 color="8421504" )
+detail(height=168 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=order_no dbname="order_no" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=porder_no dbname="porder_no" )
+ column=(type=long updatewhereclause=yes name=porder_seq dbname="porder_seq" )
+ column=(type=char(14) updatewhereclause=yes name=insp_no dbname="insp_no" )
+ column=(type=long updatewhereclause=yes name=oi_no dbname="oi_no" )
+ column=(type=datetime updatewhereclause=yes name=insp_date dbname="insp_date" )
+ column=(type=decimal(2) updatewhereclause=yes name=rcpt_qty dbname="rcpt_qty" )
+ column=(type=datetime updatewhereclause=yes name=log_date dbname="log_date" )
+ column=(type=char(30) updatewhereclause=yes name=supp_name dbname="supp_name" )
+ column=(type=char(15) updatewhereclause=yes name=shipto_tel dbname="shipto_tel" )
+ column=(type=char(255) updatewhereclause=yes name=cham dbname="cham" )
+ column=(type=char(1) updatewhereclause=yes name=po_print dbname="po_print" )
+ column=(type=datetime updatewhereclause=yes name=sys_date dbname="sys_date" )
+ retrieve="  SELECT order_no     = s.order_no    
+       , seq_no       = s.seq_no      
+       , porder_no    = pd.order_no   
+       , porder_seq   = pd.sale_seq   
+       , insp_no      = ip.insp_no    
+       , oi_no        = ip.oi_no      
+       , insp_date    = i.insp_date   
+       , rcpt_qty     = ip.rcpt_qty   
+       , log_date     = i.log_date    
+       , supp_name    = sp.supp_name  
+       , shipto_tel   = p.shipto_tel  
+       , cham         = p.cham        
+       , po_print     = p.po_print  
+       , sys_date     = p.sys_date  
+    FROM saledet s  ( nolock )
+         LEFT OUTER JOIN purdet  pd ( nolock ) ON s.order_no  = pd.sale_no  AND s.seq_no = pd.sale_seq
+         LEFT OUTER JOIN pur     p  ( nolock ) ON pd.order_no = p.order_no
+         LEFT OUTER JOIN inspdet ip ( nolock ) ON p.order_no  = ip.pur_no   AND pd.item_no = ip.item_no AND pd.qa = ip.qa /*AND pd.order_qty = ip.rcpt_qty*/
+         LEFT OUTER JOIN insp    i  ( nolock ) ON i.insp_no   = ip.insp_no 
+         LEFT OUTER JOIN supp    sp ( nolock ) ON p.supp_no   = sp.supp_no
+   WHERE s.order_no    = :as_orderno
+   ORDER BY seq_no, porder_no
+" arguments=(("as_orderno", string)) )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="4" color="33554432" x="1966" y="4" height="144" width="1563" format="[general]" html.valueishtml="0"  name=cham visible="1" edit.limit=255 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+text(band=header alignment="2" text="순번" border="1" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="발주번호" border="1" color="33554432" x="187" y="8" height="60" width="352" html.valueishtml="0"  name=porder_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="확정" border="1" color="33554432" x="9" y="88" height="60" width="160" html.valueishtml="0"  name=po_print_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="발주처전화" border="1" color="0" x="558" y="8" height="60" width="558" html.valueishtml="0"  name=shipto_tel_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+line(band=detail x1="0" y1="164" x2="3543" y2="164"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="8421504"  background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="4" color="33554432" x="9" y="4" height="64" width="160" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="12639424~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="4" color="33554432" x="187" y="4" height="64" width="352" format="[general]" html.valueishtml="0"  name=porder_no visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="4" color="33554432" x="9" y="84" height="64" width="160" format="[general]" html.valueishtml="0"  name=po_print visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="4" color="33554432" x="187" y="84" height="64" width="928" format="[general]" html.valueishtml="0"  name=supp_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="0" height="76" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Arial" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="4" color="0" x="558" y="4" height="64" width="558" format="[general]" html.valueishtml="0"  name=shipto_tel visible="1" edit.limit=15 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+text(band=header alignment="2" text="입고번호" border="1" color="33554432" x="1134" y="8" height="60" width="448" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="발주처" border="1" color="33554432" x="187" y="88" height="60" width="928" html.valueishtml="0"  name=supp_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="입고일자" border="1" color="33554432" x="1134" y="88" height="60" width="448" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입고수량" border="1" color="33554432" x="1595" y="8" height="60" width="347" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입고처리" border="1" color="33554432" x="1595" y="88" height="60" width="347" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="참조사항" border="1" color="33554432" x="1966" y="8" height="140" width="1563" html.valueishtml="0"  name=cham_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=5 alignment="0" tabsequence=0 border="4" color="16711680" x="1134" y="4" height="64" width="448" html.valueishtml="0"  name=insp_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=0 border="4" color="16711680" x="1595" y="4" height="64" width="347" format="#,##0" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="2" tabsequence=0 border="4" color="16711680" x="1134" y="88" height="60" width="448" format="yyyy/mm/dd" html.valueishtml="0"  name=insp_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="2" tabsequence=0 border="4" color="16711680" x="1595" y="88" height="60" width="347" format="yyyy/mm/dd" html.valueishtml="0"  name=log_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="2949" y="76" height="64" width="581" format="yyyy/mm/dd hh:mm" html.valueishtml="0"  name=sys_date visible="1~tif ( isnull(sys_date), 0, 1 )" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="발주처리" border="1" color="33554432" x="2949" y="88" height="60" width="581" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

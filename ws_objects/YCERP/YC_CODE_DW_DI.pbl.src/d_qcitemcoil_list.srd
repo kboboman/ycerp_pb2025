@@ -1,0 +1,71 @@
+﻿$PBExportHeader$d_qcitemcoil_list.srd
+$PBExportComments$품목별코일규격관리(2005/06/09, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa123 dbname="qa123" )
+ column=(type=long updatewhereclause=yes name=qa4 dbname="qa4" )
+ column=(type=decimal(2) updatewhereclause=yes name=ship_qty dbname="ship_qty" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=coil_item dbname="coil_item" )
+ column=(type=char(60) updatewhereclause=yes name=coil_name dbname="coil_name" )
+ column=(type=char(255) updatewhereclause=yes name=coil_qa dbname="coil_qa" )
+ retrieve="  SELECT item_no   = a.item_no     /* 출고품목 */
+       , item_name = c.item_name
+       , qa123     = a.qa123       /* 출고규격 */
+       , qa4       = a.cm          /* 출고길이 */
+       , ship_qty  = a.ship_qty    /* 출고수량 */
+       , coil_item = b.coil_item   /* 스리팅 품목 */
+       , coil_name = d.item_name
+       , coil_qa   = b.coil_qa     /* 스리팅 규격 */
+    FROM ( /* 기간별 출고데이터 */
+         SELECT b.item_no
+              , qa123     = substring(b.qa,1,13)
+              , qa4       = b.qa
+              , cm        = convert(int,substring(b.qa,15,5))
+              , ship_qty  = sum(b.ship_qty )
+           FROM do A     
+                LEFT OUTER JOIN dodet B  ON a.do_no  = b.do_no		
+          WHERE a.do_date    BETWEEN :as_sdate AND :as_edate
+            AND isnumeric( substring(b.qa,15,5) ) = 1
+          GROUP BY b.item_no, substring(b.qa,1,13), b.qa, convert(int,substring(b.qa,15,5))
+         ) A
+         LEFT OUTER JOIN ( /* 품목별 코일규격관리 */
+              SELECT item_no   = a.item_no     /* 완제품 명칭 */
+                   , qa123     = a.qa          /* 완제품 규격 */
+                   , coil_item = a.coil_item   /* 스리팅 품목 */
+                   , coil_qa   = replace(convert(char(10),a.thick ), '.','') + 'X'
+                               + (case when width > 99 then left('0' + replace(convert(char(10),a.width * 10000), '.',''), 4)
+                                       else left('00' + replace(convert(char(10),a.width * 10000), '.',''), 4)
+                                  end)
+                   , seq_no    = a.seq_no      /* 종류 */
+                FROM itemcoil A  
+               WHERE a.seq_no  = 1
+         ) B  ON a.item_no  = b.item_no  AND a.qa123 = b.qa123
+         LEFT OUTER JOIN GROUPITEM C   ON a.item_no    = c.item_no
+         LEFT OUTER JOIN GROUPITEM D   ON b.coil_item  = d.item_no
+   ORDER BY item_name, qa123, cm
+" arguments=(("as_sdate", string),("as_edate", string)) )
+text(band=header alignment="2" text="#" border="6" color="0" x="9" y="8" height="68" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품목명" border="6" color="0" x="178" y="8" height="68" width="997" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1184" y="8" height="68" width="544" html.valueishtml="0"  name=qa123_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="길이" border="6" color="0" x="1737" y="8" height="68" width="256" html.valueishtml="0"  name=qa4_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="출고수량" border="6" color="0" x="2002" y="8" height="68" width="329" html.valueishtml="0"  name=ship_qty_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코일명" border="6" color="0" x="2341" y="8" height="68" width="937" html.valueishtml="0"  name=coil_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코일규격" border="6" color="0" x="3287" y="8" height="68" width="389" html.valueishtml="0"  name=coil_qa_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="68" width="160" format="[General]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="178" y="8" height="68" width="997" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1184" y="8" height="68" width="544" format="[general]" html.valueishtml="0"  name=qa123 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1737" y="8" height="68" width="256" format="#,##0" html.valueishtml="0"  name=qa4 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="2341" y="8" height="68" width="937" format="[general]" html.valueishtml="0"  name=coil_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="3287" y="8" height="68" width="389" format="[general]" html.valueishtml="0"  name=coil_qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2002" y="8" height="68" width="329" format="#,##0" html.valueishtml="0"  name=ship_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="count ( item_no  for all distinct item_no )"border="0" color="0" x="178" y="8" height="68" width="997" format="[General]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="68" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="item_name	qa123")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

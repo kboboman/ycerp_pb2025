@@ -1,0 +1,822 @@
+﻿$PBExportHeader$m_printpreview.srm
+$PBExportComments$프린트 프리뷰 메뉴
+forward
+global type m_printpreview from menu
+end type
+type m_file from menu within m_printpreview
+end type
+type m_toprint from menu within m_file
+end type
+type m_setupprint from menu within m_file
+end type
+type m_tofile from menu within m_file
+end type
+type m_-1 from menu within m_file
+end type
+type m_close from menu within m_file
+end type
+type m_file from menu within m_printpreview
+m_toprint m_toprint
+m_setupprint m_setupprint
+m_tofile m_tofile
+m_-1 m_-1
+m_close m_close
+end type
+type m_display from menu within m_printpreview
+end type
+type m_firstpage from menu within m_display
+end type
+type m_priorpage from menu within m_display
+end type
+type m_nextpage from menu within m_display
+end type
+type m_lastpage from menu within m_display
+end type
+type m_- from menu within m_display
+end type
+type m_zoom from menu within m_display
+end type
+type m_20% from menu within m_zoom
+end type
+type m_40% from menu within m_zoom
+end type
+type m_60% from menu within m_zoom
+end type
+type m_80% from menu within m_zoom
+end type
+type m_100% from menu within m_zoom
+end type
+type m_120% from menu within m_zoom
+end type
+type m_zoom from menu within m_display
+m_20% m_20%
+m_40% m_40%
+m_60% m_60%
+m_80% m_80%
+m_100% m_100%
+m_120% m_120%
+end type
+type m_zoomdown from menu within m_display
+end type
+type m_zoomup from menu within m_display
+end type
+type m_-2 from menu within m_display
+end type
+type m_rulers from menu within m_display
+end type
+type m_display from menu within m_printpreview
+m_firstpage m_firstpage
+m_priorpage m_priorpage
+m_nextpage m_nextpage
+m_lastpage m_lastpage
+m_- m_-
+m_zoom m_zoom
+m_zoomdown m_zoomdown
+m_zoomup m_zoomup
+m_-2 m_-2
+m_rulers m_rulers
+end type
+global type m_printpreview from menu
+m_file m_file
+m_display m_display
+end type
+end forward
+
+global type m_printpreview from menu
+m_file m_file
+m_display m_display
+end type
+global m_printpreview m_printpreview
+
+on m_printpreview.create
+m_printpreview=this
+call super::create
+this.m_file=create m_file
+this.m_display=create m_display
+this.Item[UpperBound(this.Item)+1]=this.m_file
+this.Item[UpperBound(this.Item)+1]=this.m_display
+end on
+
+on m_printpreview.destroy
+call super::destroy
+destroy(this.m_file)
+destroy(this.m_display)
+end on
+
+type m_file from menu within m_printpreview
+m_toprint m_toprint
+m_setupprint m_setupprint
+m_tofile m_tofile
+m_-1 m_-1
+m_close m_close
+end type
+
+on m_file.create
+call super::create
+this.text = "화일"
+this.m_toprint=create m_toprint
+this.m_setupprint=create m_setupprint
+this.m_tofile=create m_tofile
+this.m_-1=create m_-1
+this.m_close=create m_close
+this.Item[UpperBound(this.Item)+1]=this.m_toprint
+this.Item[UpperBound(this.Item)+1]=this.m_setupprint
+this.Item[UpperBound(this.Item)+1]=this.m_tofile
+this.Item[UpperBound(this.Item)+1]=this.m_-1
+this.Item[UpperBound(this.Item)+1]=this.m_close
+end on
+
+on m_file.destroy
+call super::destroy
+destroy(this.m_toprint)
+destroy(this.m_setupprint)
+destroy(this.m_tofile)
+destroy(this.m_-1)
+destroy(this.m_close)
+end on
+
+type m_toprint from menu within m_file
+end type
+
+on m_toprint.create
+call super::create
+this.text = "프린트출력"
+this.toolbaritemname = "Print!"
+this.toolbaritemtext = "프린트출력"
+this.toolbaritemorder = 1
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Print the active report
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_print")
+	end if
+end if
+end event
+
+on m_toprint.destroy
+call super::destroy
+end on
+
+type m_setupprint from menu within m_file
+end type
+
+on m_setupprint.create
+call super::create
+this.text = "프린트셋업"
+this.toolbaritemname = "RunReport5!"
+this.toolbaritemtext = "프린트셋업"
+this.toolbaritemorder = 1
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Print setup
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_print_setup")
+		lw_sheet.TriggerEvent ("ue_ruler")
+	end if
+end if
+//lw_sheet.object.datawindow.print.preview = true
+end event
+
+on m_setupprint.destroy
+call super::destroy
+end on
+
+type m_tofile from menu within m_file
+end type
+
+on m_tofile.create
+call super::create
+this.text = "화일출력"
+this.toolbaritemname = "Custom008!"
+this.toolbaritemtext = "화일출력"
+this.toolbaritemorder = 3
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// out file the active report
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_file")
+	end if
+end if
+end event
+
+on m_tofile.destroy
+call super::destroy
+end on
+
+type m_-1 from menu within m_file
+end type
+
+on m_-1.create
+call super::create
+this.text = "-"
+end on
+
+on m_-1.destroy
+call super::destroy
+end on
+
+type m_close from menu within m_file
+end type
+
+event clicked;close(parentwindow)
+
+close(w_printsetup)
+
+end event
+
+on m_close.create
+call super::create
+this.text = "닫기"
+this.toolbaritemname = "Continue!"
+this.toolbaritemtext = "닫기"
+this.toolbaritemorder = 12
+end on
+
+on m_close.destroy
+call super::destroy
+end on
+
+type m_display from menu within m_printpreview
+m_firstpage m_firstpage
+m_priorpage m_priorpage
+m_nextpage m_nextpage
+m_lastpage m_lastpage
+m_- m_-
+m_zoom m_zoom
+m_zoomdown m_zoomdown
+m_zoomup m_zoomup
+m_-2 m_-2
+m_rulers m_rulers
+end type
+
+on m_display.create
+call super::create
+this.text = "화면"
+this.m_firstpage=create m_firstpage
+this.m_priorpage=create m_priorpage
+this.m_nextpage=create m_nextpage
+this.m_lastpage=create m_lastpage
+this.m_-=create m_-
+this.m_zoom=create m_zoom
+this.m_zoomdown=create m_zoomdown
+this.m_zoomup=create m_zoomup
+this.m_-2=create m_-2
+this.m_rulers=create m_rulers
+this.Item[UpperBound(this.Item)+1]=this.m_firstpage
+this.Item[UpperBound(this.Item)+1]=this.m_priorpage
+this.Item[UpperBound(this.Item)+1]=this.m_nextpage
+this.Item[UpperBound(this.Item)+1]=this.m_lastpage
+this.Item[UpperBound(this.Item)+1]=this.m_-
+this.Item[UpperBound(this.Item)+1]=this.m_zoom
+this.Item[UpperBound(this.Item)+1]=this.m_zoomdown
+this.Item[UpperBound(this.Item)+1]=this.m_zoomup
+this.Item[UpperBound(this.Item)+1]=this.m_-2
+this.Item[UpperBound(this.Item)+1]=this.m_rulers
+end on
+
+on m_display.destroy
+call super::destroy
+destroy(this.m_firstpage)
+destroy(this.m_priorpage)
+destroy(this.m_nextpage)
+destroy(this.m_lastpage)
+destroy(this.m_-)
+destroy(this.m_zoom)
+destroy(this.m_zoomdown)
+destroy(this.m_zoomup)
+destroy(this.m_-2)
+destroy(this.m_rulers)
+end on
+
+type m_firstpage from menu within m_display
+end type
+
+on m_firstpage.create
+call super::create
+this.text = "첫페이지"
+this.toolbaritemname = "VCRFirst!"
+this.toolbaritemtext = "첫페이지"
+this.toolbaritemorder = 4
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Go to the first page of the active report
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_first")
+	end if
+end if
+end event
+
+on m_firstpage.destroy
+call super::destroy
+end on
+
+type m_priorpage from menu within m_display
+end type
+
+on m_priorpage.create
+call super::create
+this.text = "이전페이지"
+this.toolbaritemname = "VCRPrior!"
+this.toolbaritemtext = "이전페이지"
+this.toolbaritemorder = 5
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Go to the prior page of the active report
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_prior")
+	end if
+end if
+end event
+
+on m_priorpage.destroy
+call super::destroy
+end on
+
+type m_nextpage from menu within m_display
+end type
+
+on m_nextpage.create
+call super::create
+this.text = "다음페이지"
+this.toolbaritemname = "VCRNext!"
+this.toolbaritemtext = "다음페이지"
+this.toolbaritemorder = 6
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Go to the next page of the active report
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_next")
+	end if
+end if
+end event
+
+on m_nextpage.destroy
+call super::destroy
+end on
+
+type m_lastpage from menu within m_display
+end type
+
+on m_lastpage.create
+call super::create
+this.text = "마지막페이지"
+this.toolbaritemname = "VCRLast!"
+this.toolbaritemtext = "마지막페이지"
+this.toolbaritemorder = 7
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Go to the last page of the active report
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_last")
+	end if
+end if
+end event
+
+on m_lastpage.destroy
+call super::destroy
+end on
+
+type m_- from menu within m_display
+end type
+
+on m_-.create
+call super::create
+this.text = "-"
+end on
+
+on m_-.destroy
+call super::destroy
+end on
+
+type m_zoom from menu within m_display
+m_20% m_20%
+m_40% m_40%
+m_60% m_60%
+m_80% m_80%
+m_100% m_100%
+m_120% m_120%
+end type
+
+on m_zoom.create
+call super::create
+this.text = "확대/축소"
+this.toolbaritemorder = 8
+this.m_20%=create m_20%
+this.m_40%=create m_40%
+this.m_60%=create m_60%
+this.m_80%=create m_80%
+this.m_100%=create m_100%
+this.m_120%=create m_120%
+this.Item[UpperBound(this.Item)+1]=this.m_20%
+this.Item[UpperBound(this.Item)+1]=this.m_40%
+this.Item[UpperBound(this.Item)+1]=this.m_60%
+this.Item[UpperBound(this.Item)+1]=this.m_80%
+this.Item[UpperBound(this.Item)+1]=this.m_100%
+this.Item[UpperBound(this.Item)+1]=this.m_120%
+end on
+
+on m_zoom.destroy
+call super::destroy
+destroy(this.m_20%)
+destroy(this.m_40%)
+destroy(this.m_60%)
+destroy(this.m_80%)
+destroy(this.m_100%)
+destroy(this.m_120%)
+end on
+
+type m_20% from menu within m_zoom
+end type
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area to 20%
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+// uncheck all zoom menu items
+parent.m_20%.checked = false
+parent.m_40%.checked = false
+parent.m_60%.checked = false
+parent.m_80%.checked = false
+parent.m_100%.checked = false
+parent.m_120%.checked = false
+
+this.checked = not this.checked
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom")
+	end if
+end if
+end event
+
+on m_20%.create
+call super::create
+this.text = "20%"
+end on
+
+on m_20%.destroy
+call super::destroy
+end on
+
+type m_40% from menu within m_zoom
+end type
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area to 40%
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+// uncheck all zoom menu items
+parent.m_20%.checked = false
+parent.m_40%.checked = false
+parent.m_60%.checked = false
+parent.m_80%.checked = false
+parent.m_100%.checked = false
+parent.m_120%.checked = false
+
+this.checked = not this.checked
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom")
+	end if
+end if
+end event
+
+on m_40%.create
+call super::create
+this.text = "40%"
+end on
+
+on m_40%.destroy
+call super::destroy
+end on
+
+type m_60% from menu within m_zoom
+end type
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area to 60%
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+// uncheck all zoom menu items
+parent.m_20%.checked = false
+parent.m_40%.checked = false
+parent.m_60%.checked = false
+parent.m_80%.checked = false
+parent.m_100%.checked = false
+parent.m_120%.checked = false
+
+this.checked = not this.checked
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom")
+	end if
+end if
+end event
+
+on m_60%.create
+call super::create
+this.text = "60%"
+end on
+
+on m_60%.destroy
+call super::destroy
+end on
+
+type m_80% from menu within m_zoom
+end type
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area to 60%
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+// uncheck all zoom menu items
+parent.m_20%.checked = false
+parent.m_40%.checked = false
+parent.m_60%.checked = false
+parent.m_80%.checked = false
+parent.m_100%.checked = false
+parent.m_120%.checked = false
+
+this.checked = not this.checked
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom")
+	end if
+end if
+end event
+
+on m_80%.create
+call super::create
+this.text = "80%"
+end on
+
+on m_80%.destroy
+call super::destroy
+end on
+
+type m_100% from menu within m_zoom
+end type
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area to 60%
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+// uncheck all zoom menu items
+parent.m_20%.checked = false
+parent.m_40%.checked = false
+parent.m_60%.checked = false
+parent.m_80%.checked = false
+parent.m_100%.checked = false
+parent.m_120%.checked = false
+
+this.checked = not this.checked
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom")
+	end if
+end if
+end event
+
+on m_100%.create
+call super::create
+this.text = "100%"
+end on
+
+on m_100%.destroy
+call super::destroy
+end on
+
+type m_120% from menu within m_zoom
+end type
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area to 60%
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+// uncheck all zoom menu items
+parent.m_20%.checked = false
+parent.m_40%.checked = false
+parent.m_60%.checked = false
+parent.m_80%.checked = false
+parent.m_100%.checked = false
+parent.m_120%.checked = false
+
+this.checked = not this.checked
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom")
+	end if
+end if
+end event
+
+on m_120%.create
+call super::create
+this.text = "120%"
+end on
+
+on m_120%.destroy
+call super::destroy
+end on
+
+type m_zoomdown from menu within m_display
+end type
+
+on m_zoomdown.create
+call super::create
+this.text = "화면축소"
+this.toolbaritemname = "Custom034!"
+this.toolbaritemtext = "화면축소"
+this.toolbaritemorder = 9
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area down
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom_down")
+	end if
+end if
+end event
+
+on m_zoomdown.destroy
+call super::destroy
+end on
+
+type m_zoomup from menu within m_display
+end type
+
+on m_zoomup.create
+call super::create
+this.text = "화면확대"
+this.toolbaritemname = "Custom033!"
+this.toolbaritemtext = "화면확대"
+this.toolbaritemorder = 10
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Scale the display area up
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_zoom_up")
+	end if
+end if
+end event
+
+on m_zoomup.destroy
+call super::destroy
+end on
+
+type m_-2 from menu within m_display
+end type
+
+on m_-2.create
+call super::create
+this.text = "-"
+end on
+
+on m_-2.destroy
+call super::destroy
+end on
+
+type m_rulers from menu within m_display
+end type
+
+on m_rulers.create
+call super::create
+this.text = "여백조정"
+this.toolbaritemname = "Move5!"
+this.toolbaritemtext = "여백조정"
+this.toolbaritemorder = 11
+end on
+
+event clicked;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Show/Hide Rulers
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+window	lw_frame, &
+		lw_sheet
+
+this.checked = not this.checked
+
+lw_frame = ParentWindow.ParentWindow()
+if IsValid (lw_frame) then
+	lw_sheet = lw_frame.GetActiveSheet()	
+	if IsValid (lw_sheet) then
+		lw_sheet.TriggerEvent ("ue_ruler")
+	end if
+end if
+end event
+
+on m_rulers.destroy
+call super::destroy
+end on
+

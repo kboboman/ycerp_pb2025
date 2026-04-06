@@ -1,0 +1,55 @@
+﻿$PBExportHeader$gf_dw2filter.srf
+$PBExportComments$DataWindow 필터
+global type gf_dw2filter from function_object
+end type
+
+forward prototypes
+global subroutine gf_dw2filter (datawindow arg_dw, dropdownlistbox arg_ddlb_nm, dropdownlistbox arg_ddlb_op, singlelineedit arg_sle, dropdownlistbox arg_dwtitles)
+end prototypes
+
+global subroutine gf_dw2filter (datawindow arg_dw, dropdownlistbox arg_ddlb_nm, dropdownlistbox arg_ddlb_op, singlelineedit arg_sle, dropdownlistbox arg_dwtitles);/*
+  Function Name : GF_DW2Filter (Datawindow 필터링 하기)
+       Argument : arg_dw, arg_ddlb_nm, arg_ddlb_op, arg_sle, arg_dwtitles
+    Return Type : None
+*/
+string ls_colname_split[], ls_nullarray[]
+string ls_column, ls_col, ls_type, ls_value
+long	 ii
+
+//ls_value = string(long(ls_columnx[ii]),"00000") + "|" + ls_columnt[ii] + "|" + ls_column[ii]
+for ii = 1 to arg_dwtitles.TotalItems()
+	ls_colname_split = ls_nullarray		// 초기화
+	GF_SPLIT( arg_dwtitles.Text(ii), "|", ls_colname_split )
+	if ls_colname_split[2] = arg_ddlb_nm.text then
+		ls_col = ls_colname_split[3]
+		exit
+	end if
+next
+
+// 필드
+ls_value  = arg_sle.text
+if trim(arg_ddlb_nm.text) = "" then
+	ls_column = ""
+else
+	if trim(arg_ddlb_op.text) = "LIKE" then
+		ls_column = ls_col + " " + trim(arg_ddlb_op.text) + " '%" + trim(ls_value) + "%' "
+	else
+		ls_type = arg_dw.Describe(ls_col + ".coltype")
+		choose case LeftA(ls_type,4)
+			case "char"
+			   ls_column = ls_col + " " + trim(arg_ddlb_op.text) + " '" + trim(ls_value) + "' "
+			case "deci", "numb", "long"
+			   ls_column = ls_col + " " + trim(arg_ddlb_op.text) + " "  + trim(ls_value) + " "
+			case "date", "time"
+			   ls_column = ls_col + " " + trim(arg_ddlb_op.text) + " #" + trim(ls_value) + "# "
+		end choose
+	end if
+end if
+
+arg_dw.setfilter(ls_column)
+arg_dw.filter()
+arg_dw.groupcalc()
+arg_dw.scrolltorow(1)
+arg_dw.setfocus()
+end subroutine
+

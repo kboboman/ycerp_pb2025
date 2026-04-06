@@ -1,0 +1,150 @@
+﻿$PBExportHeader$d_orsaleduerep_r1.srd
+$PBExportComments$납기일자별 수주현황 REPORT(1998/05/13, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=456 color="536870912" )
+summary(height=80 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=sale_cust_no dbname="sale.cust_no" initial=" " )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=sale_scene_code dbname="sale.scene_code" initial=" " )
+ column=(type=char(14) updatewhereclause=yes name=sale_order_no dbname="sale.order_no" initial=" " )
+ column=(type=char(1) updatewhereclause=yes name=sale_sale_flag dbname="sale.sale_flag" initial=" " values="내수	D/수출	E/L//C	L/" )
+ column=(type=char(3) updatewhereclause=yes name=sale_curr_code dbname="sale.curr_code" initial=" " )
+ column=(type=datetime updatewhereclause=yes name=sale_order_date dbname="sale.order_date" initial=" " )
+ column=(type=datetime updatewhereclause=yes name=sale_due_date dbname="sale.due_date" initial=" " )
+ column=(type=long updatewhereclause=yes name=saledet_seq_no dbname="saledet.seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=saledet_item_no dbname="saledet.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=saledet_qa dbname="saledet.qa" )
+ column=(type=char(2) updatewhereclause=yes name=saledet_uom dbname="saledet.uom" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_order_qty dbname="saledet.order_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_acc_qty dbname="saledet.acc_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=saledet_price dbname="saledet.price" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ column=(type=datetime updatewhereclause=yes name=c_start dbname="c_start" )
+ column=(type=datetime updatewhereclause=yes name=c_end dbname="c_end" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=datetime updatewhereclause=yes name=routtempnew_work_date dbname="RoutTempNew.work_date" )
+ retrieve="  SELECT sale.cust_no,   
+         customer.cust_name,   
+         sale.scene_code,   
+         sale.order_no,   
+         sale.sale_flag,   
+         sale.curr_code,   
+         sale.order_date,   
+         sale.due_date,   
+         saledet.seq_no,   
+         saledet.item_no,   
+         saledet.qa,   
+         saledet.uom,   
+         saledet.order_qty,   
+         saledet.acc_qty,   
+         saledet.price,   
+         scene.scene_desc,   
+         c_start = convert(smalldatetime, :ad_start, 111),   
+         c_end = convert(smalldatetime, :ad_end, 111),   
+         groupitem.item_name,   
+         user_name = (case :as_user when '%' then '전체' else login.user_name end),   
+         routtempnew.work_date  
+
+    FROM sale  with(nolock) inner join saledet   with(nolock) on  sale.order_no         = saledet.order_no
+                                               inner join groupitem  with(nolock) on saledet.item_no = groupitem.item_no
+                                               inner join customer  with(nolock) on sale.cust_no          = customer.cust_no                                               
+                                               left outer join login  with(nolock) on customer.salesman = login.user_id                                               
+                                               left outer  join scene with(nolock) on sale.cust_no    = scene.cust_no and sale.scene_code     = scene.scene_code
+                                               left outer join routtempnew  with(nolock) on saledet.order_no  = routtempnew.sale_no 
+                                                                                                              and  saledet.seq_no     = routtempnew.seq_no
+                                                                                                              and  saledet.item_no   = routtempnew.assy_item
+                                                                                                              and  saledet.qa = routtempnew.assy_qa
+/*where	 ( sale.open_close <> 'X') and  	한도초과 */
+where	 ( sale.open_close IN ('O', 'C') ) and
+        ( ( :as_area = '%' and sale.area_no like :as_area ) or
+			  ( :as_area = 'B0001' AND sale.area_no = :as_area) or
+			  ( :as_area <> 'B0001' and sale.area_no <> 'B0001' ) ) and
+         ( ( sale.sale_flag in ( :asa_sale_flag ) ) AND  
+         ( sale.due_date between :ad_start and :ad_end ) AND  
+         ( customer.salesman like :as_user ) )    
+/*
+    FROM customer,   
+         groupitem,   
+         sale,   
+         saledet,   
+         scene,   
+         routtempnew,
+			login 
+   WHERE ( sale.open_close <> 'X') and  
+         ( sale.cust_no *= scene.cust_no) and  
+         ( sale.scene_code *= scene.scene_code) and  
+         ( saledet.order_no *= routtempnew.sale_no) and  
+         ( saledet.seq_no *= routtempnew.seq_no) and  
+         ( saledet.item_no *= routtempnew.assy_item) and  
+         ( saledet.qa *= routtempnew.assy_qa) and  
+         ( sale.order_no = saledet.order_no ) and  
+         ( sale.cust_no = customer.cust_no ) and  
+         ( saledet.item_no = groupitem.item_no ) and  
+         ( customer.salesman *= login.user_id ) and 
+			( ( :as_area = '%' and sale.area_no like :as_area ) or
+			  ( :as_area = 'B0001' AND sale.area_no = :as_area) or
+			  ( :as_area <> 'B0001' and sale.area_no <> 'B0001' ) ) and
+         ( ( sale.sale_flag in ( :asa_sale_flag ) ) AND  
+         ( sale.due_date between :ad_start and :ad_end ) AND  
+         ( customer.salesman like :as_user ) )    
+
+*/
+" arguments=(("as_area", string),("asa_sale_flag", stringlist),("ad_start", date),("ad_end", date),("as_user", string))  sort="sale_due_date A customer_cust_name A sale_scene_code A sale_order_date A sale_order_no A saledet_seq_no A " )
+group(level=1 header.height=68 trailer.height=80 by=("sale_due_date" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=80 by=("sale_order_no" ) header.color="553648127" trailer.color="536870912" )
+compute(band=header alignment="0" expression="'작성일:' + STRING(today(), 'YYYY/MM/DD')"border="0" color="0" x="5495" y="232" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="납기기간:" border="0" color="0" x="2537" y="304" height="60" width="288" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=17 alignment="0" tabsequence=32766 border="0" color="0" x="2839" y="304" height="60" width="320" format="[general]" html.valueishtml="0"  name=c_start visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="~~" border="0" color="0" x="3163" y="304" height="60" width="32" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=18 alignment="0" tabsequence=32766 border="0" color="0" x="3200" y="304" height="60" width="320" format="[general]" html.valueishtml="0"  name=c_end visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'페이지:' + page() + ' of ' + pageCount()"border="0" color="0" x="5495" y="304" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="18" y1="372" x2="6043" y2="372"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="납기일자" border="0" color="0" x="23" y="384" height="60" width="320" html.valueishtml="0"  name=sale_due_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="거래처" border="0" color="0" x="357" y="384" height="60" width="640" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="물품번호" border="0" color="0" x="2807" y="384" height="60" width="320" html.valueishtml="0"  name=saledet_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="물품명" border="0" color="0" x="3141" y="384" height="60" width="640" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="규격" border="0" color="0" x="3794" y="384" height="60" width="608" html.valueishtml="0"  name=saledet_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="단위" border="0" color="0" x="4416" y="384" height="60" width="128" html.valueishtml="0"  name=saledet_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="주문수량" border="0" color="0" x="4558" y="384" height="60" width="320" html.valueishtml="0"  name=saledet_order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="환산수량" border="0" color="0" x="4891" y="384" height="60" width="320" html.valueishtml="0"  name=saledet_acc_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="주문단가" border="0" color="0" x="5225" y="384" height="60" width="352" html.valueishtml="0"  name=saledet_price_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="공급가액" border="0" color="0" x="5591" y="384" height="60" width="448" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="18" y1="452" x2="6043" y2="452"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="납기일자별 수주현황" border="0" color="0" x="18" y="52" height="148" width="6025" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="순번" border="0" color="0" x="2674" y="384" height="60" width="119" html.valueishtml="0"  name=saledet_seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="예정일자" border="0" color="0" x="2336" y="384" height="60" width="325" html.valueishtml="0"  name=sale_sale_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="수주번호" border="0" color="0" x="1874" y="384" height="60" width="448" html.valueishtml="0"  name=sale_order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="현장" border="0" color="0" x="1010" y="384" height="60" width="850" html.valueishtml="0"  name=sale_scene_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="w_orsaledue_r" border="0" color="0" x="23" y="304" height="60" width="416" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="판매담당자:" border="0" color="0" x="526" y="304" height="60" width="375" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=20 alignment="0" tabsequence=32766 border="0" color="0" x="923" y="304" height="60" width="416" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header.1 id=8 alignment="0" tabsequence=32766 border="0" color="0" x="23" y="4" height="60" width="320" format="[shortdate] [time]" html.valueishtml="0"  name=sale_due_date  tag="최종납기일자" visible="1" editmask.mask="YYYY/MM/DD" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="2807" y="4" height="60" width="320" format="[general]" html.valueishtml="0"  name=saledet_item_no  tag="물품번호" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="0" x="3141" y="4" height="60" width="640" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="0" x="4416" y="4" height="60" width="128" format="[general]" html.valueishtml="0"  name=saledet_uom  tag="단위" visible="1" edit.limit=2 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="0" x="3794" y="4" height="60" width="608" format="[general]" html.valueishtml="0"  name=saledet_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="4558" y="4" height="60" width="320" format="#,##0.00" html.valueishtml="0"  name=saledet_order_qty  tag="주문수량" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0" x="4891" y="4" height="60" width="320" format="#,##0.00" html.valueishtml="0"  name=saledet_acc_qty  tag="환산수량" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0" x="5225" y="4" height="60" width="352" format="#,##0.000" html.valueishtml="0"  name=saledet_price  tag="가격" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" if(   sale_curr_code = 'WON', truncate(saledet_acc_qty  *  saledet_price  , 0), truncate(saledet_acc_qty  *  saledet_price  , 2)) "border="0" color="0" x="5591" y="4" height="60" width="448" format="#,##0.00" html.valueishtml="0"  name=c_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="357" y="4" height="60" width="640" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0" x="2674" y="4" height="60" width="119" format="[General]" html.valueishtml="0"  name=saledet_seq_no  tag="순번" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="0" x="2336" y="4" height="60" width="325" format="yyyy/mm/dd" html.valueishtml="0"  name=routtempnew_work_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1874" y="4" height="60" width="448" format="[general]" html.valueishtml="0"  name=sale_order_no  tag="판매주문번호" visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="0" x="1010" y="4" height="60" width="850" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="1874" y1="0" x2="6043" y2="0"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="2" text="수주 소계" border="2" color="0" x="1874" y="12" height="60" width="320" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" if(   sale_curr_code = 'WON', truncate(sum( saledet_acc_qty  *  saledet_price  for group 2)  , 0), sum( saledet_acc_qty  *  saledet_price  for group 2)  ) "border="0" color="0" x="5216" y="12" height="60" width="823" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  c_amt  for group 1 )"border="0" color="0" x="5216" y="12" height="60" width="823" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="2" text="일자소계" border="2" color="0" x="23" y="12" height="60" width="320" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="18" y1="0" x2="6043" y2="0"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=summary alignment="2" text="합    계" border="2" color="0" x="23" y="12" height="60" width="320" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  c_amt  for all )"border="0" color="0" x="5216" y="12" height="60" width="823" format="#,##0.00" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="18" y1="0" x2="6043" y2="0"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+
+sparse(names="sale_due_date	customer_cust_name	scene_scene_desc	sale_order_no")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

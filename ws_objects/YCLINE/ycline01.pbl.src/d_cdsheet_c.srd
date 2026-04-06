@@ -1,0 +1,52 @@
+﻿$PBExportHeader$d_cdsheet_c.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=1 )
+header(height=88 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=84 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=sheet_no dbname="sheetmst.sheet_no" )
+ column=(type=decimal(4) updatewhereclause=yes name=unit_qty dbname="sheetmst.unit_qty" )
+ column=(type=long updatewhereclause=yes name=qcnt dbname="sheetmst.qcnt" )
+ column=(type=decimal(2) updatewhereclause=yes name=thin dbname="thin" )
+ column=(type=char(10) updatewhereclause=yes name=loc_no dbname="sheetmst.loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="sheetmst.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="sheetmst.qa" )
+ column=(type=char(1) updatewhereclause=yes name=flag dbname="sheetmst.flag" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="groupitem.item_name" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="groupitem.uom" )
+ retrieve="  SELECT sheetmst.sheet_no,   
+         sheetmst.unit_qty,   
+         sheetmst.qcnt,   
+         thin = convert (decimal (3,2) , substring(qa,1,1) + ~".~" + substring(qa, 2,2)),   
+         sheetmst.loc_no,   
+         sheetmst.item_no,   
+         sheetmst.qa,   
+         sheetmst.flag,   
+         groupitem.item_name,   
+         groupitem.uom  
+    FROM sheetmst,   
+         groupitem  
+   WHERE ( sheetmst.item_no = groupitem.item_no ) and  
+         ( ( sheetmst.open_close = ~"O~" ) AND  
+         ( sheetmst.item_no not in (select loss_item from lossitem) ) AND  
+         ( sheetmst.loc_no = :as_loc ) AND  
+         ( sheetmst.sheet_no like :as_coil ) AND  
+         ( sheetmst.qa like :as_qa ) AND  
+         ( ( :al_unit = 0 ) or ( :al_unit <> 0 and ( sheetmst.unit_qty = :al_unit ) ) )  )  
+" retrieve.asneeded=yes arguments=(("as_loc", string),("as_coil", string),("as_qa", string),("al_wid", number),("al_unit", number))  sort="thin A unit_qty A sheet_no A " )
+text(band=header alignment="2" text="두께" border="6" color="0" x="786" y="8" height="72" width="201" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가로*세로" border="6" color="0" x="997" y="8" height="72" width="384" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="갯수" border="6" color="0" x="1390" y="8" height="72" width="165" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="1563" y="8" height="72" width="1111" html.valueishtml="0"  name=loc_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="쉬트번호" border="6" color="0" x="142" y="8" height="72" width="635" html.valueishtml="0"  name=sheet_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="0" x="9" y="8" height="72" width="123" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="5" y="4" height="72" width="128" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="786" y="4" height="76" width="201" format="[general]" html.valueishtml="0"  name=thin visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+compute(band=detail alignment="2" expression="string(integer(mid( qa , 5,4))) + '*' + string(integer(mid( qa , 10,4)))"border="0" color="0~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="997" y="4" height="76" width="384" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1390" y="4" height="76" width="165" format="[General]" html.valueishtml="0"  name=qcnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1563" y="4" height="76" width="1111" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif ( isnull(sheetmst_etc_no ) or trim( sheetmst_etc_no ) = '' , rgb(0,0,0), rgb(255,0,0))" x="142" y="4" height="76" width="635" format="[general]" html.valueishtml="0"  name=sheet_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="76" width="123" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

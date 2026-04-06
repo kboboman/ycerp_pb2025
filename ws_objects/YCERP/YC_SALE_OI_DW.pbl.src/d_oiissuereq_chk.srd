@@ -1,0 +1,169 @@
+﻿$PBExportHeader$d_oiissuereq_chk.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=req_date dbname="req_date" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=long updatewhereclause=yes name=req_seq dbname="req_seq" )
+ column=(type=char(10) updatewhereclause=yes name=accept_user dbname="accept_user" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name dbname="user_name" )
+ column=(type=char(13) updatewhereclause=yes name=req_flag dbname="req_flag" )
+ column=(type=char(8) updatewhereclause=yes name=confirm_flag dbname="confirm_flag" )
+ column=(type=char(10) updatewhereclause=yes name=accept_area dbname="accept_area" )
+ column=(type=datetime updatewhereclause=yes name=sys_date dbname="sys_date" )
+ column=(type=char(60) updatewhereclause=yes name=req_rem dbname="req_rem" )
+ column=(type=char(10) updatewhereclause=yes name=issue_schedule dbname="issue_schedule" )
+ column=(type=long updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(50) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(20) updatewhereclause=yes name=add_scene dbname="add_scene" )
+ column=(type=char(14) updatewhereclause=yes name=sale_no dbname="sale_no" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="seq_no" )
+ column=(type=datetime updatewhereclause=yes name=do_date dbname="do_date" )
+ column=(type=char(14) updatewhereclause=yes name=do_no dbname="do_no" )
+ column=(type=long updatewhereclause=yes name=oi_no dbname="oi_no" )
+ column=(type=char(10) updatewhereclause=yes name=area_no dbname="area_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(3) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=char(6) updatewhereclause=yes name=issue_flag dbname="issue_flag" )
+ column=(type=char(30) updatewhereclause=yes name=ship_flag dbname="ship_flag" )
+ column=(type=char(8) updatewhereclause=yes name=ship_case dbname="ship_case" )
+ column=(type=char(60) updatewhereclause=yes name=issuereqdet_tel dbname="tel" )
+ column=(type=char(60) updatewhereclause=yes name=reqdet_rem dbname="reqdet_rem" )
+ column=(type=datetime updatewhereclause=yes name=reqdet_sysdate dbname="reqdet_sysdate" )
+ retrieve="  SELECT req_date  = issuereq.req_date                                                                                                                        
+       , salesman  = issuereq.salesman                                                                                                                        
+       , user_name = login_a.user_name                                                                                                                        
+       , req_seq   = issuereq.req_seq                                                                                                                         
+       , accept_user = issuereq.accept_user                                                                                                                     
+       , user_name = login_b.user_name                                                                                                                        
+       , req_flag        = (case when issuereqdet.req_flag = 'A' then '출고의뢰'
+                                 when issuereqdet.req_flag = 'B' then '생산확인'
+                                 when issuereqdet.req_flag = 'P' then '출고/생산확인'
+                                 else ''
+                            end)
+       , confirm_flag    = (case issuereq.confirm_flag                                        
+                                 when 'Y' then '확정완료'                                   
+                                 when 'N' then '미확정'                                 
+                                 else          ''                                       
+                            end)                                                        
+       , accept_area = issuereq.accept_area                                                                                                                     
+       , sys_date    = issuereq.sys_date                                                                                                           
+       , req_rem     = issuereq.rem                                                                                                                             
+
+       , issue_schedule  = (case issuereqdet.issue_schedule                                      
+                                 when 'A' then '직출'                                   
+                                 when 'B' then '생산후직출'                             
+                                 when 'C' then '자동작성'                               
+                                 when 'D' then '방문'                                   
+                                 when 'E' then '외주(시화)'                             
+                                 when 'F' then '외주(본사)'                             
+                                 when 'G' then '유창강건'                               
+                                 when 'H' then '지점이송'                               
+                                 when 'I' then '야간도착'                               
+                                 when 'J' then '저녁상차'                               
+                                 when 'K' then '택배/정기'                              
+                                 else           ''                                      
+                            end)                                                        
+                                                                                                                                                  
+       , seq        = issuereqdet.seq                /* Key1 */                                                                                                
+       , cust_no    = issuereqdet.cust_no            /* Key1 */                                                                                                
+       , cust_name  = dbo.uf_getcustname(issuereqdet.sale_no)                                                                                     
+       , scene_code = issuereqdet.scene_code         /* Key1 */                                                                                                
+       , scene_desc = dbo.uf_getscenename(issuereqdet.sale_no)                                                                                    
+       , add_scene  = issuereqdet.add_scene          /* Key1 */                                                                                                
+       , sale_no    = issuereqdet.sale_no                                                                                                                      
+       , seq_no     = a.seq_no
+       , do_date    = isnull(issuereqdet.do_date, a.prt_date) /* 출력송장 미발행인 경우도 있음 */
+       , do_no      = a.do_no
+       , oi_no      = a.oi_no
+       , area_no    = a.area_no
+       , item_name  = issuereqdet.item_name                                                                                                                    
+       , uom        = issuereqdet.uom                                                                                                                          
+       , issue_flag      = (case issuereqdet.issue_flag                                          
+                                 when 'A' then '전량'                                   
+                                 when 'P' then '부분'                                   
+                                 when 'R' then '잔여분'                                 
+                                 else          ''                                       
+                            end)                                                        
+       , ship_flag       = dbo.uf_getshipflag(issuereqdet.ship_flag)                                                                                   
+       , ship_case       = (case issuereqdet.ship_case                                           
+                                 when 'J' then '정기화물'                               
+                                 when 'T' then '택배'                                   
+                                 when 'A' then '오토바이'                               
+                                 when 'S' then '선박'                                   
+                                 when 'P' then '항공'                                   
+                                 when 'E' then '기타'                                   
+                                 else          ''                                       
+                            end)                                                        
+       , tel        = issuereqdet.tel                                                                                                                          
+       , reqdet_rem = issuereqdet.rem                                                                                                                          
+       , reqdet_sysdate = issuereqdet.sys_date                                                                                                                     
+    FROM issuereq                                                                                                                                 
+         LEFT OUTER JOIN issuereqdet                                                                                                              
+           ON issuereq.req_date = issuereqdet.req_date AND issuereq.salesman = issuereqdet.salesman AND issuereq.req_seq = issuereqdet.req_seq    
+         LEFT OUTER JOIN login login_a ON issuereq.salesman    = login_a.user_id                                                                  
+         LEFT OUTER JOIN login login_b ON issuereq.accept_user = login_b.user_id                                                                  
+         LEFT OUTER JOIN (                                                                                                                        
+              SELECT do.do_no, dodet.oi_no, dodet.sale_no, dodet.seq_no, prt_date, do.area_no                                                                                        
+                FROM do                                                                                                                           
+                     LEFT OUTER JOIN dodet ON do.do_no = dodet.do_no                                                                              
+               WHERE DO_DATE between :as_sdate + ' 00:00:00.000' AND :as_edate + ' 23:59:59.999' 
+         ) A ON issuereqdet.sale_no = a.sale_no                                                                                                   
+   WHERE ( issuereq.req_date between :as_sdate + ' 00:00:00.000' AND :as_edate + ' 23:59:59.999' )                                                                                                       
+" arguments=(("as_sdate", string),("as_edate", string))  sort="req_date D salesman A req_seq A " )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="접수자" border="6" color="0" x="1385" y="8" height="60" width="256" html.valueishtml="0"  name=login_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="출고번호" border="6" color="0" x="6903" y="8" height="60" width="498" html.valueishtml="0"  name=do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="번호" border="6" color="0" x="7410" y="8" height="60" width="165" html.valueishtml="0"  name=oi_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="송장출력" border="6" color="0" x="7584" y="8" height="60" width="530" html.valueishtml="0"  name=do_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="순번" border="6" color="0" x="6729" y="8" height="60" width="165" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="배송연락처" border="6" color="0" x="2030" y="8" height="60" width="457" html.valueishtml="0"  name=issuereqdet_tel_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="배송지역" border="6" color="0" x="1650" y="8" height="60" width="370" html.valueishtml="0"  name=add_scene_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="확정시간" border="6" color="0" x="869" y="8" height="60" width="507" html.valueishtml="0"  name=sys_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="#" border="6" color="0" x="782" y="8" height="60" width="78" html.valueishtml="0"  name=req_seq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="의뢰자" border="6" color="0" x="526" y="8" height="60" width="247" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="의뢰일자" border="6" color="0" x="178" y="8" height="60" width="338" html.valueishtml="0"  name=issuereq_req_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="782" y="8" height="72" width="78" format="[general]" html.valueishtml="0"  name=req_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="869" y="8" height="72" width="507" format="yy/mm/dd hh:mm" html.valueishtml="0"  name=sys_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="1385" y="8" height="72" width="256" format="[general]" html.valueishtml="0"  name=login_user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="0" x="1650" y="8" height="72" width="370" format="[general]" html.valueishtml="0"  name=add_scene visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=30 alignment="2" tabsequence=32766 border="0" color="0" x="2030" y="8" height="72" width="457" format="[general]" html.valueishtml="0"  name=issuereqdet_tel visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="526" y="8" height="72" width="247" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="178" y="8" height="72" width="338" format="yy/mm/dd" html.valueishtml="0"  name=req_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="0" x="7584" y="8" height="72" width="530" format="yy/mm/dd hh:mm" html.valueishtml="0"  name=do_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=23 alignment="2" tabsequence=32766 border="0" color="0" x="7410" y="8" height="72" width="165" format="[general]" html.valueishtml="0"  name=oi_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="0" x="6903" y="8" height="72" width="498" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="0" x="6729" y="8" height="72" width="165" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="12" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( salesman for all distinct salesman )"border="0" color="0" x="526" y="12" height="72" width="247" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count(  req_date  for all distinct req_date )"border="0" color="0" x="178" y="12" height="72" width="338" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="max( req_seq  for all )"border="0" color="0" x="782" y="12" height="72" width="78" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( login_user_name for all distinct login_user_name )"border="0" color="0" x="1385" y="12" height="72" width="256" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( add_scene  for all distinct )"border="0" color="0" x="1650" y="12" height="72" width="370" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( do_no for all distinct do_no )"border="0" color="0" x="6903" y="12" height="72" width="498" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=24 alignment="2" tabsequence=0 border="0" color="0" x="8128" y="8" height="72" width="251" html.valueishtml="0"  name=area_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+text(band=header alignment="2" text="출고지" border="6" color="0" x="8123" y="8" height="60" width="256" html.valueishtml="0"  name=area_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="0" x="6213" y="8" height="72" width="507" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=17 alignment="0" tabsequence=0 border="0" color="0" x="5367" y="8" height="72" width="846" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="6213" y="8" height="60" width="507" html.valueishtml="0"  name=issuereqdet_sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="5362" y="8" height="60" width="850" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="2" expression="count( sale_no for all distinct sale_no )"border="0" color="0" x="6213" y="12" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( scene_desc for all distinct cust_name, scene_desc )"border="0" color="0" x="5362" y="12" height="72" width="850" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=31 alignment="0" tabsequence=0 border="0" color="0" x="2501" y="8" height="72" width="1179" html.valueishtml="0"  name=reqdet_rem visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+text(band=header alignment="2" text="의뢰서비고" border="6" color="0" x="2496" y="8" height="60" width="1184" html.valueishtml="0"  name=reqdet_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="4576" y="8" height="60" width="777" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="3689" y="8" height="60" width="887" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=15 alignment="0" tabsequence=0 border="0" color="0" x="4581" y="8" height="72" width="773" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=25 alignment="0" tabsequence=0 border="0" color="0" x="3694" y="8" height="72" width="882" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="0" x="4576" y="12" height="72" width="777" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( item_name for all distinct item_name )"border="0" color="0" x="3689" y="12" height="72" width="887" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

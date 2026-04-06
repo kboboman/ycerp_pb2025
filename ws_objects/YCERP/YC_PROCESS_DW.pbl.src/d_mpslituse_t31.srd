@@ -1,0 +1,110 @@
+﻿$PBExportHeader$d_mpslituse_t31.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=72 color="536870912" )
+header[2](height=72 color="536870912" )
+summary(height=84 color="8421504" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=number updatewhereclause=yes name=ship_qty dbname="ship_qty" )
+ retrieve="  SELECT groupitem.item_name                              
+       , sdate    = convert(smalldatetime, :ad_start, 111)   
+       , edate    = convert(smalldatetime, :ad_end, 111)     
+       , do.do_date                                       
+       , dodet.qa                                         
+       , dodet.coil_no                                    
+       , cnt      = dodet.cnt
+       , ship_qty = dodet.ship_qty
+       , dodet.do_no
+       , dodet.oi_no
+       , customer.cust_name                            
+       , coilsheet.unit_qty                                 
+       , coilsheet.etc_no  
+       , as_flag  = :as_flag
+FROM dodet with(nolock) inner join groupitem with(nolock) on dodet.item_no = groupitem.item_no
+                           inner join do with(nolock)on dodet.do_no           = do.do_no                           
+                           inner join customer  with(nolock) on do.cust_no            = customer.cust_no
+                           inner join  (
+										select     loc_no = coilmst.loc_no
+														 , coil_no= coilmst.coil_no
+														 , unit_qty = (case when coilmst.loc_no = 'WS00000000'
+																						 then isnull( inspdet.unit_qty , coilmst.unit_qty ) 
+																				  else coilmst.unit_qty 
+																			end ) /* 스리팅 판매분의 단중은 시화저장소일 경우만 입고단중으로 표기 */
+														 , etc_no   = coilmst.etc_no
+														 , flag     = coilmst.flag  
+										from coilmst with(nolock) inner join 
+												  (
+														SELECT unit_qty, coil_no
+														FROM inspdet with(nolock)
+														group by unit_qty, coil_no
+														having count(insp_no) = 1
+												  ) inspdet
+										on coilmst.coil_no = inspdet.coil_no
+													  UNION
+													  SELECT loc_no, sheet_no, unit_qty, '',     flag  FROM sheetmst with(nolock)
+                             ) coilsheet on   dodet.coil_no         = coilsheet.coil_no 
+                                            AND  dodet.loc_no          = coilsheet.loc_no  
+   WHERE ((:as_area    = '%'   AND do.area_no   LIKE '%' ) or 
+                    (:as_area   <> '%'   AND do.area_no      = :as_area )
+                   )
+         AND ( ( do.do_date    BETWEEN :ad_start AND :ad_end ) AND  
+                    ( coilsheet.flag      = :as_flag              ) AND  
+                    ( dodet.coil_no  IS NOT NULL                  ) 
+                 )    
+/*
+    FROM groupitem   
+       , dodet       
+       , do          
+       , customer  
+       , (
+         /* SELECT loc_no, coil_no,  unit_qty, etc_no, flag  FROM coilmst */
+            SELECT loc_no = coilmst.loc_no
+                 , coil_no= coilmst.coil_no
+                 , unit_qty = (case when coilmst.loc_no = 'WS00000000'
+                                         then isnull( (SELECT unit_qty FROM inspdet WHERE coil_no = coilmst.coil_no) , coilmst.unit_qty ) 
+                                    else coilmst.unit_qty 
+                               end ) /* 스리팅 판매분의 단중은 시화저장소일 경우만 입고단중으로 표기 */
+                 , etc_no   = coilmst.etc_no
+                 , flag     = coilmst.flag  
+              FROM coilmst
+
+            UNION
+            SELECT loc_no, sheet_no, unit_qty, '',     flag  FROM sheetmst         
+         ) coilsheet
+   WHERE ( dodet.item_no        *= groupitem.item_no )   
+     AND ( dodet.do_no           = do.do_no          )   
+     AND ( dodet.coil_no         = coilsheet.coil_no )   
+     AND ( dodet.loc_no          = coilsheet.loc_no  )   
+     AND ( do.cust_no            = customer.cust_no  )   
+     AND ((:as_area    = '%'   AND do.area_no   LIKE '%' ) or 
+          (:as_area   <> '%'   AND do.area_no      = :as_area )
+         )
+     AND ( ( do.do_date    BETWEEN :ad_start AND :ad_end ) AND  
+           ( coilsheet.flag      = :as_flag              ) AND  
+           ( dodet.coil_no  IS NOT NULL                  ) 
+         )    
+*/" arguments=(("as_area", string),("ad_start", date),("ad_end", date),("as_flag", string))  sort="item_name A qa A " )
+group(level=1 header.height=0 trailer.height=88 by=("item_name" ) header.color="536870912" trailer.color="12639424" )
+text(band=header[1] alignment="0" text="Sum Of Ship Qty" border="0" color="33554432" x="9" y="4" height="60" width="1024" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Cust Name" border="0" color="33554432" x="1042" y="4" height="60" width="672" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="품목" border="6" color="33554432" x="9" y="4" height="60" width="1024" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="규격" border="6" color="33554432" x="1042" y="4" height="60" width="672" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="1" text="@cust_name" border="6" color="33554432" x="1723" y="4" height="60" width="430" html.valueishtml="0"  name=ship_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="1" text="합 계" border="6" color="33554432" x="2162" y="4" height="60" width="471" html.valueishtml="0"  name=grand_sum_ship_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="1024" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1042" y="4" height="72" width="672" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1723" y="4" height="72" width="430" format="#,##0" html.valueishtml="0"  name=ship_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2162" y="4" height="72" width="471" format="#,##0" html.valueishtml="0"  name=grand_sum_ship_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="item_name + ~" 계~""border="0" color="33554432" x="9" y="4" height="72" width="1024" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(ship_qty for group 1)"border="0" color="33554432" x="1723" y="4" height="72" width="430" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_ship_qty for group 1)"border="0" color="33554432" x="2162" y="4" height="72" width="471" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"합 계~""border="0" color="33554432" x="9" y="4" height="72" width="1024" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(ship_qty for all )"border="0" color="33554432" x="1723" y="4" height="72" width="430" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_ship_qty for all )"border="0" color="33554432" x="2162" y="4" height="72" width="471" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "cust_name" rows = "item_name, qa" values = "sum(ship_qty for crosstab)" sourcenames = "item_name, sdate, edate, do_date, qa, coil_no, cnt, ship_qty, do_no, oi_no, cust_name, unit_qty, etc_no, as_flag")
+sparse(names="item_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

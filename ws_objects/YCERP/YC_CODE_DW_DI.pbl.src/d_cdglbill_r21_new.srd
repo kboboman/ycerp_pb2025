@@ -1,0 +1,185 @@
+﻿$PBExportHeader$d_cdglbill_r21_new.srd
+$PBExportComments$어음내역출력(1998/9/10,성삼지)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 1 print.margin.left = 0 print.margin.right = 0 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 9 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=176 color="536870912" )
+summary(height=84 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(4) updatewhereclause=yes name=bill_class dbname="bill_class" )
+ column=(type=char(12) updatewhereclause=yes name=bill_no dbname="bill_no" )
+ column=(type=char(20) updatewhereclause=yes name=draft dbname="draft" )
+ column=(type=char(10) updatewhereclause=yes name=close_date dbname="close_date" )
+ column=(type=char(20) updatewhereclause=yes name=bank_name dbname="bank_name" )
+ column=(type=char(20) updatewhereclause=yes name=bill_area dbname="bill_area" )
+ column=(type=decimal(4) updatewhereclause=yes name=bill_amount dbname="bill_amount" )
+ column=(type=char(18) updatewhereclause=yes name=acct_date dbname="acct_date" )
+ column=(type=char(50) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=char(8) updatewhereclause=yes name=det_class dbname="det_class" )
+ column=(type=decimal(4) updatewhereclause=yes name=amount dbname="amount" )
+ column=(type=char(18) updatewhereclause=yes name=vcno_date dbname="vcno_date" )
+ column=(type=char(1) updatewhereclause=yes name=set_view dbname="set_view" )
+ retrieve=" SELECT seq         = '1'
+		, cust_no     = aa.cust_no
+		, bill_class  = isnull(aa.bill_class, '')
+		, bill_no     = isnull(aa.bill_no,    '')
+		, draft       = isnull(aa.draft,      '')
+		, close_date  = aa.close_date
+		, bank_name   = aa.bank_name
+		, bill_area   = aa.bill_area
+		, bill_amount = aa.bill_amount
+		, acct_date   = ''
+		, rem         = ''
+		, det_class   = ''
+		, amount      = 0
+		, vcno_date   = aa.vcno_date
+		, set_view    = aa.set_view
+	FROM (
+		  SELECT cust_no    = a.cust_no
+				 , bill_class = isnull((case when a.bill_class = 'R' then '받을'
+													  when a.bill_class = 'P' then '지급'
+													  when a.bill_class = 'C' then '교환'
+													  when a.bill_class = 'E' then '만기'
+													  when a.bill_class = 'D' then '부도'
+													  else a.bill_class
+												end), '')
+				 , bill_no    = isnull(a.bill_no, '')
+				 , draft      = isnull(a.draft,   '')
+				 , close_date = convert(char(10),a.close_date,111)
+				 , bank_name  = c.bank_name
+				 , bill_area  = a.bill_area
+				 , bill_amount= a.bill_amount
+				 , vcno_date  = convert(char(10),b.oi_date,111)
+				 , set_view   = isnull(a.set_view,'')
+			 FROM glbill A with (nolock) 
+					LEFT OUTER JOIN aroivc B with (nolock) ON a.vc_no     = b.vc_no  AND b.delete_key = 'N'
+					LEFT OUTER JOIN bank   C with (nolock) ON a.bank_code = c.bank_code
+			WHERE a.cust_no        = :as_custno
+			  AND (a.bill_class   IN ('R','D')) /*받을,부도*/
+				OR (a.bill_class    = 'P' AND convert(char(10),a.close_date,111) >= convert(char(10),getdate(),111) ) /*지급 만기일 존재*/
+		  ) AA
+ 
+		  LEFT OUTER JOIN
+		  (
+		  SELECT cust_no
+				 , bill_class
+				 , bill_no
+				 , det_class = sum(isnull(det_class,0))
+				 , amount    = sum(aa.amount)
+			 FROM (
+					SELECT cust_no    = a.cust_no
+						  , bill_class = isnull((case when a.bill_class = 'R' then '받을'
+																when a.bill_class = 'P' then '지급'
+																when a.bill_class = 'C' then '교환'
+																when a.bill_class = 'E' then '만기'
+																when a.bill_class = 'D' then '부도'
+																else a.bill_class
+														 end), '')
+						  , bill_no    = isnull(a.bill_no, '')
+						  , det_class  = (case when b.det_class = 'B' then 0
+													  when b.det_class = 'C' then 0
+													  when b.det_class = 'D' then 0
+													  when b.det_class = 'E' then 0
+													  when b.det_class = 'F' then 0
+													  when b.det_class = 'G' then 0
+													  when b.det_class = 'R' then 0
+													  when b.det_class = 'S' then 1
+												end)
+						  , amount     = isnull(b.amount,0)
+					  FROM glbill A with (nolock) 
+							 LEFT OUTER JOIN glbilldet B with (nolock) ON a.vc_no = b.vc_no AND a.bill_no = b.bill_no
+					 WHERE a.cust_no     = :as_custno
+						AND (a.bill_class   IN ('R','D')) /*받을,부도*/
+						 OR (a.bill_class    = 'P' AND convert(char(10),a.close_date,111) >= convert(char(10),getdate(),111) ) /*지급 만기일 존재*/
+					 ) AA
+				GROUP BY cust_no, bill_class, bill_no
+		  ) BB  
+		 ON aa.cust_no     = bb.cust_no  and aa.bill_no  = bb.bill_no
+	 WHERE (aa.bill_amount      <> bb.amount)
+		 OR (aa.bill_amount       = bb.amount  AND bb.det_class > 0)
+	
+/*----------------*/
+ UNION  /*어음관리*/
+/*----------------*/
+ SELECT seq         = '3'
+		, cust_no     = a.cust_no    
+		, bill_class  = isnull(a.bill_class, '')
+		, bill_no     = isnull(a.bill_no,    '')
+		, draft       = isnull(a.draft,      '')
+		, close_date  = null
+		, bank_name   = a.bank_name  
+		, bill_area   = a.bill_area  
+		, bill_amount = a.bill_amount
+		, acct_date   = a.acct_date  
+		, rem         = a.rem        
+		, det_class   = a.det_class  
+		, amount      = a.amount     
+		, vcno_date   = a.vcno_date  
+		, set_view    = ''
+	FROM (
+		  SELECT cust_no     = a.cust_no         
+				 , bill_class  = isnull((case when a.vc_type = 'R' and  a.rcpt_type     IN ('G','R','M','N') then '대손'
+														when a.vc_type = 'R' and  a.rcpt_type NOT IN ('G','R','M','N') then '수금'
+														when a.vc_type = 'P' then '지불'
+														when a.vc_type = 'S' then '대손'
+														else a.vc_type
+												 end), '')
+				 , bill_no     = isnull(a.cheque_no,'')
+				 , draft       = isnull(a.large,    '')
+				 , close_date  = convert(char(10),a.oi_date,111)
+				 , bank_name   = isnull(d.bank_name,'')
+				 , bill_area   = isnull(a.branch,'')
+				 , bill_amount = a.amount         
+				 , vcno_date   = substring(a.vc_no,1,4) + '/' + substring(a.vc_no,5,2) + '/' + substring(a.vc_no,7,2)
+				 , acct_date   = substring(a.vc_no,1,4) + '/' + substring(a.vc_no,5,2) + '/' + substring(a.vc_no,7,2)
+				 , rem         = a.rem            
+				 , det_class   = (case when a.rcpt_type = 'C' then '현금'      
+											  when a.rcpt_type = 'B' then '어음'     
+											  when a.rcpt_type = 'A' then '예금'     
+											  when a.rcpt_type = 'D' then 'D/C'      
+											  when a.rcpt_type = 'S' then '상계'     
+											  when a.rcpt_type = 'E' then '잡이익'   
+											  when a.rcpt_type = 'P' then '처리어음' 
+											  when a.rcpt_type = 'Z' then '기타'     
+											  when a.rcpt_type = 'F' then '하자보수' 
+											  when a.rcpt_type = 'G' then '대손상각' 
+											  when a.rcpt_type = 'R' then '대손이익' 
+											  when a.rcpt_type = 'M' then '대손예금' 
+											  when a.rcpt_type = 'N' then '대손어음' 
+											  else a.rcpt_type
+										end)
+				 , amount      = a.amount       
+			 FROM aroivc a with (nolock) 
+					LEFT OUTER JOIN bank   d with (nolock) ON a.bank_code = d.bank_code
+			WHERE a.cust_no     = :as_custno
+			  AND a.rcpt_type  IN ('G') /* 대손들 */
+			  AND a.delete_key  = 'N'
+			  AND a.amount      > 0
+		  ) A
+" arguments=(("as_custno", string))  sort="seq D vcno_date A " )
+group(level=1 header.height=0 trailer.height=4 by=("bill_class" , "bill_no" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=0 by=("bill_class" , "bill_no" , "draft" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="어음번호" border="0" color="0" x="160" y="96" height="60" width="370" html.valueishtml="0"  name=glbill_bill_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=header x1="5" y1="80" x2="2336" y2="80"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5" y1="168" x2="2336" y2="168"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="구분" border="0" color="0" x="14" y="96" height="60" width="128" html.valueishtml="0"  name=glbill_bill_class_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="[[[ 발 생 ]]]" border="0" color="0" x="9" y="8" height="60" width="2322" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="1" text="금액" border="0" color="0" x="1573" y="96" height="60" width="398" html.valueishtml="0"  name=glbill_bill_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="만기일자" border="0" color="0" x="1230" y="96" height="60" width="302" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="발행자" border="0" color="0" x="553" y="96" height="60" width="649" html.valueishtml="0"  name=glbill_draft_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="수금/처리" border="0" color="0" x="2034" y="96" height="60" width="288" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="14" y="8" height="60" width="128" format="[general]" html.valueishtml="0"  name=bill_class visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="160" y="8" height="60" width="370" format="[general]" html.valueishtml="0"  name=bill_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="1573" y="8" height="60" width="398" format="#,##0" html.valueishtml="0"  name=bill_amount visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="1230" y="8" height="60" width="302" format="[general]" html.valueishtml="0"  name=close_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="553" y="8" height="60" width="649" format="[general]" html.valueishtml="0"  name=draft visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="0" x="2034" y="8" height="60" width="288" format="[general]" html.valueishtml="0"  name=vcno_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="1125" y1="0" x2="2336" y2="0"  name=l_5 visible="0" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="5" y1="0" x2="2336" y2="0"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=summary alignment="2" text="합계금액" border="0" color="0" x="5" y="12" height="60" width="526" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression=" sum(bill_amount for all) "border="0" color="0" x="1573" y="12" height="60" width="398" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=summary x1="5" y1="80" x2="2336" y2="80"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

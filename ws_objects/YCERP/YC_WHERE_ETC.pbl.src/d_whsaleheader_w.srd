@@ -1,0 +1,100 @@
+﻿$PBExportHeader$d_whsaleheader_w.srd
+$PBExportComments$수주헤더조회(2003/09/24, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=sale_cust_no dbname="sale.cust_no" )
+ column=(type=char(11) updatewhereclause=yes name=sale_scene_code dbname="sale.scene_code" )
+ column=(type=datetime updatewhereclause=yes name=sale_order_date dbname="sale.order_date" )
+ column=(type=datetime updatewhereclause=yes name=sale_due_date dbname="sale.due_date" )
+ column=(type=datetime updatewhereclause=yes name=sale_plan_date dbname="sale.plan_date" )
+ column=(type=char(1) updatewhereclause=yes name=sale_sale_flag dbname="sale.sale_flag" )
+ column=(type=char(1) updatewhereclause=yes name=ship_flag2 dbname="ship_flag2" )
+ column=(type=char(30) updatewhereclause=yes name=sale_ship_flag dbname="ship_flag" )
+ column=(type=char(10) updatewhereclause=yes name=sale_fob dbname="sale.fob" )
+ column=(type=char(10) updatewhereclause=yes name=sale_salesman dbname="sale.salesman" )
+ column=(type=char(10) updatewhereclause=yes name=sale_confirm_user dbname="sale.confirm_user" )
+ column=(type=decimal(4) updatewhereclause=yes name=sale_sale_tax dbname="sale.sale_tax" )
+ column=(type=decimal(4) updatewhereclause=yes name=sale_sale_amount dbname="sale.sale_amount" )
+ column=(type=char(80) updatewhereclause=yes name=sale_shipto_addr dbname="sale.shipto_addr" )
+ column=(type=char(80) updatewhereclause=yes name=sale_rem dbname="sale.rem" )
+ column=(type=char(20) updatewhereclause=yes name=sale_tel_no dbname="sale.tel_no" )
+ column=(type=char(1) updatewhereclause=yes name=sale_ship_case dbname="sale.ship_case" values="정기화물	J/택배	T/오토바이	A/선박	S/항공	P/기타	E/" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="SCENE.scene_desc" )
+ column=(type=char(14) updatewhereclause=yes name=sale_order_no dbname="sale.order_no" )
+ column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" )
+ retrieve="  SELECT DISTINCT sale.cust_no   
+       , sale.scene_code   
+       , sale.order_date   
+       , sale.due_date   
+       , sale.plan_date   
+       , sale.sale_flag   
+       , ship_flag2 = sale.ship_flag   
+       , ship_flag  = dbo.UF_GetShipFlag(sale.ship_flag)   
+       , sale.fob   
+       , sale.salesman   
+       , sale.confirm_user   
+       , sale.sale_tax   
+       , sale.sale_amount   
+       , sale.shipto_addr   
+       , sale.rem   
+       , sale.tel_no   
+       , sale.ship_case   
+       , customer.cust_name   
+       , scene.scene_desc   
+       , sale.order_no
+       , chk      = 'N'  
+    FROM saledet
+         LEFT OUTER JOIN sale     ON saledet.order_no = sale.order_no
+         LEFT OUTER JOIN scene    ON sale.scene_code  = scene.scene_code
+         LEFT OUTER JOIN customer ON sale.cust_no     = customer.cust_no
+   WHERE ( sale.open_close    = 'O'              )
+     AND ( saledet.order_qty  > saledet.rlse_qty )
+     AND ( sale.order_date BETWEEN :as_sdate + ' 00:00:00.000' AND :as_edate + ' 23:59:59.999' )
+     AND ((:as_sel = 'S' AND sale.order_no = :as_ret ) OR
+          (:as_sel = 'C' AND sale.cust_no  = :as_ret )
+         )
+/* as_sel: 'A' 전체거래처, 'S' 수주번호, 'C' 거래처 */
+/* as_chk: 'H' 수주일자,   'B' 납기일자 */
+" arguments=(("as_sel", string),("as_ret", string),("as_sdate", string),("as_edate", string))  sort="sale_order_no D " )
+text(band=header alignment="2" text="주문" border="6" color="33554432" x="2766" y="8" height="60" width="219" html.valueishtml="0"  name=sale_order_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="납기" border="6" color="33554432" x="2994" y="8" height="60" width="201" html.valueishtml="0"  name=sale_due_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="조정" border="6" color="33554432" x="3205" y="8" height="60" width="206" html.valueishtml="0"  name=sale_plan_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송방법" border="6" color="33554432" x="3419" y="8" height="60" width="261" html.valueishtml="0"  name=sale_ship_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송수단" border="6" color="33554432" x="3689" y="8" height="60" width="256" html.valueishtml="0"  name=sale_ship_case_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="결재방법" border="6" color="33554432" x="3954" y="8" height="60" width="274" html.valueishtml="0"  name=sale_fob_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당" border="6" color="33554432" x="4238" y="8" height="60" width="197" html.valueishtml="0"  name=sale_salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="확정자" border="6" color="33554432" x="4443" y="8" height="60" width="201" html.valueishtml="0"  name=sale_confirm_user_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부가세" border="6" color="33554432" x="4654" y="8" height="60" width="384" html.valueishtml="0"  name=sale_sale_tax_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="공급가액" border="6" color="33554432" x="5047" y="8" height="60" width="402" html.valueishtml="0"  name=sale_sale_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송처주소" border="6" color="33554432" x="5458" y="8" height="60" width="1353" html.valueishtml="0"  name=sale_shipto_addr_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="33554432" x="6821" y="8" height="60" width="1074" html.valueishtml="0"  name=sale_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="649" y="8" height="60" width="558" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="1216" y="8" height="60" width="1019" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전화번호" border="6" color="33554432" x="2245" y="8" height="60" width="512" html.valueishtml="0"  name=sale_tel_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="33554432" x="183" y="8" height="60" width="457" html.valueishtml="0"  name=sale_order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="3419" y="4" height="64" width="261" format="[general]" html.valueishtml="0"  name=sale_ship_flag  tag="운송방법" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="3954" y="4" height="64" width="274" format="[general]" html.valueishtml="0"  name=sale_fob  tag="결재방법" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="4238" y="4" height="64" width="197" format="[general]" html.valueishtml="0"  name=sale_salesman  tag="영업사원코드" visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="4443" y="4" height="64" width="201" format="[general]" html.valueishtml="0"  name=sale_confirm_user  tag="확정자" visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="5458" y="4" height="64" width="1353" format="[general]" html.valueishtml="0"  name=sale_shipto_addr  tag="운송처주소" visible="1" edit.limit=80 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="6821" y="4" height="64" width="1074" format="[general]" html.valueishtml="0"  name=sale_rem  tag="비고" visible="1" edit.limit=80 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="3689" y="4" height="64" width="256" format="[general]" html.valueishtml="0"  name=sale_ship_case  tag="운송수단" visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="2994" y="4" height="64" width="201" format="mm/dd" html.valueishtml="0"  name=sale_due_date  tag="최종납기일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="3205" y="4" height="64" width="206" format="mm/dd" html.valueishtml="0"  name=sale_plan_date  tag="조정납기" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="2766" y="4" height="64" width="219" format="mm/dd" html.valueishtml="0"  name=sale_order_date  tag="주문일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="4654" y="4" height="64" width="384" format="#,##0" html.valueishtml="0"  name=sale_sale_tax  tag="부가세" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="5047" y="4" height="64" width="402" format="#,##0" html.valueishtml="0"  name=sale_sale_amount  tag="공급가액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="0~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="649" y="4" height="64" width="558" format="[general]" html.valueishtml="0"  name=customer_cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="0~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="1216" y="4" height="64" width="1019" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="2245" y="4" height="64" width="512" format="[general]" html.valueishtml="0"  name=sale_tel_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(255, 0, 0), rgb(0,0,0) )" x="183" y="4" height="64" width="457" format="[general]" html.valueishtml="0"  name=sale_order_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="64" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="60" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

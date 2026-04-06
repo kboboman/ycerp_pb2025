@@ -1,0 +1,102 @@
+﻿$PBExportHeader$d_orsalesalemanrep_r4.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=84 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=datetime updatewhereclause=yes name=order_date dbname="order_date" )
+ column=(type=decimal(0) updatewhereclause=yes name=pamt dbname="pamt" )
+ column=(type=decimal(4) updatewhereclause=yes name=balance_amt dbname="balance_amt" )
+ column=(type=decimal(4) updatewhereclause=yes name=sale_amount dbname="sale_amount" )
+ retrieve="  SELECT distinct cust_no      = a.cust_no
+       , user_name    = a.user_name   
+       , cust_name    = a.cust_name   
+       , scene_code   = a.scene_code
+       , scene_desc   = a.scene_desc   
+       , order_date   = a.order_date   
+       , pamt         = dbo.UF_GetMonthAMT( a.cust_no, datepart(year, a.order_date), datepart(month, a.order_date) ) /* 당월매출 */
+       , balance_amt  = (SELECT balance_amt FROM customer WHERE cust_no = a.cust_no) /* 미수금액 */
+       , sale_amount  = a.sale_amount
+    FROM (
+         SELECT cust_no      = a.cust_no
+              , user_name    = a.user_name   
+              , cust_name    = a.cust_name   
+              , scene_code   = a.scene_code
+              , scene_desc   = a.scene_desc   
+              , order_date   = a.order_date   
+              , sale_amount  = sum(a.sale_amount)
+           FROM (
+                SELECT DISTINCT l.user_name
+                     , m.cust_no   
+                     , c.cust_name   
+                     , s.scene_code
+                     , sc.scene_desc   
+                     , s.order_date   
+                     , s.order_no
+                     , s.sale_amount   
+                  FROM UF_MyCustomers( :as_salesman ) M
+                       LEFT OUTER JOIN customer   C ON m.cust_no     = c.cust_no
+/*                       LEFT OUTER JOIN sale       S ON m.cust_no     = s.cust_no AND s.open_close NOT IN ('X','C')	 한도초과*/
+                       LEFT OUTER JOIN sale       S ON m.cust_no     = s.cust_no AND s.open_close  = 'O'
+                       LEFT OUTER JOIN saledet   SD ON s.order_no    = sd.order_no 
+                       LEFT OUTER JOIN groupitem  G ON sd.item_no    = g.item_no
+                       LEFT OUTER JOIN scene     SC ON s.scene_code  = sc.scene_code
+                       LEFT OUTER JOIN login      L ON c.salesman    = l.user_id
+                 WHERE ((:as_output  = 'Y' AND sd.order_qty - sd.rlse_qty > 0 ) OR /*출고분 제외*/
+                        (:as_output <> 'Y' AND sd.order_qty > 0 )
+                       )
+                   AND ( s.area_no        LIKE :as_area ) 
+                   AND ( s.order_date  BETWEEN :as_sdate AND :as_edate ) 
+                   AND ((:as_team  = '%' ) OR 
+                        (:as_team <> '%' AND m.salesman = :as_salesman )
+                       )
+                   AND ((:as_custno  = '%'   AND m.cust_no   LIKE :as_custno  ) OR 
+                        (:as_custno  = 'ALL' AND m.cust_no   LIKE :as_custno  ) OR 
+                        (:as_custno <> 'ALL' AND m.cust_no      = :as_custno )
+                       )
+                   AND ((:as_inside  = '%') OR
+                        (:as_inside <> '%' AND c.cust_no NOT IN (SELECT item_cd FROM codemst WHERE type = '내부업체' AND use_yn = 'Y') )
+                       )
+                   AND ( sd.acc_qty * sd.price > 0 )
+                ) A
+            GROUP BY a.user_name
+                   , a.cust_no   
+                   , a.cust_name
+                   , a.scene_code
+                   , a.scene_desc
+                   , a.order_date
+         ) A
+     WHERE a.sale_amount > :ad_amount
+" arguments=(("as_area", string),("as_custno", string),("as_sdate", string),("as_edate", string),("as_salesman", string),("as_team", string),("as_inside", string),("as_output", string),("ad_amount", number))  sort="user_name A cust_name A scene_desc A order_date A " )
+text(band=header alignment="2" text="거래처" border="6" color="33554432" x="544" y="8" height="68" width="837" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="33554432" x="1390" y="8" height="68" width="1312" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문일자" border="6" color="33554432" x="2711" y="8" height="68" width="398" html.valueishtml="0"  name=order_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당월매출" border="6" color="33554432" x="3118" y="8" height="68" width="672" html.valueishtml="0"  name=pamt_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="미수금액" border="6" color="33554432" x="3799" y="8" height="68" width="690" html.valueishtml="0"  name=balance_amt_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주금액" border="6" color="33554432" x="4498" y="8" height="68" width="681" html.valueishtml="0"  name=sale_amount_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="183" y="8" height="68" width="352" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="68" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="544" y="8" height="72" width="837" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1390" y="8" height="72" width="1312" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2711" y="8" height="72" width="398" format="yyyy/mm/dd" html.valueishtml="0"  name=order_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="3118" y="8" height="72" width="672" format="#,##0" html.valueishtml="0"  name=pamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="3799" y="8" height="72" width="690" format="#,##0" html.valueishtml="0"  name=balance_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="4498" y="8" height="72" width="681" format="#,##0" html.valueishtml="0"  name=sale_amount visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="1" expression="sum( sale_amount for all )"border="0" color="33554432" x="4498" y="8" height="72" width="681" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( user_name for all DISTINCT user_name )"border="0" color="33554432" x="183" y="8" height="72" width="352" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( cust_name for all DISTINCT cust_name )"border="0" color="33554432" x="544" y="8" height="72" width="837" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( scene_desc for all DISTINCT cust_name, scene_desc )"border="0" color="33554432" x="1390" y="8" height="72" width="1312" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( order_date for all DISTINCT order_date )"border="0" color="33554432" x="2711" y="8" height="72" width="398" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="2" text="" border="0" color="0" x="3118" y="8" height="72" width="672" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="2" text="" border="0" color="0" x="3799" y="8" height="72" width="690" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

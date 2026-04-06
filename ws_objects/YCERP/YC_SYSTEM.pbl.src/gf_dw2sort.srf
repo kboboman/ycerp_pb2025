@@ -1,0 +1,43 @@
+﻿$PBExportHeader$gf_dw2sort.srf
+global type gf_dw2sort from function_object
+end type
+
+forward prototypes
+global subroutine gf_dw2sort (datawindow arg_dw, dropdownlistbox arg_ddlb_nm, string arg_sorttype, dropdownlistbox arg_dwtitles)
+end prototypes
+
+global subroutine gf_dw2sort (datawindow arg_dw, dropdownlistbox arg_ddlb_nm, string arg_sorttype, dropdownlistbox arg_dwtitles);/*
+  Function Name : GF_DW2Sort      (Datawindow 오름차순, 내림차순)
+       Argument : arg_dw, arg_ddlb_nm, arg_sorttype, arg_dwtitles
+    Return Type : None
+*/
+string ls_colname_split[], ls_nullarray[]
+string ls_column, ls_col,  ls_arg_ddlb
+long	 ii
+
+if isnull( arg_dw ) then RETURN
+if IsValid( arg_dw ) = false then RETURN
+
+if arg_dw.Object.DataWindow.Processing = "4" then		// 4: Crosstab
+	arg_dw.object.DataWindow.CrossTab.StaticMode = "Yes"
+end if
+
+
+//ls_value = string(long(ls_columnx[ii]),"00000") + "|" + ls_columnt[ii] + "|" + ls_column[ii]
+ls_arg_ddlb = arg_ddlb_nm.text
+
+for ii = 1 to arg_dwtitles.TotalItems()
+	ls_colname_split = ls_nullarray		// 초기화
+	GF_SPLIT( arg_dwtitles.Text(ii), "|", ls_colname_split )
+	if ls_colname_split[2] = arg_ddlb_nm.text then
+		ls_col = ls_colname_split[3]
+		exit
+	end if
+next
+
+arg_dw.SetSort(ls_col + " " + arg_sorttype)
+arg_dw.sort()
+arg_dw.setfocus()
+
+end subroutine
+

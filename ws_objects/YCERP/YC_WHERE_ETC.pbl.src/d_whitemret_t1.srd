@@ -1,0 +1,169 @@
+﻿$PBExportHeader$d_whitemret_t1.srd
+$PBExportComments$생산계획
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=4 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=saler_user dbname="saler_user" )
+ column=(type=char(10) updatewhereclause=yes name=wc_no dbname="wc_no" )
+ column=(type=char(10) updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=char(4) updatewhereclause=yes name=pri dbname="pri" )
+ column=(type=datetime updatewhereclause=yes name=napgi_date dbname="napgi_date" )
+ column=(type=char(14) updatewhereclause=yes name=sale_no dbname="sale_no" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="seq_no" )
+ column=(type=char(1) updatewhereclause=yes name=overtime dbname="overtime" )
+ column=(type=char(4) updatewhereclause=yes name=runcmd dbname="runcmd" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(10) updatewhereclause=yes name=assy_item dbname="assy_item" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=order_qty dbname="order_qty" )
+ column=(type=char(20) updatewhereclause=yes name=assy_qa dbname="assy_qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom_order dbname="uom_order" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=plan_qty dbname="plan_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=make_qty dbname="make_qty" )
+ column=(type=char(10) updatewhereclause=yes name=color_name dbname="color_name" )
+ column=(type=char(17) updatewhereclause=yes name=planno dbname="planno" )
+ column=(type=char(50) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=datetime updatewhereclause=yes name=work_date dbname="work_date" )
+ column=(type=char(1) updatewhereclause=yes name=flag dbname="flag" )
+ column=(type=long updatewhereclause=yes name=op dbname="op" )
+ column=(type=long updatewhereclause=yes name=div dbname="div" )
+ column=(type=char(1) updatewhereclause=yes name=req_chk dbname="req_chk" )
+ column=(type=char(1) updatewhereclause=yes name=utong_yn dbname="utong_yn" )
+ column=(type=char(1) updatewhereclause=yes name=make_order_sort dbname="make_order_sort" )
+ column=(type=char(16) updatewhereclause=yes name=mpsorder_order_no dbname="mpsorder.order_no" )
+ retrieve="  SELECT saler_user = aroiinv_esero.saler_user
+       , wc_no      = routtempnew.wc_no
+       , work_name  = wc.work_name             
+       , pri        = (case when mpsdet.priority is null then '미' 
+                            else (case when mpsdet.mpsorder_order is null 
+                                            then right(  '  ' + convert(char(2), mpsdet.priority), 2 ) 
+                                       else right(  '  ' + convert(char(2), mpsdet.order_seq), 2 ) 
+                                  end)
+                       end)
+       , napgi_date = routtempnew.napgi_date   
+       , sale_no    = routtempnew.sale_no       
+       , seq_no     = routtempnew.seq_no       
+       , overtime   = (case when mpsorder.overtime = 'Y' then mpsorder.overtime else '' end)
+       , runcmd     = substring(convert(char(10),mpsorder.order_date,111),9,2)
+       , cust_name  = customer.cust_name       
+       , scene_desc = scene.scene_desc         
+       , assy_item  = routtempnew.assy_item     
+       , item_name  = groupitem.item_name       
+       , qa         = routtempnew.qa           
+       , order_qty  = routtempnew.order_qty    
+       , assy_qa    = routtempnew.assy_qa      
+       , uom_order  = (case when groupitem.uom = 'M' OR  groupitem.uom = 'M2' then 'EA' else groupitem.uom end)         
+       , uom        = groupitem.uom
+       , plan_qty   = routtempnew.plan_qty     
+       , make_qty   = routtempnew.make_qty     
+       , color_name = color.color_name         
+       , planno     = (case when mpsdet.order_no is null then 'ZZZZZZZZZZZZZZZZZ' 
+                            else (case when mpsdet.mpsorder_order is null then mpsdet.order_no 
+                                       else mpsdet.mpsorder_order 
+                                  end)
+                       end)
+       , rem        = routtempnew.rem          
+       , work_date  = routtempnew.work_date     
+       , flag       = routtempnew.plan_flag         
+       , op         = routtempnew.operation         
+       , div        = routtempnew.division         
+       , req_chk    = (case when b.sale_no is null then '' else 'Y' end)
+	  , isnull( scene.utong_yn, 'N' ) utong_yn
+       , ( case when mpsorder.order_no is null then '2' else '1' end ) make_order_sort
+	 , mpsorder.order_no
+    FROM routtempnew 
+         LEFT OUTER JOIN customer    ON routtempnew.cust_no     = customer.cust_no 
+         LEFT OUTER JOIN scene       ON routtempnew.scene_code  = scene.scene_code 
+         LEFT OUTER JOIN color       ON routtempnew.item_color  = color.color_code 
+         LEFT OUTER JOIN wc          ON routtempnew.wc_no       = wc.work_no   
+         LEFT OUTER JOIN mpsdet      ON routtempnew.sale_no     = mpsdet.sale_no   
+                                    AND routtempnew.seq_no      = mpsdet.seq_no  
+                                    AND routtempnew.division    = mpsdet.division  
+                                    AND routtempnew.operation   = mpsdet.operation 
+                                    AND routtempnew.wc_no       = mpsdet.wc_no     
+         LEFT OUTER JOIN mpsorder    ON mpsdet.mpsorder_order   = mpsorder.order_no
+         LEFT OUTER JOIN groupitem   ON routtempnew.assy_item   = groupitem.item_no    
+         LEFT OUTER JOIN aroiinv_esero  ON customer.salesman    = aroiinv_esero.id
+         LEFT OUTER JOIN (
+              SELECT DISTINCT sale_no 
+                FROM issuereqdet B with (nolock) 
+               WHERE b.req_date   = :ad_date
+                 AND b.req_flag   = 'A' /* '출고의뢰' */
+         ) B ON routtempnew.sale_no = b.sale_no  
+   WHERE ( routtempnew.work_date      = :ad_date )  
+     AND ( routtempnew.plan_flag   LIKE :as_flag ) 
+     AND ( wc.work_name            LIKE :as_wcnm ) 
+     AND ( routtempnew.area_no        = :as_area )     
+" arguments=(("ad_date", date),("as_wcnm", string),("as_flag", string),("as_area", string))  sort="wc_no A make_order_sort A mpsorder_order_no A planno A right( '00' + trim( pri ), 3 ) A napgi_date A assy_qa A " )
+group(level=1 header.height=0 trailer.height=80 by=("wc_no" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="납기일자" border="6" color="33554432" x="613" y="12" height="60" width="379" html.valueishtml="0"  name=napgi_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="계획수량" border="6" color="33554432" x="5371" y="12" height="60" width="247" html.valueishtml="0"  name=plan_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산수량" border="6" color="33554432" x="6053" y="12" height="60" width="251" html.valueishtml="0"  name=make_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="색상" border="6" color="33554432" x="6313" y="12" height="60" width="293" html.valueishtml="0"  name=color_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="485" y="12" height="60" width="119" html.valueishtml="0"  name=pri_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문수량" border="6" color="33554432" x="4937" y="12" height="60" width="256" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="33554432" x="5202" y="12" height="60" width="160" html.valueishtml="0"  name=uom_order_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="환산수량" border="6" color="33554432" x="5627" y="12" height="60" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="환단" border="6" color="33554432" x="5888" y="12" height="60" width="155" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="16711680" x="1001" y="12" height="60" width="238" html.valueishtml="0"  name=saler_user_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="33554432" x="1248" y="12" height="60" width="503" html.valueishtml="0"  name=sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="지" border="6" color="33554432" x="1760" y="12" height="60" width="105" html.valueishtml="0"  name=runcmd_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="야" border="6" color="33554432" x="1874" y="12" height="60" width="91" html.valueishtml="0"  name=overtime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="33554432" x="2656" y="12" height="60" width="855" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="3520" y="12" height="60" width="754" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="33554432" x="6615" y="12" height="60" width="1038" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="계획번호" border="6" color="33554432" x="7662" y="12" height="60" width="526" html.valueishtml="0"  name=planno_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="4283" y="12" height="60" width="645" html.valueishtml="0"  name=assy_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="33554432" x="2071" y="12" height="60" width="576" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출" border="6" color="33554432" x="1975" y="12" height="60" width="87" html.valueishtml="0"  name=req_chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="33554432" x="142" y="12" height="60" width="334" html.valueishtml="0"  name=work_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="#" border="6" color="0" x="9" y="12" height="60" width="123" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="6" color="33554432" x="9" y="0" height="80" width="123" format="[GENERAL]" html.valueishtml="0"  name=compute_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif( utong_yn = 'Y' ,    65535,  67108864 ) " )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="142" y="8" height="72" width="334" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="485" y="8" height="72" width="119" format="[general]" html.valueishtml="0"  name=pri visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="613" y="8" height="72" width="379" format="yyyy/mm/dd" html.valueishtml="0"  name=napgi_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="16711680~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="1001" y="8" height="72" width="238" format="[general]" html.valueishtml="0"  name=saler_user visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="1248" y="8" height="72" width="503" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="1760" y="8" height="72" width="105" format="[general]" html.valueishtml="0"  name=runcmd visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="1874" y="8" height="72" width="91" format="[general]" html.valueishtml="0"  name=overtime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=28 alignment="2" tabsequence=32766 border="0" color="0" x="1975" y="8" height="72" width="87" format="[general]" html.valueishtml="0"  name=req_chk visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="2071" y="8" height="72" width="576" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="2656" y="8" height="72" width="855" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="3520" y="8" height="72" width="754" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="4283" y="8" height="72" width="645" format="[general]" html.valueishtml="0"  name=assy_qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="4937" y="8" height="72" width="256" format="#,##0" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="5202" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=uom_order visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="5371" y="8" height="72" width="247" format="#,##0" html.valueishtml="0"  name=plan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+compute(band=detail alignment="1" expression="if(left( assy_item, 1) = 'P' and mid( assy_item, 3,1) = 'Y' and (mid( assy_item, 7,1) = 'A' or mid( assy_item, 7,1) = 'B' or mid( assy_item, 7,1) = 'C' or mid( assy_item, 7,1) = 'D'),  plan_qty, if( uom = 'M2' or  uom = 'SS', truncate( long(mid( assy_qa,5,4)) * long(mid( assy_qa,10,4)) * plan_qty / 1000000, 2), if( uom = 'M', if ( plan_qty < 0, truncate(long(mid( assy_qa, 15,5)) * plan_qty / 1000 - 0.00001,2), truncate(long(mid( assy_qa, 15,5)) * plan_qty / 1000 + 0.00001,2)), plan_qty )))"border="0" color="16711680~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="5627" y="8" height="72" width="251" format="#,##0" html.valueishtml="0"  name=com_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="16711680~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="5888" y="8" height="72" width="155" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="6053" y="8" height="72" width="251" format="#,##0" html.valueishtml="0"  name=make_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="6313" y="8" height="72" width="293" format="[general]" html.valueishtml="0"  name=color_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="6615" y="4" height="72" width="1038" format="[general]" html.valueishtml="0"  name=rem visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  overtime = 'Y', rgb(255, 0, 0), rgb(0, 0, 0) )" x="7662" y="4" height="72" width="526" format="[general]" html.valueishtml="0"  name=planno visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif( utong_yn = 'Y' ,    65535,  553648127 )" )
+compute(band=trailer.1 alignment="1" expression="sum ( make_qty for group 1 )"border="0" color="33554432" x="6053" y="8" height="64" width="251" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( com_qty for group 1 )"border="0" color="16711680" x="5627" y="8" height="64" width="251" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( order_qty for group 1 )"border="0" color="33554432" x="4937" y="8" height="64" width="256" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression=" work_name "border="0" color="33554432" x="4283" y="8" height="64" width="645" format="[GENERAL]" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum (  make_qty for all )"border="0" color="0" x="6053" y="8" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( order_qty for all )"border="0" color="0" x="4937" y="8" height="72" width="256" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( com_qty for all )"border="0" color="16711680" x="5627" y="8" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count ( saler_user for all distinct saler_user )"border="0" color="0" x="1001" y="8" height="72" width="238" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( scene_desc for all distinct scene_desc )"border="0" color="0" x="2656" y="8" height="72" width="855" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( item_name for all distinct item_name )"border="0" color="33554432" x="3520" y="8" height="72" width="754" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="0" x="2071" y="8" height="72" width="576" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( work_name for all distinct work_name )"border="0" color="0" x="142" y="8" height="72" width="334" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="6" color="33554432" x="9" y="0" height="84" width="123" format="[GENERAL]" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum ( if ( runcmd = 'Y', 1, 0) for all )"border="0" color="16711680" x="1760" y="8" height="72" width="105" format="[GENERAL]" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count ( sale_no for all distinct sale_no )"border="0" color="0" x="1248" y="8" height="72" width="503" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="'품목+규격(13): ' + count( left(qa, 13) for all distinct item_name, left(qa, 13) )"border="0" color="33554432" x="4283" y="8" height="72" width="645" format="[GENERAL]" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum ( if ( overtime = 'Y', 1, 0) for all )"border="0" color="16711680" x="1874" y="8" height="72" width="91" format="[GENERAL]" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum ( if ( req_chk = 'Y', 1, 0) for all )"border="0" color="16711680" x="1975" y="8" height="72" width="87" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="work_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

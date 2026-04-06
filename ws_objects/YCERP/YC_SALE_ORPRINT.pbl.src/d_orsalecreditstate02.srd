@@ -1,0 +1,208 @@
+﻿$PBExportHeader$d_orsalecreditstate02.srd
+$PBExportComments$담당자별 거래처 여신한도현황_출력
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=460 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(5) updatewhereclause=yes name=team_code dbname="team_code" )
+ column=(type=char(30) updatewhereclause=yes name=team_name dbname="team_name" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=top_level dbname="top_level" )
+ column=(type=decimal(4) updatewhereclause=yes name=credit_limit dbname="credit_limit" )
+ column=(type=decimal(0) updatewhereclause=yes name=limit_amt dbname="limit_amt" )
+ column=(type=char(8) updatewhereclause=yes name=start_date dbname="start_date" )
+ column=(type=char(8) updatewhereclause=yes name=end_date dbname="end_date" )
+ column=(type=decimal(2) updatewhereclause=yes name=amt1 dbname="amt1" )
+ column=(type=decimal(0) updatewhereclause=yes name=amt2 dbname="amt2" )
+ column=(type=decimal(9) updatewhereclause=yes name=amt3 dbname="amt3" )
+ column=(type=decimal(0) updatewhereclause=yes name=sum_amt dbname="sum_amt" )
+ column=(type=decimal(0) updatewhereclause=yes name=balance_amt dbname="balance_amt" )
+ column=(type=char(30) updatewhereclause=yes name=today dbname="today" )
+ retrieve="select 
+    d.team_code		team_code
+	,e.team_name		team_name
+   ,a.salesman			salesman
+	,d.user_name		user_name
+	,a.cust_no			cust_no
+	,a.cust_name		cust_name
+	,a.top_level		top_level
+	,a.credit_limit	credit_limit
+	,b.limit_amt		limit_amt
+	,b.start_date		start_date
+	,isnull(b.end_date,CONVERT(VARCHAR, DATEADD(YEAR, DATEDIFF(YEAR, -1, GETDATE()), -1),112))	end_date
+	,f.amt1				amt1
+	,isnull(g.amt2,0) amt2
+	,isnull(h.amt3,0) amt3
+	,isnull(f.amt1,0) + isnull(g.amt2,0) + isnull(h.amt3,0) 																																							sum_amt
+	,case when convert(varchar, getdate(), 112) > b.end_date then a.credit_limit else isnull(b.limit_amt,a.credit_limit) end - (f.amt1 + isnull(g.amt2,0) + isnull(h.amt3,0))	balance_amt	
+	,convert(varchar, getdate(), 112)	today	
+from 
+	customer a	left outer join (select aa.* from orexceed aa inner join (select cust_no, max(input_date) input_date from orexceed where use_yn = 'Y' group by cust_no) bb on aa.cust_no = bb.cust_no and aa.input_date = bb.input_date) b on a.cust_no = b.cust_no
+			   	inner join login d on a.salesman = d.user_id
+			   	inner join team e on d.team_code = e.team_code
+			   	left outer join (select
+			   					 cust_no
+								,(inv_01 + inv_02 + inv_03 + inv_04 + inv_05 + inv_06 + inv_07 + inv_08 + inv_09 + inv_10 + inv_11 + inv_12
+								 - coll_01 - coll_02 - coll_03 - coll_04 - coll_05 - coll_06 - coll_07 - coll_08 - coll_09 - coll_10 - coll_11 - coll_12) + balbf_amount as amt1
+							from 
+								opeom
+							where 
+								datepart(year,eom_year) = convert(char(4),getdate(),111)) f on a.cust_no = f.cust_no
+					left outer join	   
+								  (
+									SELECT 
+										 AAAA.cust_no
+										,sum(AAAA.bill_amount) amt2 
+									FROM 
+										(
+										SELECT 
+											 AAA.cust_no cust_no
+											,AAA.bill_amount bill_amount
+										FROM 
+											(
+											SELECT 
+												 cust_no = a.cust_no
+												,bill_class = isnull((case	when a.bill_class = 'R' then '받을'
+																					when a.bill_class = 'P' then '지급'
+																					when a.bill_class = 'C' then '교환'
+																					when a.bill_class = 'E' then '만기'
+																					when a.bill_class = 'D' then '부도'
+																			else a.bill_class end), '')
+												,bill_no    = isnull(a.bill_no, '')
+												,bill_amount= a.bill_amount
+											FROM glbill A with (nolock) INNER JOIN aroivc B with (nolock) ON a.vc_no     = b.vc_no  AND b.delete_key = 'N' AND B.vc_type2 = '01'
+																				 LEFT OUTER JOIN bank   C with (nolock) ON a.bank_code = c.bank_code
+											WHERE (a.bill_class   IN ('R','D')) /*받을,부도*/
+											OR (a.bill_class    = 'P' AND convert(char(10),a.close_date,111) >= convert(char(10),getdate(),111) ) /*지급 만기일 존재*/
+											) AAA	LEFT OUTER JOIN	(
+																			SELECT 
+																				 cust_no
+																				,bill_class
+																				,bill_no
+																				,det_class = sum(isnull(det_class,0))
+																				,amount    = sum(aa.amount)
+																			FROM 
+																				(
+																				SELECT 
+																					 cust_no    = a.cust_no
+																					,bill_class = isnull((case when a.bill_class = 'R' then '받을'
+																														when a.bill_class = 'P' then '지급'
+																														when a.bill_class = 'C' then '교환'
+																														when a.bill_class = 'E' then '만기'
+																														when a.bill_class = 'D' then '부도'
+																												 else a.bill_class end), '')
+																					,bill_no    = isnull(a.bill_no, '')
+																					,det_class  = (case when b.det_class = 'B' then 0
+																											  when b.det_class = 'C' then 0
+																											  when b.det_class = 'D' then 0
+																											  when b.det_class = 'E' then 0
+																											  when b.det_class = 'F' then 0
+																											  when b.det_class = 'G' then 0
+																											  when b.det_class = 'R' then 0
+																											  when b.det_class = 'S' then 1
+																										end)
+																					,amount     = isnull(b.amount,0)
+																				FROM glbill A with (nolock) LEFT OUTER JOIN glbilldet B with (nolock) ON a.vc_no = b.vc_no AND a.bill_no = b.bill_no
+																				WHERE (a.bill_class   IN ('R','D')) /*받을,부도*/
+																				OR (a.bill_class    = 'P' AND convert(char(10),a.close_date,111) >= convert(char(10),getdate(),111) ) /*지급 만기일 존재*/
+																				) AA
+																			GROUP BY cust_no, bill_class, bill_no) BBB ON AAA.cust_no     = BBB.cust_no  and AAA.bill_no  = BBB.bill_no
+										WHERE 
+										 	(AAA.bill_amount	<> BBB.amount)
+										OR 
+											(AAA.bill_amount	= BBB.amount  AND BBB.det_class > 0)) AAAA
+									group by  
+										AAAA.cust_no) g on a.cust_no = g.cust_no 
+					left outer join	   
+								  (
+									SELECT 
+										 aa.cust_no cust_no
+										,sum(aa.sale_amount) + sum(case when AA.tax_sign = 'Y' then case when AA.curr_code = 'WON' then round(AA.sale_amount/10,0,1) else round(AA.sale_amount/10,2,1) end else 0 end) amt3
+									FROM
+										(
+										SELECT
+											 sale.cust_no
+											,sale.order_no
+											,sale.tax_sign
+											,sale.curr_code
+											,SUM(saledet.price * dbo.uf_getqty(saledet.item_no, saledet.qa, saledet.uom, saledet.order_qty - saledet.rlse_qty)) sale_amount
+										FROM 
+											customer  C with (nolock) inner join OPEOM_ORG O with(nolock) on c.salesman  = o.user_id
+											INNER JOIN sale with (nolock) ON c.cust_no = sale.cust_no  AND sale.open_close = 'O'
+											INNER JOIN saledet     with (nolock) ON sale.order_no   = saledet.order_no 
+											INNER JOIN scene       with (nolock) ON sale.scene_code = scene.scene_code 
+											INNER JOIN groupitem G with (nolock) ON saledet.item_no = g.item_no
+											LEFT OUTER JOIN itemtop10 I with (nolock) ON saledet.item_no = i.item_no  
+											LEFT OUTER JOIN codemst cm with (nolock) ON  i.category = cm.item_cd and cm.type = 'ITEMTOP10' AND cm.use_yn = 'Y'
+										WHERE 
+											sale.order_date   BETWEEN convert(varchar(8), dateadd(day,-60,getdate()),112) AND convert(varchar(8), dateadd(day,30,getdate()),112)
+										AND 
+											saledet.order_qty  > saledet.rlse_qty
+										GROUP BY 
+											sale.cust_no, sale.order_no, sale.tax_sign, sale.curr_code) AA
+									group by aa.cust_no) h on a.cust_no  = h.cust_no	
+where
+	a.open_close = 'O'
+and
+	a.credit_limit > 0
+and
+	a.salesman	like :as_salesman
+" arguments=(("as_salesman", string))  sort="team_name A top_level A user_name A " )
+group(level=1 header.height=0 trailer.height=88 by=("salesman" ) header.color="536870912" trailer.color="536870912" )
+column(band=header id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="6057" y="232" height="100" width="512" format="[general]" html.valueishtml="0"  name=today visible="1" editmask.mask="XXXX/XX/XX" editmask.imemode=0 editmask.focusrectangle=no  font.face="맑은 고딕" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="담당자별 거래처 여신한도현황" border="0" color="33554432" x="9" y="68" height="148" width="6560" html.valueishtml="0"  name=t_12 visible="1"  font.face="맑은 고딕" font.height="-20" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" font.underline="1" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="No." border="0" color="33554432" x="9" y="356" height="92" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="담당자" border="0" color="33554432" x="526" y="356" height="92" width="352" html.valueishtml="0"  name=user_name_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="등급" border="0" color="33554432" x="2080" y="356" height="92" width="165" html.valueishtml="0"  name=top_level_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="한도기초금액" border="0" color="33554432" x="2254" y="356" height="92" width="503" html.valueishtml="0"  name=credit_limit_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="시작일" border="0" color="33554432" x="3291" y="356" height="92" width="334" html.valueishtml="0"  name=start_date_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="종료일" border="0" color="33554432" x="3634" y="356" height="92" width="334" html.valueishtml="0"  name=end_date_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="미수잔액" border="0" color="33554432" x="3977" y="356" height="92" width="512" html.valueishtml="0"  name=amt1_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="자수어음" border="0" color="33554432" x="4498" y="356" height="92" width="503" html.valueishtml="0"  name=amt2_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="수주잔액" border="0" color="33554432" x="5010" y="356" height="92" width="526" html.valueishtml="0"  name=amt3_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="부서" border="0" color="33554432" x="174" y="356" height="92" width="343" html.valueishtml="0"  name=team_name_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="거래처명" border="0" color="33554432" x="1234" y="356" height="92" width="837" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="거래처코드" border="0" color="33554432" x="887" y="356" height="92" width="338" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="한도적용금액" border="0" color="33554432" x="2766" y="356" height="92" width="517" html.valueishtml="0"  name=limit_amt_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="2" text="미수,수주총액" border="0" color="33554432" x="5545" y="356" height="92" width="503" html.valueishtml="0"  name=sum_amt_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+text(band=header alignment="1" text="조회일시 :" border="0" color="33554432" x="5545" y="232" height="84" width="503" html.valueishtml="0"  name=t_13 visible="1"  font.face="맑은 고딕" font.height="-12" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="여신잔여액" border="0" color="33554432" x="6057" y="356" height="92" width="512" html.valueishtml="0"  name=balance_amt_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="268435456" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="6057" y="4" height="84" width="512" format="#,##0" html.valueishtml="0"  name=balance_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="84" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="174" y="4" height="84" width="343" format="[general]" html.valueishtml="0"  name=team_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="526" y="4" height="84" width="352" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="887" y="4" height="84" width="338" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1234" y="4" height="84" width="837" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2080" y="4" height="84" width="165" format="[general]" html.valueishtml="0"  name=top_level visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2254" y="4" height="84" width="503" format="#,##0" html.valueishtml="0"  name=credit_limit visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="3291" y="4" height="84" width="334" format="[General]" html.valueishtml="0"  name=start_date visible="1" editmask.mask="XXXX-XX-XX" editmask.imemode=0 editmask.focusrectangle=no  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="3634" y="4" height="84" width="334" format="[General]" html.valueishtml="0"  name=end_date visible="1" editmask.mask="XXXX-XX-XX" editmask.imemode=0 editmask.focusrectangle=no  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="3977" y="4" height="84" width="512" format="#,##0" html.valueishtml="0"  name=amt1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="4498" y="4" height="84" width="503" format="#,##0" html.valueishtml="0"  name=amt2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="5010" y="4" height="84" width="526" format="#,##0" html.valueishtml="0"  name=amt3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="33554432" x="5545" y="4" height="84" width="503" format="#,##0" html.valueishtml="0"  name=sum_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="2766" y="4" height="84" width="517" format="#,##0" html.valueishtml="0"  name=limit_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(amt2 for group 1)"border="0" color="33554432" x="4498" y="4" height="84" width="503" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(amt3 for group 1)"border="0" color="33554432" x="5010" y="4" height="84" width="526" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(sum_amt for group 1)"border="0" color="33554432" x="5545" y="4" height="84" width="503" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(balance_amt for group 1)"border="0" color="33554432~tif(  sum_balance_amt < 0, rgb( 255, 0, 0), rgb( 0, 0, 0) )" x="6057" y="4" height="84" width="512" format="#,##0" html.valueishtml="0"  name=sum_balance_amt visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(amt1 for group 1)"border="0" color="33554432" x="3977" y="4" height="84" width="512" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="2" text="[ 합 계 ]" border="0" color="33554432" x="3634" y="4" height="68" width="334" html.valueishtml="0"  name=t_2 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="5" y="4" height="76" width="160" html.valueishtml="0"  name=t_3 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="174" y="4" height="76" width="343" html.valueishtml="0"  name=t_4 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="526" y="4" height="76" width="352" html.valueishtml="0"  name=t_5 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="887" y="4" height="76" width="338" html.valueishtml="0"  name=t_6 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="1234" y="4" height="76" width="837" html.valueishtml="0"  name=t_7 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="2080" y="4" height="76" width="165" html.valueishtml="0"  name=t_8 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="2254" y="4" height="76" width="503" html.valueishtml="0"  name=t_9 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="2766" y="4" height="76" width="517" html.valueishtml="0"  name=t_10 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="3291" y="4" height="76" width="334" html.valueishtml="0"  name=t_11 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="14" y1="0" x2="6565" y2="0"  name=l_1 visible="1" pen.style="2" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="14" y1="84" x2="6565" y2="84"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

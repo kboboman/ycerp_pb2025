@@ -1,0 +1,75 @@
+﻿$PBExportHeader$d_cdglbill_r_110822.srd
+$PBExportComments$어음내역출력(1998/9/10,성삼지)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=108 color="536870912" )
+summary(height=108 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(12) updatewhereclause=yes name=vc_no dbname="VC_NO" )
+ column=(type=char(12) updatewhereclause=yes name=bill_no dbname="BILL_NO" )
+ column=(type=char(1) updatewhereclause=yes name=bill_class dbname="BILL_CLASS" values="받을	R/지급	P/교환	C/만기	E/부도	D/" )
+ column=(type=char(4) updatewhereclause=yes name=glbill_cust_no dbname="CUST_NO" )
+ column=(type=datetime updatewhereclause=yes name=close_date dbname="CLOSE_DATE" )
+ column=(type=datetime updatewhereclause=yes name=glbill_start_date dbname="START_DATE" )
+ column=(type=char(6) updatewhereclause=yes name=bank_code dbname="BANK_CODE" )
+ column=(type=char(20) updatewhereclause=yes name=bill_area dbname="BILL_AREA" )
+ column=(type=decimal(0) updatewhereclause=yes name=bill_amount dbname="BILL_AMOUNT" )
+ column=(type=decimal(0) updatewhereclause=yes name=retamt dbname="RETAMT" )
+ column=(type=char(1) updatewhereclause=yes name=set_flag dbname="SET_FLAG" )
+ column=(type=datetime updatewhereclause=yes name=glbill_set_date dbname="SET_DATE" )
+ column=(type=char(20) updatewhereclause=yes name=draft dbname="DRAFT" )
+ column=(type=char(40) updatewhereclause=yes name=rem dbname="REM" )
+ column=(type=char(10) updatewhereclause=yes name=set_user dbname="SET_USER" )
+ retrieve="  SELECT A.VC_NO         
+       , A.BILL_NO       
+       , A.BILL_CLASS    
+       , A.CUST_NO        
+       , A.CLOSE_DATE    
+       , A.START_DATE    
+       , A.BANK_CODE     
+       , A.BILL_AREA     
+       , A.BILL_AMOUNT 
+       , RETAMT = ISNULL(B.RETAMT,0)             
+       , A.SET_FLAG      
+       , A.SET_DATE      
+       , A.DRAFT         
+       , A.REM           
+       , A.SET_USER  
+    FROM GLBILL A
+         LEFT OUTER JOIN 
+         (
+          SELECT GLBILLDET.VC_NO, RETAMT = SUM(GLBILLDET.AMOUNT)
+            FROM GLBILLDET  
+           GROUP BY GLBILLDET.VC_NO
+         ) B ON A.VC_NO = B.VC_NO
+   WHERE ( A.CUST_NO    = :aa    )
+     AND ( A.SET_FLAG  <> 'Y'    )
+" arguments=(("aa", string)) )
+text(band=header alignment="2" text="구분" border="0" color="0" x="14" y="28" height="60" width="128" html.valueishtml="0"  name=glbill_bill_class_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=header x1="5" y1="12" x2="3675" y2="12"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5" y1="104" x2="3675" y2="104"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="만기일자" border="0" color="0" x="1239" y="28" height="60" width="320" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="은행명" border="0" color="0" x="1577" y="28" height="60" width="489" html.valueishtml="0"  name=bank_bank_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="지점명" border="0" color="0" x="2085" y="28" height="60" width="343" html.valueishtml="0"  name=glbill_bill_area_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="1" text="금액" border="0" color="0" x="2446" y="28" height="60" width="398" html.valueishtml="0"  name=glbill_bill_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="1" text="부도대" border="0" color="0" x="2862" y="28" height="60" width="398" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="수금번호" border="0" color="0" x="3278" y="28" height="60" width="384" html.valueishtml="0"  name=glbill_vc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="어음번호" border="0" color="0" x="160" y="28" height="60" width="334" html.valueishtml="0"  name=glbill_bill_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="발행자" border="0" color="0" x="512" y="28" height="60" width="709" html.valueishtml="0"  name=glbill_draft_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0~tif( bill_class = 'C' OR  bill_class = 'D', rgb(255,0,0),rgb(0,0,255))" x="14" y="8" height="60" width="128" format="[general]" html.valueishtml="0"  name=bill_class  tag="어음구분" visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="160" y="8" height="60" width="334" format="[general]" html.valueishtml="0"  name=bill_no  tag="어음번호" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="1239" y="8" height="60" width="320" format="[shortdate] [time]" html.valueishtml="0"  name=close_date  tag="만기일자" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="1577" y="8" height="60" width="489" format="[general]" html.valueishtml="0"  name=bank_code visible="1" dddw.name=d_cdbank_s dddw.displaycolumn=bank_name dddw.datacolumn=bank_code dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="2085" y="8" height="60" width="343" format="[general]" html.valueishtml="0"  name=bill_area  tag="지점명" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="2446" y="8" height="60" width="398" format="#,##0" html.valueishtml="0"  name=bill_amount  tag="금액" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="2862" y="8" height="60" width="398" format="#,##0" html.valueishtml="0"  name=retamt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="3278" y="8" height="60" width="384" format="[general]" html.valueishtml="0"  name=vc_no  tag="수금번호" visible="1" edit.limit=12 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0" x="512" y="8" height="60" width="709" format="[general]" html.valueishtml="0"  name=draft  tag="발행처" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=summary alignment="2" text="합계금액" border="0" color="0" x="5" y="24" height="60" width="489" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=summary x1="5" y1="8" x2="3675" y2="8"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="5" y1="96" x2="3675" y2="96"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(bill_amount for all)"border="0" color="0" x="2446" y="24" height="60" width="398" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum( retamt for all)"border="0" color="0" x="2862" y="24" height="60" width="398" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,37 @@
+﻿$PBExportHeader$d_apoi_s.srd
+$PBExportComments$매입관리 운송비선택 (199805/21, 이인호)
+release 6;
+datawindow(units=0 timer_interval=0 color=79741120 processing=0 print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="553648127" )
+detail(height=76 color="536870912" )
+table(column=(type=char(14) update=yes updatewhereclause=yes key=yes name=insp_insp_no dbname="insp.insp_no" )
+ column=(type=decimal(0) update=yes updatewhereclause=yes name=ship_amount dbname="insp.ship_amount" )
+ column=(type=char(12) update=yes updatewhereclause=yes name=insp_inv_no dbname="insp.inv_no" )
+ column=(type=char(1) updatewhereclause=yes name=pick dbname="pick" values="	Y/	N" )
+ retrieve="  SELECT DISTINCT insp.insp_no,   
+         insp.ship_amount,   
+         insp.inv_no,   
+         'N' pick  
+    FROM insp,   
+         inspdet  
+   WHERE ( inspdet.insp_no = insp.insp_no ) and  
+         ( ( insp.supp_no = :as_supp_no ) AND  
+         ( insp.insp_date >= :ad_sdate ) AND  
+         ( insp.insp_date <= :ad_edate ) AND  
+         ( insp.inv_no is null ) AND  
+         ( insp.pur_flag = :as_pur_flag ) AND  
+         ( insp.ship_amount <> 0 ) AND  
+         ( insp.ship_flag = 'D' )  AND  
+         ( ( inspdet.pur_no like :as_area + ~"%~" ) or
+			  ( :as_area = 'S' and inspdet.pur_no like 'PUR%')))    
+    
+" update="insp" updatewhere=1 updatekeyinplace=no arguments=(("as_supp_no", string),("ad_sdate", date),("ad_edate", date),("as_pur_flag", string),("as_area", string))  sort="insp_insp_no A " )
+text(band=header alignment="2" text="선정"border="5" color="0" x="5" y="12" height="60" width="128"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="운송비"border="5" color="0" x="649" y="12" height="60" width="448"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입고번호"border="5" color="0" x="151" y="12" height="60" width="480"  name=do_no_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="5" color="0" x="649" y="8" height="56" width="448" format="#,##0"  name=ship_amount edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79416533" )
+column(band=detail id=4 alignment="0" tabsequence=10 border="0" color="0" x="37" y="8" height="56" width="55" format="[general]"  name=pick checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79416533" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="5" color="0" x="151" y="8" height="56" width="480" format="[general]"  name=insp_insp_no edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79416533" )
+htmltable(border="1" cellpadding="0" cellspacing="0" generatecss="no" nowrap="yes")

@@ -1,0 +1,39 @@
+﻿$PBExportHeader$d_ororder_s.srd
+$PBExportComments$판매수주관리 수주번호선택(1998/04/02, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=79219928 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=64 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=order_no dbname="sale.ORDER_NO" initial=" " )
+ column=(type=char(10) updatewhereclause=yes name=due_date dbname="DUE_DATE" initial=" " )
+ column=(type=char(10) updatewhereclause=yes name=order_date dbname="ORDER_DATE" initial=" " )
+ column=(type=char(40) updatewhereclause=yes name=scene_name dbname="SCENE_NAME" )
+ column=(type=decimal(2) updatewhereclause=yes name=order_qty dbname="ORDER_QTY" )
+ column=(type=decimal(2) updatewhereclause=yes name=rlse_qty dbname="RLSE_QTY" )
+ retrieve="  SELECT SALE.ORDER_NO   
+       , DUE_DATE   = convert(char(10),SALE.DUE_DATE  ,111) 
+       , ORDER_DATE = convert(char(10),SALE.ORDER_DATE,111)
+       , SCENE_NAME = SCENE.SCENE_DESC
+       , ORDER_QTY  = (SELECT SUM(order_qty) FROM saledet WHERE order_no = sale.order_no)
+       , RLSE_QTY   = (SELECT SUM(rlse_qty)  FROM saledet WHERE order_no = sale.order_no)
+    FROM SALE
+       , SCENE         
+   WHERE ( SALE.CUST_NO  = SCENE.CUST_NO AND SALE.SCENE_CODE = SCENE.SCENE_CODE )
+     AND ( SALE.CUST_NO           = :as_custno ) 
+     AND ( convert(char(10),SALE.ORDER_DATE,111) BETWEEN :as_sdate AND :as_edate )   
+   ORDER BY SALE.ORDER_DATE DESC   
+" arguments=(("as_custno", string),("as_sdate", string),("as_edate", string))  sort="order_no D " )
+text(band=header alignment="2" text="수주번호" border="2" color="0" x="9" y="8" height="60" width="448" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="납기일자" border="2" color="0" x="471" y="8" height="60" width="329" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="현장명" border="2" color="0" x="814" y="8" height="60" width="827" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="미출" border="2" color="0" x="1655" y="8" height="60" width="206" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="0" x="471" y="4" height="60" width="329" format="[General]" html.valueishtml="0"  name=due_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="2" color="0" x="9" y="4" height="60" width="448" format="[general]" html.valueishtml="0"  name=order_no  tag="판매주문번호" visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="2" color="0" x="814" y="4" height="60" width="827" format="[general]" html.valueishtml="0"  name=scene_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+compute(band=detail alignment="1" expression=" order_qty - rlse_qty "border="2" color="0" x="1655" y="4" height="60" width="206" format="#,##0" html.valueishtml="0"  name=c_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+compute(band=footer alignment="2" expression="count(  order_no  for all )"border="0" color="0" x="9" y="8" height="52" width="448" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum (  c_qty  )"border="0" color="0" x="800" y="8" height="52" width="1061" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

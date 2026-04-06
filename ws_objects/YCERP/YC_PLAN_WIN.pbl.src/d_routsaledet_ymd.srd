@@ -1,0 +1,157 @@
+﻿$PBExportHeader$d_routsaledet_ymd.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=0 color="536870912" )
+header[3](height=60 color="67108864" )
+header[4](height=60 color="67108864" )
+header[5](height=72 color="67108864" )
+summary(height=80 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=거래처 dbname="거래처" )
+ column=(type=char(20) updatewhereclause=yes name=현장 dbname="현장" )
+ column=(type=char(20) updatewhereclause=yes name=수주번호 dbname="수주번호" )
+ column=(type=number updatewhereclause=yes name=순번 dbname="순번" )
+ column=(type=char(20) updatewhereclause=yes name=품목 dbname="품목" )
+ column=(type=char(20) updatewhereclause=yes name=규격 dbname="규격" )
+ column=(type=char(20) updatewhereclause=yes name=작업1 dbname="작업1" )
+ column=(type=char(20) updatewhereclause=yes name=상태1 dbname="상태1" )
+ column=(type=char(20) updatewhereclause=yes name=작업2 dbname="작업2" )
+ column=(type=char(20) updatewhereclause=yes name=상태2 dbname="상태2" )
+ column=(type=char(20) updatewhereclause=yes name=작업3 dbname="작업3" )
+ column=(type=char(20) updatewhereclause=yes name=상태3 dbname="상태3" )
+ column=(type=number updatewhereclause=yes name=납기 dbname="납기" )
+ retrieve="  SELECT '거래처'   = a.cust_name
+       , '현장'     = a.scene_desc
+       , '품목'     = g.item_name
+       , '규격'     = a.qa19 
+       , '수주번호' = a.order_no
+       , '순번'     = a.seq_no
+       , '년'       = year(b1.napgi_date)
+       , '월'       = month(b1.napgi_date)
+       , '십'       = cast(substring(convert(char(10),b1.napgi_date,111),9,1) as int)
+       , '일'       = cast(right(convert(char(10),b1.napgi_date,111),1) as int)
+       , '납기'     = (case when b1.napgi_date >= b1.work_date  then 1
+                            when b1.work_date  >= b2.work_date  then 2
+                            when b2.work_date  >= b3.work_date  then 3
+                            when b3.work_date  >= b1.napgi_date then 4
+                            else 5
+                       end)
+
+       , '작업1'    = w1.work_name
+       , '상태1'    = b1.process_flag
+       , '수량1'    = b1.plan_qty
+  
+       , '작업2'    = w2.work_name
+       , '상태2'    = b2.process_flag
+       , '수량2'    = b2.plan_qty
+  
+       , '작업3'    = w3.work_name
+       , '상태3'    = b3.process_flag
+       , '수량3'    = b3.plan_qty
+    FROM (
+          SELECT a.user_name
+               , a.cust_name
+               , a.scene_desc
+               , a.order_no
+               , a.seq_no
+               , a.item_no
+               , a.qa   
+               , a.qa19 
+               , wc1 = max((case when r.operation = 1 then r.wc_no else null end))
+               , wc2 = max((case when r.operation = 2 then r.wc_no else null end))
+               , wc3 = max((case when r.operation = 3 then r.wc_no else null end))
+            FROM (
+                  SELECT l.user_name
+                       , c.cust_name
+                       , s.scene_desc
+                       , a.order_no
+                       , a.seq_no
+                       , a.item_no
+                       , qa   = left(a.qa ,14) + '00000'
+                       , qa19 = a.qa
+                    FROM saledet A
+                         LEFT OUTER JOIN sale       B ON a.order_no   = b.order_no
+                         LEFT OUTER JOIN customer   C ON b.cust_no    = c.cust_no
+                         LEFT OUTER JOIN scene      S ON b.scene_code = s.scene_code
+                         LEFT OUTER JOIN login      L ON c.salesman   = l.user_id
+                   WHERE b.order_date  BETWEEN '2014/12/01' AND '2014/12/19'
+/*                     AND b.open_close       <> 'C'	한도초과 */
+                       AND b.open_close       = 'O'
+                   /*AND b.tracking          = 'Y'*/
+                 ) A
+                 LEFT OUTER JOIN rout R ON a.item_no = r.item_no AND a.qa = r.qa
+           GROUP BY a.user_name, a.cust_name, a.scene_desc, a.order_no, a.seq_no, a.item_no, a.qa, a.qa19
+         ) A
+         LEFT OUTER JOIN groupitem  G ON a.item_no = g.item_no
+         LEFT OUTER JOIN wc        W1 ON a.wc1     = w1.work_no
+         LEFT OUTER JOIN wc        W2 ON a.wc2     = w2.work_no
+         LEFT OUTER JOIN wc        W3 ON a.wc3     = w3.work_no
+         LEFT OUTER JOIN (
+              SELECT area_no, work_date, sale_no, seq_no, napgi_date, rem, wc_no, operation, order_qty, plan_qty
+                   , process_flag = (case r.process_flag when 'N' then '불가' when 'Y' then '가능' 
+                                                         when 'P' then '진행' when 'E' then '완료' else '마감' 
+                                     end)
+                FROM routtempnew R
+               WHERE r.work_date >= '2014/12/01' AND operation = 1
+         ) B1 ON a.order_no = b1.sale_no AND a.seq_no = b1.seq_no AND a.wc1 = b1.wc_no
+         LEFT OUTER JOIN (
+              SELECT area_no, work_date, sale_no, seq_no, napgi_date, rem, wc_no, operation, plan_qty
+                   , process_flag = (case r.process_flag when 'N' then '불가' when 'Y' then '가능' 
+                                                         when 'P' then '진행' when 'E' then '완료' else '마감' 
+                                     end)
+                FROM routtempnew R
+               WHERE r.work_date >= '2014/12/01' AND operation = 2
+         ) B2 ON a.order_no = b2.sale_no AND a.seq_no = b2.seq_no AND a.wc2 = b2.wc_no
+         LEFT OUTER JOIN (
+              SELECT area_no, work_date, sale_no, seq_no, napgi_date, rem, wc_no, operation, plan_qty
+                   , process_flag = (case r.process_flag when 'N' then '불가' when 'Y' then '가능' 
+                                                         when 'P' then '진행' when 'E' then '완료' else '마감' 
+                                     end)
+                FROM routtempnew R
+               WHERE r.work_date >= '2014/12/01' AND operation = 3
+         ) B3 ON a.order_no = b3.sale_no AND a.seq_no = b3.seq_no AND a.wc3 = b3.wc_no
+   WHERE b1.napgi_date is not null
+"  sort="거래처 A 현장 A 수주번호 A 순번 A 품목 A 규격 A 작업1 A 상태1 A 작업2 A 상태2 A 작업3 A 상태3 A " )
+text(band=header[1] alignment="0" text="납기" border="0" color="33554432" x="9" y="12" height="56" width="503" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[1] alignment="0" text="년" border="0" color="33554432" x="521" y="12" height="56" width="594" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[1] alignment="0" text="월" border="0" color="33554432" x="1125" y="12" height="56" width="425" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[1] alignment="0" text="일" border="0" color="33554432" x="1559" y="12" height="56" width="110" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="0" text="@년" border="0" color="33554432" x="4146" y="12" height="56" width="50" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="@월 Sum Of 납기" border="0" color="33554432" x="4206" y="12" height="56" width="46" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[3] alignment="0" text="@월" border="0" color="33554432" x="4146" y="4" height="64" width="50" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[4] alignment="0" text="@십" border="0" color="33554432" x="4146" y="4" height="64" width="50" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="거래처" border="0" color="33554432" x="9" y="8" height="56" width="503" html.valueishtml="0"  name=거래처_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="현장" border="0" color="33554432" x="521" y="8" height="56" width="594" html.valueishtml="0"  name=현장_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="수주번호" border="0" color="33554432" x="1125" y="8" height="56" width="425" html.valueishtml="0"  name=수주번호_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="순번" border="0" color="33554432" x="1559" y="8" height="56" width="110" html.valueishtml="0"  name=순번_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="품목" border="0" color="33554432" x="1678" y="8" height="56" width="594" html.valueishtml="0"  name=품목_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="규격" border="0" color="33554432" x="2281" y="8" height="56" width="594" html.valueishtml="0"  name=규격_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="작업1" border="0" color="33554432" x="2885" y="8" height="56" width="251" html.valueishtml="0"  name=작업1_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="상태1" border="0" color="33554432" x="3145" y="8" height="56" width="151" html.valueishtml="0"  name=상태1_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="작업2" border="0" color="33554432" x="3305" y="8" height="56" width="251" html.valueishtml="0"  name=작업2_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="상태2" border="0" color="33554432" x="3566" y="8" height="56" width="146" html.valueishtml="0"  name=상태2_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="작업3" border="0" color="33554432" x="3721" y="8" height="56" width="247" html.valueishtml="0"  name=작업3_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="상태3" border="0" color="33554432" x="3977" y="8" height="56" width="160" html.valueishtml="0"  name=상태3_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[5] alignment="0" text="@일" border="0" color="33554432" x="4146" y="8" height="56" width="50" html.valueishtml="0"  name=납기_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="64" width="503" format="[general]" html.valueishtml="0"  name=거래처 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="521" y="4" height="64" width="594" format="[general]" html.valueishtml="0"  name=현장 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1125" y="4" height="64" width="425" format="[general]" html.valueishtml="0"  name=수주번호 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1559" y="4" height="64" width="110" format="[general]" html.valueishtml="0"  name=순번 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1678" y="4" height="64" width="594" format="[general]" html.valueishtml="0"  name=품목 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2281" y="4" height="64" width="594" format="[general]" html.valueishtml="0"  name=규격 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="2885" y="4" height="64" width="251" format="[general]" html.valueishtml="0"  name=작업1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="3145" y="4" height="64" width="151" format="[general]" html.valueishtml="0"  name=상태1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3305" y="4" height="64" width="251" format="[general]" html.valueishtml="0"  name=작업2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="3566" y="4" height="64" width="146" format="[general]" html.valueishtml="0"  name=상태2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="3721" y="4" height="64" width="247" format="[general]" html.valueishtml="0"  name=작업3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="3977" y="4" height="64" width="160" format="[general]" html.valueishtml="0"  name=상태3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432~tif( 납기 = 1, rgb(255, 0, 0), if( 납기 = 2, rgb(255, 255, 0), if( 납기 = 3, rgb(255, 125, 0),  if( 납기 = 4, rgb(255, 100, 0), rgb(255, 255, 255) ) ) ) )" x="4146" y="4" height="64" width="50" format="[general]" html.valueishtml="0"  name=납기 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-8" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif( 납기 = 1, rgb(255, 0, 0), if( 납기 = 2, rgb(255, 255, 0), if( 납기 = 3, rgb(255, 125, 0),  if( 납기 = 4, rgb(255, 100, 0), rgb(255, 255, 255) ) ) ) )" )
+compute(band=detail alignment="2" expression="crosstabsum(1, 3, ~"@년@월~")"border="0" color="8421504" x="4206" y="4" height="64" width="46" format="[general]" html.valueishtml="0"  name=sum_납기_1 visible="1"  font.face="굴림체" font.height="-8" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8421504" crosstab.repeat=yes )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="64" width="503" format="[general]" html.valueishtml="0"  name=compute_67 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="sum(납기 for all )"border="0" color="33554432~tif( 납기 = 1, rgb(255, 0, 0), if( 납기 = 2, rgb(255, 255, 0), if( 납기 = 3, rgb(255, 125, 0),  if( 납기 = 4, rgb(255, 100, 0), rgb(255, 255, 255) ) ) ) )" x="4146" y="4" height="64" width="50" format="[general]" html.valueishtml="0"  name=compute_68 visible="1"  font.face="굴림체" font.height="-8" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif( 납기 = 1, rgb(255, 0, 0), if( 납기 = 2, rgb(255, 255, 0), if( 납기 = 3, rgb(255, 125, 0),  if( 납기 = 4, rgb(255, 100, 0), rgb(255, 255, 255) ) ) ) )" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "년, 월, 십, 일" rows = "거래처, 현장, 수주번호, 순번, 품목, 규격, 작업1, 상태1, 작업2, 상태2, 작업3, 상태3" values = "sum(납기 for crosstab)" sourcenames = "거래처, 현장, 품목, 규격, 수주번호, 순번, 년, 월, 십, 일, 납기, 작업1, 상태1, 수량1, 작업2, 상태2, 수량2, 작업3, 상태3, 수량3")
+sparse(names="거래처	현장	수주번호	순번	품목	규격	작업1	상태1	작업2	상태2	작업3")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

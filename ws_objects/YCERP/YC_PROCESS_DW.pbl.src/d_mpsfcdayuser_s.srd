@@ -1,0 +1,52 @@
+﻿$PBExportHeader$d_mpsfcdayuser_s.srd
+$PBExportComments$일자별 작업장 작업자 추가
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no rows_per_detail = 10 )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=user_name dbname="sfcdayuser.user_name" )
+ column=(type=char(20) updatewhereclause=yes name=team_nm dbname="sfcdayuser.team_nm" )
+ column=(type=char(30) updatewhereclause=yes name=team_org dbname="team_org" )
+ column=(type=long updatewhereclause=yes name=sortkey dbname="sortkey" )
+ column=(type=long updatewhereclause=yes name=sortkey2 dbname="sortkey2" )
+ retrieve="  SELECT login.user_name
+       , team_nm
+       , team_org  = sfcdayuser.team_org
+       , sortkey   = (case when team_nm = wc.work_name then 1
+                           when team_nm = '일용'       then 3
+                           else 2
+                      end)
+       , sortkey2  = login.cat
+    FROM sfcdayuser   
+         LEFT OUTER JOIN (
+              SELECT user_id, user_name, team_nm = '', cat = 1 FROM login
+              UNION ALL
+              SELECT user_id = sabun, user_name = name_kor, team_nm, cat = 2
+                FROM v_insabase
+               WHERE ((:as_area = 'S0001' AND acc_cd = '01') OR
+                      (:as_area = 'T0001' AND acc_cd = '06')
+                     )
+              UNION ALL
+              SELECT DISTINCT sfcworkman.user_id, name_kor, team_nm = work_nm, cat = 3
+                FROM sfcworkman
+               WHERE day_labor = 'Y'
+         ) login  on sfcdayuser.user_id  = login.user_id
+         LEFT OUTER JOIN wc  ON sfcdayuser.wc_no = wc.work_no
+   WHERE ( sfcdayuser.area_no  = :as_area      ) 
+     AND ( sfcdayuser.wc_no    = :as_wc        ) 
+     AND ( sfcdayuser.sfc_date = :ad_date      ) 
+" arguments=(("as_area", string),("as_wc", string),("ad_date", date))  sort="sortkey A sortkey2 A team_nm A user_name A " )
+text(band=detail alignment="2" text="근무자:" border="6" color="16777215" x="14" y="4" height="68" width="315" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="128" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="347" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=1  name=user_name_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="704" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=2  name=user_name_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="1061" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=3  name=user_name_3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="1417" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=4  name=user_name_4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="1774" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=5  name=user_name_5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="2130" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=6  name=user_name_6 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="2487" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=7  name=user_name_7 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="2848" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=8  name=user_name_8 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="3205" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=9  name=user_name_9 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( sortkey2 =  3, rgb(255, 0, 0), if ( sortkey2 = 2, rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="3561" y="4" height="68" width="338" format="[general]" html.valueishtml="0" row_in_detail=10  name=user_name_10 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

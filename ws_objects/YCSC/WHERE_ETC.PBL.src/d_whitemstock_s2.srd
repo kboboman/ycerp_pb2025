@@ -1,0 +1,147 @@
+﻿$PBExportHeader$d_whitemstock_s2.srd
+$PBExportComments$장기재고조회(2003/08/26,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=io_name dbname="io_name" )
+ column=(type=datetime updatewhereclause=yes name=io_date dbname="io_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=order_no dbname="order_no" )
+ column=(type=char(60) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=rcpt_qty dbname="rcpt_qty" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=rem dbname="rem" )
+ retrieve="SELECT * 
+  FROM dbo.uf_rcpthistoryTab(:ad_date, :as_loc, :as_item, :as_qa)
+/* uf_rcpthistoryTab(
+     @inaudit_date smalldatetime,
+     @loc_no       char(10),
+     @item_no      char(10),
+     @qa           char(20)
+) */
+
+/*
+   DECLARE @io_type        char(2)       
+         , @io_name        char(20)      
+         , @l_inaudit_date smalldatetime 
+         , @l_order_no     varchar(20)   
+         , @l_cust_name    varchar(20)   
+         , @l_rem          varchar(30)   
+         , @l_rcpt_qty     dec(18,4)    
+         , @l_des          varchar(20)  
+         , @l_ser          varchar(20)  
+         , @l_seq          smallint
+
+   DECLARE inaudit_cursor CURSOR
+   FOR
+   SELECT inaudit_date, inaudit_type, order_no, rcpt_qty, destination, serial_id, rem, cnt 
+     FROM inaudit
+    WHERE inaudit_date    >= @inaudit_date
+      AND inaudit_item     = @item_no
+      AND qa               = @qa
+      AND loc_no           = @loc_no
+      AND inaudit_type  LIKE 'R%'
+      AND inaudit_type    <> 'RX'
+    ORDER BY inaudit_date DESC
+   
+   OPEN inaudit_cursor 
+   FETCH NEXT FROM inaudit_cursor INTO @l_inaudit_date, @io_type, @l_order_no,  @l_rcpt_qty, @l_des, @l_ser, @l_rem, @l_seq
+   WHILE (@@FETCH_STATUS = 0)
+   BEGIN
+      SET @io_name = ( SELECT remarks FROM iotype WHERE inaudit_type = @io_type )
+      /*
+      inaudit_type   remarks
+      RA   대체입고
+      RB   불량품입고
+      RC   슬리팅입고
+      RF   반품입고
+      RI   구매입고
+      RK   물품요청입고
+      RL   저장소입고 <- 코일 이동만 있음
+      RO   외주가공입고
+      RP   생산계획
+      RR   자재반품입고
+      RS   제품반품입고
+      RT   기타입고
+      RW   작업장에서입고<-사용자재등록
+      RX   실사보정입고
+      */
+      IF @io_type = 'RA' AND @l_ser = 'D'
+      BEGIN
+         SET @l_cust_name = (SELECT cust_name FROM customer WHERE cust_no = ( SELECT cust_no FROM do where do_no = @l_order_no) )
+      END
+      ELSE
+      BEGIN
+         IF @io_type = 'RF' 
+         BEGIN
+            SET @l_cust_name = (SELECT cust_name FROM customer WHERE cust_no = rtrim(@l_des))
+         END
+         ELSE
+         BEGIN
+            IF @io_type = 'RI' or @io_type = 'RO' 
+            BEGIN
+               SET @l_cust_name = (SELECT cust_name FROM customer
+                                    WHERE cust_no IN ( SELECT cust_no FROM sale, purdet, inspdet
+                                                        WHERE inspdet.insp_no = @l_order_no
+                                                          AND inspdet.oi_no   = @l_seq
+                                                          AND inspdet.pur_no  = purdet.order_no
+                                                          AND inspdet.seq_no  = purdet.seq_no
+                                                          AND purdet.sale_no  = sale.order_no
+                                                     )
+                                  )
+            END
+            ELSE
+            BEGIN
+               IF @io_type = 'RK' 
+               BEGIN
+                  SET @l_cust_name = (SELECT loc_name FROM location where loc_no = @l_des)
+               END
+               ELSE
+               BEGIN
+                  IF @io_type = 'RP' 
+                  BEGIN
+                     SET @l_cust_name = (SELECT cust_name FROM customer
+                                          WHERE cust_no IN (SELECT cust_no FROM mpsdet WHERE plan_no = @l_order_no) )
+                  END
+                  ELSE
+                  BEGIN
+                     IF @io_type = 'RS' 
+                     BEGIN
+                        SET @l_cust_name = (SELECT loc_name FROM location WHERE loc_no = @l_des)
+                     END
+                  END
+               END
+            END
+         END
+      END
+      
+      INSERT INTO @rcpthistoryTab ( io_name, io_date, order_no, rcpt_qty, cust_name, rem )
+      VALUES (@io_name, @l_inaudit_date, @l_order_no, @l_rcpt_qty, @l_cust_name, @l_rem)
+      IF @@ERROR <> 0 
+      BEGIN 
+         CLOSE inaudit_cursor
+         DEALLOCATE inaudit_cursor
+         RETURN
+      END
+
+      FETCH NEXT FROM inaudit_cursor INTO @l_inaudit_date, @io_type, @l_order_no,  @l_rcpt_qty, @l_des, @l_ser, @l_rem, @l_seq
+   END
+   CLOSE inaudit_cursor
+   DEALLOCATE inaudit_cursor
+*/" arguments=(("ad_date", date),("as_loc", string),("as_item", string),("as_qa", string)) )
+text(band=header alignment="2" text="일자" border="6" color="0" x="9" y="8" height="60" width="334" html.valueishtml="0"  name=io_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="유형" border="6" color="0" x="352" y="8" height="60" width="256" html.valueishtml="0"  name=io_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="617" y="8" height="60" width="439" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고수량" border="6" color="0" x="1065" y="8" height="60" width="402" html.valueishtml="0"  name=rcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문번호" border="6" color="33554432" x="1477" y="8" height="60" width="576" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="33554432" x="2062" y="8" height="60" width="992" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="60" width="334" format="yyyy/mm/dd" html.valueishtml="0"  name=io_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=10 border="0" color="33554432" x="1477" y="8" height="60" width="576" format="[general]" html.valueishtml="0"  name=order_no  tag="주문번호" visible="1" edit.limit=17 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=20 border="0" color="33554432" x="2062" y="8" height="60" width="992" format="[general]" html.valueishtml="0"  name=rem  tag="비고" visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="352" y="8" height="60" width="256" format="[general]" html.valueishtml="0"  name=io_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="617" y="8" height="60" width="439" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1065" y="8" height="60" width="402" format="#,##0" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="5" y="4" height="64" width="338" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,86 @@
+﻿$PBExportHeader$d_orissue_list.srd
+$PBExportComments$이슈상품 수신자
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(8) updatewhereclause=yes name=gubun dbname="gubun" )
+ column=(type=datetime updatewhereclause=yes name=req_date dbname="req_date" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=long updatewhereclause=yes name=req_seq dbname="req_seq" )
+ column=(type=char(10) updatewhereclause=yes name=accept_user_name dbname="issuereqdet.accept_user_name" )
+ column=(type=char(8) updatewhereclause=yes name=confirm_name dbname="confirm_name" )
+ column=(type=char(11) updatewhereclause=yes name=issue_schedule dbname="issue_schedule" )
+ column=(type=char(8) updatewhereclause=yes name=ship_case dbname="ship_case" )
+ retrieve="  SELECT '출고의뢰' gubun,
+         req_date   = r.req_date
+       , user_name  = l.user_name
+       , req_seq    = r.req_seq
+       , e.user_name accept_user_name
+       , (case when isnull(a.confirm_flag, 'N') = 'N' then '미확정' else '확정' end ) confirm_name
+       , issue_schedule = (case when r.issue_schedule = 'A' then '직출' 
+                                when r.issue_schedule = 'B' then '생산후 직출'
+                                when r.issue_schedule = 'J' then '저녁상차'
+                                when r.issue_schedule = 'K' then '택배/정기'
+                                when r.issue_schedule = 'D' then '방문'
+                                when r.issue_schedule = 'I' then '야간도착'
+                                when r.issue_schedule = 'E' then '외주(시화)'
+                                when r.issue_schedule = 'F' then '외주(본사)'
+                                when r.issue_schedule = 'G' then '유창강건'
+                                when r.issue_schedule = 'H' then '지점이송'
+                                when r.issue_schedule = 'C' then '자동작성'
+                                else r.issue_schedule
+                           end)
+       , ship_case      = (case when r.ship_case = 'J' then '정기화물'
+                                when r.ship_case = 'T' then '택배'
+                                when r.ship_case = 'A' then '오토바이'
+                                when r.ship_case = 'S' then '선박'
+                                when r.ship_case = 'P' then '항공'
+                                when r.ship_case = 'E' then '기타'
+                                else r.ship_case
+                           end)
+    FROM issuereqdet R with(nolock) INNER JOIN issuereq A with(nolock) ON r.req_date = a.req_date and r.salesman = a.salesman and r.req_seq = a.req_seq
+         LEFT OUTER JOIN login L with(nolock) ON r.salesman = l.user_id
+         LEFT OUTER JOIN login e  with(nolock) on a.accept_user = e.user_id
+   WHERE ( r.sale_no  = :as_orderno )
+     AND ( r.req_flag = 'A' )
+   union all           
+   select  distinct '물품요청' gubun,
+               b.ask_date req_date, 
+               c.user_name user_name,               
+               null req_seq, 
+               d.user_name accept_user_name,
+              (case when  b.proc_flag = 'Y' THEN '처리완료' 
+                       when b.proc_flag = 'N' THEN '접수중' 
+                       when b.proc_flag = 'P' THEN '부분'  END) confirm_name,      
+              null issue_schedule,
+              null ship_case
+   from  ask_det a left outer join ask_head b with (nolock) ON a.ask_no  = b.ask_no
+                               left outer join login c with (nolock) ON b.ask_user  = c.user_id
+                               left outer join login d with (nolock) ON b.act_user  = d.user_id
+   where a.sale_no = :as_orderno
+
+  " arguments=(("as_orderno", string))  sort="gubun D req_date A " )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="183" y="4" height="64" width="325" html.valueishtml="0"  name=gubun_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="의뢰일자" border="6" color="33554432" x="517" y="8" height="60" width="421" html.valueishtml="0"  name=req_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="946" y="8" height="60" width="334" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="차수" border="6" color="33554432" x="1289" y="8" height="60" width="146" html.valueishtml="0"  name=req_seq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고예정" border="6" color="33554432" x="1445" y="8" height="60" width="421" html.valueishtml="0"  name=issue_schedule_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송방법" border="6" color="33554432" x="1874" y="8" height="60" width="334" html.valueishtml="0"  name=ship_case_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="접수자" border="6" color="33554432" x="2217" y="8" height="60" width="357" html.valueishtml="0"  name=e_accept_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="확정유무" border="6" color="0" x="2583" y="8" height="60" width="343" html.valueishtml="0"  name=confirm_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="72" width="325" format="[general]" html.valueishtml="0"  name=gubun visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="946" y="8" height="72" width="334" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1289" y="8" height="72" width="146" format="[general]" html.valueishtml="0"  name=req_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="1445" y="8" height="72" width="421" format="[general]" html.valueishtml="0"  name=issue_schedule visible="1" edit.limit=11 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="517" y="8" height="72" width="421" format="yyyy/mm/dd" html.valueishtml="0"  name=req_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="1874" y="8" height="72" width="334" format="[general]" html.valueishtml="0"  name=ship_case visible="1" edit.limit=8 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="2217" y="8" height="72" width="357" format="[general]" html.valueishtml="0"  name=accept_user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2583" y="8" height="72" width="343" format="[general]" html.valueishtml="0"  name=confirm_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

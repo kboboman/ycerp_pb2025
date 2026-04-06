@@ -1,0 +1,70 @@
+﻿$PBExportHeader$d_mpplandiary_m2.srd
+$PBExportComments$일일업무(생산)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="8421504" )
+detail(height=92 color="536870912"  height.autosize=yes)
+table(column=(type=long update=yes updatewhereclause=yes key=yes identity=yes name=id dbname="id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=diary_date dbname="diary_date" )
+ column=(type=long updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=work_no dbname="work_no" )
+ column=(type=char(51) update=yes updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=interview dbname="interview" )
+ column=(type=char(4099) update=yes updatewhereclause=no name=contents dbname="contents" )
+ column=(type=char(4099) update=yes updatewhereclause=no name=contents2 dbname="contents2" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=employee dbname="employee" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=long update=yes updatewhereclause=yes name=cqty dbname="cqty" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(10) updatewhereclause=yes name=input_name dbname="input_name" )
+ column=(type=char(1) updatewhereclause=yes name=sw_modify dbname="sw_modify" )
+ retrieve="  SELECT id         = a.id
+       , diary_date = a.diary_date   
+       , seq        = 1
+       , work_no    = a.work_no   
+       , work_name  = (case when a.work_no is null or a.work_no = '' then '*'+a.work_name else c.work_name end)
+       , interview  = a.interview
+       , contents   = a.contents   
+       , contents2  = a.contents2
+       , employee   = a.employee
+       , user_name  = l.user_name    
+       , cqty       = a.cqty
+       , user_id    = a.user_id
+       , input_name = u.user_name
+       , sw_modify  = 'X'  
+    FROM plan_diary A
+         LEFT OUTER JOIN wc        C ON a.work_no  = c.work_no
+         LEFT OUTER JOIN login     L ON a.employee = l.user_id
+         LEFT OUTER JOIN login     U ON a.user_id  = u.user_id
+       /*LEFT OUTER JOIN opeom_org O ON a.salesman = o.user_id*/
+   WHERE ( a.diary_date  BETWEEN :as_sdate AND :as_edate )
+     AND ( :as_workno   <> '%' AND a.work_no     = :as_workno   OR
+           :as_workno    = '%' AND a.work_no  LIKE :as_workno
+         )
+     AND ( :as_employee <> '%' AND a.employee    = :as_employee OR
+           :as_employee  = '%' AND a.employee LIKE :as_employee
+         )
+" update="plan_diary" updatewhere=0 updatekeyinplace=no arguments=(("as_workno", string),("as_sdate", string),("as_edate", string),("as_employee", string))  sort="diary_date D seq A user_name A " )
+text(band=header alignment="2" text="작업일자" border="6" color="33554432" x="174" y="4" height="68" width="421" html.valueishtml="0"  name=diary_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="33554432" x="9" y="4" height="68" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="603" y="4" height="68" width="329" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="내용(금일)" border="6" color="33554432" x="942" y="4" height="68" width="1979" html.valueishtml="0"  name=contents_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="내용(명일)" border="6" color="33554432" x="2930" y="4" height="68" width="1696" html.valueishtml="0"  name=contents2_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="작업자" border="6" color="33554432" x="4635" y="4" height="68" width="334" html.valueishtml="0"  name=interview_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산량" border="6" color="33554432" x="4978" y="4" height="68" width="416" html.valueishtml="0"  name=cqty_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="33554432" x="5403" y="4" height="68" width="329" html.valueishtml="0"  name=work_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등록자" border="6" color="33554432" x="5742" y="4" height="68" width="329" html.valueishtml="0"  name=input_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="76" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="174" y="8" height="76" width="421" format="yyyy/mm/dd" html.valueishtml="0"  name=diary_date visible="1" edit.limit=0 edit.case=any edit.format="yyyy/mm/dd" edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="603" y="8" height="76" width="329" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="0" tabsequence=10 border="0" color="33554432" x="942" y="8" height="76" width="1979" format="[general]" html.valueishtml="0" protect="0~tif ( sw_modify = 'X', 1, 0 )"  name=contents visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=no edit.autovscroll=yes edit.imemode=0 edit.vscrollbar=yes  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="0" tabsequence=20 border="0" color="33554432" x="2930" y="8" height="76" width="1696" format="[General]" html.valueishtml="0" protect="0~tif ( sw_modify = 'X', 1, 0 )"  name=contents2 visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=no edit.autovscroll=yes edit.imemode=0 edit.vscrollbar=yes  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=30 border="0" color="33554432" x="4635" y="8" height="76" width="334" format="[general]" html.valueishtml="0"  name=interview visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="1" tabsequence=40 border="0" color="33554432" x="4978" y="8" height="76" width="416" format="#,##0" html.valueishtml="0"  name=cqty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="5403" y="8" height="76" width="329" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="5742" y="8" height="76" width="329" format="[general]" html.valueishtml="0"  name=input_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="72" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

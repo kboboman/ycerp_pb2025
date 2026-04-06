@@ -1,0 +1,91 @@
+﻿$PBExportHeader$d_osaroimonth_r.srd
+$PBExportComments$물품별 월 매출집계 DISPLAY(1998/05/15, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="79416533" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=80 color="553648127" )
+table(column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=aroiinv_gl_cur_rate dbname="gl_cur_rate" )
+ column=(type=char(3) updatewhereclause=yes name=aroiinv_curr_code dbname="curr_code" )
+ column=(type=decimal(2) updatewhereclause=yes name=ship_qty dbname="ship_qty" )
+ column=(type=long updatewhereclause=yes name=aroi_dc_rate dbname="dc_rate" )
+ column=(type=decimal(4) updatewhereclause=yes name=rate_cash dbname="rate_cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=ori_amount dbname="ori_amount" )
+ retrieve="  SELECT item_no    = a.item_no
+       , item_name  = a.item_name
+       , qa         = a.qa
+       , uom        = a.uom
+       , gl_cur_rate= a.gl_cur_rate
+       , curr_code  = a.curr_code
+       , ship_qty   = sum(a.ship_qty)
+       , dc_rate    = sum(a.dc_rate)
+       , rate_cash  = sum(a.rate_cash)
+       , ori_amount = sum(a.ori_amount)
+    FROM (
+         SELECT aroi.item_no
+              , qa         = (case aroi.uom when 'M' then left(qa, 13) when 'M2' then left(qa, 3) when 'SS' then left(qa, 3) else qa end)
+              , aroi.uom
+              , aroiinv.gl_cur_rate
+              , groupitem.item_name
+              , aroi.dc_rate
+              , aroiinv.curr_code
+              , ship_qty   = aroi.ship_qty
+              , rate_cash  = aroi.rate_cash
+              , ori_amount = aroi.ori_amount
+              , oi_date    = aroiinv.oi_date   
+           FROM aroiinv
+                LEFT OUTER JOIN aroi      ON aroiinv.aroiinv_no = aroi.aroiinv_no
+                LEFT OUTER JOIN customer  ON aroiinv.cust_no    = customer.cust_no 
+                LEFT OUTER JOIN groupitem ON aroi.item_no       = groupitem.item_no
+          WHERE ((:as_area   = '%' ) OR
+                 (:as_area  <> '%' AND aroiinv.inv_area  = :as_area ) 
+                )
+            AND ( aroiinv.sale_flag     IN ( :asa_flag )  )
+            AND ( datepart(year,  aroiinv.oi_date) = :al_year  ) 
+            AND ( datepart(month, aroiinv.oi_date) = :al_month )
+            AND ( aroiinv.delete_flag    = 'N' )  
+            AND ( customer.salesman   LIKE :as_userid )
+         ) A
+   GROUP BY a.item_no
+          , a.item_name
+          , a.qa
+          , a.uom
+          , a.gl_cur_rate
+          , a.curr_code
+" arguments=(("as_area", string),("asa_flag", stringlist),("al_year", number),("al_month", number),("as_userid", string))  sort="item_no A qa A " )
+group(level=1 header.height=0 trailer.height=80 by=("item_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="매출수량" border="6" color="0" x="2158" y="8" height="60" width="453" html.valueishtml="0"  name=ship_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="2619" y="8" height="60" width="521" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="매출금액" border="6" color="0" x="3150" y="8" height="60" width="549" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="부가세" border="6" color="0" x="3707" y="8" height="60" width="558" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="총금액" border="6" color="0" x="4274" y="8" height="60" width="590" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="60" width="251" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="270" y="8" height="60" width="960" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1239" y="8" height="60" width="741" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="1989" y="8" height="60" width="160" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="68" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="270" y="4" height="68" width="960" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="2158" y="4" height="68" width="453" format="#,##0" html.valueishtml="0"  name=ship_qty  tag="매출수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="if(left( item_no ,1) = 'P' and mid(item_no, 3,1) = 'Y' and (mid(item_no, 7,1) = 'A' or mid(item_no, 7,1) = 'B' or mid(item_no, 7,1) = 'C' or mid(item_no, 7,1) = 'D' or left(item_no, 5) = 'PCYSZ'), ship_qty, if(uom = 'M2' or uom = 'SS',truncate( long(mid( qa ,5,4)) * long(mid(qa,10,4)) *   ship_qty / 1000000+ 0.00001, 2), if(uom = 'M',if(  ship_qty < 0 , truncate(long(mid(  qa , 15,5)) *    ship_qty / 1000 - 0.00001,2), truncate(long(mid(  qa , 15,5)) *   ship_qty / 1000 + 0.00001,2)) ,      ship_qty )))"border="0" color="0" x="2619" y="4" height="68" width="521" format="#,##0.00" html.valueishtml="0"  name=cqty visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="truncate( (  ori_amount - if( aroiinv_curr_code = 'WON', truncate(   ori_amount *  aroi_dc_rate / 100, 0 ),  truncate(   ori_amount *  aroi_dc_rate / 100, 2 )))  *  aroiinv_gl_cur_rate , 0 )"border="0" color="0" x="3150" y="4" height="68" width="549" format="#,##0" html.valueishtml="0"  name=c_ori_amount visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="truncate( (   rate_cash - if( aroiinv_curr_code = 'WON', truncate(    rate_cash *  aroi_dc_rate / 100, 0 ),  truncate(    rate_cash *  aroi_dc_rate / 100 + 0.0001, 2 )))  *  aroiinv_gl_cur_rate , 0 )"border="0" color="0" x="3707" y="4" height="68" width="558" format="#,##0" html.valueishtml="0"  name=c_rate_cash visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression=" c_ori_amount  +  c_rate_cash "border="0" color="0" x="4274" y="4" height="68" width="590" format="#,##0" html.valueishtml="0"  name=c_total visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="1989" y="4" height="68" width="160" format="[general]" html.valueishtml="0"  name=uom  tag="단위" visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="1239" y="4" height="68" width="741" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="60" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(truncate( (   rate_cash - if( aroiinv_curr_code = 'WON', truncate(    rate_cash *  aroi_dc_rate / 100, 0 ),  truncate(    rate_cash *  aroi_dc_rate / 100, 2 )))  *  aroiinv_gl_cur_rate , 0 ) for all)"border="0" color="0" x="3707" y="4" height="64" width="558" format="#,##0" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( c_ori_amount  +  c_rate_cash  for all)"border="0" color="0" x="4274" y="4" height="64" width="590" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="item_name + ~" 계~""border="0" color="0" x="270" y="4" height="68" width="960" format="[GENERAL]" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(truncate( (  ori_amount - if( aroiinv_curr_code = 'WON', truncate(   ori_amount *  aroi_dc_rate / 100, 0 ),  truncate(   ori_amount *  aroi_dc_rate / 100, 2 )))  *  aroiinv_gl_cur_rate , 0 ) for group 1)"border="0" color="16711680" x="3150" y="4" height="68" width="549" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(truncate( (   rate_cash - if( aroiinv_curr_code = 'WON', truncate(    rate_cash *  aroi_dc_rate / 100, 0 ),  truncate(    rate_cash *  aroi_dc_rate / 100, 2 )))  *  aroiinv_gl_cur_rate , 0 ) for group 1)"border="0" color="16711680" x="3707" y="4" height="68" width="558" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( c_ori_amount  +  c_rate_cash  for group 1)"border="0" color="16711680" x="4274" y="4" height="68" width="590" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( item_name for all DISTINCT item_name )"border="0" color="0" x="270" y="8" height="60" width="960" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(truncate( (  ori_amount - if( aroiinv_curr_code = 'WON', truncate(   ori_amount *  aroi_dc_rate / 100, 0 ),  truncate(   ori_amount *  aroi_dc_rate / 100, 2 )))  *  aroiinv_gl_cur_rate , 0 ) for all)"border="0" color="0" x="3150" y="8" height="60" width="549" format="#,##0" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

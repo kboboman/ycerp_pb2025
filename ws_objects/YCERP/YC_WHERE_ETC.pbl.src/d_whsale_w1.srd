@@ -1,0 +1,217 @@
+﻿$PBExportHeader$d_whsale_w1.srd
+$PBExportComments$수주조회(2002/01/14)
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=108 color="536870912" )
+summary(height=120 color="536870912" )
+footer(height=0 color="12639424" )
+detail(height=88 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=saledet_cust_no dbname="customer.cust_no" )
+ column=(type=char(14) updatewhereclause=yes name=sale_order_no dbname="order_no" )
+ column=(type=datetime updatewhereclause=yes name=sale_due_date dbname="due_date" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="scene_desc" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_order_qty dbname="order_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_rlse_qty dbname="rlse_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=ask_rlse_qty dbname="ask_rlse_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=corder dbname="corder" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=char(10) updatewhereclause=yes name=citem dbname="citem" )
+ column=(type=char(20) updatewhereclause=yes name=cqa dbname="cqa" )
+ column=(type=decimal(4) updatewhereclause=yes name=make_qty dbname="make_qty" )
+ retrieve=" SELECT       saledet.cust_no
+        		 	, order_no  = saledet.order_no
+        			, due_date  = saledet.due_date
+        			, cust_name = customer.cust_name
+        			, scene_desc= scene.scene_desc
+        			, order_qty = isnull(saledet.order_qty,0) 
+        			, rlse_qty  = isnull(saledet.rlse_qty,0)
+     		           , ask_rlse_qty = isnull(ask.rlse_qty,0)
+        			, corder    = isnull(saledet.order_qty,0) - isnull(saledet.rlse_qty, 0 ) - isnull(ask.rlse_qty,0)
+        			, uom       = saledet.uom
+        			, citem     = saledet.item_no
+        			, cqa       = saledet.qa
+        			, isnull(sfcday.make_qty, 0) make_qty
+   FROM (
+                             SELECT sale.due_date, sale.cust_no, SALE.scene_code, SALEDET.ORDER_NO,  SALEDET.ITEM_NO, SALEDET.QA,  saledet.uom, SUM(isnull(saledet.order_qty,0)) order_qty,  SUM(isnull(saledet.rlse_qty,0)) rlse_qty
+                           FROM saledet with(nolock) inner join sale with(nolock) on saledet.order_no = sale.order_no
+                          WHERE convert(char(8),sale.order_date,112)   between :ad_start and :ad_end
+                              AND saledet.item_no   = :as_item
+                              AND saledet.qa        = :as_qa
+                              AND sale.open_close   = 'O' 
+                              AND sale.confirm_flag IN ( 'Y', 'T' )      /*미확정 제외 */
+                      GROUP BY  sale.due_date, sale.cust_no, SALE.scene_code, SALEDET.ORDER_NO, SALEDET.ITEM_NO, SALEDET.QA, saledet.uom
+                  ) saledet left outer join customer with(nolock) on saledet.cust_no = customer.cust_no
+						  INNER JOIN item WITH (NOLOCK) ON saledet.item_no = item.item_no and  saledet.qa = item.qa
+						  left outer join scene with(nolock) on saledet.scene_code = scene.scene_code
+						  left outer join (    
+												select b.sale_no, b.item_no, b.qa, sum(d.make_qty) make_qty
+												from routtempnew b with(nolock) inner join  (
+																												select  a.sale_no, a.seq_no, a.division
+																												from 
+																												(
+																														  select sale_no, seq_no, max(division) division
+																														  from routtempnew with(nolock)
+																														  where  item_no = :as_item
+																															and qa =  :as_qa
+																														  group by  sale_no, seq_no
+																												) a                                                                                            
+																										)  c on b.sale_no = c.sale_no and b.seq_no = c.seq_no and b.division  =c.division
+												inner join sfcday d on  b.sale_no = d.sale_no and b.seq_no = d.seq_no and d.item_no = b.item_no and d.qa =  b.qa
+												group by b.sale_no,  b.item_no, b.qa
+											) sfcday on saledet.order_no = sfcday.sale_no and saledet.item_no = sfcday.item_no and saledet.qa = sfcday.qa
+						 left outer join (
+												select item_no, qa, sale_no, sum(isnull(rlse_qty,0)) rlse_qty
+												from ask_det with(nolock)
+												where convert(char(8),rlse_date,112)  between :ad_start and :ad_end 
+													 and (case when loc_no = 'WS00000006' then 'WS00000008' else loc_no end)  = :as_locno /* 2019-08-29 JOWONSUK YSP저장소 미출고 내역 -> 화성저장소 변경 요청 */
+													 and item_no   = :as_item
+													 and qa        = :as_qa
+												group by item_no, qa, sale_no
+										  ) ask on saledet.order_no = ask.sale_no and saledet.item_no = ask.item_no and saledet.qa = ask.qa
+  WHERE isnull(item.loc_no, :as_locno)   LIKE :as_locno	
+	  AND isnull(saledet.order_qty,0) - isnull(saledet.rlse_qty,0 )  - isnull(ask.rlse_qty,0) > 0
+    
+/*
+ SELECT  sale.cust_no
+		 	,
+ order_no  = sale.order_no
+			,
+ due_date  = sale.due_date
+			,
+ cust_name = customer.cust_name
+			,
+ scene_desc= scene.scene_desc
+			,
+ order_qty = saledet.order_qty
+			,
+ rlse_qty  = saledet.rlse_qty
+			,
+ corder    = isnull(saledet.order_qty,
+0) - isnull(saledet.rlse_qty,
+0) - isnull(ask.rlse_qty,
+0)
+			,
+ uom       = saledet.uom
+			,
+ citem     = saledet.item_no
+			,
+ cqa       = saledet.qa
+			,
+ isnull(sfcday.make_qty,
+ 0) make_qty
+   FROM saledet with(nolock) inner join sale with(nolock) on saledet.order_no = sale.order_no
+									  inner join customer with(nolock) on sale.cust_no = customer.cust_no
+									  INNER JOIN item WITH (NOLOCK) ON saledet.item_no = item.item_no and  saledet.qa = item.qa
+									  left outer join scene with(nolock) on sale.scene_code = scene.scene_code
+									  left outer join (    
+																select b.sale_no,
+ b.seq_no,
+ b.item_no,
+ b.qa,
+ sum(d.make_qty) make_qty
+																from routtempnew b with(nolock) inner join  (
+																																select  a.sale_no,
+ a.seq_no,
+ a.division
+																																from 
+																																(
+																																		  select sale_no,
+ seq_no,
+ max(division) division
+																																		  from routtempnew with(nolock)
+																																		  where  item_no = :as_item
+																																			and qa =  :as_qa
+																																		  group by  sale_no,
+ seq_no
+																																) a                                                                                            
+																														)  c on b.sale_no = c.sale_no and b.seq_no = c.seq_no and b.division  =c.division
+																inner join sfcday d on  b.sale_no = d.sale_no and b.seq_no = d.seq_no and d.item_no = b.item_no and d.qa =  b.qa
+																group by b.sale_no,
+ b.seq_no,
+ b.item_no,
+ b.qa
+														) sfcday on saledet.order_no = sfcday.sale_no and saledet.seq_no = sfcday.seq_no and saledet.item_no = sfcday.item_no and saledet.qa = sfcday.qa
+									 left outer join (
+															select item_no,
+ qa,
+ sale_no,
+ sum(rlse_qty) rlse_qty
+															from ask_det with(nolock)
+															where rlse_date between :ad_start and :ad_end 
+																 and loc_no = :as_locno
+																 and item_no   = :as_item
+																 and qa        = :as_qa
+															group by item_no,
+ qa,
+ sale_no
+													  ) ask on saledet.order_no = ask.sale_no and saledet.item_no = ask.item_no and saledet.qa = ask.qa
+  WHERE sale.order_date  between :ad_start and :ad_end
+        AND saledet.item_no   = :as_item
+        AND saledet.qa        = :as_qa
+        AND sale.open_close   = 'O'
+       AND isnull(item.loc_no,
+ :as_locno)   LIKE :as_locno	
+	  AND isnull(saledet.order_qty,
+0) - isnull(saledet.rlse_qty,
+0) <> 0
+*/
+ 
+" arguments=(("as_locno", string),("ad_start", string),("ad_end", string),("as_item", string),("as_qa", string))  sort="sale_order_no A customer_cust_name A scene_scene_desc A " )
+text(band=header alignment="2" text="" border="0" color="0" x="1938" y="16" height="88" width="494" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+line(band=header x1="3511" y1="12" x2="3511" y2="128"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2917" y1="12" x2="2917" y2="128"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2432" y1="12" x2="2432" y2="128"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1934" y1="12" x2="1934" y2="128"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="946" y1="12" x2="946" y2="128"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="521" y1="12" x2="521" y2="128"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="18" y1="12" x2="18" y2="128"  name=l_19 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="거래처" border="0" color="0" x="535" y="28" height="68" width="402" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수주번호" border="0" color="0" x="32" y="28" height="68" width="480" html.valueishtml="0"  name=sale_order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수주수량" border="0" color="0" x="2446" y="28" height="68" width="462" html.valueishtml="0"  name=saledet_order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현장명" border="0" color="0" x="960" y="28" height="68" width="965" html.valueishtml="0"  name=scene_scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="미출고수량" border="0" color="0" x="1943" y="28" height="68" width="494" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="기출고수량" border="0" color="0" x="2930" y="28" height="68" width="571" html.valueishtml="0"  name=saledet_rlse_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="납기" border="0" color="0" x="4014" y="28" height="68" width="425" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+line(band=header x1="4494" y1="12" x2="4494" y2="128"  name=l_29 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="4000" y1="12" x2="4000" y2="128"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="23" y1="104" x2="4494" y2="104"  name=l_17 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="23" y1="12" x2="4494" y2="12"  name=l_20 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="생산량" border="0" color="0" x="3529" y="28" height="60" width="457" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+line(band=detail x1="946" y1="0" x2="946" y2="116"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="960" y="8" height="68" width="965" format="[general]" html.valueishtml="0"  name=scene_scene_desc  tag="현장명" visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="535" y="8" height="68" width="402" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="18" y1="0" x2="18" y2="116"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="521" y1="0" x2="521" y2="116"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1934" y1="0" x2="1934" y2="116"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2432" y1="0" x2="2432" y2="116"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2917" y1="0" x2="2917" y2="116"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3511" y1="0" x2="3511" y2="116"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="8388608" x="1947" y="8" height="68" width="475" format="#,##0" html.valueishtml="0"  name=corder visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="32" y="8" height="68" width="480" format="[general]" html.valueishtml="0"  name=sale_order_no  tag="판매주문번호" visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2446" y="8" height="68" width="462" format="#,##0" html.valueishtml="0"  name=saledet_order_qty  tag="주문수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="4014" y="8" height="68" width="425" format="yyyy/mm/dd" html.valueishtml="0"  name=sale_due_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="2930" y="8" height="68" width="571" format="#,##0" html.valueishtml="0"  name=saledet_rlse_qty  tag="출고수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="4494" y1="0" x2="4494" y2="116"  name=l_30 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="4000" y1="0" x2="4000" y2="116"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="3525" y="8" height="68" width="462" format="#,##0" html.valueishtml="0"  name=make_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="23" y1="84" x2="4494" y2="84"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=summary alignment="1" text="" border="0" color="0" x="23" y="8" height="108" width="4471" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+line(band=summary x1="18" y1="4" x2="18" y2="120"  name=l_21 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="521" y1="4" x2="521" y2="120"  name=l_22 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="1934" y1="4" x2="1934" y2="120"  name=l_23 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="2432" y1="4" x2="2432" y2="120"  name=l_24 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="2917" y1="4" x2="2917" y2="120"  name=l_25 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="3511" y1="4" x2="3511" y2="120"  name=l_26 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=summary alignment="2" text="합 계" border="0" color="0" x="1682" y="28" height="60" width="215" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(saledet_order_qty for all)"border="0" color="0" x="2446" y="24" height="84" width="462" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(corder for all)"border="0" color="0" x="1947" y="24" height="84" width="475" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="2" expression="string(count( sale_order_no for all ) ) + ' 건'"border="0" color="0" x="242" y="24" height="84" width="261" format="[General]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+line(band=summary x1="4494" y1="4" x2="4494" y2="120"  name=l_31 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="4000" y1="4" x2="4000" y2="120"  name=l_27 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="23" y1="4" x2="4494" y2="4"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="23" y1="116" x2="4494" y2="116"  name=l_28 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(saledet_rlse_qty for all)"border="0" color="0" x="2930" y="24" height="84" width="571" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(make_qty for all)"border="0" color="0" x="3525" y="24" height="84" width="462" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

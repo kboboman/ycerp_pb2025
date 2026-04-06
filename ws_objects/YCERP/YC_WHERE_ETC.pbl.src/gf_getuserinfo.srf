@@ -1,0 +1,41 @@
+﻿$PBExportHeader$gf_getuserinfo.srf
+$PBExportComments$로그인사용자정보[2000.12.07,서재복]
+global type gf_getuserinfo from function_object
+end type
+
+forward prototypes
+global subroutine gf_getuserinfo ()
+end prototypes
+
+global subroutine gf_getuserinfo ();string ls_username, ls_personno, ls_parentcode, ls_teamname, ls_divcode
+integer icount
+
+// 담당자(user_name,person_no,kor_name)와 담당자본부(div_name,div_code) 자동으로 가져오기 단계
+
+// 1단계 user_id -> user_name, team_code 
+select user_name into :ls_username from login where user_id = :gs_userid;
+
+// 1-2단계 user_name과 인사상의 이름을 비교  user_name -> person_no, kor_name
+select person_no into :ls_personno  from  per_mast where kor_name = :ls_username;
+
+// 2단계 team_code -> team_name, parent_code
+select parent_code, team_name into :ls_parentcode, :ls_teamname 
+from team where team_code = :gs_team;
+
+// 2-1단계 (parent_code가 00000이 아니면 루프돌기)*/ parent_code -> team_name,parent_code
+for icount = 1 to 10 
+	select parent_code, team_name into :ls_parentcode, :ls_teamname 
+	from team where team_code = :ls_parentcode;
+	if ls_parentcode = '00000' then exit
+next
+
+// 3단계 team_name -> div_name,div_code
+select div_code into :ls_divcode from per_divcd where div_name = :ls_teamname;
+
+//gs_personno = ls_personno //2007.06.18 per_mast -> login 테이블 변경. 기존자료와 불일치 됨..
+gs_personno = gs_userid
+gs_divcode = ls_divcode
+
+
+end subroutine
+

@@ -1,0 +1,37 @@
+﻿$PBExportHeader$gf_useprogram.srf
+$PBExportComments$프로그램 사용현황
+global type gf_useprogram from function_object
+end type
+
+forward prototypes
+global subroutine gf_useprogram (string a_userid, string a_window, string a_flag, string a_today, string a_title)
+end prototypes
+
+global subroutine gf_useprogram (string a_userid, string a_window, string a_flag, string a_today, string a_title);long   ll_count
+
+// a_userid, a_window, a_flag, a_today, a_title
+ll_count = 0
+SELECT USE_COUNT INTO :ll_count 
+  FROM SYSUSERCNT
+ WHERE USER_ID   = :a_userid 
+   AND WINDOW_ID = :a_window 
+   AND FLAG      = :a_flag 
+   AND USE_DAY   = :a_today;
+   
+if sqlca.sqlcode = 100 or ll_count = 0 then
+    INSERT INTO SYSUSERCNT ( USER_ID, USE_COUNT, WINDOW_ID, FLAG, USE_DAY, WINDOW_TITLE ) 
+    VALUES ( :a_userid, 1, :a_window, :a_flag, :a_today, :a_title );
+else
+    UPDATE SYSUSERCNT
+       SET USE_COUNT    = USE_COUNT + 1
+		   , WINDOW_TITLE = :a_title
+     WHERE USER_ID   = :a_userid 
+       AND WINDOW_ID = :a_window 
+       AND FLAG      = :a_flag 
+       AND USE_DAY   = :a_today;
+end if
+
+COMMIT;
+
+end subroutine
+

@@ -1,0 +1,77 @@
+﻿$PBExportHeader$gf_download.srf
+global type gf_download from function_object
+end type
+
+forward prototypes
+global function integer gf_download (blob as_blob, string as_path, string as_filename)
+end prototypes
+
+global function integer gf_download (blob as_blob, string as_path, string as_filename);///////////////////////////////////////////////////////////////////////////////////////
+//	함수명   : gf_download
+//	함수용도: 파일다운로드
+//	작성일자: 2020-07-04			
+//    작성자  : jowonsuk
+//   변수: as_blob (파일데이터)
+//           as_path (저장할 경로)
+//           as_filename(저장할파일명)
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+string 			ls_ext, ls_file_path
+LONG		ll_file_size, ll_loops
+LONG		ll_startTime,  ll_EndTime
+BLOB 		lb_file_content ,  lb_temp  
+integer		li_file_pointer, li_start_1, li_rtn
+
+constant long LENGTH = 32765
+				 
+ ll_file_size = LenA(as_blob)
+ 
+ IF RightA(as_path,1) = '\' then
+	 ls_file_path = as_path + as_filename	//저장 경로 및 화일	
+ else
+	 ls_file_path = as_path + "\" + as_filename	//저장 경로 및 화일
+ end if 
+
+						
+ IF  FileExists(ls_file_path) Then 
+		  FileDelete(ls_file_path)
+ END IF			
+
+IF ll_file_size > LENGTH THEN
+
+	IF Mod(ll_file_size, LENGTH) = 0 THEN
+		ll_loops = ll_file_size / LENGTH
+	ELSE
+		ll_loops = (ll_file_size / LENGTH) + 1
+	END IF
+
+ELSE
+	ll_loops = 1
+END IF
+
+li_file_pointer = FileOpen(ls_file_path, StreamMode!,Write!,Shared!,Replace!)			
+
+ FOR li_start_1 = 1 TO ll_loops							
+	
+	IF li_start_1 = ll_loops THEN 
+		lb_temp = BlobMid(as_blob, 1 + ((li_start_1 - 1) * LENGTH))
+	ELSE
+		lb_temp = BlobMid(as_blob, 1 + ((li_start_1 - 1) * LENGTH), LENGTH)
+	END IF				
+
+	li_rtn = FileWrite(li_file_pointer, lb_temp)
+	
+	IF li_rtn = -1 THEN 
+		MessageBox("에러","파일 생성 실패(1) [" + as_filename + "] ",StopSign!)
+		Fileclose(li_file_pointer)
+		
+		filedelete(ls_file_path)
+		RETURN  0
+	END IF
+	
+NEXT
+
+return 1
+end function
+

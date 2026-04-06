@@ -1,0 +1,102 @@
+﻿$PBExportHeader$d_orsalemstrep_r.srd
+$PBExportComments$수주마스터 현황 DISPLAY(1998/05/12, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="79741120" )
+summary(height=72 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(4) update=yes updatewhereclause=yes name=cust_no dbname="sale.cust_no" initial=" " )
+ column=(type=char(11) update=yes updatewhereclause=yes name=scene_code dbname="sale.scene_code" initial=" " )
+ column=(type=char(14) update=yes updatewhereclause=yes name=order_no dbname="sale.order_no" initial=" " )
+ column=(type=datetime update=yes updatewhereclause=yes name=order_date dbname="sale.order_date" initial=" " )
+ column=(type=datetime update=yes updatewhereclause=yes name=due_date dbname="sale.due_date" initial=" " )
+ column=(type=char(1) update=yes updatewhereclause=yes name=sale_flag dbname="sale.sale_flag" initial=" " values="내수	D/수출	E/L//C	L/" )
+ column=(type=char(3) update=yes updatewhereclause=yes name=curr_code dbname="sale.curr_code" initial=" " )
+ column=(type=char(30) update=yes updatewhereclause=yes name=ship_flag dbname="ship_flag" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=fob dbname="sale.fob" initial=" " )
+ column=(type=char(10) update=yes updatewhereclause=yes name=salesman dbname="sale.salesman" initial=" " )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=sale_amount dbname="sale.sale_amount" initial=" " )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=sale_tax dbname="sale.sale_tax" initial=" " )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ column=(type=datetime updatewhereclause=yes name=c_start dbname="c_start" )
+ column=(type=datetime updatewhereclause=yes name=c_end dbname="c_end" )
+ column=(type=char(8) updatewhereclause=yes name=c_text dbname="c_text" )
+ retrieve="  SELECT sale.cust_no,   
+         sale.scene_code,   
+         sale.order_no,   
+         sale.order_date,   
+         sale.due_date,   
+         sale.sale_flag,   
+         sale.curr_code,   
+         ship_flag = dbo.uf_getshipflag(sale.ship_flag),   
+         sale.fob,   
+         sale.salesman,   
+         sale.sale_amount,   
+         sale.sale_tax,   
+         customer.cust_name,   
+         scene.scene_desc,   
+         c_start = convert(smalldatetime, :ad_start, 111),   
+         c_end = convert(smalldatetime, :ad_end, 111),   
+         '        ' c_text  
+
+from sale  inner join customer  with(nolock) on sale.cust_no          = customer.cust_no
+                  left outer  join scene with(nolock) on sale.cust_no    = scene.cust_no and sale.scene_code     = scene.scene_code                   
+/*   WHERE ( sale.open_close not in('X','C')) and  	한도초과 */
+      WHERE ( sale.open_close  = 'O' ) and
+         ( ( sale.sale_flag in ( :asa_sale_flag ) ) AND  
+         ( sale.order_date between :ad_start and :ad_end ) AND  
+	    	 ( sale.salesman like :as_userid)  AND
+         ( sale.confirm_flag in ( :asa_confirm_flag ) ) )    
+/*
+    FROM sale,
+			customer,   
+         scene
+   WHERE ( sale.open_close not in('X','C')) and  
+         ( sale.cust_no = customer.cust_no ) and  
+         ( sale.scene_code *= scene.scene_code ) and  
+         ( ( sale.sale_flag in ( :asa_sale_flag ) ) AND  
+         ( sale.order_date between :ad_start and :ad_end ) AND  
+			( sale.salesman like :as_userid) AND
+         ( sale.confirm_flag in ( :asa_confirm_flag ) ) )    
+*/" arguments=(("asa_sale_flag", stringlist),("ad_start", date),("ad_end", date),("asa_confirm_flag", stringlist),("as_userid", string))  sort="customer_cust_name A scene_code A order_date A order_no A " )
+group(level=1 header.height=0 trailer.height=72 by=("cust_no" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=72 by=("scene_code" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="9" y="8" height="60" width="434" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장" border="6" color="0" x="453" y="8" height="60" width="581" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="1042" y="8" height="60" width="448" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문일자" border="6" color="0" x="1499" y="8" height="60" width="329" html.valueishtml="0"  name=order_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="납기일자" border="6" color="0" x="1838" y="8" height="60" width="325" html.valueishtml="0"  name=due_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송방법" border="6" color="0" x="2171" y="8" height="60" width="247" html.valueishtml="0"  name=ship_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="결재방법" border="6" color="0" x="2427" y="8" height="60" width="325" html.valueishtml="0"  name=fob_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당영업사원" border="6" color="0" x="2761" y="8" height="60" width="379" html.valueishtml="0"  name=salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="공급가액" border="6" color="0" x="3150" y="8" height="60" width="539" html.valueishtml="0"  name=sale_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부가세" border="6" color="0" x="3698" y="8" height="60" width="347" html.valueishtml="0"  name=sale_tax_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="총금액" border="6" color="0" x="4055" y="8" height="60" width="549" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1499" y="4" height="60" width="329" format="[shortdate] [time]" html.valueishtml="0"  name=order_date  tag="주문일자" visible="1" editmask.mask="YYYY/MM/DD" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="1838" y="4" height="60" width="325" format="[shortdate] [time]" html.valueishtml="0"  name=due_date  tag="최종납기일자" visible="1" editmask.mask="YYYY/MM/DD" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="2171" y="4" height="60" width="247" format="[general]" html.valueishtml="0"  name=ship_flag  tag="운송방법" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="2427" y="4" height="60" width="325" format="[general]" html.valueishtml="0"  name=fob  tag="결재방법" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="2761" y="4" height="60" width="379" format="[general]" html.valueishtml="0"  name=salesman  tag="영업사원코드" visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="3150" y="4" height="60" width="539" format="#,##0.00" html.valueishtml="0"  name=sale_amount  tag="공급가액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="3698" y="4" height="60" width="347" format="#,##0" html.valueishtml="0"  name=sale_tax  tag="부가세" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" sale_amount  +  sale_tax "border="0" color="0" x="4055" y="4" height="60" width="549" format="#,##0.00" html.valueishtml="0"  name=c_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1042" y="4" height="60" width="448" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="434" format="[general]" html.valueishtml="0"  name=customer_cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="0" x="453" y="4" height="60" width="581" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum( c_amt   for group 2)"border="0" color="255" x="4055" y="4" height="60" width="549" format="#,##0.00" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(sale_tax for group 2)"border="0" color="255" x="3698" y="4" height="60" width="347" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(sale_amount for group 2)"border="0" color="255" x="3150" y="4" height="60" width="539" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="2" text="현장 소계" border="6" color="0" x="453" y="4" height="60" width="581" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79416533" )
+text(band=trailer.1 alignment="2" text="거래처 소계" border="6" color="0" x="9" y="4" height="60" width="434" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79416533" )
+compute(band=trailer.1 alignment="1" expression="sum(  c_amt  for group 1 )"border="0" color="32768" x="4055" y="4" height="60" width="549" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  sale_tax  for group 1 )"border="0" color="32768" x="3698" y="4" height="60" width="347" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  sale_amount  for group 1 )"border="0" color="32768" x="3150" y="4" height="60" width="539" format="#,##0.00" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="2" text="합       계" border="6" color="0" x="9" y="4" height="60" width="434" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79416533" )
+compute(band=summary alignment="1" expression="sum(  c_amt  for all )"border="0" color="255" x="4055" y="4" height="60" width="549" format="#,##0.00" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  sale_tax  for all )"border="0" color="255" x="3698" y="4" height="60" width="347" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  sale_amount  for all )"border="0" color="255" x="3150" y="4" height="60" width="539" format="#,##0.00" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="customer_cust_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

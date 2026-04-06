@@ -1,0 +1,221 @@
+﻿$PBExportHeader$d_mpprocess_ct.srd
+$PBExportComments$근태현황
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=72 color="536870912" )
+header[2](height=68 color="536870912" )
+summary(height=0 color="8421504" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=gt_dt dbname="gt_dt" )
+ column=(type=char(20) updatewhereclause=yes name=dt_nm dbname="dt_nm" )
+ column=(type=char(20) updatewhereclause=yes name=gt_nm dbname="gt_nm" )
+ column=(type=char(20) updatewhereclause=yes name=gtime dbname="gtime" )
+ column=(type=number updatewhereclause=yes name=gt_day dbname="gt_day" )
+ retrieve="  SELECT acc_cd   = a.acc_cd               
+       , acc_nm   = a.acc_nm               
+       , name_kor = a.name_kor             
+       , team_nm  = (case b.team_nm when '성형' then '1 성형' when '유압' then '2 유압'
+                                    when '절곡' then '3 절곡' when '도장' then '4 도장'
+                                    when 'YSP'  then '5 YSP'  when '출고' then '6 출고'
+                                    else b.team_nm
+                     end)
+       , gt_cd    = a.gt_cd
+       , gt_dt    = a.gt_dt
+       , dt_nm    = a.dt_nm
+       , gt_nm    = c.gt_nm
+       , gtime    = c.gtime
+       , gt_day   = a.gt_day     /* 근무일수 */
+       , wh_day   = a.wh_day     /* 주휴일수 */
+       , ab_day   = a.ab_day     /* 결근일수 */
+       , yy_day   = a.yy_day     /* 년차일수 */
+       , dtime    = a.dtime      /* 공제시간 */
+       , etime    = a.etime      /* 연장시간 */
+       , ntime    = a.ntime      /* 야간시간 */
+       , stime    = a.stime      /* 휴일시간 */
+       , ttime    = a.ttime      /* 토요시간 */
+    FROM (
+         SELECT t.acc_cd               
+              , t.acc_nm               
+              , t.name_kor             
+              , jumin_no = t.jumin_no
+              , gt_cd    = t.gt_cd
+              , gt_dt    = t.gt_dt
+              , dt_nm    = t.dt_nm
+              , gt_day   = sum(t.gt_day) /* 근무일수 */
+              , wh_day   = sum(t.wh_day) /* 주휴일수 */
+              , ab_day   = sum(t.ab_day) /* 결근일수 */
+              , yy_day   = sum(t.yy_day) /* 년차일수 */
+              , dtime    = sum(t.dtime)  /* 공제시간 */
+              , etime    = sum(t.etime)  /* 연장시간 */
+              , ntime    = sum(t.ntime)  /* 야간시간 */
+              , stime    = sum(t.stime)  /* 휴일시간 */
+              , ttime    = sum(t.ttime)  /* 토요시간 */
+           FROM (
+                 SELECT acc_cd             
+                      , acc_nm             
+                      , name_kor           
+                      , jumin_no           
+                      , gt_cd   
+                      , gt_dt    = right(gt_dt,2)
+                      , dt_nm    = left(datename(dw, gt_dt),1)
+                      , gt_day   = 0      
+                      , wh_day   = 0      
+                      , ab_day   = 0      
+                      , yy_day   = 0      
+                      , etime    = (case when gt_cd in ('02','03','04','05','06','07','08','09'
+                                                       ,'10','11','12','13','14','15','16','17'
+                                                       ,'45','46'
+                                                       ,'51','52','53','54','55','56'
+                                                       ,'65','66','69'
+                                                       ,'70','71'                                               ) then sum(etime)              else 0 end) /* 연장시간 */
+                      , ntime    = (case when gt_cd in ('11','12','13','14','15','16','17','18','19'
+                                                       ,'20','21','22','23','24','25','26','27','28','29'
+                                                       ,'30','31','39'
+                                                       ,'40','41','42','43','44','45','46','47','48','49'
+                                                       ,'50','51','52','53','54','55','56','58','59'
+                                                       ,'60','61','62','63','65','66','67','68','69'
+                                                       ,'70','71'                                               ) then sum(ntime)              else 0 end) /* 야간시간 */
+                      , stime    = (case when gt_cd in ('32','36','37','38','39'
+                                                       ,'40','41','42','43','44','49'
+                                                       ,'50','68'                                               ) then sum(btime) + sum(etime) else 0 end) /* 휴일시간 */
+                      , ttime    = (case when gt_cd in ('18','19'
+                                                       ,'20','21','22','23','24','25','26','27','28','29'
+                                                       ,'30','31'
+                                                       ,'47','48','58','59'
+                                                       ,'60','61','62','63','67'                                ) then sum(btime) + sum(etime) else 0 end) /* 토요시간 */
+                      , dtime    = sum(dtime) /* 공제시간 */
+         
+                   FROM ycerp.dbo.gt_info
+                  WHERE acc_cd          = :as_com
+                    AND gt_dt     between :as_sdate and :as_edate
+                  GROUP BY acc_cd, acc_nm, name_kor, jumin_no, gt_cd, gt_dt
+                  
+                 UNION ALL
+                 
+                 SELECT s.acc_cd   
+                      , s.acc_nm   
+                      , s.name_kor 
+                      , s.jumin_no 
+                      , s.gt_cd   
+                      , s.gt_dt   
+                      , s.dt_nm  
+                      , gt_day    = sum(s.gt_day) 
+                      , wh_day    = sum(s.wh_day) 
+                      , ab_day    = sum(s.ab_day) 
+                      , yy_day    = sum(s.yy_day) 
+                      , dtime     = 0             
+                      , etime     = 0             
+                      , ntime     = 0             
+                      , stime     = 0             
+                      , ttime     = 0             
+                   FROM (
+                         SELECT acc_cd                
+                              , acc_nm                
+                              , name_kor              
+                              , jumin_no              
+                              , gt_cd   
+                              , gt_dt      = right(gt_dt,2)
+                              , dt_nm      = left(datename(dw, gt_dt),1)
+                              , gt_day     = count(gt_dt)   /* 근무일수 */
+                              , wh_day     = 0           
+                              , ab_day     = 0           
+                              , yy_day     = 0           
+                           FROM ycerp.dbo.gt_info
+                          WHERE acc_cd       = :as_com
+                            AND gt_dt  between :as_sdate and :as_edate
+                            AND gt_cd      NOT IN ('32','90','92','93','95')   /* 주휴, 주휴휴일 정상근무, 휴직, 산재(무급), 결근 */
+                          GROUP BY acc_cd, acc_nm, name_kor, jumin_no, gt_cd, gt_dt
+                          
+                         UNION ALL
+                         
+                         SELECT acc_cd                
+                              , acc_nm                
+                              , name_kor              
+                              , jumin_no              
+                              , gt_cd   
+                              , gt_dt      = right(gt_dt,2)
+                              , dt_nm      = left(datename(dw, gt_dt),1)
+                              , gt_day     = 0            
+                              , wh_day     = count(gt_dt)   /* 주휴일수 */ 
+                              , ab_day     = 0            
+                              , yy_day     = 0            
+                           FROM ycerp.dbo.gt_info
+                          WHERE acc_cd       = :as_com
+                            AND gt_dt  between :as_sdate and :as_edate
+                            AND gt_cd       IN ('32', '90')   /* 주휴, 주휴휴일 정상근무 */
+                          GROUP BY acc_cd, acc_nm, name_kor, jumin_no, gt_cd, gt_dt
+                         
+                         UNION ALL
+                         
+                         SELECT acc_cd                 
+                              , acc_nm                 
+                              , name_kor               
+                              , jumin_no               
+                              , gt_cd   
+                              , gt_dt      = right(gt_dt,2)
+                              , dt_nm      = left(datename(dw, gt_dt),1)
+                              , gt_day    = 0                       
+                              , wh_day    = 0                       
+                              , ab_day    = count(gt_dt) /* 결근일수 */
+                              , yy_day    = 0            
+                           FROM ycerp.dbo.gt_info
+                          WHERE acc_cd       = :as_com
+                            AND gt_dt  between :as_sdate and :as_edate
+                            AND gt_cd       IN ('95')      /* 결근 */
+                          GROUP BY acc_cd, acc_nm, name_kor, jumin_no, gt_cd, gt_dt
+                         
+                         UNION ALL
+                         
+                         SELECT acc_cd     
+                              , acc_nm     
+                              , name_kor   
+                              , jumin_no
+                              , gt_cd
+                              , gt_dt      = right(gt_dt,2)
+                              , dt_nm      = left(datename(dw, gt_dt),1)
+                              , gt_day     = 0            
+                              , wh_day     = 0            
+                              , ab_day     = 0            
+                              , yy_day     = count(gt_dt) /* 년차일수 */
+                           FROM ycerp.dbo.gt_info
+                          WHERE acc_cd      = :as_com
+                            AND gt_dt between :as_sdate and :as_edate
+                            AND gt_cd       = '96'          /* 연차사용 */
+                          GROUP BY acc_cd, acc_nm, name_kor, jumin_no, gt_cd, gt_dt
+                       ) S
+                   GROUP BY s.acc_cd, s.acc_nm, s.name_kor, s.jumin_no, s.gt_cd, gt_dt, s.dt_nm
+                ) T
+            GROUP BY t.acc_cd, t.acc_nm, t.name_kor, t.jumin_no, t.gt_cd, t.gt_dt, t.dt_nm
+         ) A
+         LEFT OUTER JOIN ycerp.dbo.insa_base B ON a.acc_cd = b.acc_cd AND a.jumin_no = b.jumin_no AND retire_yn <> 'Y'
+         LEFT OUTER JOIN ycerp.dbo.gt_item   C ON a.acc_cd = c.acc_cd AND a.gt_cd    = c.gt_cd
+" arguments=(("as_com", string),("as_sdate", string),("as_edate", string))  sort="gt_dt A dt_nm A gt_nm A gtime A " )
+group(level=1 header.height=0 trailer.height=80 by=("gt_dt" ) header.color="536870912" trailer.color="12639424" )
+text(band=header[1] alignment="2" text="COUNT" border="0" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[1] alignment="2" text="TEAM" border="0" color="33554432" x="178" y="8" height="60" width="165" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1733" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=gt_day visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1993" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=grand_count_gt_day visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( dt_nm = '토', rgb(0, 0, 255), if ( dt_nm = '일', rgb(255, 0, 0), rgb(0, 0, 0) ) )" x="9" y="4" height="72" width="160" format="[general]" html.valueishtml="0"  name=gt_dt visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( dt_nm = '토', rgb(0, 0, 255), if ( dt_nm = '일', rgb(255, 0, 0), rgb(0, 0, 0) ) )" x="178" y="4" height="72" width="165" format="[general]" html.valueishtml="0"  name=dt_nm visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( dt_nm = '토', rgb(0, 0, 255), if ( dt_nm = '일', rgb(255, 0, 0), rgb(0, 0, 0) ) )" x="352" y="4" height="72" width="855" format="[general]" html.valueishtml="0"  name=gt_nm visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( dt_nm = '토', rgb(0, 0, 255), if ( dt_nm = '일', rgb(255, 0, 0), rgb(0, 0, 0) ) )" x="1216" y="4" height="72" width="507" format="[general]" html.valueishtml="0"  name=gtime visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+compute(band=trailer.1 alignment="2" expression="gt_dt"border="0" color="33554432" x="9" y="4" height="72" width="160" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(gt_day for group 1 )"border="0" color="33554432" x="1733" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_count_gt_day for group 1 )"border="0" color="33554432" x="1993" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="~"합계~""border="0" color="33554432" x="9" y="4" height="72" width="160" format="[general]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(gt_day for all )"border="0" color="33554432" x="1733" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_count_gt_day for all )"border="0" color="33554432" x="1993" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_10 "border="0" color="33554432" x="9" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_11 "border="0" color="33554432" x="1733" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_12 "border="0" color="33554432" x="1993" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="일자" border="0" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=gt_dt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="요일" border="0" color="33554432" x="178" y="8" height="60" width="165" html.valueishtml="0"  name=dt_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="근태명" border="0" color="33554432" x="352" y="8" height="60" width="855" html.valueishtml="0"  name=gt_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="근무시간" border="0" color="33554432" x="1216" y="8" height="60" width="507" html.valueishtml="0"  name=gtime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="@team_nm" border="0" color="33554432" x="1733" y="8" height="60" width="251" html.valueishtml="0"  name=gt_day_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="합계" border="0" color="33554432" x="1993" y="8" height="60" width="251" html.valueishtml="0"  name=grand_count_gt_day_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "team_nm" rows = "gt_dt, dt_nm, gt_nm, gtime" values = "count(gt_day for crosstab)" sourcenames = "acc_cd, acc_nm, name_kor, team_nm, gt_cd, gt_dt, dt_nm, gt_nm, gtime, gt_day, wh_day, ab_day, yy_day, dtime, etime, ntime, stime, ttime")
+sparse(names="gt_dt	dt_nm	gt_nm")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

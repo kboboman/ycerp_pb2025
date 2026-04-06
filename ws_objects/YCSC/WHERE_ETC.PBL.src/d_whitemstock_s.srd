@@ -1,0 +1,39 @@
+﻿$PBExportHeader$d_whitemstock_s.srd
+$PBExportComments$장기재고조회(2003/08/26,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes name=item_no dbname="itemloc.item_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=qa dbname="itemloc.qa" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="groupitem.item_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=qoh dbname="itemloc.qoh" )
+ retrieve="  SELECT itemloc.item_no    
+       , itemloc.qa            
+       , groupitem.item_name   
+       , itemloc.qoh  
+    FROM itemloc
+       , groupitem  
+   WHERE groupitem.item_no   < 'PZZZ' 
+     AND groupitem.use_flag  = 'Y' 
+     AND ( itemloc.item_no   = groupitem.item_no ) 
+     AND ( itemloc.qoh       > 0                 ) 
+     AND ( ( itemloc.loc_no           = :as_loc  ) AND 
+           ( itemloc.last_rcpt_date   < :ad_date ) AND
+           ( itemloc.item_no       LIKE :as_item ) 
+         ) 
+     AND itemloc.item_no + qa NOT IN (SELECT itemstock.item_no + qa FROM itemstock)
+" arguments=(("as_loc", string),("ad_date", date),("as_item", string))  sort="groupitem_item_name A qa A " )
+text(band=header alignment="2" text="품명" border="6" color="0" x="9" y="8" height="60" width="695" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="713" y="8" height="60" width="635" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현재고" border="6" color="0" x="1358" y="8" height="60" width="343" html.valueishtml="0"  name=itemloc_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="물품번호" border="6" color="33554432" x="1710" y="8" height="60" width="361" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="60" width="695" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="713" y="8" height="60" width="635" format="[general]" html.valueishtml="0"  name=qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1358" y="8" height="60" width="343" format="#,##0" html.valueishtml="0"  name=qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="1" tabsequence=32766 border="0" color="33554432" x="1710" y="8" height="60" width="361" format="[general]" html.valueishtml="0"  name=item_no  tag="물품번호" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="5" y="4" height="64" width="699" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

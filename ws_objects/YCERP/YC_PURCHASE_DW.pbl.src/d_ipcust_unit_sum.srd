@@ -1,0 +1,23 @@
+﻿$PBExportHeader$d_ipcust_unit_sum.srd
+$PBExportComments$거래처별 입고내역(1998/05/13,곽용덕)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=116 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=insp_insp_no dbname="insp.insp_no" )
+ column=(type=decimal(8) updatewhereclause=yes name=sum_amt dbname="sum_amt" )
+ retrieve="  SELECT     insp.insp_no,    SUM(isnull((case when supp.round = 'Y' then ROUND(inspdet.comqty * inspdet.price, 0, 0) else ROUND(inspdet.comqty * inspdet.price, 0, 1) end), 0) +
+                                                         isnull((case when supp.round = 'Y' then ROUND(inspdet.comqty * inspdet.price, 0, 0) else ROUND(inspdet.comqty * inspdet.price, 0, 1) end), 0)*0.1) sum_amt                   
+FROM  inspdet with(nolock) inner join insp with(nolock) on  inspdet.insp_no = insp.insp_no
+                                                 inner join groupitem  with(nolock) on inspdet.item_no = groupitem.item_no
+                                                 inner join purdet with(nolock) on inspdet.pur_no  = purdet.order_no  and  inspdet.seq_no = purdet.seq_no
+                                                 inner join pur with(nolock) on inspdet.pur_no = pur.order_no
+                                                 inner join supp with(nolock) on insp.supp_no  = supp.supp_no
+     WHERE ( insp.insp_date     BETWEEN :ad_date1 AND :ad_date2  )
+          AND rtrim(ltrim(insp.login_id)) like :as_user_id
+group by insp.insp_no" arguments=(("ad_date1", date),("ad_date2", date),("as_user_id", string)) )
+column(band=detail id=1 alignment="0" tabsequence=0 border="0" color="0" x="55" y="4" height="96" width="576" html.valueishtml="0"  name=insp_insp_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-15" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=0 border="0" color="0" x="631" y="4" height="96" width="3570" html.valueishtml="0"  name=sum_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-15" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

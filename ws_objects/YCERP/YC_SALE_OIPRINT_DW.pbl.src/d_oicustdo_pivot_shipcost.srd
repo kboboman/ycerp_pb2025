@@ -1,0 +1,75 @@
+﻿$PBExportHeader$d_oicustdo_pivot_shipcost.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(20) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=number updatewhereclause=yes name=amt dbname="amt" )
+ retrieve="  SELECT user_name    = a.user_name
+       , cust_name    = a.cust_name
+       , item_no      = a.item_no  
+       , item_name    = a.item_name
+       , category     = (case when :as_etcyn = 'Y' and a.category = 'TOP1016' then a.gtype 
+                              else cm.item_nm
+                         end)
+       , amt          = a.amt
+       , oonsong      = a.oonsong
+       , do_no        = a.do_no
+    FROM (
+         SELECT user_name    = l.user_name
+              , cust_name    = d.cust_name   
+              , item_no      = a.item_no  
+              , item_name    = (case when not g.item_name is null then g.item_name
+                                     else (SELECT item_name FROM groupitem WHERE item_no = a.item_no)
+                                end)
+              , category     = isnull(g.category,'TOP1999')
+              , gtype        = isnull(g.type,'99) 미분류')
+              , amt          = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price) + a.rate_cash
+              , oonsong      = case when a.oi_no = (select max(c.oi_no) from dodet c where c.do_no = b.do_no) then do_total else 0 end 
+              , b.do_no
+           FROM dodet     a      
+                LEFT OUTER JOIN do b         ON a.do_no     = b.do_no
+                LEFT OUTER JOIN customer  d  ON b.cust_no   = d.cust_no
+                LEFT OUTER JOIN itemtop10 g  ON a.item_no   = g.item_no  
+                LEFT OUTER JOIN login     l  ON d.salesman  = l.user_id
+          WHERE convert(char(10),b.do_date,111) BETWEEN :as_sdate AND :as_edate
+            AND b.do_no     LIKE :as_area
+            AND ((:as_etcyn    = 'Y' and  g.category    = 'TOP1016') OR
+                 (:as_etcyn   <> 'Y' and (g.category LIKE '%' or g.category is null) )
+                ) 
+         ) A
+         LEFT OUTER JOIN (
+              SELECT item_cd, item_nm FROM codemst with (nolock) WHERE type = 'ITEMTOP10' AND use_yn = 'Y'
+         ) cm ON a.category = cm.item_cd
+" arguments=(("as_area", string),("as_sdate", string),("as_edate", string),("as_etcyn", string))  sort="user_name A cust_name A " )
+group(level=1 header.height=0 trailer.height=84 by=("user_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Sum Of Amt" border="0" color="33554432" x="9" y="4" height="60" width="247" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Category" border="0" color="33554432" x="265" y="4" height="60" width="1024" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="265" y="4" height="72" width="1024" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1298" y="4" height="72" width="466" format="#,##0" html.valueishtml="0"  name=amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1774" y="4" height="72" width="663" format="#,##0" html.valueishtml="0"  name=grand_sum_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_amt for group 1)"border="0" color="33554432" x="1774" y="4" height="72" width="663" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="0" expression="user_name + ~"  계~""border="0" color="33554432" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=summary alignment="1" expression="sum(grand_sum_amt for all )"border="0" color="33554432" x="1774" y="4" height="72" width="663" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+text(band=header[2] alignment="2" text="담당자" border="6" color="33554432" x="9" y="4" height="60" width="247" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="거래처명" border="6" color="33554432" x="265" y="4" height="60" width="1024" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="0" text="@category" border="6" color="33554432" x="1298" y="4" height="60" width="466" html.valueishtml="0"  name=amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="합계" border="6" color="33554432" x="1774" y="4" height="60" width="663" html.valueishtml="0"  name=grand_sum_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=summary alignment="2" expression="count( user_name for all DISTINCT user_name )"border="0" color="33554432" x="5" y="4" height="72" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(amt for group 1)"border="0" color="33554432" x="1298" y="4" height="72" width="466" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="2" expression="count( cust_name for group 1 DISTINCT cust_name )"border="0" color="33554432" x="265" y="4" height="72" width="1024" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(amt for all )"border="0" color="33554432" x="1298" y="4" height="72" width="466" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=summary alignment="0" expression="count( cust_name for all DISTINCT cust_name )"border="0" color="33554432" x="265" y="4" height="72" width="1024" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_4 "border="0" color="33554432" x="5" y="4" height="72" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_8 "border="0" color="33554432" x="265" y="4" height="72" width="1024" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_5 "border="0" color="33554432" x="1298" y="4" height="72" width="466" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_6 "border="0" color="33554432" x="1774" y="4" height="72" width="663" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "category" rows = "user_name, cust_name" values = "sum(oonsong for crosstab)" sourcenames = "user_name, cust_name, item_no, item_name, category, amt, oonsong, do_no")
+sparse(names="user_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

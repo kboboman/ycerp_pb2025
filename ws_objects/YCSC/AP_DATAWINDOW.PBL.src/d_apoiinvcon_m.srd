@@ -1,0 +1,84 @@
+﻿$PBExportHeader$d_apoiinvcon_m.srd
+$PBExportComments$월 매입확정(2001/12/26,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(12) update=yes updatewhereclause=yes key=yes name=apoiinv_apoiinv_no dbname="apoiinv.apoiinv_no" )
+ column=(type=datetime updatewhereclause=yes name=apoiinv_oi_date dbname="apoiinv.oi_date" )
+ column=(type=decimal(4) updatewhereclause=yes name=apoiinv_apoiinv_cash dbname="apoiinv_cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=apoiinv_apoiinv_rate dbname="apoiinv.apoiinv_rate" )
+ column=(type=char(1) updatewhereclause=yes name=apoiinv_printed dbname="apoiinv.printed" values="	Y/	N" )
+ column=(type=char(40) update=yes updatewhereclause=yes name=apoiinv_rem dbname="apoiinv.rem" )
+ column=(type=decimal(0) updatewhereclause=yes name=apoiinv_dc dbname="apoiinv.dc" )
+ column=(type=decimal(0) updatewhereclause=yes name=apoiinv_dc_rate dbname="apoiinv.dc_rate" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=apoiinv_open_close dbname="apoiinv.open_close" values="	S/	O" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=apoiinv_confirm_user dbname="apoiinv.confirm_user" )
+ column=(type=char(1) updatewhereclause=yes name=pur_flag dbname="apoiinv.pur_flag" )
+ column=(type=char(1) updatewhereclause=yes name=chk_user dbname="chk_user" values="	Y/	N" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=apoiinv_top_user dbname="apoiinv.top_user" )
+ column=(type=char(30) updatewhereclause=yes name=supp_supp_name dbname="supp.supp_name" )
+ column=(type=char(19) updatewhereclause=yes name=yymm dbname="yymm" )
+ retrieve="  SELECT apoiinv.apoiinv_no                                 
+       , apoiinv.oi_date                                    
+       , apoiinv_cash = apoiinv.apoiinv_cash - apoiinv.dc   
+       , apoiinv.apoiinv_rate                               
+       , apoiinv.printed                                    
+       , apoiinv.rem                                        
+       , apoiinv.dc                                         
+       , apoiinv.dc_rate                                   
+       , apoiinv.open_close                              
+       , apoiinv.confirm_user                            
+       , apoiinv.pur_flag                                
+       , chk_user     = ( case when ( apoiinv.top_user is null ) or ( apoiinv.top_user = '') then 'N' else 'Y' end )
+       , apoiinv.top_user                                
+       , supp.supp_name                                  
+       , yymm         = substring(convert(char(7),:as_date), 1, 4) + ' 년  ' + substring(convert(char(7),:as_date), 6, 2)  + ' 월'
+    FROM apoiinv,   
+         supp  
+   WHERE ( ( convert(char(7),oi_date,111) = :as_date     ) AND  
+           ( apoiinv.supp_no              = supp.supp_no ) AND  
+           ( apoiinv.inv_area             = :as_area     ) AND  
+           ( apoiinv.delete_flag         <> 'Y'          ) AND  
+           ( apoiinv.open_close           = :as_con      ) 
+         )   
+" update="apoiinv" updatewhere=0 updatekeyinplace=yes arguments=(("as_date", string),("as_con", string),("as_area", string))  sort="pur_flag A supp_supp_name A " )
+group(level=1 header.height=68 trailer.height=68 by=("pur_flag" ) header.color="12639424" trailer.color="12639424" )
+text(band=header alignment="2" text="매입일자" border="6" color="0" x="9" y="8" height="60" width="343" html.valueishtml="0"  name=apoiinv_oi_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="361" y="8" height="60" width="576" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="매입금액" border="6" color="0" x="946" y="8" height="60" width="416" html.valueishtml="0"  name=apoiinv_apoiinv_cash_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="부과세" border="6" color="0" x="1371" y="8" height="60" width="421" html.valueishtml="0"  name=apoiinv_apoiinv_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="결재" border="6" color="0" x="1801" y="8" height="60" width="128" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="부서장" border="6" color="0" x="1938" y="8" height="60" width="197" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="결재" border="6" color="0" x="2144" y="8" height="60" width="133" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="임원" border="6" color="0" x="2286" y="8" height="60" width="187" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="비고" border="6" color="0" x="2482" y="8" height="60" width="869" html.valueishtml="0"  name=apoiinv_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="에누리" border="6" color="0" x="3360" y="8" height="60" width="315" html.valueishtml="0"  name=apoiinv_dc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="D/C율" border="6" color="0" x="3685" y="8" height="60" width="192" html.valueishtml="0"  name=apoiinv_dc_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="계산서번호" border="6" color="0" x="3886" y="8" height="60" width="402" html.valueishtml="0"  name=apoiinv_apoiinv_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=header.1 alignment="0" expression="~"◆ ~" + case(  pur_flag  when 'W' then '원재료' when 'S' then '상품'  when 'B' then '부자재'  when 'Y' then '외주가공' else '기타' ) + ~" ◆~"
+"border="0" color="0" x="361" y="4" height="60" width="576" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="343" format="yyyy/mm/dd" html.valueishtml="0"  name=apoiinv_oi_date  tag="매입일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="0" x="361" y="8" height="60" width="576" format="[general]" html.valueishtml="0"  name=supp_supp_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=20 border="6" color="0" x="2144" y="8" height="60" width="133" format="[general]" html.valueishtml="0"  name=apoiinv_open_close visible="1" checkbox.text="" checkbox.on="S" checkbox.off="O" checkbox.scale=yes checkbox.threed=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (  apoiinv_open_close = 'O' , rgb(255,255,255), rgb(0,0,255))
+" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="1938" y="8" height="60" width="197" format="[general]" html.valueishtml="0"  name=apoiinv_confirm_user visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=10 border="6" color="0" x="1801" y="8" height="60" width="128" format="[general]" html.valueishtml="0"  name=chk_user visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (   chk_user = 'N' , rgb(255,255,255), rgb(0, 128, 0))" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0" x="2286" y="8" height="60" width="187" format="[general]" html.valueishtml="0"  name=apoiinv_top_user visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=30 border="0" color="0" x="2482" y="8" height="60" width="869" format="[general]" html.valueishtml="0"  name=apoiinv_rem  tag="비고" visible="1" edit.limit=27 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="3360" y="8" height="60" width="315" format="#,##0" html.valueishtml="0"  name=apoiinv_dc  tag="에누리" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="3685" y="8" height="60" width="192" format="0%" html.valueishtml="0"  name=apoiinv_dc_rate  tag="D/C율" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="3886" y="8" height="60" width="402" format="[general]" html.valueishtml="0"  name=apoiinv_apoiinv_no  tag="세금계산서번호" visible="1" edit.limit=12 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="0" x="946" y="8" height="60" width="416" format="#,##0" html.valueishtml="0"  name=apoiinv_apoiinv_cash  tag="매입금액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="1371" y="8" height="60" width="421" format="#,##0" html.valueishtml="0"  name=apoiinv_apoiinv_rate  tag="부과세" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(apoiinv_apoiinv_cash for group 1)"border="0" color="0" x="946" y="4" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(apoiinv_apoiinv_rate for group 1)"border="0" color="0" x="1371" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="case(  pur_flag  when 'W' then '원재료' when 'S' then '상품'  when 'B' then '부자재'  when 'Y' then '외주가공' else '기타' ) + ~" 소계~"
+"border="0" color="0" x="361" y="8" height="60" width="576" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(apoiinv_apoiinv_cash for all)"border="0" color="0" x="946" y="8" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(apoiinv_apoiinv_rate for all)"border="0" color="0" x="1371" y="8" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression="~"합계 => ~" + STRING(sum(apoiinv_apoiinv_rate for all) + sum(apoiinv_apoiinv_cash for all) , '#,##0')"border="0" color="0" x="2482" y="8" height="60" width="869" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,157 @@
+﻿$PBExportHeader$gf_get_amt_receivable.srf
+global type gf_get_amt_receivable from function_object
+end type
+
+forward prototypes
+global function decimal gf_get_amt_receivable (string as_cust_no, string as_order_no)
+end prototypes
+
+global function decimal gf_get_amt_receivable (string as_cust_no, string as_order_no);// 미수 금액 확인 svn 테스트
+// gf_get_amt_receivable(cust_no, order_no)
+// 미수금액(vat포함) = 외상매출금 + 미출고 금액 + 입력 금액  + 어음?
+
+decimal	ldc_amt, ldc_amt1, ldc_amt2, ldc_amt3
+string	ls_fr_dt, ls_to_dt, ls_order_no
+//0. 초기화 작업
+if gf_null_chk(as_order_no) then
+	ls_order_no	= 'NotData'
+else
+	ls_order_no	= as_order_no
+end if
+
+//1. 외상매출금 : 판매거래처관리 -> 매출/수금내역
+select 
+	(a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 + a.inv_07 + a.inv_08 + a.inv_09 + a.inv_10 + a.inv_11 + a.inv_12
+	 - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06 - a.coll_07 - a.coll_08 - a.coll_09 - a.coll_10 - a.coll_11 - a.coll_12) + a.balbf_amount remainder_amt
+into 
+	:ldc_amt1
+from 
+	opeom a
+where 
+	cust_no = :as_cust_no
+and 
+	datepart(year,a.eom_year) = convert(char(4),getdate(),111)
+using sqlca;
+
+//2. 미출고 금액 : 거래처별 미출고 현황(-60 ~ +30)
+select 
+	convert(varchar(8), dateadd(day,-60,getdate()),112) 
+into
+	:ls_fr_dt
+from 
+	dual
+using sqlca;
+
+select 
+	convert(varchar(8), dateadd(day,30,getdate()),112) 
+into 
+	:ls_to_dt
+from 
+	dual
+using sqlca;
+
+//금액 확인
+SELECT 
+	sum(aa.sale_amount) + sum(case when AA.tax_sign = 'Y' then case when AA.curr_code = 'WON' then round(AA.sale_amount/10,0,1) else round(AA.sale_amount/10,2,1) end else 0 end)
+into
+	:ldc_amt2
+FROM
+	(
+	SELECT    
+		 sale.order_no
+		,sale.tax_sign
+		,sale.curr_code
+		,SUM(saledet.price * dbo.uf_getqty(saledet.item_no, saledet.qa, saledet.uom, saledet.order_qty - saledet.rlse_qty)) sale_amount
+	FROM 
+		customer  C with (nolock) inner join OPEOM_ORG O with(nolock) on c.salesman  = o.user_id
+		INNER JOIN sale with (nolock) ON c.cust_no = sale.cust_no  AND sale.open_close = 'O'
+		INNER JOIN saledet     with (nolock) ON sale.order_no   = saledet.order_no 
+		INNER JOIN scene       with (nolock) ON sale.scene_code = scene.scene_code 
+		INNER JOIN groupitem G with (nolock) ON saledet.item_no = g.item_no
+		LEFT OUTER JOIN itemtop10 I with (nolock) ON saledet.item_no = i.item_no  
+		LEFT OUTER JOIN codemst cm with (nolock) ON  i.category = cm.item_cd and cm.type = 'ITEMTOP10' AND cm.use_yn = 'Y'
+	WHERE
+		sale.cust_no = :as_cust_no
+	AND 
+		sale.order_no <> :ls_order_no
+	and 
+		sale.order_date   BETWEEN :ls_fr_dt AND :ls_to_dt
+	AND 
+		saledet.order_qty  > saledet.rlse_qty
+	GROUP BY 
+		sale.order_no, sale.tax_sign, sale.curr_code) AA;
+
+
+//3. 어음잔액 vc_type2 (자수 : 01 / 타수 : 02)
+SELECT 
+	sum(AAA.bill_amount)
+into
+	:ldc_amt3
+FROM 
+	(
+	SELECT 
+		 cust_no = a.cust_no
+		,bill_class = isnull((case	when a.bill_class = 'R' then '받을'
+											when a.bill_class = 'P' then '지급'
+											when a.bill_class = 'C' then '교환'
+											when a.bill_class = 'E' then '만기'
+											when a.bill_class = 'D' then '부도'
+									else a.bill_class end), '')
+		,bill_no    = isnull(a.bill_no, '')
+		,bill_amount= a.bill_amount
+	FROM glbill A with (nolock) INNER JOIN aroivc B with (nolock) ON a.vc_no     = b.vc_no  AND b.delete_key = 'N' AND B.vc_type2 = '01'
+										 LEFT OUTER JOIN bank   C with (nolock) ON a.bank_code = c.bank_code
+	WHERE a.cust_no        = :as_cust_no
+	AND (a.bill_class   IN ('R','D')) /*받을,부도*/
+	OR (a.bill_class    = 'P' AND convert(char(10),a.close_date,111) >= convert(char(10),getdate(),111) ) /*지급 만기일 존재*/
+	) AAA	LEFT OUTER JOIN	(
+									SELECT 
+										 cust_no
+										,bill_class
+										,bill_no
+										,det_class = sum(isnull(det_class,0))
+										,amount    = sum(aa.amount)
+									FROM 
+										(
+										SELECT 
+											 cust_no    = a.cust_no
+											,bill_class = isnull((case when a.bill_class = 'R' then '받을'
+																				when a.bill_class = 'P' then '지급'
+																				when a.bill_class = 'C' then '교환'
+																				when a.bill_class = 'E' then '만기'
+																				when a.bill_class = 'D' then '부도'
+																		 else a.bill_class end), '')
+											,bill_no    = isnull(a.bill_no, '')
+											,det_class  = (case when b.det_class = 'B' then 0
+																	  when b.det_class = 'C' then 0
+																	  when b.det_class = 'D' then 0
+																	  when b.det_class = 'E' then 0
+																	  when b.det_class = 'F' then 0
+																	  when b.det_class = 'G' then 0
+																	  when b.det_class = 'R' then 0
+																	  when b.det_class = 'S' then 1
+																end)
+											,amount     = isnull(b.amount,0)
+										FROM glbill A with (nolock) LEFT OUTER JOIN glbilldet B with (nolock) ON a.vc_no = b.vc_no AND a.bill_no = b.bill_no
+										WHERE a.cust_no     = :as_cust_no
+										AND (a.bill_class   IN ('R','D')) /*받을,부도*/
+										OR (a.bill_class    = 'P' AND convert(char(10),a.close_date,111) >= convert(char(10),getdate(),111) ) /*지급 만기일 존재*/
+										) AA
+									GROUP BY cust_no, bill_class, bill_no) BBB ON AAA.cust_no     = BBB.cust_no  and AAA.bill_no  = BBB.bill_no
+WHERE 
+ 	(AAA.bill_amount	<> BBB.amount)
+OR 
+	(AAA.bill_amount	= BBB.amount  AND BBB.det_class > 0)
+using sqlca; 
+             
+
+IF ISNULL(ldc_amt1) then ldc_amt1 = 0 
+IF ISNULL(ldc_amt2) then ldc_amt2 = 0 				
+IF ISNULL(ldc_amt3) then ldc_amt3 = 0 				
+				
+ldc_amt =  ldc_amt1	+	ldc_amt2	+	ldc_amt3
+	
+RETURN ldc_amt
+
+end function
+

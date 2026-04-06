@@ -1,0 +1,112 @@
+﻿$PBExportHeader$d_iocoilsheetqoh_r.srd
+$PBExportComments$SHEET재고현황(2000/01/16,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="536870912" )
+summary(height=76 color="12639424" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=a_loc_no dbname="GroupItem.loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=c_loc_name dbname="GroupItem.loc_name" )
+ column=(type=char(10) updatewhereclause=yes name=a_item_no dbname="GroupItem.item_no" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=a_qa dbname="GroupItem.qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=a_stock_qty dbname="stock_qty" )
+ column=(type=long updatewhereclause=yes name=coil_stock_qty dbname="coil_stock_qty" )
+ retrieve="         select a.loc_no loc_no,
+                    c.loc_name loc_name,
+                    a.item_no item_no,
+                    b.item_name item_name,
+                    a.qa qa,
+                    SUM(a.stock_qty) stock_qty,
+                    SUM(isnull(a.RCPT_QTY,0)) coil_stock_qty
+          from 
+          (                                      
+                  select  
+                  		 a.loc_no,
+                  		 a.item_no,
+                  		 a.qa,
+                  		 sum(a.qty) stock_qty,
+					0 RCPT_QTY
+                  	from 
+                  	(
+
+                  				select 
+                  						loc_no, 
+                  						inaudit_item item_no, 
+                  						qa, 
+              							(isnull(rcpt_qty,0)) - (isnull(issue_qty,0)) QTY
+                  				from inaudit with(nolock, index(inaudit_pk))
+                  			     where inaudit_date  BETWEEN convert(datetime, substring(:as_date,1,6)+'01 00:00:00' ) and   dateadd(day, -1, dateadd(month, 1, convert(datetime, substring(:as_date,1,6)+'01 23:59:59') ))
+                  				union all
+                  				select  loc_no,                                 
+                  						  item_no,
+                  						  qa,           
+               							 stock_qty qty
+                  				from item_stock with(nolock)
+                  				where stock_date = convert(char(8), dateadd(day, -1, convert(datetime, substring(:as_date,1,6)+'01') ),112)					
+                 
+                      ) a
+                      group by 
+					 a.loc_no,
+					 a.item_no,
+					 a.qa
+				UNION ALL
+
+				 SELECT  LOC_NO, 
+							ITEM_NO, 
+							 QA,            
+							  0 STOCK_QTY,                                           
+							 SUM(UNIT_QTY*QCNT) RCPT_QTY
+					FROM COILMST
+				where open_close in ( :as_oc )
+					 and rcpt_date >= dateadd( year, -20, convert(datetime, :as_date) )
+				GROUP BY ITEM_NO, 
+								  QA, 
+								  LOC_NO
+								union all
+				  SELECT LOC_NO, 
+							  ITEM_NO, 
+							QA,       
+							0 STOCK_QTY,                                                     
+							SUM(QCNT) RCPT_QTY
+					FROM sheetmst
+					where open_close in ( :as_oc )
+					and rcpt_date >= dateadd( year, -20, convert(datetime, :as_date) )
+					GROUP BY ITEM_NO, 
+											  QA, 
+											  LOC_NO       
+
+          ) a inner join groupitem b with(nolock) on a.item_no = b.item_no
+               inner join location  c  with(nolock) on a.loc_no = c.loc_no
+        WHERE a.loc_no like :as_loc
+             and  a.item_no like :as_item
+             and substring(a.item_no,4,1) in ('1','2')
+             and b.item_name NOT like '%LOSS%'
+GROUP BY a.loc_no,
+                    c.loc_name,
+                    a.item_no,
+                    b.item_name,
+                    a.qa" arguments=(("as_loc", string),("as_item", string),("as_oc", stringlist),("as_date", string))  sort="a_loc_no A groupitem_item_name A a_qa A " )
+text(band=header alignment="2" text="저장소" border="2" color="0" x="9" y="8" height="60" width="393" html.valueishtml="0"  name=coillot_loc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="저장소코드" border="2" color="0" x="411" y="8" height="60" width="530" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="물품번호" border="2" color="0" x="951" y="8" height="60" width="352" html.valueishtml="0"  name=coillot_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="규격" border="2" color="0" x="2487" y="8" height="60" width="617" html.valueishtml="0"  name=coillot_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="COIL,SHEET 재고" border="2" color="0" x="3113" y="8" height="60" width="544" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="ERP재고" border="2" color="0" x="3666" y="8" height="60" width="439" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="ERP재고" border="2" color="0" x="3666" y="8" height="60" width="439" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="차이량" border="2" color="0" x="4114" y="8" height="60" width="498" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="물품명" border="2" color="0" x="1312" y="8" height="60" width="1166" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="12" height="60" width="393" format="[general]" html.valueishtml="0"  name=c_loc_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="411" y="12" height="60" width="530" format="[general]" html.valueishtml="0"  name=a_loc_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="951" y="12" height="60" width="352" format="[general]" html.valueishtml="0"  name=a_item_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="2487" y="12" height="60" width="617" format="[general]" html.valueishtml="0"  name=a_qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="3113" y="12" height="60" width="544" format="#,##0" html.valueishtml="0"  name=coil_stock_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="3666" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=a_stock_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="coil_stock_qty - a_stock_qty"border="0" color="0" x="4114" y="12" height="60" width="498" format="#,##0" html.valueishtml="0"  name=gab visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1312" y="12" height="60" width="1166" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=summary alignment="1" expression="sum( coil_stock_qty for all )"border="0" color="0" x="3113" y="12" height="60" width="544" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum( a_stock_qty for all )"border="0" color="0" x="3666" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum( coil_stock_qty - a_stock_qty for all )"border="0" color="0" x="4114" y="12" height="60" width="498" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

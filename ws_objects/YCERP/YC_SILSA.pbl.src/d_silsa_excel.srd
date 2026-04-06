@@ -1,0 +1,150 @@
+﻿$PBExportHeader$d_silsa_excel.srd
+$PBExportComments$실사목록조회(2001/11/24,이인호)
+release 8;
+datawindow(units=0 timer_interval=60000 color=1090519039 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=412 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=loc_name dbname="location.loc_name" )
+ column=(type=char(10) updatewhereclause=yes name=itemloc_item_no dbname="itemloc.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=itemloc_qa dbname="itemloc.qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=eom_qoh dbname="eom_qoh" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(4) updatewhereclause=yes name=ineoym_cyear dbname="ineoym.cyear" )
+ column=(type=char(2) updatewhereclause=yes name=ineoym_cmon dbname="ineoym.cmon" )
+ column=(type=decimal(4) updatewhereclause=yes name=qoh dbname="qoh" )
+ column=(type=decimal(4) updatewhereclause=yes name=stock dbname="stock" )
+ column=(type=char(2) updatewhereclause=yes name=groupitem_uom dbname="uom" )
+ column=(type=char(22) updatewhereclause=yes name=title dbname="title" )
+ retrieve="  SELECT location.loc_name
+       , itemloc.item_no     
+       , itemloc.qa           
+       , eom_qoh = itemloc.qoh - isnull(cday.rcpt, 0) + isnull(cday.issue, 0)
+       , groupitem.item_name   
+       , ineoym.cyear   
+       , ineoym.cmon    
+       , qoh     = ineoym.qoh   
+       , stock   = ineoym.stock_qty
+       , uom     = (case groupitem.uom when 'M'  then 'EA'
+                                       when 'M2' then 'EA'
+                                       else groupitem.uom
+                    end)
+       , title   = convert(char(4),:as_year) + '년 ' + convert(char(2), :as_mon) + '월 실사목록표'
+    FROM  itemloc with(nolock) left outer join  ineoym with(nolock) on itemloc.item_no = ineoym.item_no and  itemloc.qa = ineoym.qa and itemloc.loc_no = ineoym.loc_no
+																			AND ineoym.cyear       = :as_year
+																		     AND ineoym.cmon        = :as_mon
+											  inner join  groupitem with(nolock) on  itemloc.item_no = groupitem.item_no          
+											  inner join location with(nolock) on itemloc.loc_no       = location.loc_no
+											  left outer join (
+																	SELECT item_no, qa, rcpt = sum(rcpt_qty), issue = sum(issue_qty) 
+																		FROM ineoday with(nolock)
+																	  WHERE cdate > rtrim(:as_year) + rtrim(:as_mon) + '99'
+																		 AND loc_no = :as_loc 
+																	  GROUP BY item_no, qa
+ 															  ) cday on  itemloc.item_no = cday.item_no  and  itemloc.qa   = cday.qa
+   WHERE (     
+				    ( itemloc.loc_no     = :as_loc          ) AND  
+                         ( itemloc.item_no like :as_item AND groupitem.use_flag = 'Y' AND groupitem.item_name like :as_name ) AND 
+                         ( itemloc.item_no    < 'PZZZ'          ) 
+                 )           
+/*       
+    FROM location 
+       , itemloc     
+       , ineoym      
+       , groupitem   
+       , (SELECT item_no, qa, rcpt = sum(rcpt_qty), issue = sum(issue_qty) 
+            FROM ineoday
+           WHERE cdate > rtrim(:as_year) + rtrim(:as_mon) + '99'
+             AND loc_no = :as_loc 
+           GROUP BY item_no, qa
+         ) cday
+   WHERE ( itemloc.item_no     *= ineoym.item_no    ) and  
+         ( itemloc.qa          *= ineoym.qa         ) and  
+         ( itemloc.loc_no      *= ineoym.loc_no     ) and  
+         ( itemloc.item_no     *= cday.item_no      ) and  
+         ( itemloc.qa          *= cday.qa           ) and  
+         ( itemloc.item_no      = groupitem.item_no ) and
+         ( itemloc.loc_no       = location.loc_no   ) and  
+         ( ( itemloc.loc_no     = :as_loc         ) AND  
+           ( ineoym.cyear       = :as_year        ) AND  
+           ( ineoym.cmon        = :as_mon         ) AND  
+           ( itemloc.item_no like :as_item AND groupitem.use_flag = 'Y' AND groupitem.item_name like :as_name ) AND 
+           ( itemloc.item_no    < 'PZZZ'          ) 
+         )
+*/          
+         
+/* 
+  UNION
+  
+  SELECT location.loc_name
+       , ineoym.item_no      
+       , ineoym.qa           
+       , eom_qoh = 0 - isnull(cday.rcpt, 0) + isnull(cday.issue, 0)
+       , groupitem.item_name          
+       , ineoym.cyear                 
+       , ineoym.cmon                  
+       , qoh     = ineoym.qoh         
+       , stock   = ineoym.stock_qty   
+       , uom     = (case groupitem.uom when 'M'  then 'EA'
+                                       when 'M2' then 'EA'
+                                       else groupitem.uom
+                    end)
+       , title   = convert(char(4),:as_year) + ~"년 ~" + convert(char(2), :as_mon) + ~"월 실사목록표~"
+    FROM location 
+       , ineoym      
+       , groupitem   
+       , (SELECT item_no, qa, rcpt = sum(rcpt_qty), issue = sum(issue_qty) 
+            FROM ineoday
+           WHERE cdate > rtrim(:as_year) + rtrim(:as_mon) + '99'
+             AND loc_no = :as_loc 
+           GROUP BY item_no, qa
+         ) cday
+   WHERE ( ineoym.item_no     *= cday.item_no      )   
+     AND ( ineoym.qa          *= cday.qa           )   
+     AND ( ineoym.item_no      = groupitem.item_no )   
+     AND ( ineoym.loc_no       = location.loc_no   )   
+     AND ( ( ineoym.loc_no     = :as_loc  ) AND  
+           ( ineoym.cyear      = :as_year ) AND  
+           ( ineoym.cmon       = :as_mon  ) AND  
+           ( ineoym.item_no LIKE :as_item AND groupitem.use_flag = 'Y' AND groupitem.item_name LIKE :as_name ) AND  
+           ( ineoym.item_no < 'PZZZ' )
+         )  
+     AND ( NOT EXISTS ( SELECT * FROM itemloc WHERE itemloc.item_no = ineoym.item_no and itemloc.qa =  ineoym.qa ) )
+*/
+" arguments=(("as_loc", string),("as_year", string),("as_mon", string),("as_item", string),("as_name", string))  sort="groupitem_item_name A itemloc_qa A " )
+compute(band=header alignment="2" expression=" ineoym_cyear   + ~"년~" +    ineoym_cmon + ~"월 실사목록표~" "border="0" color="0" x="960" y="476" height="148" width="1751" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="553648127" )
+line(band=header x1="9" y1="328" x2="3369" y2="328"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="9" y1="332" x2="9" y2="536"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="9" y1="408" x2="3369" y2="408"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="402" y1="328" x2="402" y2="532"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2318" y1="328" x2="2318" y2="532"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2441" y1="328" x2="2441" y2="532"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2907" y1="328" x2="2907" y2="532"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3365" y1="328" x2="3365" y2="532"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=header id=11 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="32" height="148" width="3365" format="[general]" html.valueishtml="0"  name=title visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-24" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" font.underline="1" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="저장소:" border="0" color="0" x="18" y="260" height="60" width="224" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=header id=1 alignment="0" tabsequence=32766 border="0" color="0" x="261" y="260" height="60" width="960" format="[general]" html.valueishtml="0"  name=loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="1655" y1="328" x2="1655" y2="532"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="비     고" border="0" color="0" x="2921" y="340" height="60" width="434" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실사수량" border="0" color="0" x="2455" y="340" height="60" width="443" html.valueishtml="0"  name=count_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="0" color="0" x="2331" y="340" height="60" width="101" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="0" color="0" x="1669" y="340" height="60" width="640" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="물품명" border="0" color="0" x="416" y="340" height="60" width="1230" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="물품번호" border="0" color="0" x="23" y="340" height="60" width="370" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=detail x1="9" y1="4" x2="9" y2="208"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="9" y1="72" x2="3369" y2="72"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="402" y1="0" x2="402" y2="204"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3365" y1="0" x2="3365" y2="204"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2318" y1="0" x2="2318" y2="204"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2441" y1="0" x2="2441" y2="204"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2907" y1="0" x2="2907" y2="204"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="2455" y="4" height="60" width="443" format="#,##0.00" html.valueishtml="0"  name=qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="2921" y="4" height="60" width="434" format="#,##0" html.valueishtml="0"  name=eom_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=detail x1="1655" y1="0" x2="1655" y2="204"  name=l_17 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="23" y="4" height="60" width="370" format="[general]" html.valueishtml="0"  name=itemloc_item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="416" y="4" height="60" width="1230" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="1669" y="4" height="60" width="640" format="[general]" html.valueishtml="0"  name=itemloc_qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="2331" y="4" height="60" width="101" format="[general]" html.valueishtml="0"  name=groupitem_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

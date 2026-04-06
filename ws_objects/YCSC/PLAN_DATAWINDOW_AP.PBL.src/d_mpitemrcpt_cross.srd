@@ -1,0 +1,82 @@
+﻿$PBExportHeader$d_mpitemrcpt_cross.srd
+$PBExportComments$품목별 입출고 조회
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=60 color="536870912" )
+header[3](height=76 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=inaudit_date dbname="inaudit_date" )
+ column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(20) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=number updatewhereclause=yes name=rcpt_qty dbname="rcpt_qty" )
+ column=(type=number updatewhereclause=yes name=issue_qty dbname="issue_qty" )
+ column=(type=number updatewhereclause=yes name=qoh dbname="qoh" )
+ retrieve="  SELECT inaudit.inaudit_time,   
+         inaudit.inaudit_type,   
+         inaudit.inaudit_item,   
+         inaudit.qa,   
+         inaudit.loc_no,   
+         inaudit.rcpt_qty,   
+         inaudit.destination,   
+         e.cust_name,
+         inaudit.issue_qty,   
+         inaudit.cost,   
+         inaudit_date = convert(char(10),inaudit.inaudit_date,111),   
+         inaudit.order_no,   
+         inaudit.serial_id,   
+         inaudit.rem,   
+         inaudit.unit_qty,   
+         inaudit.cnt,   
+         iotype.remarks,   
+         item.item_name,   
+         location.loc_name,   
+         item.uom,   
+         item.source,   
+         item.qoh  
+    FROM inaudit   
+       , item   
+       , iotype   
+       , location
+       , (
+          SELECT cust_no, cust_name FROM customer
+          UNION
+          SELECT loc_no,  loc_name  FROM location
+         ) e  
+   WHERE ( inaudit.qa               = item.qa             ) and  
+         ( inaudit.inaudit_item     = item.item_no        ) and  
+         ( inaudit.inaudit_type     = iotype.inaudit_type ) and  
+         ( inaudit.loc_no           = location.loc_no     ) and  
+         ( inaudit.destination      = e.cust_no           ) and  
+         ( ( inaudit.inaudit_item    like :as_itemno ) AND  
+           ( inaudit.qa              like :as_qa     ) AND  
+           ( item.source             like :as_source ) AND  
+           ( inaudit.loc_no          like :as_loc    ) AND  
+           ( convert(char(10),inaudit.inaudit_date,111) between :as_from and :as_to ) 
+         )    
+" arguments=(("as_itemno", string),("as_qa", string),("as_source", string),("as_loc", string),("as_from", string),("as_to", string))  sort="inaudit_date A item_name A qa A uom A " )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="68" width="329" format="yyyy/mm/dd" html.valueishtml="0"  name=inaudit_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="347" y="4" height="68" width="855" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1211" y="4" height="68" width="681" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1902" y="4" height="68" width="165" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2075" y="4" height="68" width="512" format="#,##0" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2597" y="4" height="68" width="512" format="#,##0" html.valueishtml="0"  name=issue_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="3118" y="4" height="68" width="507" format="#,##0" html.valueishtml="0"  name=qoh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(qoh for all )"border="0" color="33554432" x="3118" y="4" height="68" width="507" format="[general]" html.valueishtml="0"  name=compute_25 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(issue_qty for all )"border="0" color="33554432" x="2597" y="4" height="68" width="512" format="[general]" html.valueishtml="0"  name=compute_24 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(rcpt_qty for all )"border="0" color="33554432" x="2075" y="4" height="68" width="512" format="[general]" html.valueishtml="0"  name=compute_23 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="68" width="329" format="[general]" html.valueishtml="0"  name=compute_22 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[3] alignment="2" text="입출일자" border="6" color="33554432" x="9" y="8" height="60" width="329" html.valueishtml="0"  name=inaudit_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="품명" border="6" color="33554432" x="347" y="8" height="60" width="855" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="규격" border="6" color="33554432" x="1211" y="8" height="60" width="681" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="단위" border="6" color="33554432" x="1902" y="8" height="60" width="165" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="입고수량" border="6" color="33554432" x="2075" y="8" height="60" width="512" html.valueishtml="0"  name=rcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="출고수량" border="6" color="33554432" x="2597" y="8" height="60" width="512" html.valueishtml="0"  name=issue_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="현재고" border="6" color="33554432" x="3118" y="8" height="60" width="507" html.valueishtml="0"  name=qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "remarks" rows = "inaudit_date, item_name, qa, uom" values = "sum(rcpt_qty for crosstab), sum(issue_qty for crosstab), sum(qoh for crosstab)" sourcenames = "inaudit_time, inaudit_type, inaudit_item, qa, loc_no, rcpt_qty, destination, cust_name, issue_qty, cost, inaudit_date, order_no, serial_id, rem, unit_qty, cnt, remarks, item_name, loc_name, uom, source, qoh")
+sparse(names="inaudit_date	item_name	qa")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

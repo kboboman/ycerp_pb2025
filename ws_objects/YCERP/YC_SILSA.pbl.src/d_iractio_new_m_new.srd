@@ -1,0 +1,145 @@
+﻿$PBExportHeader$d_iractio_new_m_new.srd
+$PBExportComments$실사목록갱신(2000/09/02)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=96 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(8) update=yes updatewhereclause=yes key=yes name=yyyymm dbname="yyyymm" )
+ column=(type=char(10) update=yes updatewhereclause=yes key=yes name=loc_no dbname="loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=loc_name dbname="loc_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=decimal(2) update=yes updatewhereclause=yes name=pre_qty dbname="pre_qty" )
+ column=(type=decimal(2) update=yes updatewhereclause=yes name=stock_qty dbname="stock_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=erp_pre_qty dbname="erp_pre_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=erp_stock_qty dbname="erp_stock_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=erp_plus_qty dbname="erp_plus_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=erp_minus_qty dbname="erp_minus_qty" )
+ column=(type=decimal(0) update=yes updatewhereclause=yes name=silsa_qty dbname="silsa_qty" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=decimal(0) updatewhereclause=yes name=silsa_check_qty dbname="silsa_check_qty" )
+ column=(type=char(1) updatewhereclause=yes name=close_yn dbname="close_yn" values="마감	C/미진행	O/조정완료	I/" )
+ column=(type=char(8) update=yes updatewhereclause=yes name=save_date dbname="save_date" )
+ column=(type=char(1) updatewhereclause=yes name=p4 dbname="p4" )
+ column=(type=char(40) update=yes updatewhereclause=yes name=comment dbname="comment" )
+ column=(type=char(40) updatewhereclause=yes name=comment_check dbname="comment_check" )
+ retrieve="SELECT a.yyyymm,
+             a.loc_no,
+             location.loc_name,
+             a.item_no,
+		  b.item_name,
+             a.qa,
+		  b.uom,
+             a.pre_qty,
+             isnull(a.stock_qty,0) stock_qty,
+             isnull(item_stock.stock_qty,0) erp_pre_qty,
+		   isnull(item_stock.stock_qty,0) + sum(isnull(inaudit.rcpt_qty,0))  -  sum(isnull(inaudit.issue_qty,0)) erp_stock_qty,
+		   sum(case when inaudit.inaudit_type = 'RX' then isnull(inaudit.rcpt_qty,0) else 0 end) erp_plus_qty, 
+		   sum(case when inaudit.inaudit_type = 'IX' then isnull(inaudit.issue_qty,0) else 0 end) erp_minus_qty,
+		  
+             a.silsa_qty,
+		   a.user_id,
+		   login.user_name,
+		   isnull(a.silsa_qty,0) silsa_check_qty,
+		   ISNULL(a.close_yn, 'O') close_yn,
+             save_date,
+             b.p4 p4,
+             a.comment,
+             rtrim(ltrim(isnull(a.comment,''))) comment_check
+FROM    silsa_itemstock a with(nolock) inner join groupitem b with(nolock) on a.item_no = b.item_no
+                inner join location  with(nolock) on a.loc_no = location.loc_no
+			inner join financial_location c with(nolock) on a.loc_no = c.loc_no and c.area_name = :as_loc_name
+			left outer join login  with(nolock) on a.user_id = login.user_id
+			left outer join inaudit with(nolock, index(inaudit_pk) ) on a.loc_no = inaudit.loc_no and a.item_no = inaudit.inaudit_item and a.qa = inaudit.qa
+													  and inaudit.inaudit_date  BETWEEN convert(datetime, :as_yyyymm+'01 00:00:00' ) and   dateadd(day, -1, dateadd(month, 1, convert(datetime, :as_yyyymm+'01 23:59:59') ))
+													  and inaudit.loc_no  LIKE :as_loc		
+			left outer join item_stock with(nolock) on a.loc_no = item_stock.loc_no and a.item_no = item_stock.item_no and a.qa = item_stock.qa
+                                                                          and  item_stock.stock_date = convert(char(8), dateadd(day, -1, convert(datetime, :as_yyyymm+'01') ),112)		
+														 and item_stock.loc_no  like  :as_loc	
+where a.yyyymm = :as_yyyymm
+   and  a.loc_no LIKE :as_loc
+   and a.item_no like :as_item_no
+   and b.item_name like :as_item_name
+    and b.cost_yn <> 'Y'
+    and a.item_no not in ('PZZZPA9ZZZ', 'PZZZPP7ZZZ') /* jowonsuk 2018.07.09 , 계산서정정,  금형비 */
+    and not exists (
+							select b.item_no
+							from
+							  (
+											 SELECT  item_no
+											  FROM groupitem
+											  WHERE groupitem.ITEM_NAME LIKE '%샘플%' or groupitem.item_name like '%LOSS%' OR COST_YN = 'Y'
+											  union
+											  select item_no
+												from item_cost
+							 ) b 
+							 where  b.item_no = a.item_no
+                            )
+group by a.yyyymm,
+             a.loc_no,
+             location.loc_name,
+             a.item_no,
+		  b.item_name,
+             a.qa,
+		  b.uom,
+             a.pre_qty,
+             isnull(a.stock_qty,0),
+             item_stock.stock_qty,
+             a.silsa_qty,
+		   a.user_id,
+		   login.user_name,
+		   isnull(a.silsa_qty,0),
+		   ISNULL(a.close_yn, 'O'),
+             save_date,
+             b.p4,
+		   a.comment
+" update="silsa_itemstock" updatewhere=0 updatekeyinplace=no arguments=(("as_loc", string),("as_yyyymm", string),("as_item_no", string),("as_item_name", string),("as_loc_name", string))  sort="loc_no A item_no A qa A " )
+text(band=header alignment="2" text="순번" border="6" color="0" x="9" y="4" height="72" width="192" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="저장소명" border="6" color="0" x="210" y="4" height="72" width="480" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품목번호" border="6" color="0" x="699" y="4" height="72" width="398" html.valueishtml="0"  name=silsa_itemstock_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="1106" y="4" height="72" width="1184" html.valueishtml="0"  name=b_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="2299" y="4" height="72" width="640" html.valueishtml="0"  name=silsa_itemstock_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2949" y="4" height="72" width="160" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="기말재고(재고조정제외)" border="6" color="0" x="4471" y="4" height="72" width="713" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="erp기말재고" border="6" color="0" x="5193" y="4" height="72" width="471" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실사재고" border="6" color="0" x="5673" y="4" height="72" width="416" html.valueishtml="0"  name=실사재고  tag="" visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="차이량" border="6" color="0" x="6098" y="4" height="72" width="384" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="6491" y="4" height="72" width="325" html.valueishtml="0"  name=login_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수정일" border="6" color="0" x="6825" y="4" height="72" width="325" html.valueishtml="0"  name=silsa_itemstock_save_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="(+)재고조정" border="6" color="0" x="3520" y="4" height="72" width="466" html.valueishtml="0"  name=silsa_itemstock_plus_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="(-)재고조정" border="6" color="0" x="3995" y="4" height="72" width="466" html.valueishtml="0"  name=silsa_itemstock_minus_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="기초재고" border="6" color="0" x="3118" y="4" height="72" width="393" html.valueishtml="0"  name=erp_pre_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사유" border="6" color="0" x="7159" y="4" height="72" width="1102" html.valueishtml="0"  name=comment_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="상태" border="6" color="0" x="8270" y="4" height="72" width="311" html.valueishtml="0"  name=silsa_itemstock_close_yn_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="0" x="6825" y="0" height="72" width="325" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn= 'C' , 1 , 0 )"  name=save_date visible="1" editmask.mask="XXXX.XX.XX" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="67108864~tif( isnull(save_date), if (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255) ), rgb(0,255,0) )" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="0" x="6491" y="0" height="72" width="325" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn= 'C' , 1 , 0 )"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+compute(band=detail alignment="1" expression="if( isnull(silsa_qty), 0, silsa_qty)  - if( isnull(erp_stock_qty), 0, erp_stock_qty) "border="0" color="0" x="6098" y="0" height="72" width="384" format="#,##0" html.valueishtml="0"  name=gab_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=14 alignment="1" tabsequence=10 border="0" color="0" x="5673" y="0" height="72" width="416" format="#,##0" html.valueishtml="0" protect="0~tIF( close_yn <> 'O' , 1 , 0 )"  name=silsa_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="5193" y="0" height="72" width="471" format="#,##0" html.valueishtml="0"  name=erp_stock_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="4471" y="0" height="72" width="713" format="#,##0" html.valueishtml="0"  name=stock_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="3995" y="0" height="72" width="466" format="#,##0" html.valueishtml="0"  name=erp_minus_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="3520" y="0" height="72" width="466" format="#,##0" html.valueishtml="0"  name=erp_plus_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="3118" y="0" height="72" width="393" format="#,##0" html.valueishtml="0" protect="0~tIF( close_yn= 'C' , 1 , 0 )"  name=erp_pre_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="2949" y="0" height="72" width="160" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn= 'C' , 1 , 0 )"  name=uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="2299" y="0" height="72" width="640" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn <> 'O' , 1 , 0 )"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="1106" y="0" height="72" width="1184" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn <> 'O' , 1 , 0 )"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="699" y="0" height="72" width="398" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn <> 'O' , 1 , 0 )"  name=item_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="210" y="0" height="72" width="480" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn= 'C' , 1 , 0 )"  name=loc_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="0" height="72" width="192" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=21 alignment="0" tabsequence=20 border="0" color="0" x="7159" y="0" height="72" width="1102" format="[general]" html.valueishtml="0"  name=comment visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="0~tcase( close_yn when 'C' then rgb(0,0,0) when 'I' then rgb(0,0,255) else rgb(255,0,0) )" x="8270" y="0" height="72" width="311" format="[general]" html.valueishtml="0" protect="0~tIF( close_yn= 'C' , 1 , 0 )"  name=close_yn visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(),RGB(254,252,175), RGB(255,255,255))" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="64" width="192" format="#,###" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(erp_pre_qty for all)"border="0" color="0" x="3118" y="16" height="72" width="393" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression=" sum(erp_plus_qty for all) "border="0" color="0" x="3520" y="16" height="72" width="466" format="#,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(erp_minus_qty for all)"border="0" color="0" x="3995" y="16" height="72" width="466" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(gab_qty for all) "border="0" color="0" x="6098" y="16" height="72" width="384" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(silsa_qty for all)"border="0" color="0" x="5673" y="16" height="72" width="416" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(erp_stock_qty for all)"border="0" color="0" x="5193" y="16" height="72" width="471" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(stock_qty for all)"border="0" color="0" x="4471" y="16" height="72" width="713" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

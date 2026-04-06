@@ -1,0 +1,125 @@
+﻿$PBExportHeader$d_oido_ct.srd
+$PBExportComments$계절지수
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=68 color="536870912" )
+header[2](height=68 color="536870912" )
+summary(height=108 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=품명 dbname="품명" )
+ column=(type=char(20) updatewhereclause=yes name=규격 dbname="규격" )
+ column=(type=number updatewhereclause=yes name=상차년 dbname="상차년" )
+ column=(type=number updatewhereclause=yes name=출고수량 dbname="출고수량" )
+ retrieve="SELECT '거래처'  = a.cust_name
+     , '코드'    = a.item_no
+     , '품명'    = a.item_name
+     , '규격'    = a.qa
+     , '주문일자'= a.order_date
+     , '상차년'  = year(a.ship_date)
+     , '상차월'  = month(a.ship_date)
+     , '상차일자'= a.ship_date
+     , '납품소요'= datediff(day, a.order_date, a.ship_date)
+     , '주문수량'= a.order_qty
+     , '출고수량'= a.ship_qty
+     , '매출수량'= a.com_qty
+     , '출고단가'= a.price
+     , '공급가액'= a.amount 
+     , '사업장'  = a.area_no
+     , '출고번호'= a.do_no
+     , '출고일자'= a.do_date
+  FROM (
+       SELECT cust_name = rtrim(c.cust_name)
+            , a.item_no
+            , item_name = rtrim(g.item_name)
+            , a.qa
+            , s.order_date
+            , b.order_qty
+       
+            , do.ship_date
+            , do.do_date
+            , a.ship_qty
+            , a.price
+            , com_qty  = dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty)
+            , amount   = a.price * dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty)
+            
+            , do.area_no
+            , do.do_no
+         FROM dodet a  ( nolock )
+              LEFT OUTER JOIN do          (nolock) ON a.do_no    = do.do_no
+              LEFT OUTER JOIN customer  c (nolock) ON do.cust_no = c.cust_no
+              LEFT OUTER JOIN groupitem g (nolock) ON a.item_no  = g.item_no
+              LEFT OUTER JOIN saledet   b (nolock) ON a.sale_no  = b.order_no  and a.seq_no = b.seq_no
+              LEFT OUTER JOIN sale      s (nolock) ON b.order_no = s.order_no
+        WHERE CONVERT(CHAR(10),do.ship_date,111)   BETWEEN '2008/01/01' AND '2012/12/31'
+          AND s.order_date IS NOT NULL
+          AND A.ITEM_NO  IN ('PACSMBDB00'
+                            ,'PACSMBDK00'
+                            ,'PACSCACB00'
+                            ,'PACSCACK00'
+                            ,'PACSCLIB00'
+                            ,'PACSMCHK00'
+                            ,'PACSMTBK00'
+                            ,'PZAAWMPB00'
+                            ,'PZAAWMDB0W'
+                            ,'PZAADMJB0Z'
+                            ,'PZAADMDB0W'
+                            ,'PAWSSTDB00'
+                            ,'PAWSSTDK00'
+                            ,'PAWSJRUB00'
+                            ,'PAWSRUNB00'
+                            ,'PAWSRUNK00'
+                            )
+       ) A
+   WHERE (a.item_no ='PACSMBDB00' and a.qa ='045X0045X0019X04000')
+      or (a.item_no ='PACSMBDK00' and a.qa ='050X0050X0019X04000')
+      or (a.item_no ='PACSCACB00' and a.qa ='100X0038X0012X04000')
+      or (a.item_no ='PACSCACK00' and a.qa ='120X0038X0012X04000')
+      or (a.item_no ='PACSCLIB00' and a.qa ='050X0024X0035X04000')
+      or (a.item_no ='PACSMCHK00' and a.qa ='120X0019X0010X04000')
+      or (a.item_no ='PACSMTBK00' and a.qa ='040X0025X0038X03658')
+      or (a.item_no ='PZAAWMPB00' and a.qa ='100X0015X0015X03000')
+      or (a.item_no ='PZAAWMDB0W' and a.qa ='100X0015X0015X03000')
+      or (a.item_no ='PZAADMJB0Z' and a.qa ='100X0015X0030X03000')
+      or (a.item_no ='PZAADMDB0W' and a.qa ='100X0015X0030X03000')
+      or (a.item_no ='PAWSSTDB00' and a.qa ='080X0030X0032X03000')
+      or (a.item_no ='PAWSSTDB00' and a.qa ='080X0064X0032X03000')
+      or (a.item_no ='PAWSSTDK00' and a.qa ='080X0050X0045X02700')
+      or (a.item_no ='PAWSSTDK00' and a.qa ='080X0050X0045X03000')
+      or (a.item_no ='PAWSSTDK00' and a.qa ='080X0065X0045X02700')
+      or (a.item_no ='PAWSSTDK00' and a.qa ='080X0065X0045X03000')
+      or (a.item_no ='PAWSSTDK00' and a.qa ='080X0065X0045X03500')
+      or (a.item_no ='PAWSJRUB00' and a.qa ='080X0075X0025X03000')
+      or (a.item_no ='PAWSJRUB00' and a.qa ='080X0102X0025X03000')
+      or (a.item_no ='PAWSRUNB00' and a.qa ='080X0032X0032X03000')
+      or (a.item_no ='PAWSRUNB00' and a.qa ='080X0064X0032X03000')
+      or (a.item_no ='PAWSRUNK00' and a.qa ='080X0052X0040X03000')
+      or (a.item_no ='PAWSRUNK00' and a.qa ='080X0067X0040X03000')
+"  sort="품명 A 규격 A 상차년 A " )
+group(level=1 header.height=0 trailer.height=108 by=("품명" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=108 by=("규격" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Sum Of 출고수량" border="0" color="33554432" x="9" y="4" height="60" width="1952" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="상차월" border="0" color="33554432" x="1970" y="4" height="60" width="672" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="품명" border="0" color="33554432" x="9" y="4" height="60" width="1952" html.valueishtml="0"  name=품명_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="규격" border="0" color="33554432" x="1970" y="4" height="60" width="672" html.valueishtml="0"  name=규격_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="상차년" border="0" color="33554432" x="2651" y="4" height="60" width="384" html.valueishtml="0"  name=상차년_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="@상차월" border="0" color="33554432" x="3045" y="4" height="60" width="384" html.valueishtml="0"  name=출고수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="Grand Total " border="0" color="33554432" x="3438" y="4" height="60" width="686" html.valueishtml="0"  name=grand_sum_출고수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="1952" format="[general]" html.valueishtml="0"  name=품명 visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1970" y="4" height="72" width="672" format="[general]" html.valueishtml="0"  name=규격 visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="2651" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=상차년 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="3045" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=출고수량 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="3438" y="4" height="72" width="686" format="[general]" html.valueishtml="0"  name=grand_sum_출고수량 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="규격 + ~" Total~""border="0" color="33554432" x="1970" y="4" height="72" width="672" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(출고수량 for group 2)"border="0" color="33554432" x="3045" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(grand_sum_출고수량 for group 2)"border="0" color="33554432" x="3438" y="4" height="72" width="686" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="품명 + ~" Total~""border="0" color="33554432" x="9" y="4" height="72" width="1952" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(출고수량 for group 1)"border="0" color="33554432" x="3045" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_출고수량 for group 1)"border="0" color="33554432" x="3438" y="4" height="72" width="686" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="72" width="1952" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(출고수량 for all )"border="0" color="33554432" x="3045" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_출고수량 for all )"border="0" color="33554432" x="3438" y="4" height="72" width="686" format="[general]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "상차월" rows = "품명, 규격, 상차년" values = "sum(출고수량 for crosstab)" sourcenames = "거래처, 코드, 품명, 규격, 주문일자, 상차년, 상차월, 상차일자, 납품소요, 주문수량, 출고수량, 매출수량, 출고단가, 공급가액, 사업장, 출고번호, 출고일자")
+sparse(names="품명	규격")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

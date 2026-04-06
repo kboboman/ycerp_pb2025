@@ -1,0 +1,43 @@
+﻿$PBExportHeader$gf_multi_select.srf
+global type gf_multi_select from function_object
+end type
+
+forward prototypes
+global subroutine gf_multi_select (datawindow a_dw, long al_row)
+end prototypes
+
+global subroutine gf_multi_select (datawindow a_dw, long al_row);//**************************************//
+//     함수명 :gf_multi_select
+//     전달값 :a_dw(datawindow),al_row(현재row)
+//**************************************//
+
+long  w_selrow, i
+
+if al_row <= 0 then return
+
+if keydown(keyshift!)then
+	w_selrow = a_dw.GetSelectedRow(0)
+	if w_selrow > 0 then
+		for i = min(w_selrow,al_row) to max(w_selrow, al_row)
+			a_dw.SelectRow(i,true)
+		next
+	else
+		a_dw.SelectRow(al_row,true)
+	end if
+elseif keydown(KeyControl!) then
+		if a_dw.isSelected(al_row) then
+			a_dw.SelectRow(al_row,false)
+		else
+			a_dw.SelectRow(al_row,true)
+		end if
+else
+	if a_dw.isSelected(al_row) then
+		a_dw.SelectRow(0,false)
+	else
+		a_dw.SelectRow(0,false)
+		a_dw.SelectRow(al_row,true)
+	end if
+end if  
+//**************************************//
+end subroutine
+

@@ -1,0 +1,345 @@
+﻿$PBExportHeader$d_apbitemtot_t6.srd
+$PBExportComments$조업자재 집계표(원본)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 grid.columnmove=no selected.mouse=no )
+header(height=84 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=part_name dbname="part_name" )
+ column=(type=char(30) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_1 dbname="in_month_1" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_2 dbname="in_month_2" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_3 dbname="in_month_3" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_4 dbname="in_month_4" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_5 dbname="in_month_5" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_6 dbname="in_month_6" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_7 dbname="in_month_7" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_8 dbname="in_month_8" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_9 dbname="in_month_9" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_10 dbname="in_month_10" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_11 dbname="in_month_11" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_month_12 dbname="in_month_12" )
+ column=(type=char(10) updatewhereclause=yes name=cstart dbname="cstart" )
+ column=(type=char(10) updatewhereclause=yes name=cend dbname="cend" )
+ column=(type=long updatewhereclause=yes name=ship_qty dbname="ship_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=c_qty dbname="c_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=c_amt dbname="c_amt" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="cnt" )
+ column=(type=long updatewhereclause=yes name=sort dbname="sort" )
+ column=(type=long updatewhereclause=yes name=sort2 dbname="sort2" )
+ retrieve="SELECT part_name                       
+     , item_name                       
+     , in_month_1  = max(in_month_1)   
+     , in_month_2  = max(in_month_2)   
+     , in_month_3  = max(in_month_3)   
+     , in_month_4  = max(in_month_4)   
+     , in_month_5  = max(in_month_5)   
+     , in_month_6  = max(in_month_6)   
+     , in_month_7  = max(in_month_7)   
+     , in_month_8  = max(in_month_8)   
+     , in_month_9  = max(in_month_9)   
+     , in_month_10 = max(in_month_10)  
+     , in_month_11 = max(in_month_11)  
+     , in_month_12 = max(in_month_12)  
+     , cstart      = max(cstart)       
+     , cend        = max(cend)         
+     , ship_qty    = sum(ship_qty)     
+     , c_qty       = sum(c_qty)        
+     , c_amt       = sum(c_amt)        
+     , cnt         = sum(cnt)          
+     , sort        = max(sort)         
+     , sort2       = max(sort2)        
+  FROM (                                 
+       SELECT part_name                  
+            , item_name                  
+            , in_month_1  = (case when in_month = 1  then sum(c_amt) else 0 end)
+            , in_month_2  = (case when in_month = 2  then sum(c_amt) else 0 end)
+            , in_month_3  = (case when in_month = 3  then sum(c_amt) else 0 end)
+            , in_month_4  = (case when in_month = 4  then sum(c_amt) else 0 end)
+            , in_month_5  = (case when in_month = 5  then sum(c_amt) else 0 end)
+            , in_month_6  = (case when in_month = 6  then sum(c_amt) else 0 end)
+            , in_month_7  = (case when in_month = 7  then sum(c_amt) else 0 end)
+            , in_month_8  = (case when in_month = 8  then sum(c_amt) else 0 end)
+            , in_month_9  = (case when in_month = 9  then sum(c_amt) else 0 end)
+            , in_month_10 = (case when in_month = 10 then sum(c_amt) else 0 end)
+            , in_month_11 = (case when in_month = 11 then sum(c_amt) else 0 end)
+            , in_month_12 = (case when in_month = 12 then sum(c_amt) else 0 end)
+            , cstart      = max(cstart)                                  
+            , cend        = max(cend)                                    
+            , ship_qty    = sum(ship_qty)                                
+            , c_qty       = sum(c_qty)                                   
+            , c_amt       = sum(c_amt)                                   
+            , cnt         = sum(cnt)                                     
+            , sort        = max(sort)                                    
+            , sort2       = max(sort2)                                   
+         FROM (                                                          
+              SELECT d.part_name                                         
+                   , item_name = b.item_name                                                                                 
+                   , item_no   = a.item_no
+                   , in_year   = year(a.in_date)                                                                             
+                   , in_month  = month(a.in_date)                                                                            
+                   , cstart    = (case when :as_start = ''  then '          ' else :as_start   end)                          
+                   , cend      = (case when :as_end   = ''  then '          ' else :as_end     end)                          
+                   , ship_qty  = isNULL(count(a.qa),0)                                                                       
+                   , c_qty     = sum(isNULL(a.qty,0))                                                                        
+                   , c_amt     = sum(isNULL(a.amount,0))                                                                     
+                   , cnt       = isNULL(count(a.qa),0)                                                                       
+                   , sort      = max(isnull(d.sort,999))
+                   , sort2     = max(isnull(e.sort,999))
+                FROM binitem A                                                                                               
+                     LEFT OUTER JOIN bitem B ON a.item_no   = b.item_no                                                      
+                     LEFT OUTER JOIN bsupp C ON a.supp_no   = c.supp_no                                                      
+                     LEFT OUTER JOIN bpart D ON a.part_code = d.part_no                                                      
+                     LEFT OUTER JOIN (
+                          SELECT item_cd, sort FROM codemst WHERE type = '조업자재_대중분류' AND use_yn = 'Y'
+                     ) E  ON b.catgroup = e.item_cd
+               WHERE ( convert(char(10),a.in_date,111)  BETWEEN :as_start AND :as_end )                                      
+                 AND ( a.supp_no           LIKE :as_supp      )                                                              
+                 AND ( a.part_code         LIKE :as_part_code )                                                              
+               GROUP BY d.part_name    
+                      , a.in_date      
+                      , a.supp_no      
+                      , b.item_name    
+                      , a.item_no      
+                      , a.uom          
+              ) TMP_01                 
+          GROUP BY part_name           
+                 , item_name           
+                 , in_month            
+       ) TMP_MAIN                      
+  GROUP BY part_name                   
+         , item_name                   
+  ORDER BY sort, sort2                 
+
+/*
+SELECT part_name                       
+     , item_name                       
+     , in_month_1  = max(in_month_1)   
+     , in_month_2  = max(in_month_2)   
+     , in_month_3  = max(in_month_3)   
+     , in_month_4  = max(in_month_4)   
+     , in_month_5  = max(in_month_5)   
+     , in_month_6  = max(in_month_6)   
+     , in_month_7  = max(in_month_7)   
+     , in_month_8  = max(in_month_8)   
+     , in_month_9  = max(in_month_9)   
+     , in_month_10 = max(in_month_10)  
+     , in_month_11 = max(in_month_11)  
+     , in_month_12 = max(in_month_12)  
+     , cstart      = max(cstart)       
+     , cend        = max(cend)         
+     , ship_qty    = sum(ship_qty)     
+     , c_qty       = sum(c_qty)        
+     , c_amt       = sum(c_amt)        
+     , cnt         = sum(cnt)          
+     , sort        = max(sort)         
+     , sort2       = max(sort2)        
+  FROM (                                 
+       SELECT part_name                  
+            , item_name                  
+            , in_month_1  = (case when in_month = 1  then sum(c_amt) end)
+            , in_month_2  = (case when in_month = 2  then sum(c_amt) end)
+            , in_month_3  = (case when in_month = 3  then sum(c_amt) end)
+            , in_month_4  = (case when in_month = 4  then sum(c_amt) end)
+            , in_month_5  = (case when in_month = 5  then sum(c_amt) end)
+            , in_month_6  = (case when in_month = 6  then sum(c_amt) end)
+            , in_month_7  = (case when in_month = 7  then sum(c_amt) end)
+            , in_month_8  = (case when in_month = 8  then sum(c_amt) end)
+            , in_month_9  = (case when in_month = 9  then sum(c_amt) end)
+            , in_month_10 = (case when in_month = 10 then sum(c_amt) end)
+            , in_month_11 = (case when in_month = 11 then sum(c_amt) end)
+            , in_month_12 = (case when in_month = 12 then sum(c_amt) end)
+            , cstart      = max(cstart)                                  
+            , cend        = max(cend)                                    
+            , ship_qty    = sum(ship_qty)                                
+            , c_qty       = sum(c_qty)                                   
+            , c_amt       = sum(c_amt)                                   
+            , cnt         = sum(cnt)                                     
+            , sort        = max(sort)                                    
+            , sort2       = max(sort2)                                   
+         FROM (                                                          
+              SELECT d.part_name                                         
+                   , item_name = (case when b.item_name like '%스티로폼%'             then '스티로폼'                        
+                                       when b.item_name like '%베어링%'               then '베어링'                          
+                                       when b.item_name like '%작업복%'               then '작업복'                          
+                                       when b.item_name like '%안전화%'               then '안전화'                          
+                                       when b.item_name like '%면장갑%'               then '면장갑'                          
+                                       when b.item_name like '%면보루%'               then '면보루'                          
+                                       when b.item_name like '%마대%'                 then '마대'                            
+                                       when b.item_name like '%필라멘트테이프%'       then '필라멘트테이프'                  
+                                       when b.item_name like '%OPP테이프%'            then 'OPP테이프'                       
+                                       when b.item_name like '%보호필름%'             then '보호필름'                        
+                                       when b.item_name like '%비닐%'                 then '비닐'                            
+                                       when b.item_name like '%노루지%'               then '노루지'                          
+                                       when b.item_name like '%공업용랩%'             then '공업용랩'                        
+                                       when b.item_name like '%유압유%'               then '유압유'                          
+                                       when b.item_name like '%수성본드%'             then '수성본드'                        
+                                       when b.item_name like '%우레탄본드%'           then '우레탄본드'                      
+                                       when b.item_name like '%PP밴드%'               then 'PP밴드'                          
+                                       when a.supp_no = '230'                         then '포장BOX'                         
+                                       when b.item_name like '%받침목%'               then '받침목'                          
+                                       when b.item_name like '%소포제%' or b.item_name like '%탈지제%' then '소포,탈지제'    
+                                       when b.item_name like '%절삭유%'               then '절삭유'                          
+                                       when b.item_name like '%펀칭유%'               then '펀칭유'                          
+                                       when b.item_name like '%철밴드%'               then '철밴드'                          
+                                       else '기타'                                                                           
+                                  end)                                                                                       
+                   , item_no   = (case when a.supp_no = '230' then '999999' else a.item_no end)                              
+                   , in_year   = year(a.in_date)                                                                             
+                   , in_month  = month(a.in_date)                                                                            
+                   , cstart    = (case when :as_start = ''  then '          ' else :as_start   end)                          
+                   , cend      = (case when :as_end   = ''  then '          ' else :as_end     end)                          
+                   , ship_qty  = isNULL(count(a.qa),0)                                                                       
+                   , c_qty     = sum(isNULL(a.qty,0))                                                                        
+                   , c_amt     = sum(isNULL(a.amount,0))                                                                     
+                   , cnt       = isNULL(count(a.qa),0)                                                                       
+                   , sort      = (case when d.part_name = '성형'      then 1                                                 
+                                       when d.part_name = '스리타'    then 2                                                 
+                                       when d.part_name = 'YSP'       then 3                                                 
+                                       when d.part_name = '절곡'      then 4                                                 
+                                       when d.part_name = '유압'      then 5                                                 
+                                       when d.part_name = '도장'      then 6                                                 
+                                       when d.part_name = '공무'      then 7                                                 
+                                       when d.part_name = '금형'      then 8                                                 
+                                       when d.part_name = '출고'      then 9                                                 
+                                       when d.part_name = '사무실'    then 10                                                
+                                       when d.part_name = '공용'      then 11                                                
+                                       when d.part_name = '모듈러'    then 12                                                
+                                       when d.part_name = '화성공장'  then 13                                                
+                                       when d.part_name = '프레스'    then 14                                                
+                                  end)                                                                                       
+                   , sort2     = (case when b.item_name like '%스티로폼%'                  then 1                            
+                                       when b.item_name like '%베어링%'                    then 2                            
+                                       when b.item_name like '%작업복%'                    then 3                            
+                                       when b.item_name like '%안전화%'                    then 4                            
+                                       when b.item_name like '%면장갑%'                    then 5                            
+                                       when b.item_name like '%면보루%'                    then 6                            
+                                       when b.item_name like '%마대%'                      then 7                            
+                                       when b.item_name like '%필라멘트테이프%'            then 8                            
+                                       when b.item_name like '%OPP테이프%'                 then 9                            
+                                       when b.item_name like '%보호필름%'                  then 10                           
+                                       when b.item_name like '%비닐%'                      then 11                           
+                                       when b.item_name like '%노루지%'                    then 12                           
+                                       when b.item_name like '%공업용랩%'                  then 13                           
+                                       when b.item_name like '%유압유%'                    then 14                           
+                                       when b.item_name like '%수성본드%'                  then 15                           
+                                       when b.item_name like '%우레탄본드%'                then 16                           
+                                       when b.item_name like '%PP밴드%'                    then 17                           
+                                       when a.supp_no = '230'                              then 18                           
+                                       when b.item_name like '%받침목%'                    then 19                           
+                                       when b.item_name like '%소포제%' or b.item_name like '%탈지제%' then 20               
+                                       when b.item_name like '%절삭유%'                    then 21                           
+                                       when b.item_name like '%펀칭유%'                    then 22                           
+                                       when b.item_name like '%철밴드%'                    then 23                           
+                                       else 99                                                                               
+                                  end)                                                                                       
+                FROM binitem A                                                                                               
+                     LEFT OUTER JOIN bitem B ON a.item_no   = b.item_no                                                      
+                     LEFT OUTER JOIN bsupp C ON a.supp_no   = c.supp_no                                                      
+                     LEFT OUTER JOIN bpart D ON a.part_code = d.part_no                                                      
+               WHERE ( convert(char(10),a.in_date,111)  BETWEEN :as_start AND :as_end )                                      
+                 AND ( a.supp_no           LIKE :as_supp      )                                                              
+                 AND ( a.part_code         LIKE :as_part_code )                                                              
+                 AND (( b.item_name like '%스티로폼%'   or b.item_name like '%베어링%'         or b.item_name like '%작업복%'    or 
+                        b.item_name like '%안전화%'     or b.item_name like '%면장갑%'         or b.item_name like '%면보루%'    or 
+                        b.item_name like '%마대%'       or b.item_name like '%필라멘트테이프%' or b.item_name like '%OPP테이프%' or 
+                        b.item_name like '%보호필름%'   or b.item_name like '%비닐%'           or b.item_name like '%노루지%'    or 
+                        b.item_name like '%공업용랩%'   or b.item_name like '%유압유%'         or b.item_name like '%수성본드%'  or 
+                        b.item_name like '%우레탄본드%' or b.item_name like '%PP밴드%'         or b.item_name like '%받침목%'    or 
+                        b.item_name like '%소포제%'     or b.item_name like '%탈지제%'         or b.item_name like '%절삭유%'    or
+                        b.item_name like '%펀칭유%'     or b.item_name like '%철밴드%' 
+                      ) OR  
+                      ( convert(char(10),a.in_date,111)  BETWEEN :as_start AND :as_end ) AND
+                      ( a.supp_no           LIKE :as_supp      ) AND
+                      ( a.part_code         LIKE :as_part_code ) AND
+                      ( a.supp_no              = '230'         ) 
+                     )                 
+               GROUP BY d.part_name    
+                      , a.in_date      
+                      , a.supp_no      
+                      , b.item_name    
+                      , a.item_no      
+                      , a.uom          
+              ) TMP_01                 
+          GROUP BY part_name           
+                 , item_name           
+                 , in_month            
+       ) TMP_MAIN                      
+  GROUP BY part_name                   
+         , item_name                   
+  ORDER BY sort, sort2                 
+*/
+" arguments=(("as_start", string),("as_end", string),("as_supp", string),("as_part_code", string)) )
+group(level=1 header.height=0 trailer.height=80 by=("part_name" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="부서" border="6" color="33554432" x="9" y="12" height="64" width="251" html.valueishtml="0"  name=part_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="물품명" border="6" color="33554432" x="270" y="12" height="64" width="480" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="1월" border="6" color="33554432" x="1998" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="2월" border="6" color="33554432" x="2368" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="3월" border="6" color="33554432" x="2738" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_3_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="4월" border="6" color="33554432" x="3109" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_4_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="5월" border="6" color="33554432" x="3479" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_5_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="6월" border="6" color="33554432" x="3849" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_6_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="7월" border="6" color="33554432" x="4219" y="12" height="64" width="379" html.valueishtml="0"  name=in_month_7_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="8월" border="6" color="33554432" x="4608" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_8_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="9월" border="6" color="33554432" x="4978" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_9_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="10월" border="6" color="33554432" x="5349" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_10_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="11월" border="6" color="33554432" x="5719" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_11_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="12월" border="6" color="33554432" x="6089" y="12" height="64" width="361" html.valueishtml="0"  name=in_month_12_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="251" format="[general]" html.valueishtml="0"  name=part_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="270" y="8" height="72" width="480" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="6089" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_12 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1998" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2368" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2738" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="3109" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="3479" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="3849" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_6 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="4219" y="8" height="72" width="379" format="#,##0" html.valueishtml="0"  name=in_month_7 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="4608" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_8 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="4978" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_9 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="5349" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_10 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="5719" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=in_month_11 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="9" y="12" height="60" width="251" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="2" text="소계" border="0" color="33554432" x="270" y="12" height="60" width="480" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="sum ( cnt for group 1 )"border="0" color="0" x="759" y="12" height="60" width="261" format="[GENERAL]" html.valueishtml="0"  name=cf_cnt_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( c_qty for group 1 )"border="0" color="0" x="1029" y="12" height="60" width="389" format="#,##0.00" html.valueishtml="0"  name=cf_c_qty_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( c_amt for group 1 )"border="0" color="0" x="1426" y="12" height="60" width="562" format="#,##0" html.valueishtml="0"  name=cf_c_amt_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_1 for group 1 )"border="0" color="0" x="1998" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_1_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_2 for group 1 )"border="0" color="0" x="2368" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_2_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_3 for group 1 )"border="0" color="0" x="2738" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_3_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_4 for group 1 )"border="0" color="0" x="3109" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_4_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_5 for group 1 )"border="0" color="0" x="3479" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_5_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_6 for group 1 )"border="0" color="0" x="3849" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_6_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_7 for group 1 )"border="0" color="0" x="4219" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cf_in_month_7_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_8 for group 1 )"border="0" color="0" x="4608" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_8_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_9 for group 1 )"border="0" color="0" x="4978" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_9_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_10 for group 1 )"border="0" color="0" x="5349" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_10_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_11 for group 1 )"border="0" color="0" x="5719" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_11_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_month_12 for group 1 )"border="0" color="0" x="6089" y="12" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_12_g visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( c_qty for all )"border="0" color="0" x="1029" y="8" height="60" width="389" format="#,##0.00" html.valueishtml="0"  name=cf_c_qty_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum ( cnt for all )"border="0" color="0" x="759" y="8" height="60" width="261" format="[GENERAL]" html.valueishtml="0"  name=cf_cnt_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( c_amt for all )"border="0" color="0" x="1426" y="8" height="60" width="562" format="#,##0" html.valueishtml="0"  name=cf_c_amt_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_1 for all )"border="0" color="0" x="1998" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_1_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_2 for all )"border="0" color="0" x="2368" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_2_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_3 for all )"border="0" color="0" x="2738" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_3_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_4 for all )"border="0" color="0" x="3109" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_4_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_5 for all )"border="0" color="0" x="3479" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_5_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_6 for all )"border="0" color="0" x="3849" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_6_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_7 for all )"border="0" color="0" x="4219" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cf_in_month_7_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_8 for all )"border="0" color="0" x="4608" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_8_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_9 for all )"border="0" color="0" x="4978" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_9_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_10 for all )"border="0" color="0" x="5349" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_10_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_11 for all )"border="0" color="0" x="5719" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_11_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  in_month_12 for all )"border="0" color="0" x="6089" y="8" height="60" width="361" format="#,##0" html.valueishtml="0"  name=cf_in_month_12_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="0" text="" border="0" color="33554432" x="9" y="8" height="60" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="0" text="" border="0" color="33554432" x="270" y="8" height="60" width="480" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="공급가액" border="6" color="33554432" x="1426" y="12" height="64" width="562" html.valueishtml="0"  name=c_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="33554432" x="1426" y="8" height="72" width="562" format="#,##0" html.valueishtml="0"  name=c_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="15780518~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+text(band=header alignment="2" text="수량" border="6" color="33554432" x="1029" y="12" height="64" width="389" html.valueishtml="0"  name=c_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="33554432" x="1029" y="8" height="72" width="389" format="#,##0.00" html.valueishtml="0"  name=c_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="12639424~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+text(band=header alignment="2" text="입고건수" border="6" color="16777215" x="759" y="12" height="64" width="261" html.valueishtml="0"  name=cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="32896" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="16777215" x="759" y="8" height="72" width="261" format="#,##0" html.valueishtml="0"  name=cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="32896~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+
+sparse(names="item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

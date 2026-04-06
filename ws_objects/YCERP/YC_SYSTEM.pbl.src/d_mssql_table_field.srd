@@ -1,0 +1,67 @@
+﻿$PBExportHeader$d_mssql_table_field.srd
+$PBExportComments$MS SQL SERVER Table별 Field만 보기
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=syscolumns_colid dbname="syscolumns.colid" )
+ column=(type=char(255) updatewhereclause=yes name=syscolumns_name dbname="syscolumns.name" )
+ column=(type=char(254) updatewhereclause=yes name=pbcatcol_pbc_cmnt dbname="pbcatcol.pbc_cmnt" )
+ column=(type=char(255) updatewhereclause=yes name=cdatatype dbname="cdatatype" )
+ column=(type=char(255) updatewhereclause=yes name=systypes_name dbname="systypes.name" )
+ column=(type=long updatewhereclause=yes name=syscolumns_prec dbname="syscolumns.prec" )
+ column=(type=long updatewhereclause=yes name=syscolumns_scale dbname="syscolumns.scale" )
+ column=(type=char(1) updatewhereclause=yes name=cnull dbname="cnull" )
+ column=(type=char(2) updatewhereclause=yes name=pk dbname="pk" )
+ column=(type=char(255) updatewhereclause=yes name=sysobjects_name dbname="sysobjects.name" )
+ column=(type=char(254) updatewhereclause=yes name=pbcattbl_pbt_cmnt dbname="pbcattbl.pbt_cmnt" )
+ column=(type=long updatewhereclause=yes name=syscolumns_status dbname="syscolumns.status" )
+ column=(type=long updatewhereclause=yes name=syscolumns_type dbname="syscolumns.type" )
+ retrieve="  SELECT dbo.syscolumns.colid 
+       , dbo.syscolumns.name  
+       , dbo.pbcatcol.pbc_cmnt
+       , cdatatype = (CASE WHEN right( dbo.systypes.name , 1) <> 'n' THEN dbo.systypes.name
+                               ELSE left(  dbo.systypes.name , LEN( dbo.systypes.name ) - 1 )
+                                END)
+       , dbo.systypes.name    
+       , dbo.syscolumns.prec  
+       , dbo.syscolumns.scale 
+       , cnull     = (CASE WHEN dbo.syscolumns.status = 0 OR dbo.syscolumns.status = 16 THEN 'N' ELSE 'Y' END)
+       , pk        = dbo.uf_gettablepk(dbo.syscolumns.id, dbo.syscolumns.colid)
+       , dbo.sysobjects.name  
+       , dbo.pbcattbl.pbt_cmnt
+       , dbo.syscolumns.status
+       , dbo.syscolumns.type  
+    FROM dbo.syscolumns  
+         LEFT OUTER JOIN dbo.systypes    ON dbo.syscolumns.xusertype = dbo.systypes.xusertype
+         LEFT OUTER JOIN dbo.sysobjects  ON dbo.syscolumns.id        = dbo.sysobjects.id     /* AND dbo.systypes.uid  = dbo.sysobjects.uid*/
+         LEFT OUTER JOIN dbo.pbcatcol    ON dbo.syscolumns.name      = dbo.pbcatcol.pbc_cnam  AND dbo.sysobjects.name = dbo.pbcatcol.pbc_tnam
+         LEFT OUTER JOIN dbo.pbcattbl    ON dbo.sysobjects.name      = dbo.pbcattbl.pbt_tnam
+   WHERE /* dbo.systypes.usertype      <> 18
+     AND dbo.systypes.usertype       < 100
+     AND */ dbo.sysobjects.name         = :as_tname
+   ORDER BY dbo.syscolumns.colid
+" arguments=(("as_tname", string))  sort="sysobjects_name A syscolumns_colid A " )
+group(level=1 header.height=156 trailer.height=0 by=("sysobjects_name" ) newpage=yes resetpagecount=yes header.color="536870912" trailer.color="536870912" )
+column(band=header.1 id=11 alignment="0" tabsequence=32766 border="6" color="0" x="878" y="4" height="72" width="2523" format="[general]" html.valueishtml="0"  name=pbcattbl_pbt_cmnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=header.1 id=10 alignment="0" tabsequence=32766 border="6" color="0" x="9" y="4" height="72" width="850" format="[general]" html.valueishtml="0"  name=sysobjects_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header.1 alignment="2" text="순번" border="6" color="0" x="9" y="88" height="60" width="114" html.valueishtml="0"  name=no visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header.1 alignment="2" text="필드명" border="6" color="0" x="137" y="88" height="60" width="722" html.valueishtml="0"  name=field visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header.1 alignment="2" text="데이터형식" border="6" color="0" x="878" y="88" height="60" width="439" html.valueishtml="0"  name=datatype visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header.1 alignment="2" text="길이" border="6" color="0" x="1335" y="88" height="60" width="183" html.valueishtml="0"  name=width visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header.1 alignment="2" text="Scale" border="6" color="0" x="1536" y="88" height="60" width="165" html.valueishtml="0"  name=scale visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header.1 alignment="2" text="NULL" border="6" color="0" x="1719" y="88" height="60" width="146" html.valueishtml="0"  name=null visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header.1 alignment="2" text="PK" border="6" color="0" x="1883" y="88" height="60" width="82" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header.1 alignment="2" text="설명" border="6" color="0" x="1984" y="88" height="60" width="1417" html.valueishtml="0"  name=comment visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="4" color="0" x="9" y="4" height="60" width="114" format="[general]" html.valueishtml="0"  name=syscolumns_colid visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="4" color="0" x="1335" y="4" height="60" width="183" format="[general]" html.valueishtml="0"  name=syscolumns_prec visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="4" color="0" x="1719" y="4" height="60" width="146" format="[general]" html.valueishtml="0"  name=cnull visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="4" color="0" x="1883" y="4" height="60" width="82" format="[general]" html.valueishtml="0"  name=pk visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+compute(band=detail alignment="0" expression=" syscolumns_name "border="4" color="0" x="142" y="4" height="60" width="722" format="[general]" html.valueishtml="0"  name=name visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="4" color="0" x="878" y="4" height="60" width="439" format="[general]" html.valueishtml="0"  name=cdatatype visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="4" color="0" x="1536" y="4" height="60" width="165" format="[general]" html.valueishtml="0"  name=syscolumns_scale visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="4" color="0" x="1984" y="4" height="60" width="1417" format="[general]" html.valueishtml="0"  name=pbcatcol_pbc_cmnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif( currentrow() = getrow(), rgb(251,251,185), rgb(255,255,255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="60" width="114" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

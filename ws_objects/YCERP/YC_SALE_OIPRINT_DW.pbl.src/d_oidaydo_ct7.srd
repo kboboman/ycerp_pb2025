@@ -1,0 +1,89 @@
+﻿$PBExportHeader$d_oidaydo_ct7.srd
+$PBExportComments$출고집계(전략제품)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=80 color="536870912" )
+header[2](height=80 color="536870912" )
+header[3](height=80 color="536870912" )
+summary(height=108 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=category dbname="category" )
+ column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=number updatewhereclause=yes name=cprice dbname="cprice" )
+ retrieve="  SELECT cat          = a.category
+       , category     = cm.item_nm   
+       , gtype        = a.gtype
+       , sales_type   = (case when v.cust_no IS NULL then '1.일반영업' else '2.계열사' end)
+       , due_date     = a.due_date + (case when :as_yymm = 'Y' then a.due_days else '(' + a.due_days + ')' end)
+       , item_name    = a.item_name  
+       , cqty         = a.cqty       
+       , cprice       = a.cprice / 1000
+    FROM (
+         SELECT category     = isnull(i.category, 'TOP1999')
+              , cust_no      = b.cust_no
+              , gtype        = i.type
+              , due_date     = (case when :as_yymm = 'Y' then convert(char(04),b.do_date,111)
+                                     else convert(char(08),b.do_date,11)
+                                end)
+              , due_days     = replace((case when :as_yymm = 'Y' then '.' + right('00'+cast(datepart(m,b.do_date) as char(2)),2)+'월'
+                                             else (case when datepart(dw,b.do_date) = 1 then '일'
+                                                        when datepart(dw,b.do_date) = 2 then '월'
+                                                        when datepart(dw,b.do_date) = 3 then '화'
+                                                        when datepart(dw,b.do_date) = 4 then '수'
+                                                        when datepart(dw,b.do_date) = 5 then '목'
+                                                        when datepart(dw,b.do_date) = 6 then '금'
+                                                        when datepart(dw,b.do_date) = 7 then '토'
+                                                   end)
+                                        end),' ','')
+              , item_name    = g.item_name
+              , cqty         = dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty)
+              , cprice       = a.price * dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty)
+           FROM dodet   A with (nolock)  
+                LEFT OUTER JOIN do   B       with (nolock) ON a.do_no   = b.do_no
+                LEFT OUTER JOIN groupitem  G with (nolock) ON a.item_no = g.item_no
+                LEFT OUTER JOIN itemtop10  I with (nolock) ON a.item_no = i.item_no  
+          WHERE ( b.do_date   BETWEEN :ad_sdate AND :ad_edate )
+            AND ((:as_area     = '%' ) OR
+                 (:as_area    <> '%' AND b.area_no = :as_area)
+                )
+            AND ((:as_inside   = '%' ) OR
+                 (:as_inside  <> '%' and b.cust_no NOT IN (SELECT cust_no FROM V_CUST_INSIDE))
+                )
+         ) A
+
+         LEFT OUTER JOIN (
+              SELECT item_cd, item_nm FROM codemst with (nolock) WHERE type = 'ITEMTOP10' AND use_yn = 'Y'
+         ) CM ON a.category = cm.item_cd
+
+         LEFT OUTER JOIN v_cust_inside V ON a.cust_no = v.cust_no
+     WHERE ((:as_itemtop10  = '%' ) OR
+            (:as_itemtop10 <> '%' AND a.category = :as_itemtop10 )
+           )" arguments=(("as_area", string),("ad_sdate", date),("ad_edate", date),("as_yymm", string),("as_itemtop10", string),("as_inside", string))  sort="category A item_name A " )
+group(level=1 header.height=0 trailer.height=108 by=("category" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Sum Of Cprice" border="0" color="16777215" x="9" y="4" height="60" width="677" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[1] alignment="0" text="Due Date" border="0" color="16777215" x="695" y="4" height="60" width="864" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[1] alignment="0" text="Sales Type" border="0" color="16777215" x="1568" y="4" height="60" width="416" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[2] alignment="1" text="@due_date" border="0" color="16777215" x="1568" y="4" height="60" width="416" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[2] alignment="1" text="@due_date" border="0" color="16777215" x="1993" y="4" height="60" width="686" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[3] alignment="0" text="Category" border="0" color="16777215" x="9" y="4" height="60" width="677" html.valueishtml="0"  name=category_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[3] alignment="0" text="Item Name" border="0" color="16777215" x="695" y="4" height="60" width="864" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[3] alignment="1" text="@sales_type" border="0" color="16777215" x="1568" y="4" height="60" width="416" html.valueishtml="0"  name=cprice_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+text(band=header[3] alignment="0" text="Grand Total " border="0" color="16777215" x="2688" y="4" height="60" width="686" html.valueishtml="0"  name=grand_sum_cprice_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="677" format="[general]" html.valueishtml="0"  name=category visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="695" y="4" height="72" width="864" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1568" y="4" height="72" width="416" format="#,##0" html.valueishtml="0"  name=cprice visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1, 2, ~"@due_date~")"border="0" color="33554432" x="1993" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=sum_cprice visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" crosstab.repeat=yes )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2688" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=grand_sum_cprice visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="category + ~" Total~""border="0" color="33554432" x="9" y="4" height="72" width="677" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cprice for group 1)"border="0" color="33554432" x="1568" y="4" height="72" width="416" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(sum_cprice for group 1)"border="0" color="33554432" x="1993" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_cprice for group 1)"border="0" color="33554432" x="2688" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="16777215" x="9" y="4" height="72" width="677" format="[general]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8388736" )
+compute(band=summary alignment="1" expression="sum(cprice for all )"border="0" color="33554432" x="1568" y="4" height="72" width="416" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(sum_cprice for all )"border="0" color="33554432" x="1993" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_cprice for all )"border="0" color="33554432" x="2688" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "due_date, sales_type" rows = "category, item_name" values = "sum(cprice for crosstab)" sourcenames = "cat, category, gtype, sales_type, due_date, item_name, cqty, cprice")
+sparse(names="category")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

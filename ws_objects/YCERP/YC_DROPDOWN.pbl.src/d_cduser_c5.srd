@@ -1,0 +1,41 @@
+﻿$PBExportHeader$d_cduser_c5.srd
+$PBExportComments$사원리스트(출고의뢰접수자만)(2003/09/26,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=68 color="8421504" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(50) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(30) updatewhereclause=yes name=loc_name dbname="loc_name" )
+ column=(type=char(20) updatewhereclause=yes name=area_area_name dbname="area_name" )
+ retrieve="  SELECT DISTINCT user_id = login.user_id
+       , user_name = login.user_name
+       , loc_name  = location.loc_name
+       , area_name = area.area_name  
+    FROM location
+       , login
+       , area  
+   WHERE ( location.area_no     = area.area_no  )
+     AND ( location.loc_manager = login.user_id )    
+	UNION ALL 
+/* 2017.11.13 조원석
+출고의뢰서에서 외주 의뢰자 때문에 추가된 쿼리 */    
+	SELECT ITEM_CD USER_ID, 
+					  ITEM_NM USER_NAME,
+					'시화저장소' LOC_NAME,
+					'시화사업장' AREA_NAME              
+	  FROM  CODEMST
+	WHERE TYPE LIKE '출고의뢰서_보조자(시화)'
+		 AND  USE_YN = 'Y'
+		 AND  ITEM_CD <> 'bestvic' /*2018.04.30 jowonsuk 추가 최성욱차장 ysp로만 */
+"  sort="area_area_name A loc_name A user_name A " )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="471" y="4" height="60" width="352" format="[general]" html.valueishtml="0"  name=user_name  tag="성명" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="0" height="60" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="187" y="4" height="60" width="270" format="[general]" html.valueishtml="0"  name=user_id  tag="사번" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1326" y="4" height="60" width="585" format="[general]" html.valueishtml="0"  name=area_area_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="837" y="4" height="60" width="475" format="[general]" html.valueishtml="0"  name=loc_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="60" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="0" expression="count( user_id for all distinct user_id )"border="0" color="0" x="187" y="4" height="60" width="270" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

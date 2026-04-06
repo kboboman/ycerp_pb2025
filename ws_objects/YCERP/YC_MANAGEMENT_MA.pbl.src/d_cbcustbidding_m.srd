@@ -1,0 +1,142 @@
+﻿$PBExportHeader$d_cbcustbidding_m.srd
+$PBExportComments$계정코드관리(1998/03/18,곽용덕)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=88 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(6) updatewhereclause=yes name=kind dbname="cust_bidding.KIND" )
+ column=(type=char(4) update=yes updatewhereclause=yes key=yes name=cust_no dbname="cust_bidding.cust_no" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=bidding_date dbname="cust_bidding.bidding_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=level dbname="cust_bidding.level" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=danga dbname="cust_bidding.danga" )
+ column=(type=char(40) update=yes updatewhereclause=yes name=compete_company dbname="cust_bidding.compete_company" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_bidding.cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=top_level dbname="cust_bidding.top_level" )
+ column=(type=char(10) updatewhereclause=yes name=salesman_name dbname="cust_bidding.salesman_name" )
+ column=(type=decimal(6) updatewhereclause=yes name=now_amt dbname="cust_bidding.now_amt" )
+ column=(type=decimal(6) updatewhereclause=yes name=pre_amt dbname="cust_bidding.pre_amt" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=bigo dbname="cust_bidding.bigo" )
+ retrieve="select  b.KIND, 
+		 a.cust_no,
+		 a.bidding_date,
+		 a.level,
+		 a.danga,
+		 a.compete_company,
+            b.cust_name,
+            b.top_level,
+            b.salesman_name salesman_name,
+            b.now_amt,
+            b.pre_amt,
+            a.bigo
+from cust_bidding a with(nolock) left outer join (
+																select         '거래처' KIND,    
+																			    opeom.cust_no,  
+																			    customer.cust_name,
+																			    customer.top_level,
+																			    login.user_name salesman_name,
+																			    sum( case when datepart(year, opeom.eom_year) = datepart(year, getdate()) then ( inv_01 +
+																																														inv_02 +
+														  																																inv_03 +
+																																														inv_04 +
+																																														inv_05 +
+																																														inv_06 +
+																																														inv_07 +
+																																														inv_08 +
+																																														inv_09 +
+																																														inv_10 +
+																																														inv_11 +
+																																														inv_12   ) else 0 end )/1000 now_amt,
+																											  
+																				sum( case when datepart(year, opeom.eom_year) = datepart(year, DATEADD(year, -1,  getdate())) then (   inv_01 +
+																																																					 inv_02 +
+																																																					 inv_03 +
+																																																					 inv_04 +
+																																																					 inv_05 +
+																																																					 inv_06 +
+																																																					 inv_07 +
+																																																					 inv_08 +
+																																																					 inv_09 +
+																																																					 inv_10 +
+																																																					 inv_11 +
+																																																					 inv_12   ) else 0 end )/1000 pre_amt
+																from opeom with(nolock) inner join customer with(nolock) on opeom.cust_no = customer.cust_no
+										                                                                           inner join login with(nolock) on customer.salesman = login.user_id
+																where datepart(year, opeom.eom_year) in ( datepart(year, getdate()) ,  datepart(year, DATEADD(year, -1,  getdate())) )
+																	and  customer.open_close <> 'C'
+/*																     and  not  exists (      
+																						  select * from head_customer e with(nolock)
+																						  where e.cust_no = opeom.cust_no      
+																						)      
+*/
+																	group by opeom.cust_no,  customer.cust_name, customer.top_level, login.user_name
+																  union all
+																  select    '본점' KIND, 
+ 																		      a.head_cust_no cust_no,
+  																			 a.head_cust_name cust_name,
+																			 max(c.top_level) top_level,
+																			 max(d.user_name) salesman_name,
+																			 sum( case when datepart(year, b.eom_year) = datepart(year, getdate()) then ( inv_01 +
+																																														inv_02 +
+																																														inv_03 +
+																																														inv_04 +
+																																														inv_05 +
+																																														inv_06 +
+																																														inv_07 +
+																																														inv_08 +
+																																														inv_09 +
+																																														inv_10 +
+																																														inv_11 +
+																																														inv_12   ) else 0 end )/1000 now_amt,
+																											  
+																				sum( case when datepart(year, b.eom_year) = datepart(year, DATEADD(year, -1,  getdate())) then (   inv_01 +
+																																																					 inv_02 +
+																																																					 inv_03 +
+																																																					 inv_04 +
+																																																					 inv_05 +
+																																																					 inv_06 +
+																																																					 inv_07 +
+																																																					 inv_08 +
+																																																					 inv_09 +
+																																																					 inv_10 +
+																																																					 inv_11 +
+																																																					 inv_12   ) else 0 end )/1000 pre_amt
+																	from head_customer a with(nolock) inner join opeom b with(nolock) on a.cust_no = b.cust_no 
+																												  inner join customer c with(nolock) on a.cust_no = c.cust_no
+																												  inner join login d with(nolock) on c.salesman = d.user_id
+																	where datepart(year, b.eom_year) in ( datepart(year, getdate()) ,  datepart(year, DATEADD(year, -1,  getdate())) )          
+																		and c.open_close <> 'C' 
+                                                                                               and a.cust_no <> '0000'
+														  			group by a.head_cust_no, a.head_cust_name
+                                                                              ) b on a.cust_no = b.cust_no
+												  left outer join customer c with(nolock) on a.cust_no = c.cust_no
+												  left outer join login d with(nolock) on c.salesman  = d.user_id" update="cust_bidding" updatewhere=0 updatekeyinplace=no  sort="cust_name A " )
+text(band=header alignment="2" text="SEQ" border="6" color="0" x="9" y="12" height="68" width="183" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="구분" border="6" color="0" x="201" y="12" height="68" width="261" html.valueishtml="0"  name=구분 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="471" y="12" height="68" width="1138" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="등급" border="6" color="0" x="1618" y="12" height="68" width="210" html.valueishtml="0"  name=top_level_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="1838" y="12" height="68" width="274" html.valueishtml="0"  name=salesman_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="전년도매출액" border="6" color="0" x="2121" y="12" height="68" width="622" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="당년매출액" border="6" color="0" x="2752" y="12" height="68" width="608" html.valueishtml="0"  name=inv_amt_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입찰시기" border="6" color="0" x="3369" y="12" height="68" width="421" html.valueishtml="0"  name=bigo1_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="관리등급" border="6" color="0" x="3799" y="12" height="68" width="343" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="단가수준" border="6" color="0" x="4151" y="12" height="68" width="773" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입찰경쟁사" border="6" color="0" x="4933" y="12" height="68" width="1157" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="비고" border="6" color="0" x="6098" y="12" height="68" width="2423" html.valueishtml="0"  name=bigo2_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="76" width="183" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="201" y="4" height="76" width="261" format="[general]" html.valueishtml="0"  name=kind visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=10 border="0" color="0" x="471" y="4" height="76" width="1138" format="[general]" html.valueishtml="0"  name=cust_no visible="1" dddw.name=d_cdcust_head_dddw dddw.displaycolumn=cust_name dddw.datacolumn=cust_no dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=yes dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0" x="1618" y="4" height="76" width="210" format="[general]" html.valueishtml="0"  name=top_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0" x="1838" y="4" height="76" width="274" format="[general]" html.valueishtml="0"  name=salesman_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=3 alignment="0" tabsequence=20 border="0" color="0" x="3369" y="4" height="76" width="421" format="[general]" html.valueishtml="0"  name=bidding_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=30 border="0" color="0" x="3799" y="4" height="76" width="343" format="[general]" html.valueishtml="0"  name=level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=40 border="0" color="0" x="4151" y="4" height="76" width="773" format="[general]" html.valueishtml="0"  name=danga visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=50 border="0" color="0" x="4933" y="4" height="76" width="1157" format="[general]" html.valueishtml="0"  name=compete_company visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="0" tabsequence=60 border="0" color="0" x="6098" y="4" height="76" width="2423" format="[general]" html.valueishtml="0"  name=bigo visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="2752" y="4" height="76" width="608" format="#,##0" html.valueishtml="0"  name=now_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="2121" y="4" height="76" width="622" format="#,##0" html.valueishtml="0"  name=pre_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="1" expression="sum(now_amt for all)"border="0" color="0" x="2752" y="4" height="76" width="608" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(pre_amt for all)"border="0" color="0" x="2121" y="4" height="76" width="622" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

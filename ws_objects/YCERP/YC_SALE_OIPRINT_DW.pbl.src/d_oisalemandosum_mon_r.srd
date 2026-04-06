@@ -1,0 +1,79 @@
+﻿$PBExportHeader$d_oisalemandosum_mon_r.srd
+$PBExportComments$영업사원 출고현황(월별) 집계표
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=92 color="536870912" )
+summary(height=92 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=92 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=담당자 dbname="담당자" )
+ column=(type=char(20) updatewhereclause=yes name=판매거래처 dbname="판매거래처" )
+ column=(type=char(20) updatewhereclause=yes name=현장 dbname="현장" )
+ column=(type=number updatewhereclause=yes name=do_total dbname="do_total" )
+ retrieve="SELECT 
+	  '담당자'   	= a.user_name          
+	, cust_no     	= a.cust_no            
+	, '판매거래처' = a.cust_name
+	, spot_code   	= a.spot_code     
+	, '현장'  		= a.scene_desc  
+	, do_date	  	= a.do_date
+	, do_total    	= sum(a.do_total)
+FROM (
+	SELECT
+	  		 user_name = m.user_name          
+		, cust_no     = a.cust_no            
+		, cust_name   = d.cust_name
+		, spot_code   = a.spot_code     
+		, scene_desc  = f.scene_desc  
+		, do_date     = convert(char(7), a.do_date, 111)
+		, do_total    = a.do_total
+	FROM 
+		UF_MyCustomers( :as_salesman ) M
+		 LEFT OUTER JOIN customer D ON m.cust_no     = d.cust_no
+		 LEFT OUTER JOIN do        A ON m.cust_no     = a.cust_no
+		 LEFT OUTER JOIN scene  F ON a.spot_code   = f.scene_code 
+		 LEFT OUTER JOIN login    E ON d.salesman    = e.user_id
+	WHERE 
+		(a.area_no        LIKE :as_area ) 
+	AND 
+		(convert(char(10), a.do_date, 111)     BETWEEN :as_sdate AND :as_edate ) 
+	AND 
+		((:as_team  = '%' AND m.cust_no   LIKE '%'  ) OR 
+		(:as_team <> '%' AND m.salesman     = :as_salesman ))
+	AND 
+		((:as_custno  = '%'   AND m.cust_no   LIKE '%'  ) OR 
+		(:as_custno  = 'ALL' AND m.cust_no   LIKE '%'  ) OR 
+		(:as_custno <> 'ALL' AND m.cust_no      = :as_custno ))
+	) A
+GROUP BY 
+     a.user_name          
+	, a.cust_no            
+	, a.cust_name
+	, a.spot_code     
+	, a.scene_desc  
+   , a.do_date
+ORDER BY a.user_name, a.cust_name, a.scene_desc;" arguments=(("as_area", string),("as_custno", string),("as_sdate", string),("as_edate", string),("as_salesman", string),("as_team", string))  sort="담당자 A 판매거래처 A 현장 A " )
+group(level=1 header.height=0 trailer.height=92 by=("담당자" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Sum Of Do Total" border="0" color="33554432" x="9" y="4" height="68" width="334" html.valueishtml="0"  name=t_1 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Do Date" border="0" color="33554432" x="352" y="4" height="68" width="517" html.valueishtml="0"  name=t_2 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="합계" border="0" color="33554432" x="2249" y="4" height="84" width="594" html.valueishtml="0"  name=grand_sum_do_total_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+text(band=header[2] alignment="2" text="담당자" border="0" color="33554432" x="9" y="4" height="84" width="334" html.valueishtml="0"  name=담당자_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+text(band=header[2] alignment="2" text="판매거래처" border="0" color="33554432" x="352" y="4" height="84" width="517" html.valueishtml="0"  name=판매거래처_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+text(band=header[2] alignment="2" text="현장" border="0" color="33554432" x="878" y="4" height="84" width="850" html.valueishtml="0"  name=현장_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+text(band=header[2] alignment="2" text="@do_date" border="0" color="33554432" x="1737" y="4" height="84" width="503" html.valueishtml="0"  name=do_total_t visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="84" width="334" format="[general]" html.valueishtml="0"  name=담당자 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="352" y="4" height="84" width="517" format="[general]" html.valueishtml="0"  name=판매거래처 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="878" y="4" height="84" width="850" format="[general]" html.valueishtml="0"  name=현장 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1737" y="4" height="84" width="503" format="[general]" html.valueishtml="0"  name=do_total visible="1" editmask.mask="#,##0" editmask.imemode=0 editmask.focusrectangle=no crosstab.repeat=yes  font.face="맑은 고딕" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2249" y="4" height="84" width="594" format="#,##0" html.valueishtml="0"  name=grand_sum_do_total visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="담당자 + ~" Total~""border="0" color="33554432" x="9" y="4" height="84" width="334" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(do_total for group 1)"border="0" color="33554432" x="1737" y="4" height="84" width="503" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_do_total for group 1)"border="0" color="33554432" x="2249" y="4" height="84" width="594" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="0" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="84" width="334" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(do_total for all )"border="0" color="33554432" x="1737" y="4" height="84" width="503" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_do_total for all )"border="0" color="33554432" x="2249" y="4" height="84" width="594" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="맑은 고딕" font.height="-10" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "do_date" rows = "담당자, 판매거래처, 현장" values = "sum(do_total for crosstab)" sourcenames = "담당자, cust_no, 판매거래처, spot_code, 현장, do_date, do_total")
+sparse(names="담당자	판매거래처")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

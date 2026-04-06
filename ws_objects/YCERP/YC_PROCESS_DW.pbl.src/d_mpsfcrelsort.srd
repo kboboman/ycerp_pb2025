@@ -1,0 +1,57 @@
+﻿$PBExportHeader$d_mpsfcrelsort.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=88 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=92 color="8421504" )
+detail(height=92 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" )
+ column=(type=char(10) updatewhereclause=yes name=area_no dbname="area_no" )
+ column=(type=char(10) updatewhereclause=yes name=wc_no dbname="wc_no" )
+ column=(type=char(10) updatewhereclause=yes name=work_nm dbname="work_nm" )
+ column=(type=char(1) updatewhereclause=yes name=overtime dbname="overtime" )
+ column=(type=decimal(4) updatewhereclause=yes name=calc_qty dbname="calc_qty" )
+ column=(type=char(30) updatewhereclause=yes name=rem dbname="rem" )
+ retrieve="  SELECT chk        = 'N'
+       , area_no    = a.area_no
+       , wc_no      = a.wc_no
+       , work_nm    = a.work_nm
+       , overtime   = isnull(a.overtime,'')
+       , calc_qty   = sum(a.calc_qty)
+       , rem        = wc.bigo
+    FROM (
+         SELECT order_no   = mpsorder.order_no
+              , area_no    = mpsorder.area_no
+              , wc_no      = mpsorder.wc_no
+              , work_nm    = wc.work_name
+              , calc_qty   = dbo.uf_getqty(mpsdet.item_no, mpsdet.qa, mpsdet.uom, mpsdet.order_qty)
+              , seq        = mpsorder.seq
+              , overtime   = (case when mpsorder.overtime = 'N' then null else mpsorder.overtime end)
+           FROM mpsorder 
+                LEFT OUTER JOIN mpsdet ON mpsorder.order_no = mpsdet.mpsorder_order
+                LEFT OUTER JOIN wc     ON mpsorder.wc_no    = wc.work_no
+          WHERE mpsorder.area_no    LIKE :as_area
+            AND mpsorder.order_date    = :adt_workdate
+            AND mpsorder.wc_no   between 'F01' and 'F99'
+         ) A
+         LEFT OUTER JOIN wc     ON a.wc_no = wc.work_no
+   GROUP BY a.area_no   
+          , a.wc_no     
+          , a.work_nm 
+          , a.overtime  
+          , wc.bigo" arguments=(("as_area", string),("adt_workdate", datetime))  sort="area_no A wc_no A " )
+text(band=header alignment="2" text="야간" border="6" color="33554432" x="704" y="8" height="72" width="251" html.valueishtml="0"  name=overtime_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="33554432" x="270" y="8" height="72" width="425" html.valueishtml="0"  name=work_nm_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="72" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="환산수량" border="6" color="33554432" x="965" y="8" height="72" width="421" html.valueishtml="0"  name=calc_qty_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="0" x="1394" y="8" height="72" width="763" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="76" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(0, 0, 255), rgb(0, 0, 0) )" x="270" y="8" height="76" width="425" format="[general]" html.valueishtml="0"  name=work_nm visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(0, 0, 255), rgb(0, 0, 0) )" x="704" y="8" height="76" width="251" format="[general]" html.valueishtml="0"  name=overtime visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(0, 0, 255), rgb(0, 0, 0) )" x="965" y="8" height="76" width="421" format="#,##0.00" html.valueishtml="0"  name=calc_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( chk = 'Y', rgb(0, 0, 255), rgb(0, 0, 0) )" x="1394" y="8" height="76" width="763" format="[general]" html.valueishtml="0"  name=rem visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="1" expression="sum( calc_qty for all )"border="0" color="33554432" x="965" y="8" height="76" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="76" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( overtime for all )"border="0" color="33554432" x="704" y="8" height="76" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

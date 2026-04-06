@@ -1,0 +1,170 @@
+﻿$PBExportHeader$d_oicustdo_scene.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(10) updatewhereclause=yes name=scene_charge dbname="scene_charge" )
+ column=(type=char(10) updatewhereclause=yes name=area_nm dbname="area_nm" )
+ column=(type=char(20) updatewhereclause=yes name=project_nm dbname="project_nm" )
+ column=(type=char(20) updatewhereclause=yes name=owner dbname="owner" )
+ column=(type=char(15) updatewhereclause=yes name=tel dbname="scene_tel" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scale dbname="scene_scale" )
+ column=(type=char(80) updatewhereclause=yes name=addr dbname="scene_addr" )
+ column=(type=char(80) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=char(10) updatewhereclause=yes name=input_date dbname="input_date" )
+ column=(type=char(10) updatewhereclause=yes name=do_date dbname="do_date" )
+ column=(type=decimal(3) updatewhereclause=yes name=c_amt dbname="c_amt" )
+ retrieve="  SELECT user_name   = l.user_name
+       , cust_no     = a.cust_no        
+       , cust_name   = c.cust_name      
+       , scene_code  = a.scene_code      
+       , scene_desc  = a.scene_desc     
+       , scene_charge= a.scene_charge   
+       , area_nm     = a.area_nm        
+       , project_nm  = a.project_nm     
+       , owner       = a.owner          
+       , scene_tel   = isnull(a.scene_tel   , '')
+       , scene_scale = isnull(a.scene_scale , '')
+       , scene_addr  = isnull(a.scene_addr  , '')
+       , rem         = isnull(a.rem         , '')
+       , input_date  = convert(char(10),a.input_date,111)
+       , do_date     = convert(char(10),d.do_date,   111)
+       , c_amt       = b.c_amt
+    FROM scene  A 
+         INNER JOIN (
+              SELECT cust_no     = c.cust_no         
+                   , spot_code   = c.spot_code       
+                   , c_amt       = sum(c.c_amt)
+                FROM (
+                     SELECT a.cust_no                                                                              
+                          , a.spot_code                                                                            
+                          , a.do_date    
+                          , a.sale_no                                                                           
+                          , a.do_no                                                                                
+                          , a.oi_no                                                                             
+                          , a.item_no                                                                           
+                          , a.qa                                                                                
+                          , a.uom                                                                               
+                          , a.ship_amount                                                                          
+                          , a.do_rate                                                                              
+                          , a.do_cash                                                                              
+                          , a.do_total                                                                             
+                          , a.ship_qty                                                                          
+                          , a.c_acc_qty
+                          , a.price                                                                             
+                          , a.rate_cash                                                                         
+                          , c_amt = (case when b.round = 'Y' then 
+                                               (case when a.curr_code = 'WON' then 
+                                                          (case when a.c_acc_qty < 0 then round(a.price * a.c_acc_qty, 0)
+                                                                else round(a.price * a.c_acc_qty, 0)
+                                                           end)
+                                                     else round(a.price  *  a.c_acc_qty, 2)
+                                                end)
+                                          else (case when a.curr_code = 'WON' then 
+                                                          (case when a.c_acc_qty < 0 then floor(a.price * a.c_acc_qty)
+                                                                else floor(a.price * a.c_acc_qty + 0.000001)
+                                                           end)
+                                                     else floor(a.price  *  a.c_acc_qty)
+                                                end)
+                                     end) + a.rate_cash
+                                   + (case when a.ship_flag2 = 'D' and a.shipamt_case = 'R' then
+                                                (case when a.do_rate <> 0 then a.ship_amount * 1.1
+                                                      else a.ship_amount
+                                                 end)
+                                           else 0
+                                      end) /* 운반비 */
+                       FROM (
+                            SELECT do.cust_no                                    
+                                 , do.spot_code                                  
+                                 , do_date    = convert(char(10),do.do_date,111)
+                                 , ship_flag  = dbo.uf_getshipflag(do.ship_flag) 
+                                 , ship_flag2 = do.ship_flag                     
+                                 , dodet.sale_no                                 
+                                 , do.curr_code                                  
+                                 , do.shipamt_case                               
+                                 , do.do_no                                      
+                                 , dodet.oi_no                                   
+                                 , dodet.item_no                                 
+                                 , dodet.qa                                      
+                                 , dodet.uom                                     
+                                 , do.ship_amount                                
+                                 , do.do_rate                                    
+                                 , do.do_cash                                    
+                                 , do.do_total                                   
+                                 , dodet.ship_qty                                
+                                 , dodet.price                                   
+                                 , dodet.rate_cash                               
+                                 , c_acc_qty = round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1)
+                              FROM do
+                                   INNER JOIN  dodet      ON do.do_no   = dodet.do_no
+                             WHERE do_date     between :ad_sdate and :ad_edate
+                               AND do.area_no     LIKE :as_area
+                            ) A
+                            INNER JOIN customer B  ON a.cust_no = b.cust_no
+                     ) C
+                 GROUP BY c.cust_no, c.spot_code
+         ) B  ON a.scene_code = b.spot_code
+
+         LEFT OUTER JOIN (
+              SELECT do.cust_no                                    
+                   , do.spot_code                                  
+                   , do_date    = convert(char(10),max(do.do_date),111)
+                FROM do
+               WHERE do_date     between :ad_sdate and :ad_edate 
+                 AND do.area_no     LIKE :as_area
+               GROUP BY do.cust_no                                    
+                   , do.spot_code                                  
+         ) D  ON a.cust_no = d.cust_no  AND a.scene_code = d.spot_code
+
+         LEFT OUTER JOIN customer C  ON a.cust_no  = c.cust_no
+         LEFT OUTER JOIN login    L  ON c.salesman = l.user_id
+   WHERE ((:as_custno    = '%'  ) OR 
+          (:as_custno    = 'ALL') OR 
+          (:as_custno   <> 'ALL' AND a.cust_no  = :as_custno)
+         )
+     AND ((:as_salesman  = '%'  ) OR
+          (:as_salesman <> '%'   AND c.salesman = :as_salesman)
+         )
+" arguments=(("as_area", string),("as_custno", string),("as_salesman", string),("ad_sdate", date),("ad_edate", date))  sort="cust_name A scene_code D " )
+text(band=header alignment="2" text="현장명" border="6" color="33554432" x="1381" y="8" height="64" width="1070" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="지역명" border="6" color="33554432" x="3369" y="8" height="64" width="251" html.valueishtml="0"  name=area_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장전화" border="6" color="33554432" x="5335" y="8" height="64" width="512" html.valueishtml="0"  name=tel_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장주소" border="6" color="33554432" x="5856" y="8" height="64" width="1125" html.valueishtml="0"  name=addr_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="33554432" x="6990" y="8" height="64" width="841" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입력일자" border="6" color="33554432" x="7840" y="8" height="64" width="352" html.valueishtml="0"  name=input_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장관리자" border="6" color="33554432" x="4951" y="8" height="64" width="375" html.valueishtml="0"  name=scene_scene_charge_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="공사명" border="6" color="33554432" x="3630" y="8" height="64" width="672" html.valueishtml="0"  name=project_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="건설사" border="6" color="33554432" x="4311" y="8" height="64" width="631" html.valueishtml="0"  name=owner_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장매출계" border="6" color="0" x="2459" y="8" height="64" width="503" html.valueishtml="0"  name=c_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="최종출고일" border="6" color="0" x="2971" y="8" height="64" width="389" html.valueishtml="0"  name=do_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="64" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="521" y="8" height="64" width="850" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="174" y="8" height="64" width="338" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="3369" y="8" height="72" width="251" format="[general]" html.valueishtml="0"  name=area_nm  tag="지역명" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="5335" y="8" height="72" width="512" format="[general]" html.valueishtml="0"  name=tel  tag="현장전화" visible="1" edit.limit=15 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="5856" y="8" height="72" width="1125" format="[general]" html.valueishtml="0"  name=addr  tag="현장주소" visible="1" edit.limit=80 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="6990" y="8" height="72" width="841" format="[general]" html.valueishtml="0"  name=rem  tag="비고" visible="1" edit.limit=80 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="7840" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=input_date  tag="입력일자" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1381" y="8" height="72" width="1070" format="[general]" html.valueishtml="0"  name=scene_desc  tag="현장명" visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="4951" y="8" height="72" width="375" format="[general]" html.valueishtml="0"  name=scene_charge  tag="현장관리자" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="3630" y="8" height="72" width="672" format="[general]" html.valueishtml="0"  name=project_nm  tag="공사명" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="4311" y="8" height="72" width="631" format="[general]" html.valueishtml="0"  name=owner visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="0" x="2459" y="8" height="72" width="503" format="#,##0" html.valueishtml="0"  name=c_amt  tag="현장매출계" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="0" x="2971" y="8" height="72" width="389" format="[general]" html.valueishtml="0"  name=do_date  tag="최종출고일" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="521" y="8" height="72" width="850" format="[general]" html.valueishtml="0"  name=cust_name  tag="거래처명" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="174" y="8" height="72" width="338" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="1" expression="sum (  c_amt for all )"border="0" color="0" x="2459" y="4" height="76" width="503" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count (  scene_desc for all distinct scene_desc )"border="0" color="0" x="1381" y="4" height="76" width="1070" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="76" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count ( cust_name for all distinct cust_name )"border="0" color="0" x="521" y="4" height="76" width="850" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( user_name for all DISTINCT user_name )"border="0" color="0" x="174" y="4" height="76" width="338" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

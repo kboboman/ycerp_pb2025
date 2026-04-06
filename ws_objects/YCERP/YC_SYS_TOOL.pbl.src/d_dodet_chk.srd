@@ -1,0 +1,51 @@
+﻿$PBExportHeader$d_dodet_chk.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=88 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=cust_name dbname="customer.cust_name" )
+ column=(type=char(4) updatewhereclause=yes key=yes name=cust_no dbname="customer.cust_no" )
+ column=(type=char(14) updatewhereclause=yes name=do_do_no dbname="customer.do_no" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_total dbname="customer.do_total" )
+ column=(type=decimal(0) updatewhereclause=yes name=shipamt dbname="customer.shipamt" )
+ column=(type=decimal(8) updatewhereclause=yes name=qty dbname="customer.qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=vat dbname="customer.vat" )
+ retrieve="select cust_name, doh.cust_no, doh.do_no, doh.do_total, doh.shipamt, dod.qty, dod.vat
+from (select cust_no, do.do_no, 
+					do_total, 
+					shipamt = (case when do.ship_flag = 'D' and shipamt_case = 'R' then ship_amount else 0 end) from do
+			where datepart(year, do_date) = :ai_year
+			   and datepart(month, do_date) = :ai_mon) doh,
+		( select cust_no = do.cust_no, dodet.do_no,
+		 			qty =sum( round(dbo.uf_getqty (dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty) * dodet.price, 0,0)) , vat = sum( round(dodet.rate_cash, 0,1))		 from dodet, do
+		where dodet.do_no = do.do_no
+			and datepart(year, do_date) = :ai_year
+			   and datepart(month, do_date) = :ai_mon
+		group by cust_no, dodet.do_no ) dod, customer
+where doh.do_no = dod.do_no and  doh.cust_no = dod.cust_no
+and doh.cust_no = customer.cust_no
+		;" update="customer" updatewhere=0 updatekeyinplace=no filter="(aa  <> 0 ) or ( vat <> truncate( qty / 10 , 0) )"arguments=(("ai_year", number),("ai_mon", number))  sort="abs(aa) D cust_name A " )
+text(band=header alignment="2" text="do_do_total" border="0" color="33554432" x="553" y="8" height="60" width="485" html.valueishtml="0"  name=do_do_total_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Do Do No" border="0" color="0" x="9" y="4" height="60" width="535" html.valueishtml="0"  name=do_do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="Qty" border="0" color="0" x="1047" y="4" height="60" width="594" html.valueishtml="0"  name=qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="Shipamt" border="0" color="0" x="2423" y="4" height="76" width="503" html.valueishtml="0"  name=shipamt_t visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="Vat" border="0" color="33554432" x="1966" y="4" height="60" width="448" html.valueishtml="0"  name=vat_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Cust No" border="0" color="0" x="2935" y="4" height="76" width="206" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="Cust Name" border="0" color="33554432" x="3150" y="4" height="60" width="1591" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="553" y="8" height="72" width="485" format="#,##0.00" html.valueishtml="0"  name=do_do_total  tag="합계금액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="0" height="60" width="535" format="[general]" html.valueishtml="0"  name=do_do_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2423" y="0" height="60" width="503" format="#,##0.00" html.valueishtml="0"  name=shipamt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="1966" y="0" height="60" width="448" format="#,##0.00" html.valueishtml="0"  name=vat visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" do_do_total - qty - shipamt - truncate(shipamt/10,0) - vat"border="0" color="33554432" x="1650" y="8" height="60" width="306" format="#,##0.00" html.valueishtml="0"  name=aa visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="1047" y="16" height="60" width="594" format="#,##0.00" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="2935" y="0" height="60" width="206" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="3150" y="0" height="60" width="1591" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(do_do_total for all)"border="0" color="33554432" x="553" y="12" height="60" width="485" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(qty for all)"border="0" color="33554432" x="1047" y="4" height="60" width="594" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(   do_do_total - qty - shipamt - truncate(shipamt/10,0) - vat for all)"border="0" color="33554432" x="1650" y="4" height="60" width="306" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="aa" border="0" color="0" x="1650" y="12" height="60" width="306" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+
+sparse(names="do_do_total")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,66 @@
+﻿$PBExportHeader$d_mpsfcrelsort_ct.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=84 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=work_nm dbname="work_nm" )
+ column=(type=char(20) updatewhereclause=yes name=overtime dbname="overtime" )
+ column=(type=number updatewhereclause=yes name=calc_qty dbname="calc_qty" )
+ retrieve="  SELECT chk        = 'N'
+       , area_no    = a.area_no
+       , wc_no      = a.wc_no
+       , work_nm    = a.work_nm
+       , order_date = convert(char(10),a.order_date,111)
+       , overtime   = isnull(a.overtime,'')
+       , calc_qty   = sum(a.calc_qty)
+       , rem        = wc.bigo
+    FROM (
+         SELECT order_no   = mpsorder.order_no
+              , area_no    = mpsorder.area_no
+              , wc_no      = mpsorder.wc_no
+              , work_nm    = wc.work_name
+              , order_date = mpsorder.order_date
+              , calc_qty   = dbo.uf_getqty(mpsdet.item_no, mpsdet.qa, mpsdet.uom, mpsdet.order_qty)
+              , seq        = mpsorder.seq
+              , overtime   = (case when mpsorder.overtime = 'N' then null else mpsorder.overtime end)
+           FROM mpsorder 
+                LEFT OUTER JOIN mpsdet ON mpsorder.order_no = mpsdet.mpsorder_order
+                LEFT OUTER JOIN wc     ON mpsorder.wc_no    = wc.work_no
+          WHERE mpsorder.area_no    LIKE :as_area
+            AND mpsorder.order_date   >= :adt_workdate
+            AND mpsorder.wc_no   between 'F01' and 'F99'
+         ) A
+         LEFT OUTER JOIN wc     ON a.wc_no = wc.work_no
+   GROUP BY a.area_no   
+          , a.wc_no     
+          , a.work_nm 
+          , a.order_date
+          , a.overtime  
+          , wc.bigo" arguments=(("as_area", string),("adt_workdate", datetime))  sort="work_nm A overtime A " )
+group(level=1 header.height=0 trailer.height=80 by=("work_nm" ) header.color="536870912" trailer.color="12639424" )
+text(band=header[1] alignment="0" text="Sum Of Calc Qty" border="0" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Order Date" border="0" color="33554432" x="434" y="4" height="60" width="165" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="0" expression="~"합계~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Arial" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(calc_qty for all )"border="0" color="33554432" x="608" y="4" height="72" width="421" format="#,##0.0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Arial" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_calc_qty for all )"border="0" color="33554432" x="1038" y="4" height="72" width="462" format="#,##0.0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Arial" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="작업장" border="6" color="33554432" x="9" y="4" height="72" width="416" html.valueishtml="0"  name=work_nm_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="야간" border="6" color="33554432" x="434" y="4" height="72" width="165" html.valueishtml="0"  name=overtime_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="1" text="@order_date" border="6" color="33554432" x="608" y="4" height="72" width="421" html.valueishtml="0"  name=calc_qty_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="1" text="합계" border="6" color="33554432" x="1038" y="4" height="72" width="462" html.valueishtml="0"  name=grand_sum_calc_qty_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=work_nm visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="434" y="4" height="72" width="165" format="[general]" html.valueishtml="0"  name=overtime visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="608" y="4" height="72" width="421" format="#,##0.0" html.valueishtml="0"  name=calc_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1038" y="4" height="72" width="462" format="#,##0.0" html.valueishtml="0"  name=grand_sum_calc_qty visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="work_nm"border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(calc_qty for group 1)"border="0" color="33554432" x="608" y="4" height="72" width="421" format="#,##0.0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_calc_qty for group 1)"border="0" color="33554432" x="1038" y="4" height="72" width="462" format="#,##0.0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression=" compute_4"border="0" color="0" x="9" y="4" height="72" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression=" compute_5 "border="0" color="33554432" x="608" y="4" height="72" width="421" format="#,##0.0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_6 "border="0" color="33554432" x="1038" y="4" height="72" width="462" format="#,##0.0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "order_date" rows = "work_nm, overtime" values = "sum(calc_qty for crosstab)" sourcenames = "chk, area_no, wc_no, work_nm, order_date, overtime, calc_qty, rem")
+sparse(names="work_nm")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

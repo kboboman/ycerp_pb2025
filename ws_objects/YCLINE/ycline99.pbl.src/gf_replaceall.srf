@@ -1,0 +1,37 @@
+﻿$PBExportHeader$gf_replaceall.srf
+$PBExportComments$ReplaceAll
+global type gf_replaceall from function_object
+end type
+
+forward prototypes
+global function string gf_replaceall (string as_string, string as_old, string as_new)
+end prototypes
+
+global function string gf_replaceall (string as_string, string as_old, string as_new);// gf_replaceall(string, 
+string  ls_retvalue
+
+//SELECT top 1 replace(:as_string, :as_old, :as_new) INTO :ls_retvalue FROM codemst;
+
+long   start_pos = 1
+string old_str, new_str, mystring
+
+mystring = as_string
+old_str  = as_old
+new_str  = as_new
+
+// Find the first occurrence of old_str.
+start_pos = PosA(mystring, old_str, start_pos)
+
+// Only enter the loop if you find old_str.
+DO WHILE start_pos > 0
+    // Replace old_str with new_str.
+    mystring = ReplaceA( mystring, start_pos, LenA(old_str), new_str )
+
+    // Find the next occurrence of old_str.
+    start_pos = PosA( mystring, old_str, start_pos + LenA(new_str) )
+LOOP
+ls_retvalue = mystring
+
+RETURN ls_retvalue
+end function
+

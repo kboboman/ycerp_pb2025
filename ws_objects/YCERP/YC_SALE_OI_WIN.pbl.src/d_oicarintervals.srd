@@ -1,0 +1,92 @@
+﻿$PBExportHeader$d_oicarintervals.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 grid.columnmove=no selected.mouse=no )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(80) updatewhereclause=yes name=scene_addr dbname="issuereq.scene_addr" )
+ column=(type=datetime updatewhereclause=yes name=req_date dbname="issuereq.req_date" )
+ column=(type=char(8) updatewhereclause=yes name=reqdate dbname="reqdate" )
+ column=(type=char(4) updatewhereclause=yes name=car_message dbname="car_message" )
+ column=(type=char(10) updatewhereclause=yes name=car_count dbname="car_count" )
+ column=(type=long updatewhereclause=yes name=carcount dbname="carcount" )
+ retrieve="  SELECT DISTINCT    
+
+							   cust_no  = issuereqdet.cust_no
+							 , cust_name   = c.cust_name
+							 , scene_code  = issuereqdet.scene_code      
+							 , scene_desc  = s.scene_desc
+							 , s.scene_addr
+							 ,  issuereq.req_date
+                                      , convert(char(8), issuereq.req_date,112) reqdate
+							 , (case when car_master.car_text is null then '' else '작성' end ) car_message
+							 , (case when isnull(car_carriage.car_count,0) = 0 then '' else convert(varchar(10), isnull(car_carriage.car_count,0))  end ) car_count
+							 , isnull(car_carriage.car_count,0) carcount
+
+    FROM issuereq with(nolock)    
+         LEFT OUTER JOIN issuereqdet with(nolock)  ON issuereq.req_date = issuereqdet.req_date AND issuereq.salesman = issuereqdet.salesman AND issuereq.req_seq = issuereqdet.req_seq    
+         LEFT OUTER JOIN login login_a  with(nolock)  ON issuereq.salesman    = login_a.user_id 
+	    LEFT OUTER JOIN (
+												select  distinct a.cardate, b.req_date, b.salesman, b.req_seq, b.seq, b.order_no, count(b.car_no) car_num
+												  from car_carriage a with(nolock) inner join car_carriagedet b with(nolock) on a.cardate = b.cardate and a.car_no = b.car_no
+												where a.cardate between convert(char(8), :ad_sdate, 112 ) AND convert(char(8), :ad_edate, 112 )
+												group by a.cardate, b.req_date, b.salesman, b.req_seq, b.seq, b.order_no
+								 ) car_carriagedet ON  issuereqdet.req_date = car_carriagedet.req_date
+												and   issuereqdet.salesman = car_carriagedet.salesman
+												and  issuereqdet.req_seq  = car_carriagedet.req_seq
+												and  issuereqdet.seq  = car_carriagedet.seq
+	    LEFT OUTER JOIN (
+										SELECT issuereqdet.req_date     req_date       /* Key1 */
+												   , issuereqdet.salesman   salesman          /* Key1 */
+												   , issuereqdet.req_seq      req_seq        /* Key1 */
+												   , issuereqdet.seq              seq
+												   , COUNT(issuereqdet_sale.seq_no)  total_num
+											 FROM issuereq  with(nolock)    
+													LEFT OUTER JOIN issuereqdet   with(nolock)  ON issuereq.req_date = issuereqdet.req_date AND issuereq.salesman = issuereqdet.salesman AND issuereq.req_seq = issuereqdet.req_seq
+													 LEFT OUTER JOIN issuereqdet_sale with(nolock) on issuereqdet.req_date = issuereqdet_sale.req_date and issuereqdet.salesman = issuereqdet_sale.salesman and issuereqdet.req_seq = issuereqdet_sale.req_seq and  issuereqdet.seq = issuereqdet_sale.seq
+											WHERE ( issuereq.confirm_flag    = 'Y' )
+											  AND ( issuereqdet.req_flag     = 'A' )
+											  AND ( issuereq.req_date between  convert(datetime,  :ad_sdate +' 00:00:00' ) and convert(datetime,  :ad_edate + ' 23:59:59' ) )   
+										GROUP BY issuereqdet.req_date
+													  , issuereqdet.salesman
+													  , issuereqdet.req_seq
+													  , issuereqdet.seq
+								 ) issuereqdet_tot on issuereqdet.req_date = issuereqdet_tot.req_date
+                                                                    and issuereqdet.salesman = issuereqdet_tot.salesman
+												     and  issuereqdet.req_seq  = issuereqdet_tot.req_seq
+												     and  issuereqdet.seq  = issuereqdet_tot.seq
+	    LEFT OUTER JOIN car_master with(nolock) on  convert(char(8), issuereq.req_date,112) = car_master.cardate and car_master.scene_code = issuereqdet.scene_code and car_master.car_seq = 1
+	    LEFT OUTER JOIN (
+										select cardate, scene_code, count(car_no) car_count
+										from car_carriage with(nolock)
+										group by cardate, scene_code
+
+								) car_carriage  on convert(char(8), issuereq.req_date,112) = car_carriage.cardate and car_carriage.scene_code = issuereqdet.scene_code
+         LEFT OUTER JOIN customer C with(nolock) ON issuereqdet.cust_no = c.cust_no
+         LEFT OUTER JOIN scene    S with(nolock) ON s.scene_code = issuereqdet.scene_code
+   WHERE ( issuereq.confirm_flag  = 'Y' )
+  /*   AND ( issuereqdet.req_flag   = 'A' )   */
+     AND ( issuereq.req_date between  convert(datetime,  :ad_sdate +' 00:00:00' ) and convert(datetime,  :ad_edate + ' 23:59:59' ) )   
+     AND ((:as_area  = '%' AND issuereq.accept_area LIKE :as_area) OR
+          (:as_area <> '%' AND issuereq.accept_area    = :as_area)
+         ) " arguments=(("as_area", string),("ad_sdate", string),("ad_edate", string))  sort="cust_name A scene_desc A " )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="1033" y="4" height="68" width="1376" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="9" y="4" height="68" width="1015" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="배차수" border="6" color="0" x="2734" y="4" height="68" width="283" html.valueishtml="0"  name=car_count_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="전달사항" border="6" color="0" x="2418" y="4" height="68" width="306" html.valueishtml="0"  name=car_message_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="운송처주소" border="6" color="0" x="3026" y="8" height="64" width="1499" html.valueishtml="0"  name=s_scene_addr_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1033" y="0" height="72" width="1376" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="0" height="72" width="1015" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0" x="2418" y="0" height="72" width="306" format="[general]" html.valueishtml="0"  name=car_message visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0" x="2734" y="0" height="72" width="283" format="[general]" html.valueishtml="0"  name=car_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="3026" y="0" height="72" width="1499" format="[general]" html.valueishtml="0"  name=scene_addr visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="16777215" x="9" y="8" height="68" width="1015" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( carcount for all)"border="0" color="16777215" x="2734" y="8" height="68" width="283" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="cust_name	scene_desc")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

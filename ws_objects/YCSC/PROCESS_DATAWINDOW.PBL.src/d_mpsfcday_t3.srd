@@ -1,0 +1,64 @@
+﻿$PBExportHeader$d_mpsfcday_t3.srd
+$PBExportComments$생산일보조회_보고서(일자별)(1998/05/08,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(40) updatewhereclause=yes name=wc_name dbname="wc_name" )
+ column=(type=char(10) updatewhereclause=yes name=sfc_date dbname="sfc_date" )
+ column=(type=char(10) updatewhereclause=yes name=sfcday_item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=sfcday_qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=sfcday_uom dbname="uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=sum_qty dbname="sum_qty" )
+ column=(type=decimal(0) updatewhereclause=yes name=uf_getqty dbname="uf_getqty" )
+ column=(type=char(10) updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=char(10) updatewhereclause=yes name=edate dbname="edate" )
+ retrieve="  SELECT wc_name   = rtrim(b.work_name + space(30))         
+       , sfc_date  = convert(char(10),a.sfc_date,111)
+       , item_no   = a.assembly                         
+       , item_name = c.item_name                     
+       , qa        = a.assembly_qa                      
+       , uom       = a.uom                              
+       , sum_qty   = sum(a.make_qty)                 
+       , uf_getqty = FLOOR(DBO.UF_GETQTY(a.assembly, a.assembly_qa, a.uom, sum(a.make_qty)))
+       , sdate     = convert(char(10),min(a.sfc_date),111)
+       , edate     = convert(char(10),max(a.sfc_date),111)
+    FROM sfcday  a 
+         LEFT OUTER JOIN wc        b  ON a.wc_no     = b.work_no
+         LEFT OUTER JOIN groupitem c  ON a.assembly  = c.item_no
+   WHERE ( b.work_name        LIKE :as_wc + '%' ) 
+     AND ( convert(char(10),a.sfc_date,111)  BETWEEN :as_start AND :as_end ) 
+     AND ( a.area_no             = :as_area ) 
+   GROUP BY b.work_name
+          , convert(char(10),a.sfc_date,111)
+          , a.assembly   
+          , c.item_name
+          , a.assembly_qa
+          , a.uom
+" arguments=(("as_wc", string),("as_start", string),("as_end", string),("as_area", string))  sort="wc_name A sfc_date A groupitem_item_name A sfcday_qa A " )
+group(level=1 header.height=0 trailer.height=72 by=("groupitem_item_name" ) header.color="536870912" trailer.color="553648127" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="699" y="8" height="60" width="1202" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1911" y="8" height="60" width="681" html.valueishtml="0"  name=sfcday_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="3145" y="8" height="60" width="343" html.valueishtml="0"  name=uf_getqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="0" x="9" y="8" height="60" width="306" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="일자" border="6" color="0" x="325" y="8" height="60" width="366" html.valueishtml="0"  name=sfc_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산량" border="6" color="0" x="2775" y="8" height="60" width="361" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2601" y="8" height="60" width="165" html.valueishtml="0"  name=sfcday_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="699" y="4" height="60" width="1202" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="2775" y="4" height="60" width="361" format="#,##0" html.valueishtml="0"  name=sum_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="3145" y="4" height="60" width="343" format="#,##0" html.valueishtml="0"  name=uf_getqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="306" format="[general]" html.valueishtml="0"  name=wc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="325" y="4" height="60" width="366" format="[general]" html.valueishtml="0"  name=sfc_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="1911" y="4" height="60" width="681" format="[general]" html.valueishtml="0"  name=sfcday_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="2601" y="4" height="60" width="165" format="[general]" html.valueishtml="0"  name=sfcday_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="avg(sum_qty for group 1)"border="0" color="0" x="2775" y="4" height="60" width="361" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+compute(band=trailer.1 alignment="1" expression="avg(uf_getqty for group 1)"border="0" color="0" x="3145" y="4" height="60" width="343" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="64" width="306" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(uf_getqty for all)"border="0" color="0" x="3145" y="4" height="64" width="343" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( sum_qty for all)"border="0" color="0" x="2775" y="4" height="64" width="361" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="wc_name	sfc_date	groupitem_item_name	sfcday_qa")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

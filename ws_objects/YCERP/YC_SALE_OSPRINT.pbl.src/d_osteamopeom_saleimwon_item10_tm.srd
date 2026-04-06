@@ -1,0 +1,647 @@
+﻿$PBExportHeader$d_osteamopeom_saleimwon_item10_tm.srd
+$PBExportComments$매출실적 집계현황(월간)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=176 color="536870912" )
+summary(height=84 color="15780518" )
+footer(height=0 color="16777215" )
+detail(height=84 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=gubun dbname="gubun" values="정	1/부	2/" )
+ column=(type=long updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(20) updatewhereclause=yes name=area dbname="area" )
+ column=(type=char(20) updatewhereclause=yes name=sector dbname="sector" )
+ column=(type=char(20) updatewhereclause=yes name=team dbname="team" )
+ column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(20) updatewhereclause=yes name=login_user_name dbname="user_name" )
+ column=(type=char(10) updatewhereclause=yes name=login_rank dbname="rank" )
+ column=(type=decimal(9) updatewhereclause=yes name=pre_yinv dbname="pre_yinv" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_ayinv dbname="cur_ayinv" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_amninv dbname="cur_amninv" )
+ column=(type=decimal(9) updatewhereclause=yes name=cur_inv dbname="cur_inv" )
+ column=(type=decimal(6) updatewhereclause=yes name=curinv_rate dbname="curinv_rate" )
+ column=(type=decimal(9) updatewhereclause=yes name=bsale_amt dbname="bsale_amt" )
+ column=(type=decimal(6) updatewhereclause=yes name=increm_rate dbname="increm_rate" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_aminv dbname="cur_aminv" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_minv dbname="cur_minv" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_aminv_s dbname="cur_aminv_s" )
+ column=(type=decimal(9) updatewhereclause=yes name=cur_minv_s dbname="cur_minv_s" )
+ column=(type=decimal(6) updatewhereclause=yes name=inv_s_rate dbname="inv_s_rate" )
+ column=(type=decimal(6) updatewhereclause=yes name=inv_rate dbname="inv_rate" )
+ column=(type=long updatewhereclause=yes name=cyear dbname="cyear" )
+ column=(type=long updatewhereclause=yes name=cmon dbname="cmon" )
+ column=(type=char(2) updatewhereclause=yes name=space dbname="space" )
+ retrieve="SELECT  	   gubun = 1
+					 ,  seq         = o.seq                     /* 순서       */  
+              			 , area        = o.area                    /* 권역       */
+              			 , sector      = o.sector                  /* 본부       */
+              			 , team        = o.team                    /* 팀         */
+              			 , user_id     = o.user_id                 /* 담당자     */
+              			 , user_name   = o.user_name               /* 담당자명   */
+              			 , rank        = o.rank                    /* 직책       */
+              			 , pre_yinv    = z.pre_yinv                /* 전년 실적                                             */
+              			 , cur_ayinv   = z.cur_ayinv               /* 매출목표   - 당년 목표                                */
+              			 , cur_amninv  = z.cur_amninv              /* 매출목표   - 당년누계목표                             */
+              			 , cur_inv     = z.cur_inv                 /* 매출실적   - 매출누계                                 */
+              			 , curinv_rate = (case when z.cur_ayinv = 0 then 0 else (z.cur_inv / z.cur_ayinv)     end) /* 매출실적   - 진행율  = (매출누계 / 당년목표    )      */
+              			 , bsale_amt   = z.bsale_amt               /* 전년       - 동월실적                                 */
+              			 , increm_rate = (case when z.bsale_amt = 0 then 0 else (z.cur_minv / z.bsale_amt) -1 end) /* 실적       - 신장율  = (당월매출 / 전년동월실적) -1   */
+              			 , cur_aminv   = z.cur_aminv               /* 매출       - 당월매출목표                             */
+              			 , cur_minv    = z.cur_minv                /* 목표및진행 - 당월매출                                 */	  
+              			 , cur_aminv_s   = z.cur_aminv_s               /* 매출       - 당월매출목표                             */
+              			 , cur_minv_s    = z.cur_minv_s                /* 목표및진행 - 당월매출                                 */	  
+              			 , inv_s_rate    = (case when z.cur_aminv_s = 0 then 0 else (z.cur_minv_s / z.cur_aminv_s)    end) /* 목표및진행 - 진행율  = (당월매출 / 당월매출목표)      */
+              			 , inv_rate    = (case when z.cur_aminv = 0 then 0 else (z.cur_minv / z.cur_aminv)    end) /* 목표및진행 - 진행율  = (당월매출 / 당월매출목표)      */
+              			 , cyear       = :ai_year
+              			 , cmon        = :ai_month
+                           , space  = '  '
+    FROM (
+            						SELECT salesman    = (case when m.item_cd IS NOT NULL then 'insite' else aa.salesman end)
+            									, bsale_amt  = sum(aa.bsale_amt)     /* 전년 - 동월실적 */
+            									, pre_yinv   = sum(aa.pre_yinv)
+            									, cur_ayinv  = sum(aa.cur_ayinv)
+            									, cur_amninv = sum(aa.cur_amninv)
+            									, cur_inv    = sum(aa.cur_inv)
+            									, cur_aminv  = sum(aa.cur_aminv)
+            									, cur_minv   = sum(aa.cur_minv)
+            									, cur_aminv_s  = sum(aa.cur_aminv_s)
+            									, cur_minv_s   = sum(aa.cur_minv_s)
+            									FROM (
+            																						 SELECT salesman    = c.salesman 
+                      																										, user_name   = l.user_name
+                      																										, cust_no    = c.cust_no
+            																														  , bsale_amt  = sum(o_bf.bsale_amt) / 1000																																									
+            																														  , pre_yinv   = sum(o_bf.pre_yinv) / 1000
+            																														  , cur_ayinv  = sum((t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10 + t.special_11 + t.special_12 ) / 1.1) / 1000
+            																														  , cur_amninv = sum((case :ai_month 
+            																																						 when 1 then t.special_01
+            																																						 when 2 then t.special_01 + t.special_02
+            																																						 when 3 then t.special_01 + t.special_02 + t.special_03
+            																																						 when 4 then t.special_01 + t.special_02 + t.special_03 + t.special_04
+            																																						 when 5 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05
+            																																						 when 6 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06
+            																																						 when 7 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07
+            																																						 when 8 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08
+            																																						 when 9 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09
+            																																						 when 10 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10
+            																																						 when 11 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10 + t.special_11
+            																																						 when 12 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10 + t.special_11 + t.special_12 
+            																																					 end) / 1.1) / 1000
+            																														  , cur_inv    = sum(o_bf.cur_inv) / 1000
+																																  , cur_aminv  = sum((case :ai_month  
+																																								 when 1 then t.mod_01
+																																								 when 2 then t.mod_02
+																																								 when 3 then t.mod_03
+																																								 when 4 then t.mod_04
+																																								 when 5 then t.mod_05
+																																								 when 6 then t.mod_06
+																																								 when 7 then t.mod_07
+																																								 when 8 then t.mod_08
+																																								 when 9 then t.mod_09
+																																								 when 10 then t.mod_10
+																																								 when 11 then t.mod_11
+																																								 when 12 then t.mod_12 
+																																							 end) / 1.1) / 1000
+																																  , cur_minv       = sum(o_bf.cur_minv) / 1000
+            																														  , cur_aminv_s  = sum((case :ai_month  
+            																																						 when 1 then t.special_01
+            																																						 when 2 then t.special_02
+            																																						 when 3 then t.special_03
+            																																						 when 4 then t.special_04
+            																																						 when 5 then t.special_05
+            																																						 when 6 then t.special_06
+            																																						 when 7 then t.special_07
+            																																						 when 8 then t.special_08
+            																																						 when 9 then t.special_09
+            																																						 when 10 then t.special_10
+            																																						 when 11 then t.special_11
+            																																						 when 12 then t.special_12 
+            																																					 end) / 1.1) / 1000
+            																														  , cur_minv_s   = sum(o_bf.cur_minv_s) / 1000
+            																													  FROM customer   C with(nolock)
+            																															 LEFT OUTER JOIN cust_aim    t   with(nolock) ON c.cust_no = t.cust_code   AND datepart(year, t.tar_year)    = :ai_year
+            																															 left outer join (                
+            																																								  select  a.cust_no,
+            																																												  sum(pre_yinv) pre_yinv,
+            																																												  sum(cur_inv) cur_inv,
+            																																												  sum(bsale_amt) bsale_amt,
+            																																												  sum(cur_minv_s) cur_minv_s,
+            																																												  sum(last_day) last_day,
+            																																												  sum(cur_minv) cur_minv
+            																																								  from
+            																																								  (                         
+																																												 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv        = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)
+																																																		  , cur_inv          = 0
+																																																		  , bsale_amt     = 0
+																																																		  , cur_minv_s       = 0
+																																																		  , last_day         = 0                                                                                                      
+																																																		  , cur_minv       = 0
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	 inner  join itemtop10 G with(nolock) on a.item_no   = g.item_no  and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y')
+																																																		where convert(char(4),  (case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end), 112) =  convert(char(4), dateadd(year, - 1, substring(:as_sdate,1,4)+substring(:as_sdate,6,2)+'01'),112 )
+																																														  union all
+																																														 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv          = 0
+																																																		  , cur_inv        = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)                                  
+																																																		  , bsale_amt     = 0
+																																																		  , cur_minv_s    = 0
+																																																		  , last_day         = 0       
+																																																		  , cur_minv       = 0                                                                                               
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	inner join itemtop10 G with(nolock) on a.item_no   = g.item_no  and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y')
+																																																	 WHERE convert(char(8),(case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end),112) between substring(:as_sdate,1,4)+'0101' and  substring(:as_edate,1,4)+substring(:as_edate,6,2)+substring(:as_edate,9,2)
+																																														  union all
+																																														 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv          = 0
+																																																		  , cur_inv          = 0
+																																																		  , bsale_amt     = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)                    
+																																																		  , cur_minv_s       = 0
+																																																		  , last_day         = 0                                                  
+																																																		  , cur_minv       = 0                                                    
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	 inner join itemtop10 G with(nolock) on a.item_no   = g.item_no  and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y')
+																																																	 WHERE convert(char(6),(case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end),112) = convert(char(6), dateadd(year, - 1, substring(:as_sdate,1,4)+substring(:as_sdate,6,2)+'01'),112)
+																																														  union all
+																																														 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv          = 0
+																																																		  , cur_inv          = 0
+																																																		  , bsale_amt     = 0    
+																																																		  , cur_minv_s       = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)
+																																																		  , last_day         = 0
+																																																		  , cur_minv          = 0
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	 inner join itemtop10 G with(nolock) on a.item_no   = g.item_no and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y') 
+																																																	 WHERE convert(char(6), (case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end) ,112) = substring(:as_sdate,1,4)+substring(:as_sdate,6,2)
+																																														  union all
+																																															select cust_no         = a.cust_no
+																																																				  , item_no         = ''
+																																																				  , pre_yinv          = 0
+																																																				  , cur_inv          = 0
+																																																				  , bsale_amt     = 0    
+																																																				  , cur_minv_s       = 0
+																																																				  , last_day         = 0
+																																																				  , cur_minv          = sum(a.cur_minv)
+																																															from
+																																																(
+																																																SELECT distinct	cust_no         = b.cust_no
+																																																			, b.do_no
+																																																				  , item_no         = ''
+																																																				  , pre_yinv          = 0
+																																																				  , cur_inv          = 0
+																																																				  , bsale_amt     = 0    
+																																																				  , cur_minv_s       = 0
+																																																				  , last_day         = 0
+																																																				  , cur_minv          = (b.do_total) / 1.1
+																																																			  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no																																																																	 
+																																																			 WHERE convert(char(6), (case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end) ,112) = substring(:as_sdate,1,4)+substring(:as_sdate,6,2)
+																																															) a 
+																																															group by a.cust_no                
+																									
+																																											  ) a 
+																																											  group by a.cust_no
+																																								  ) o_bf ON c.cust_no = o_bf.cust_no  
+																																		 LEFT OUTER JOIN opeom    o_af with(nolock) ON c.cust_no = o_af.cust_no  and convert(char(4), o_af.eom_year, 112) = substring(:as_sdate,1,4)
+																													 LEFT OUTER JOIN login     L  with(nolock) ON c.salesman = l.user_id
+																																 WHERE ( c.cust_flag   = 'N' )
+																														 AND ( c.cust_type <> 'E' )
+																																 GROUP BY c.cust_no, c.salesman, l.user_name
+            															  ) AA
+            															  LEFT OUTER JOIN codemst   M  with(nolock) ON aa.cust_no  = m.item_cd  AND m.type = '내부업체' AND m.use_yn ='Y'    
+            					 group by (case when m.item_cd IS NOT NULL then 'insite' else aa.salesman end)
+
+         ) Z
+         LEFT OUTER JOIN (
+                                                    SELECT DISTINCT  seq              = a.seq          /* 순서       */
+                                                                                   , area              = a.area         /* 권역       */
+                                                                                   , sector           = a.sector       /* 본부       */
+                                                                                   , team             = a.team         /* 팀         */
+                                                                                   , user_id         = a.user_id      /* 담당자     */
+                                                                                   , user_name   = a.user_name    /* 담당자명   */
+                                                                                   , rank              = a.rank         /* 직책       */
+                                                      FROM (
+                                                                       SELECT seq         = a.seq          /* 순서       */
+                                                                            , area        = a.area         /* 권역       */
+                                                                            , sector      = a.sector       /* 본부       */
+                                                                            , team        = a.team         /* 팀         */
+                                                                            , user_id     = a.user_id      /* 담당자     */
+                                                                            , user_name   = a.user_name    /* 담당자명   */
+                                                                            , rank        = a.rank         /* 직책       */                                                         
+                                                                         FROM UF_MyMembers( :as_salesman ) M 
+                                                                              LEFT OUTER JOIN opeom_org A with(nolock) ON m.user_id = a.user_id                                                         
+                                                                       UNION ALL
+                                                                       /* 내부업체(insite) */
+                                                                       SELECT seq         = a.seq          /* 순서       */
+                                                                            , area        = a.area         /* 권역       */
+                                                                            , sector      = a.sector       /* 본부       */
+                                                                            , team        = a.team         /* 팀         */
+                                                                            , user_id     = a.user_id      /* 담당자     */
+                                                                            , user_name   = a.user_name    /* 담당자명   */
+                                                                            , rank        = a.rank         /* 직책       */
+                                                                         FROM opeom_org A  with(nolock)
+                                                                        WHERE (a.user_id     = 'insite')
+                                                                          AND (:as_salesman  = '%' OR :as_salesman = dbo.UF_INSITE() )
+                                                                  ) A
+                                            ) O  ON o.user_id = z.salesman
+   WHERE o.seq  IS NOT NULL
+union all
+SELECT  	   gubun = 2
+			           ,  seq         = o.seq                     /* 순서       */  
+              			 , area        = o.area                    /* 권역       */
+              			 , sector      = o.sector                  /* 본부       */
+              			 , team        = o.team                    /* 팀         */
+              			 , user_id     = o.user_id                 /* 담당자     */
+              			 , user_name   = o.user_name               /* 담당자명   */
+              			 , rank        = o.rank                    /* 직책       */
+              			 , pre_yinv    = z.pre_yinv                /* 전년 실적                                             */
+              			 , cur_ayinv   = z.cur_ayinv               /* 매출목표   - 당년 목표                                */
+              			 , cur_amninv  = z.cur_amninv              /* 매출목표   - 당년누계목표                             */
+              			 , cur_inv     = z.cur_inv                 /* 매출실적   - 매출누계                                 */
+              			 , curinv_rate = (case when z.cur_ayinv = 0 then 0 else (z.cur_inv / z.cur_ayinv)     end) /* 매출실적   - 진행율  = (매출누계 / 당년목표    )      */
+              			 , bsale_amt   = z.bsale_amt               /* 전년       - 동월실적                                 */
+              			 , increm_rate = (case when z.bsale_amt = 0 then 0 else (z.cur_minv / z.bsale_amt) -1 end) /* 실적       - 신장율  = (당월매출 / 전년동월실적) -1   */
+              			 , cur_aminv   = z.cur_aminv               /* 매출       - 당월매출목표                             */
+              			 , cur_minv    = z.cur_minv                /* 목표및진행 - 당월매출                                 */	  
+              			 , cur_aminv_s   = z.cur_aminv_s               /* 매출       - 당월매출목표                             */
+              			 , cur_minv_s    = z.cur_minv_s                /* 목표및진행 - 당월매출                                 */	  
+              			 , inv_s_rate    = (case when z.cur_aminv_s = 0 then 0 else (z.cur_minv_s / z.cur_aminv_s)    end) /* 목표및진행 - 진행율  = (당월매출 / 당월매출목표)      */
+              			 , inv_rate    = (case when z.cur_aminv = 0 then 0 else (z.cur_minv / z.cur_aminv)    end) /* 목표및진행 - 진행율  = (당월매출 / 당월매출목표)      */
+              			 , cyear       = :ai_year
+              			 , cmon        = :ai_month
+                           , space  = '  '
+    FROM (
+            						SELECT salesman    = (case when m.item_cd IS NOT NULL then 'insite' else aa.salesman end)
+            									, bsale_amt  = sum(aa.bsale_amt)     /* 전년 - 동월실적 */
+            									, pre_yinv   = sum(aa.pre_yinv)
+            									, cur_ayinv  = sum(aa.cur_ayinv)
+            									, cur_amninv = sum(aa.cur_amninv)
+            									, cur_inv    = sum(aa.cur_inv)
+            									, cur_aminv  = sum(aa.cur_aminv)
+            									, cur_minv   = sum(aa.cur_minv)
+            									, cur_aminv_s  = sum(aa.cur_aminv_s)
+            									, cur_minv_s   = sum(aa.cur_minv_s)
+            									FROM (
+            																						 SELECT salesman    = c.imwon_user_id 
+                      																										, user_name   = l.user_name
+                      																										, cust_no    = c.cust_no
+            																														  , bsale_amt  = sum(o_bf.bsale_amt) / 1000																																									
+            																														  , pre_yinv   = sum(o_bf.pre_yinv) / 1000
+            																														  , cur_ayinv  = sum((t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10 + t.special_11 + t.special_12 ) / 1.1) / 1000
+            																														  , cur_amninv = sum((case :ai_month 
+            																																						 when 1 then t.special_01
+            																																						 when 2 then t.special_01 + t.special_02
+            																																						 when 3 then t.special_01 + t.special_02 + t.special_03
+            																																						 when 4 then t.special_01 + t.special_02 + t.special_03 + t.special_04
+            																																						 when 5 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05
+            																																						 when 6 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06
+            																																						 when 7 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07
+            																																						 when 8 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08
+            																																						 when 9 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09
+            																																						 when 10 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10
+            																																						 when 11 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10 + t.special_11
+            																																						 when 12 then t.special_01 + t.special_02 + t.special_03 + t.special_04 + t.special_05 + t.special_06 + t.special_07 + t.special_08 + t.special_09 + t.special_10 + t.special_11 + t.special_12 
+            																																					 end) / 1.1) / 1000
+            																														  , cur_inv    = sum(o_bf.cur_inv) / 1000
+																																  , cur_aminv  = sum((case :ai_month  
+																																								 when 1 then t.mod_01
+																																								 when 2 then t.mod_02
+																																								 when 3 then t.mod_03
+																																								 when 4 then t.mod_04
+																																								 when 5 then t.mod_05
+																																								 when 6 then t.mod_06
+																																								 when 7 then t.mod_07
+																																								 when 8 then t.mod_08
+																																								 when 9 then t.mod_09
+																																								 when 10 then t.mod_10
+																																								 when 11 then t.mod_11
+																																								 when 12 then t.mod_12 
+																																							 end) / 1.1) / 1000
+																																  , cur_minv       = sum(o_bf.cur_minv) / 1000
+            																														  , cur_aminv_s  = sum((case :ai_month  
+            																																						 when 1 then t.special_01
+            																																						 when 2 then t.special_02
+            																																						 when 3 then t.special_03
+            																																						 when 4 then t.special_04
+            																																						 when 5 then t.special_05
+            																																						 when 6 then t.special_06
+            																																						 when 7 then t.special_07
+            																																						 when 8 then t.special_08
+            																																						 when 9 then t.special_09
+            																																						 when 10 then t.special_10
+            																																						 when 11 then t.special_11
+            																																						 when 12 then t.special_12 
+            																																					 end) / 1.1) / 1000
+            																														  , cur_minv_s   = sum(o_bf.cur_minv_s) / 1000
+            																													  FROM customer   C with(nolock)
+            																															 LEFT OUTER JOIN cust_aim    t   with(nolock) ON c.cust_no = t.cust_code   AND datepart(year, t.tar_year)    = :ai_year
+            																															 left outer join (                
+            																																								  select  a.cust_no,
+            																																												  sum(pre_yinv) pre_yinv,
+            																																												  sum(cur_inv) cur_inv,
+            																																												  sum(bsale_amt) bsale_amt,
+            																																												  sum(cur_minv_s) cur_minv_s,
+            																																												  sum(last_day) last_day,
+            																																												  sum(cur_minv) cur_minv
+            																																								  from
+            																																								  (                         
+																																												 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv        = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)
+																																																		  , cur_inv          = 0
+																																																		  , bsale_amt     = 0
+																																																		  , cur_minv_s       = 0
+																																																		  , last_day         = 0                                                                                                      
+																																																		  , cur_minv       = 0
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	 inner  join itemtop10 G with(nolock) on a.item_no   = g.item_no  and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y')
+																																																		where convert(char(4),  (case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end), 112) =  convert(char(4), dateadd(year, - 1, substring(:as_sdate,1,4)+substring(:as_sdate,6,2)+'01'),112 )
+																																														  union all
+																																														 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv          = 0
+																																																		  , cur_inv        = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)                                  
+																																																		  , bsale_amt     = 0
+																																																		  , cur_minv_s    = 0
+																																																		  , last_day         = 0       
+																																																		  , cur_minv       = 0                                                                                               
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	inner join itemtop10 G with(nolock) on a.item_no   = g.item_no  and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y')
+																																																	 WHERE convert(char(8),(case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end),112) between substring(:as_sdate,1,4)+'0101' and  substring(:as_edate,1,4)+substring(:as_edate,6,2)+substring(:as_edate,9,2)
+																																														  union all
+																																														 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv          = 0
+																																																		  , cur_inv          = 0
+																																																		  , bsale_amt     = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)                    
+																																																		  , cur_minv_s       = 0
+																																																		  , last_day         = 0                                                  
+																																																		  , cur_minv       = 0                                                    
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	 inner join itemtop10 G with(nolock) on a.item_no   = g.item_no  and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y')
+																																																	 WHERE convert(char(6),(case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end),112) = convert(char(6), dateadd(year, - 1, substring(:as_sdate,1,4)+substring(:as_sdate,6,2)+'01'),112)
+																																														  union all
+																																														 SELECT cust_no         = b.cust_no
+																																																		  , item_no         = a.item_no  
+																																																		  , pre_yinv          = 0
+																																																		  , cur_inv          = 0
+																																																		  , bsale_amt     = 0    
+																																																		  , cur_minv_s       = (round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty),2,1) * a.price)
+																																																		  , last_day         = 0
+																																																		  , cur_minv          = 0
+																																																	  FROM dodet A with(nolock) inner join do B with(nolock) ON a.do_no = b.do_no
+																																																																	 inner join itemtop10 G with(nolock) on a.item_no   = g.item_no and g.category in (select item_cd  from codemst where type = 'ITEMTOP10' and prt_yn = 'Y') 
+																																																	 WHERE convert(char(6), (case when 'ISSUE' = :as_flag then ( case when b.do_date > b.issue_date then b.issue_date else b.do_date end  ) else b.do_date end) ,112) = substring(:as_sdate,1,4)+substring(:as_sdate,6,2)
+																																														  union all
+													  																																			select a.cust_no
+																																																		  , item_no         = ''
+																																																		  , pre_yinv          = 0
+																																																		  , cur_inv          = 0
+																																																		  , bsale_amt     = 0    
+																																																		  , cur_minv_s       = 0
+																																																		  , last_day         = 0
+																																																	  , cur_minv = sum(a.amount + isnull(b.wd_pre_amount,0) - isnull(c.wd_discount,0) )
+																																															from 
+																																															(
+																																																	select do.cust_no, sum(do.do_total) / 1.1 amount
+																																																		 from do inner join customer c on do.cust_no = c.cust_no 
+																																																  WHERE convert(char(6), (case when 'ISSUE' = :as_flag then ( case when do.do_date > do.issue_date then do.issue_date else do.do_date end  ) else do.do_date end) ,112) = substring(:as_sdate,1,4)+substring(:as_sdate,6,2)
+																																																				  and do.do_no not in (
+																																																															 select do_no 
+																																																															  from aroiinv inner join  aroi on aroiinv.aroiinv_no = aroi.aroiinv_no
+																																																																	  where convert(char(10), oi_date, 111) between :as_sdate and :as_edate
+																																																																		 and aroiinv.inv_type = 'N'
+																																																																		  and delete_flag = 'N'
+																																																									  	 ) 
+																																																  group by do.cust_no
+																																														  ) a left outer join (                                             
+																																																									 select cust_no, sum(aroiinv_cash ) wd_pre_amount
+																																																										  from aroiinv
+																																																										 where convert(char(10), oi_date, 111) between :as_sdate and :as_edate
+																																																										 and inv_type = 'N'
+																																																										 and delete_flag = 'N'
+																																																										 group by cust_no
+																																																							  ) b on a.cust_no = b.cust_no
+																																																left outer join  (   
+																																																									select cust_no, sum(dc + discount) wd_discount
+																																																									  from aroiinv
+																																																									where convert(char(10), oi_date, 111) between :as_sdate and :as_edate
+																																																										 and delete_flag = 'N'
+																																																								  group by cust_no
+																																																							  ) c on a.cust_no = c.cust_no
+																																														 group by  a.cust_no        
+																									
+																																											  ) a 
+																																											  group by a.cust_no
+																																								  ) o_bf ON c.cust_no = o_bf.cust_no  
+																																		 LEFT OUTER JOIN opeom    o_af with(nolock) ON c.cust_no = o_af.cust_no and convert(char(4), o_af.eom_year, 112) = substring(:as_sdate,1,4)
+																													 LEFT OUTER JOIN login     L  with(nolock) ON c.imwon_user_id = l.user_id
+																																 WHERE ( c.cust_flag   = 'N' )
+																														 AND ( c.cust_type <> 'E' )
+																																 GROUP BY c.cust_no, c.imwon_user_id, l.user_name
+            															  ) AA
+            															  LEFT OUTER JOIN codemst   M  with(nolock) ON aa.cust_no  = m.item_cd  AND m.type = '내부업체' AND m.use_yn ='Y'    
+            					 group by (case when m.item_cd IS NOT NULL then 'insite' else aa.salesman end)
+
+         ) Z
+         LEFT OUTER JOIN (
+                                                    SELECT DISTINCT  seq              = a.seq          /* 순서       */
+                                                                                   , area              = a.area         /* 권역       */
+                                                                                   , sector           = a.sector       /* 본부       */
+                                                                                   , team             = a.team         /* 팀         */
+                                                                                   , user_id         = a.user_id      /* 담당자     */
+                                                                                   , user_name   = a.user_name    /* 담당자명   */
+                                                                                   , rank              = a.rank         /* 직책       */
+                                                      FROM (
+                                                                       SELECT seq         = a.seq          /* 순서       */
+                                                                            , area        = a.area         /* 권역       */
+                                                                            , sector      = a.sector       /* 본부       */
+                                                                            , team        = a.team         /* 팀         */
+                                                                            , user_id     = a.user_id      /* 담당자     */
+                                                                            , user_name   = a.user_name    /* 담당자명   */
+                                                                            , rank        = a.rank         /* 직책       */                                                         
+                                                                         FROM UF_IMWON_MyMembers( :as_salesman ) M 
+                                                                              LEFT OUTER JOIN opeom_org A with(nolock) ON m.user_id = a.user_id                                                         
+                                                                       UNION ALL
+                                                                       /* 내부업체(insite) */
+                                                                       SELECT seq         = a.seq          /* 순서       */
+                                                                            , area        = a.area         /* 권역       */
+                                                                            , sector      = a.sector       /* 본부       */
+                                                                            , team        = a.team         /* 팀         */
+                                                                            , user_id     = a.user_id      /* 담당자     */
+                                                                            , user_name   = a.user_name    /* 담당자명   */
+                                                                            , rank        = a.rank         /* 직책       */
+                                                                         FROM opeom_org A  with(nolock)
+                                                                        WHERE (a.user_id     = 'insite')
+                                                                          AND (:as_salesman  = '%' OR :as_salesman = dbo.UF_INSITE() )
+                                                                  ) A
+                                            ) O  ON o.user_id = z.salesman
+   WHERE o.seq  IS NOT NULL
+   ORDER BY o.seq" arguments=(("as_salesman", string),("ai_year", number),("ai_month", number),("as_sdate", string),("as_edate", string),("as_flag", string))  sort="seq A gubun A " )
+group(level=1 header.height=0 trailer.height=84 by=("area" ) header.color="536870912" trailer.color="12639424" )
+group(level=2 header.height=0 trailer.height=80 by=("sector" ) header.color="536870912" trailer.color="12632256" )
+group(level=3 header.height=0 trailer.height=80 by=("team" ) header.color="536870912" trailer.color="536870912" )
+group(level=4 header.height=0 trailer.height=76 by=("login_user_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="3493" y="8" height="160" width="379" html.valueishtml="0"  name=t_22 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8421376" )
+text(band=header alignment="0" text="" border="6" color="33554432" x="4329" y="8" height="160" width="270" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8421376" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="3881" y="8" height="160" width="439" html.valueishtml="0"  name=t_23 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8421376" )
+text(band=header alignment="0" text="진행" border="0" color="255" x="4329" y="28" height="60" width="270" html.valueishtml="0"  name=inv_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="" border="6" color="33554432" x="9" y="8" height="160" width="416" html.valueishtml="0"  name=t_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="6" color="33554432" x="434" y="8" height="160" width="352" html.valueishtml="0"  name=t_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담  당" border="0" color="33554432" x="434" y="60" height="60" width="352" html.valueishtml="0"  name=t_29 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구 분" border="0" color="33554432" x="9" y="60" height="60" width="416" html.valueishtml="0"  name=team_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="" border="6" color="0" x="795" y="8" height="160" width="219" html.valueishtml="0"  name=gubun_t visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="정 부" border="0" color="33554432" x="795" y="60" height="60" width="219" html.valueishtml="0"  name=t_24 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="1024" y="8" height="160" width="357" html.valueishtml="0"  name=t_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="1390" y="8" height="160" width="370" html.valueishtml="0"  name=t_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="1769" y="8" height="160" width="375" html.valueishtml="0"  name=t_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="2153" y="8" height="160" width="402" html.valueishtml="0"  name=t_20 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="" border="6" color="16711680" x="2565" y="8" height="160" width="247" html.valueishtml="0"  name=t_30 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="2821" y="8" height="160" width="375" html.valueishtml="0"  name=t_34 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="6" color="0" x="3205" y="8" height="160" width="279" html.valueishtml="0"  name=t_43 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전년 실적" border="0" color="8388736" x="1024" y="60" height="60" width="357" html.valueishtml="0"  name=pre_yinv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="동월실적" border="0" color="134217856" x="2821" y="96" height="60" width="375" html.valueishtml="0"  name=bsale_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="매출누계" border="0" color="16711680" x="2153" y="96" height="60" width="402" html.valueishtml="0"  name=cur_inv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="매  출 " border="0" color="255" x="1390" y="28" height="60" width="370" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text=" 목  표" border="0" color="255" x="1769" y="28" height="60" width="375" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="당년 목표" border="0" color="255" x="1390" y="96" height="60" width="370" html.valueishtml="0"  name=cur_ayinv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당년누계목표" border="0" color="255" x="1769" y="96" height="60" width="375" html.valueishtml="0"  name=cur_amninv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="매출실" border="0" color="16711680" x="2153" y="28" height="60" width="402" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="적" border="0" color="16711680" x="2565" y="28" height="60" width="247" html.valueishtml="0"  name=t_39 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="진행율" border="0" color="16711680" x="2565" y="96" height="60" width="247" html.valueishtml="0"  name=curinv_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="전년" border="0" color="134217856" x="2821" y="28" height="60" width="375" html.valueishtml="0"  name=t_35 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="실적" border="0" color="16711680" x="3205" y="28" height="60" width="279" html.valueishtml="0"  name=increm_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="신장율" border="0" color="16711680" x="3205" y="96" height="60" width="279" html.valueishtml="0"  name=t_42 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="진행율" border="0" color="255" x="4329" y="96" height="60" width="270" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="4608" y="8" height="160" width="233" html.valueishtml="0"  name=t_32 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="" border="6" color="33554432" x="5687" y="8" height="160" width="270" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217741" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="5239" y="8" height="160" width="439" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217741" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="4850" y="8" height="160" width="379" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217741" )
+text(band=header alignment="1" text="당월매출" border="0" color="255" x="5239" y="96" height="60" width="439" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="목표 및" border="0" color="255" x="5239" y="28" height="60" width="439" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="진행" border="0" color="255" x="5687" y="28" height="60" width="270" html.valueishtml="0"  name=t_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="진행율" border="0" color="255" x="5687" y="96" height="60" width="270" html.valueishtml="0"  name=t_21 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="당월매출목표" border="0" color="0" x="4850" y="96" height="60" width="379" html.valueishtml="0"  name=t_25 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당월매출목표" border="0" color="0" x="4850" y="96" height="60" width="379" html.valueishtml="0"  name=t_26 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="전체제품매출" border="0" color="0" x="4850" y="28" height="60" width="379" html.valueishtml="0"  name=t_27 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="5966" y="8" height="160" width="233" html.valueishtml="0"  name=t_33 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="" border="6" color="33554432" x="6208" y="8" height="160" width="233" html.valueishtml="0"  name=t_36 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전략" border="0" color="16711680" x="6208" y="28" height="60" width="233" html.valueishtml="0"  name=t_38 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="비중" border="0" color="16711680" x="6208" y="96" height="60" width="233" html.valueishtml="0"  name=t_41 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="매출" border="0" color="33554432" x="3493" y="28" height="60" width="379" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당월매출목표" border="0" color="33554432" x="3493" y="96" height="60" width="379" html.valueishtml="0"  name=cur_aminv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="목표 및" border="0" color="255" x="3881" y="28" height="60" width="439" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="당월매출" border="0" color="255" x="3881" y="96" height="60" width="439" html.valueishtml="0"  name=cur_minv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression=" login_user_name  + ~" ~" +   login_rank "border="0" color="33554432" x="434" y="12" height="60" width="352" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="12" height="60" width="416" format="[general]" html.valueishtml="0"  name=team visible="1~tif( team[0] = team[-1] , 0, 1 )" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="795" y="12" height="60" width="219" format="[general]" html.valueishtml="0"  name=gubun visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="1024" y="12" height="60" width="357" format="#,##0" html.valueishtml="0"  name=pre_yinv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="1390" y="12" height="60" width="370" format="#,##0" html.valueishtml="0"  name=cur_ayinv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="1769" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cur_amninv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="2821" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="2153" y="12" height="60" width="402" format="#,##0" html.valueishtml="0"  name=cur_inv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="2565" y="12" height="60" width="247" format="0.0%" html.valueishtml="0"  name=curinv_rate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="space"border="0" color="33554432" x="4608" y="12" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="4850" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="33554432" x="5239" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="space"border="0" color="33554432" x="5966" y="12" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression=" if( cur_minv = 0, 0, cur_minv_s/cur_minv) "border="0" color="33554432" x="6208" y="12" height="60" width="233" format="0.0%" html.valueishtml="0"  name=spe_rate visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="0" color="33554432" x="5687" y="12" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0" x="3205" y="12" height="60" width="279" format="0.0%" html.valueishtml="0"  name=increm_rate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="33554432" x="3493" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv_s visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="33554432" x="3881" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minv_s visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="cur_minv_s / cur_aminv_s"border="0" color="0" x="4329" y="12" height="60" width="270" format="0.0%" html.valueishtml="0"  name=compute_24 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.4 alignment="1" expression="sum(pre_yinv for group 4)"border="0" color="33554432" x="1024" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="sum( cur_ayinv for group 4 )"border="0" color="33554432" x="1390" y="8" height="60" width="370" format="#,##0" html.valueishtml="0"  name=cur_ayinvh4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="sum( cur_amninv for group 4 )"border="0" color="33554432" x="1769" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cur_amninvh4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="2" expression="'계'"border="0" color="33554432" x="795" y="4" height="64" width="219" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="sum( cur_inv for group 4 )"border="0" color="33554432" x="2153" y="8" height="60" width="402" format="#,##0" html.valueishtml="0"  name=cur_invh4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression=" cur_invh4 /  cur_ayinvh4"border="0" color="33554432" x="2565" y="8" height="60" width="247" format="0.0%" html.valueishtml="0"  name=curinv_rate4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="if( isnull( sum( bsale_amt for group 4 ) ),0, sum( bsale_amt for group 4 ) )"border="0" color="33554432" x="2821" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amth4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="(cur_minvh4 / bsale_amth4) -1 "border="0" color="0" x="3205" y="8" height="60" width="279" format="0.0%" html.valueishtml="0"  name=increm_rate4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.4 alignment="1" expression="sum(cur_aminv_s for group 4)"border="0" color="33554432" x="3493" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvh4_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="sum(cur_minv_s for group 4)"border="0" color="33554432" x="3881" y="8" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvh4_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="cur_minvh4_s / cur_aminvh4_s"border="0" color="33554432" x="4329" y="8" height="60" width="270" format="0.0%" html.valueishtml="0"  name=compute_27 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="space"border="0" color="33554432" x="4608" y="8" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="sum( cur_aminv for group 4 )"border="0" color="33554432" x="4850" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvh4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="sum( cur_minv for group 4 )"border="0" color="33554432" x="5239" y="8" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvh4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="if( if( isnull(cur_aminvh4),0, cur_aminvh4)  = 0, 0, if( isnull(cur_minvh4),0, cur_minvh4)  /  cur_aminvh4 )"border="0" color="33554432" x="5687" y="8" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="space"border="0" color="33554432" x="5966" y="8" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.4 alignment="1" expression="if(cur_minvh4 = 0, 0, cur_minvh4_s/cur_minvh4)"border="0" color="33554432" x="6208" y="8" height="60" width="233" format="0.0%" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+text(band=trailer.3 alignment="1" text="소 " border="0" color="33554432" x="9" y="8" height="64" width="416" html.valueishtml="0"  name=t_16 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.3 alignment="0" text=" 계" border="0" color="33554432" x="434" y="8" height="64" width="352" html.valueishtml="0"  name=t_44 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum(pre_yinv for group 3)"border="0" color="33554432" x="1024" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_30 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_ayinv for group 3 )"border="0" color="33554432" x="1390" y="8" height="60" width="370" format="#,##0" html.valueishtml="0"  name=cur_ayinvh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_amninv for group 3 )"border="0" color="33554432" x="1769" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cur_amninvh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_inv for group 3 )"border="0" color="33554432" x="2153" y="8" height="60" width="402" format="#,##0" html.valueishtml="0"  name=cur_invh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( bsale_amt for group 3 )"border="0" color="33554432" x="2821" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amth visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression=" cur_invh /  cur_ayinvh"border="0" color="33554432" x="2565" y="8" height="60" width="247" format="0.0%" html.valueishtml="0"  name=curinv_rate3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="(cur_minvh / bsale_amth) -1 "border="0" color="0" x="3205" y="8" height="60" width="279" format="0.0%" html.valueishtml="0"  name=increm_rate3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_aminv_s for group 3 )"border="0" color="33554432" x="3493" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvh_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="space"border="0" color="33554432" x="4608" y="8" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_aminv for group 3 )"border="0" color="33554432" x="4850" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_minv for group 3 )"border="0" color="33554432" x="5239" y="8" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression=" cur_minvh  /  cur_aminvh "border="0" color="33554432" x="5687" y="8" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="space"border="0" color="33554432" x="5966" y="8" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="if(cur_minvh = 0, 0, cur_minvh_s/cur_minvh)"border="0" color="33554432" x="6208" y="8" height="60" width="233" format="0.0%" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.3 alignment="1" expression="cur_minvh_s  /  cur_aminvh_s"border="0" color="33554432" x="4329" y="8" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate3_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_minv_s for group 3 )"border="0" color="33554432" x="3881" y="8" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvh_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" sector + ~" ~""border="0" color="33554432" x="9" y="8" height="64" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_31 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(bsale_amt  for group 2)"border="0" color="33554432" x="2821" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amtt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum( cur_inv for group 2 )"border="0" color="33554432" x="2153" y="8" height="60" width="402" format="#,##0" html.valueishtml="0"  name=cur_invt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum( cur_amninv for group 2 )"border="0" color="33554432" x="1769" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cur_amninvt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum( cur_ayinv   for group 2 )"border="0" color="33554432" x="1390" y="8" height="60" width="370" format="#,##0" html.valueishtml="0"  name=cur_ayinvt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(  pre_yinv  for group 2 )"border="0" color="33554432" x="1024" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cur_invt /  cur_ayinvt"border="0" color="33554432" x="2565" y="8" height="60" width="247" format="0.0%" html.valueishtml="0"  name=curinv_rate2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="(cur_minvt /  bsale_amtt) - 1"border="0" color="33554432" x="3205" y="8" height="60" width="279" format="0.0%" html.valueishtml="0"  name=increm_rate2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="0" text=" 계" border="0" color="0" x="434" y="8" height="64" width="352" html.valueishtml="0"  name=t_40 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="cur_minvt_s  /  cur_aminvt_s"border="0" color="33554432" x="4329" y="8" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate2_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_minv_s for group 2)"border="0" color="33554432" x="3881" y="8" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvt_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_aminv_s  for group 2)"border="0" color="33554432" x="3493" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvt_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="space"border="0" color="33554432" x="4608" y="8" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_aminv  for group 2)"border="0" color="33554432" x="4850" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_minv for group 2)"border="0" color="33554432" x="5239" y="8" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cur_minvt  /  cur_aminvt "border="0" color="33554432" x="5687" y="8" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="space"border="0" color="33554432" x="5966" y="8" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="if(cur_minvt = 0, 0, cur_minvt_s/cur_minvt)"border="0" color="33554432" x="6208" y="8" height="60" width="233" format="0.0%" html.valueishtml="0"  name=compute_21 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="0" text=" 합계" border="0" color="33554432" x="434" y="12" height="64" width="352" html.valueishtml="0"  name=t_28 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" area + ~" ~""border="0" color="33554432" x="9" y="12" height="64" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_32 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  cur_ayinv  for group 1 )"border="0" color="33554432" x="1390" y="12" height="60" width="370" format="#,##0" html.valueishtml="0"  name=cur_ayinvs visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  cur_amninv  for group 1 )"border="0" color="33554432" x="1769" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cur_amninvs visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( cur_inv for group 1 )"border="0" color="33554432" x="2153" y="12" height="60" width="402" format="#,##0" html.valueishtml="0"  name=cur_invs visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(bsale_amt  for group 1)"border="0" color="33554432" x="2821" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amts visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  pre_yinv  for group 1 )"border="0" color="33554432" x="1024" y="12" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cur_invs /  cur_ayinvs"border="0" color="33554432" x="2565" y="12" height="60" width="247" format="0.0%" html.valueishtml="0"  name=curinv_rate1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="(cur_minvs /  bsale_amts) - 1"border="0" color="33554432" x="3205" y="12" height="60" width="279" format="0.0%" html.valueishtml="0"  name=increm_rate1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="cur_minvs_s  /  cur_aminvs_s"border="0" color="33554432" x="4329" y="12" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate1_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_minv_s for group 1)"border="0" color="33554432" x="3881" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvs_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_aminv_s  for group 1)"border="0" color="33554432" x="3493" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvs_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="space"border="0" color="33554432" x="4608" y="12" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_aminv  for group 1)"border="0" color="33554432" x="4850" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvs visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_minv for group 1)"border="0" color="33554432" x="5239" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minvs visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cur_minvs  /  cur_aminvs "border="0" color="33554432" x="5687" y="12" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="space"border="0" color="33554432" x="5966" y="12" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="if(cur_minvs = 0, 0, cur_minvs_s/cur_minvs)"border="0" color="33554432" x="6208" y="12" height="60" width="233" format="0.0%" html.valueishtml="0"  name=compute_22 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~" 총  합 ~""border="0" color="33554432" x="9" y="12" height="64" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_33 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="0" text=" 계" border="0" color="0" x="434" y="12" height="64" width="352" html.valueishtml="0"  name=t_31 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(pre_yinv for all)"border="0" color="33554432" x="1024" y="12" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_ayinv for all)"border="0" color="33554432" x="1390" y="12" height="60" width="370" format="#,##0" html.valueishtml="0"  name=cur_ayinv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_amninv for all)"border="0" color="33554432" x="1769" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cur_amninv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum( cur_inv for all )"border="0" color="33554432" x="2153" y="12" height="60" width="402" format="#,##0" html.valueishtml="0"  name=cur_inv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(bsale_amt for all)"border="0" color="33554432" x="2821" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amt0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cur_inv0 /  cur_ayinv0"border="0" color="33554432" x="2565" y="12" height="60" width="247" format="0.0%" html.valueishtml="0"  name=curinv_rate0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="(cur_minv0 /  bsale_amt0) - 1"border="0" color="33554432" x="3205" y="12" height="60" width="279" format="0.0%" html.valueishtml="0"  name=increm_rate0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="cur_minv0_s  /  cur_aminv0_s"border="0" color="33554432" x="4329" y="12" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate0_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_minv_s for all)"border="0" color="33554432" x="3881" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minv0_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_aminv_s for all)"border="0" color="33554432" x="3493" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv0_s visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="space"border="0" color="33554432" x="4608" y="12" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_aminv for all)"border="0" color="33554432" x="4850" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_minv for all)"border="0" color="33554432" x="5239" y="12" height="60" width="439" format="#,##0" html.valueishtml="0"  name=cur_minv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cur_minv0  /  cur_aminv0 "border="0" color="33554432" x="5687" y="12" height="60" width="270" format="0.0%" html.valueishtml="0"  name=inv_rate0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="space"border="0" color="33554432" x="5966" y="12" height="60" width="233" format="[General]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="if(cur_minv0 = 0, 0, cur_minv0_s/cur_minv0)"border="0" color="33554432" x="6208" y="12" height="60" width="233" format="0.0%" html.valueishtml="0"  name=compute_23 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="team	compute_11")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

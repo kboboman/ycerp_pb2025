@@ -1,0 +1,124 @@
+﻿$PBExportHeader$d_iocoilqoh_r11.srd
+$PBExportComments$코일재고현황(스리팅)(1998,09/09,곽용덕)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=388 color="536870912" )
+summary(height=84 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=coilmst_coil_no dbname="coilmst.coil_no" )
+ column=(type=decimal(1) updatewhereclause=yes name=coilmst_wid dbname="coilmst.wid" )
+ column=(type=char(10) updatewhereclause=yes name=coilmst_item_no dbname="coilmst.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=coilmst_qa dbname="coilmst.qa" )
+ column=(type=char(10) updatewhereclause=yes name=coilmst_loc_no dbname="coilmst.loc_no" )
+ column=(type=datetime updatewhereclause=yes name=coilmst_rcpt_date dbname="coilmst.rcpt_date" )
+ column=(type=long updatewhereclause=yes name=coilmst_unit_qty dbname="coilmst.unit_qty" )
+ column=(type=long updatewhereclause=yes name=coilmst_length dbname="coilmst.length" )
+ column=(type=long updatewhereclause=yes name=coilmst_cnt dbname="coilmst.cnt" )
+ column=(type=long updatewhereclause=yes name=coilmst_qcnt dbname="coilmst.qcnt" )
+ column=(type=char(4) updatewhereclause=yes name=coilmst_color_no dbname="coilmst.color_no" )
+ column=(type=char(10) updatewhereclause=yes name=coilmst_supp_no dbname="coilmst.supp_no" )
+ column=(type=char(1) updatewhereclause=yes name=coilmst_flag dbname="coilmst.flag" values="원코일	W/스리팅	S/" )
+ column=(type=char(14) updatewhereclause=yes name=coilmst_porder_no dbname="coilmst.porder_no" )
+ column=(type=long updatewhereclause=yes name=coilmst_pseq_no dbname="coilmst.pseq_no" )
+ column=(type=char(1) updatewhereclause=yes name=coilmst_open_close dbname="coilmst.open_close" values="재고	O/계획	M/작업지시	P/외주가공	S/사용완료	C/" )
+ column=(type=char(40) updatewhereclause=yes name=coilmst_rem dbname="coilmst.rem" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ column=(type=char(30) updatewhereclause=yes name=supp_supp_name dbname="supp.supp_name" )
+ column=(type=char(2) updatewhereclause=yes name=coilmst_etc_no dbname="coilmst.etc_no" )
+ column=(type=decimal(4) updatewhereclause=yes name=inspdet_price dbname="inspdet.price" )
+ retrieve="  SELECT coilmst.coil_no,   
+         coilmst.wid,   
+         coilmst.item_no,   
+         coilmst.qa,   
+         coilmst.loc_no,   
+         coilmst.rcpt_date,   
+         coilmst.unit_qty,   
+         coilmst.length,   
+         coilmst.cnt,   
+         coilmst.qcnt,   
+         coilmst.color_no,   
+         coilmst.supp_no,   
+         coilmst.flag,   
+         coilmst.porder_no,   
+         coilmst.pseq_no,   
+         coilmst.open_close,   
+         coilmst.rem,   
+         groupitem.item_name,   
+         location.loc_name,   
+         supp.supp_name,   
+         coilmst.etc_no,
+  	    inspdet.price  
+ FROM coilmst with(nolock) left outer join groupitem with(nolock) on coilmst.item_no = groupitem.item_no
+                             left outer join location with(nolock)  on  coilmst.loc_no    = location.loc_no
+                             left outer join supp with(nolock) on coilmst.supp_no = supp.supp_no
+                             left outer join inspdet with(nolock) on coilmst.coil_no = inspdet.coil_no
+   WHERE
+         ( ( coilmst.loc_no   LIKE :as_loc         ) AND  
+           ( coilmst.item_no  LIKE :as_item    ) AND  
+           ( coilmst.flag     LIKE :as_flag          ) AND  
+           ( coilmst.open_close IN ( :as_oc ) )
+         ) and      
+      NOT EXISTS ( SELECT * FROM lossitem with(nolock) WHERE loss_item = coilmst.item_no)
+/*
+    FROM coilmst   
+       , groupitem   
+       , location   
+       , supp
+       , inspdet
+   WHERE ( coilmst.item_no      *= groupitem.item_no)   
+     AND ( coilmst.loc_no       *= location.loc_no  )   
+     AND ( coilmst.supp_no      *= supp.supp_no     )   
+     AND ( ( coilmst.loc_no   LIKE :as_loc     ) AND  
+           ( coilmst.item_no  LIKE :as_item    ) AND  
+           ( coilmst.flag     LIKE :as_flag    ) AND  
+           ( coilmst.open_close IN ( :as_oc )  ) 
+         )  
+     AND ( coilmst.coil_no      *= inspdet.coil_no ) 
+     AND NOT EXISTS ( SELECT * FROM lossitem WHERE loss_item = coilmst.item_no)
+*/" arguments=(("as_loc", string),("as_item", string),("as_flag", string),("as_oc", stringlist))  sort="mid(coilmst_item_no,3,1) A coilmst_item_no A mid( coilmst_qa, 5, 6) A coilmst_unit_qty A coilmst_coil_no A " )
+text(band=header alignment="2" text="코일 실사 목록표" border="1" color="0" x="274" y="4" height="132" width="1413" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-22" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="2" color="0" x="823" y="320" height="60" width="462" html.valueishtml="0"  name=coillot_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="특" border="2" color="0" x="2226" y="320" height="60" width="69" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="로트번호" border="2" color="0" x="2299" y="320" height="60" width="553" html.valueishtml="0"  name=coillot_coil_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="비    고" border="2" color="0" x="2857" y="320" height="60" width="530" html.valueishtml="0"  name=coillot_supp_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Page:" border="0" color="0" x="0" y="248" height="60" width="160" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="page() + ' / ' + pageCount()"border="0" color="0" x="178" y="248" height="60" width="389" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="일자:" border="0" color="0" x="617" y="248" height="60" width="160" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="today()"border="0" color="0" x="795" y="248" height="60" width="389" format="yyyy/mm/dd" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="저장소" border="2" color="0" x="0" y="164" height="72" width="242" html.valueishtml="0"  name=coillot_loc_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=header id=19 alignment="0" tabsequence=32766 border="0" color="0" x="261" y="164" height="72" width="1179" format="[general]" html.valueishtml="0"  name=location_loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="단중" border="2" color="0" x="1289" y="320" height="60" width="265" html.valueishtml="0"  name=coillot_unit_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="총중량" border="2" color="0" x="1915" y="320" height="60" width="306" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+rectangle(band=header x="2231" y="4" height="304" width="1161"  name=r_1 visible="1~tif( page() > 1, 0, 1)" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="9" pen.color="33554432"  background.mode="2" background.color="0" )
+text(band=header alignment="0" text="결" border="0" color="33554432" x="2249" y="40" height="72" width="73" html.valueishtml="0"  name=t_6 visible="1~tif( page() > 1, 0, 1)"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1090519039" )
+line(band=header x1="2341" y1="8" x2="2341" y2="304"  name=l_1 visible="1~tif( page() > 1, 0, 1)" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1090519039" )
+text(band=header alignment="2" text="담  당" border="0" color="33554432" x="2363" y="16" height="60" width="219" html.valueishtml="0"  name=t_7 visible="1~tif( page() > 1, 0, 1)"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1090519039" )
+text(band=header alignment="2" text="과  장" border="0" color="33554432" x="2624" y="16" height="60" width="219" html.valueishtml="0"  name=t_8 visible="1~tif( page() > 1, 0, 1)"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1090519039" )
+line(band=header x1="2862" y1="8" x2="2862" y2="304"  name=l_2 visible="1~tif( page() > 1, 0, 1)" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1090519039" )
+text(band=header alignment="2" text="부서장" border="0" color="33554432" x="2885" y="16" height="60" width="219" html.valueishtml="0"  name=t_9 visible="1~tif( page() > 1, 0, 1)"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1090519039" )
+line(band=header x1="2341" y1="80" x2="3383" y2="80"  name=l_3 visible="1~tif( page() > 1, 0, 1)" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="재" border="0" color="33554432" x="2249" y="180" height="72" width="73" html.valueishtml="0"  name=t_10 visible="1~tif( page() > 1, 0, 1)"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1090519039" )
+line(band=header x1="2601" y1="4" x2="2601" y2="300"  name=l_4 visible="1~tif( page() > 1, 0, 1)" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1090519039" )
+line(band=header x1="3122" y1="8" x2="3122" y2="304"  name=l_5 visible="1~tif( page() > 1, 0, 1)" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1090519039" )
+text(band=header alignment="2" text="공장장" border="0" color="33554432" x="3145" y="16" height="60" width="219" html.valueishtml="0"  name=t_11 visible="1~tif( page() > 1, 0, 1)"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1090519039" )
+text(band=header alignment="2" text="갯수" border="2" color="0" x="1559" y="320" height="60" width="119" html.valueishtml="0"  name=coillot_cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="물품명" border="2" color="0" x="0" y="320" height="60" width="818" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="실사" border="2" color="0" x="1682" y="320" height="60" width="229" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="1559" y="8" height="60" width="119" format="[General]" html.valueishtml="0"  name=coilmst_qcnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="0" x="0" y="8" height="60" width="818" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="mid( coilmst_qa ,1,1) + ~".~" + mid(  coilmst_qa ,2,2 ) "border="0" color="0" x="846" y="8" height="60" width="165" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" string( dec(mid( coilmst_qa ,5, 4)) + dec(mid( coilmst_qa, 10, 1) ) / 10 , ~"##,###.#~")"border="0" color="0" x="1015" y="8" height="60" width="247" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="1289" y="8" height="60" width="229" format="#,##0" html.valueishtml="0"  name=coilmst_unit_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="" border="2" color="0" x="1682" y="8" height="60" width="229" html.valueishtml="0"  name=t_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression=" coilmst_unit_qty   * coilmst_qcnt "border="0" color="0" x="1915" y="8" height="60" width="306" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="0" x="2231" y="8" height="60" width="69" format="[general]" html.valueishtml="0"  name=coilmst_etc_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif ( coilmst_open_close = 'O' , rgb(0, 0, 0), rgb(255,0,0))" x="2313" y="8" height="60" width="1074" format="[general]" html.valueishtml="0"  name=coilmst_coil_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="1" text="전  체" border="0" color="0" x="50" y="12" height="60" width="197" html.valueishtml="0"  name=t_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="0" expression="count(coilmst_coil_no for all)"border="0" color="0" x="247" y="12" height="60" width="503" format="#,##0 건" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum( coilmst_unit_qty   * coilmst_qcnt  for all)"border="0" color="0" x="1915" y="12" height="60" width="306" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="0" y1="0" x2="3387" y2="0"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="0" y1="80" x2="3387" y2="80"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

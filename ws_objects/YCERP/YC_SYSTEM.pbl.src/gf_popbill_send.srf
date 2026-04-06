@@ -1,0 +1,90 @@
+﻿$PBExportHeader$gf_popbill_send.srf
+$PBExportComments$KT-MMS 전송
+global type gf_popbill_send from function_object
+end type
+
+forward prototypes
+global function boolean gf_popbill_send (string as_templatecode, string as_sendhp, string as_recvhp, string as_recvname, string as_message)
+end prototypes
+
+global function boolean gf_popbill_send (string as_templatecode, string as_sendhp, string as_recvhp, string as_recvname, string as_message);////////////////////////////////////////////////////////////////////
+// 알림톡 전송(POPBILL)
+////////////////////////////////////////////////////////////////////
+// GF_POPBILL_SEND  Return Type : Boolean
+// GF_POPBILL_SEND( as_template_cd, '01027369470', as_recvhp, as_recvname, as_message )
+////////////////////////////////////////////////////////////////////
+// as_template_cd   	string
+// as_sendhp   		string		-- 팝빌에 등록해야함	'01027369470'
+// as_recvhp   		string
+// as_recvname 		string
+// as_message  		string
+//-------------------------------------------------------------------
+// 2021.06.15 bkkim
+// - 알림톡 기능
+/*****************************************************************************
+* 단건의 알림톡을 전송합니다
+* - 사전에 승인된 템플릿의 내용과 알림톡 내용(content)이 다를 경우 전송실패 처리됩니다.
+* - 팝빌에 등록되지 않은 발신번호로 알림톡 메시지를 전송하는 경우 발신번호 미등록 오류로 처리됩니다.
+* - https://docs.popbill.com/kakao/pb/api#SendATS_one
+*****************************************************************************/
+//POPBILL기초 정보
+string in_linkid = "YOOCHANG"	// 링크아이디
+string in_secretkey = "QVJvaiwhBYhVfoIujbIGbSG4/+GH47RWCmLHTvHV7KU="	// 비밀키 
+kakaoservice in_kakaoservice
+
+// 카카오톡 API 서비스 객체 생성
+in_kakaoservice = create kakaoservice
+in_kakaoservice.linkid = in_linkid			// 링크아이디 
+in_kakaoservice.secretkey = in_secretkey	// 비밀키
+in_kakaoservice.setistest(false)				// 연동환경 설정값, 개발용(true), 상업용(false)
+in_kakaoservice.setIPRestrictOnOff(true)	// 인증토큰 IP제한기능 사용여부, 권장-true
+
+string	l_receiptNum, templatecode, sender, content, altcontent, altsendtype,  receiver, receivername, requestnum
+int 		i
+string	ls_corpnum, ls_reserveDT, ls_userid
+
+//알림톡 템플릿 코드
+ls_corpnum		= '1408148198'			//사업자 번호
+ls_reserveDT	= ''						//전송 시간 - 값이 없으면 바로 전송
+ls_userid		= 'ycadmin'			//사용자아이디
+templatecode 	= as_templatecode		//승인된 알림톡 템플릿 코드는 ListATStemplate API, GetATSTemplateMgtURL API, 혹은 팝빌사이트에서 확인이 가능합니다.
+sender			= as_sendhp				// 발신번호 (팝빌에 등록된 발신번호만 이용가능)
+content			= as_message			//알림톡 내용 (최대 1000자)
+altContent		= "알림톡 대체 문자"	//대체문자 내용 (최대 2000byte)
+altsendtype 	= "C"						//대체문자 유형 [공백-미전송, C-알림톡 내용, A-대체문자 내용]
+receiver			= as_recvhp				//수신번호
+receivername 	= as_recvname			//수신자 이름
+// 전송요청번호, 파트너가 전송요청에 대한 관리번호를 직접 할당하여 관리하는 경우 기재
+// 최대 36자리, 영문, 숫자, 언더바('_'), 하이픈('-')을 조합하여 사업자별로 중복되지 않도록 구성
+requestnum 		= "";	
+kakaobutton l_kakaobutton[]
+// 알림톡 버튼정보를 템플릿 신청시 기재한 버튼정보와 동일하게 전송하는 경우 
+// l_kakaobutton 배열을 선언만 하고 함수호출.
+// 알림톡 버튼 URL에 #{템플릿변수}를 기재한경우 템플릿변수 영역을 변경하여 버튼정보 구성
+//kakaobutton l_kakaobutton[]
+//l_kakaobutton[1].n = "템플릿 안내"	// 버튼명
+//l_kakaobutton[1].t = "WL"				// 버튼유형 DS-배송조회, WL-웹링크, AL-앱링크, MD-메시지전달, BK-봇키워드
+//l_kakaobutton[1].u1 = "https://www.linkhub.co.kr"	// 앱링크-iOS, 웹링크-Mobile
+//l_kakaobutton[1].u2 = "http://www.popbill.co.kr"	// 앱링크-Android, 웹링크-PC URL
+
+//발송 내용 존재 유무 파악
+if gf_null_chk(content) = true then
+	string	ls_temp
+	ls_temp = '발송할 내용이 존재하지 않습니다.~r~n전산실로 문의하시기 바랍니다.'
+	messagebox('오류', ls_temp)
+else
+	//알림톡 발송
+	try	
+		l_receiptNum = in_kakaoservice.sendATS(ls_corpnum, templatecode, sender, content, altcontent, &
+														altsendtype, ls_reserveDT, receiver, receivername, requestnum, l_kakaobutton, ls_userid)
+	catch(popbillexception pe)	
+		messagebox("알림톡 단건 전송", "응답코드 : " + String(pe.getcode()) +  "~n응답메시지 :" + pe.getmessage())
+	end try	
+end if
+
+destroy in_kakaoservice
+
+RETURN true
+
+end function
+

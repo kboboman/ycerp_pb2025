@@ -1,0 +1,100 @@
+﻿$PBExportHeader$d_cdcustmaster_r_sales.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=customer_cust_no dbname="customer.cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=customer_salesman dbname="customer.salesman" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name dbname="login.user_name" )
+ column=(type=char(10) updatewhereclause=yes name=top_level dbname="top_level" )
+ column=(type=char(10) updatewhereclause=yes name=toplevel dbname="toplevel" )
+ column=(type=long updatewhereclause=yes name=cust_idx dbname="cust_idx" )
+ column=(type=long updatewhereclause=yes name=cust_sort dbname="cust_sort" )
+ column=(type=char(50) updatewhereclause=yes name=mgr_type dbname="mgr_type" )
+ column=(type=long updatewhereclause=yes name=mgr_sort dbname="mgr_sort" )
+ column=(type=decimal(2) updatewhereclause=yes name=opeom_amt dbname="opeom_amt" )
+ column=(type=char(1) updatewhereclause=yes name=open_close dbname="open_close" )
+ column=(type=char(255) updatewhereclause=yes name=custname_sort dbname="custname_sort" )
+ retrieve="SELECT customer.cust_no
+     , customer.cust_name
+     , customer.salesman
+     , login.user_name
+
+     , top_level  = customer.top_level
+/*     , toplevel   = (case substring(customer.top_level,1,2)
+								when 'A+' then '1'
+								when 'A'  then '2'
+								when 'B+' then '3'
+								when 'B'  then '4'
+								when 'C'  then '5'
+								when '채' then '6'
+								else '7'
+                     end)
+*/
+     , dbo.uf_toplevel_sort(customer.top_level) toplevel
+/*
+     , toplevel   = (case substring(customer.top_level,1,2)
+								when 'Aa' then 1
+								when 'Ab'  then 2
+								when 'Ac'  then 3
+								when 'Ba' then 4
+								when 'Bb'  then 5
+								when 'Bc'  then 6
+								when 'Ca' then 7
+								when 'Cb'  then 8
+								when 'Cc'  then 9
+								else 10
+                     end)
+*/
+     , cust_idx   = isnull(cs.cust_idx, 0)
+     , cust_sort  = 0
+     , mgr_type   = (SELECT item_nm FROM codemst WHERE type = 'MGR_TYPE' AND use_yn = 'Y' AND item_cd = customer.mgr_type)
+     , mgr_sort   = isnull((SELECT sort    FROM codemst WHERE type = 'MGR_TYPE' AND use_yn = 'Y' AND item_cd = customer.mgr_type),99)
+     , opeom_amt  = opeom.balbf_amount + 
+                   ( opeom.inv_01  + opeom.inv_02  + opeom.inv_03  + opeom.inv_04  + opeom.inv_05  + opeom.inv_06    + 
+                     opeom.inv_07  + opeom.inv_08  + opeom.inv_09  + opeom.inv_10  + opeom.inv_11  + opeom.inv_12  ) - 
+                   ( opeom.coll_01 + opeom.coll_02 + opeom.coll_03 + opeom.coll_04 + opeom.coll_05 + opeom.coll_06   + 
+                     opeom.coll_07 + opeom.coll_08 + opeom.coll_09 + opeom.coll_10 + opeom.coll_11 + opeom.coll_12 )
+     , customer.open_close
+     , custname_sort = replace(replace(replace(customer.cust_name,'(주)',''),'(재)',''),'(사)','')
+  FROM opeom    (nolock)
+       LEFT OUTER JOIN customer (nolock)         ON opeom.cust_no     = customer.cust_no
+       LEFT OUTER JOIN customer_sort cs (nolock) ON customer.cust_no  = cs.cust_no
+       LEFT OUTER JOIN login    (nolock)         ON customer.salesman = login.user_id
+ WHERE ( datepart(year,opeom.eom_year) = :as_year )
+   AND ( customer.salesman = :as_salesman         )
+   AND ( ( :as_open  = '%' and customer.open_close LIKE '%' ) OR
+         ( :as_open <> '%' and customer.open_close    = 'O' )           
+       )
+ ORDER BY login.user_name, customer.top_level, cust_sort, mgr_sort, customer.cust_name
+" arguments=(("as_open", string),("as_salesman", string),("as_year", number))  sort="cust_idx A login_user_name A mgr_sort A cust_sort A customer_cust_name A " )
+text(band=header alignment="2" text="상호" border="6" color="33554432" x="942" y="8" height="60" width="809" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="2272" y="8" height="60" width="251" html.valueishtml="0"  name=customer_salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="잔액" border="6" color="33554432" x="1760" y="8" height="60" width="503" html.valueishtml="0"  name=opeom_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사용자명" border="6" color="33554432" x="2533" y="8" height="60" width="352" html.valueishtml="0"  name=login_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="Custname Sort" border="6" color="0" x="2894" y="8" height="60" width="763" html.valueishtml="0"  name=custname_sort_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="Customer Cust No" border="6" color="0" x="3666" y="8" height="60" width="311" html.valueishtml="0"  name=customer_cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="686" y="8" height="60" width="247" html.valueishtml="0"  name=mgr_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출력" border="6" color="33554432" x="521" y="8" height="60" width="155" html.valueishtml="0"  name=cust_idx_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등급" border="6" color="33554432" x="347" y="8" height="60" width="165" html.valueishtml="0"  name=top_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Toplevel" border="6" color="33554432" x="183" y="8" height="60" width="155" html.valueishtml="0"  name=toplevel_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="2272" y="8" height="72" width="251" format="[general]" html.valueishtml="0"  name=customer_salesman  tag="판매담당자" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="1760" y="8" height="72" width="503" format="#,##0" html.valueishtml="0"  name=opeom_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="2533" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=login_user_name  tag="사용자명" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="3666" y="8" height="72" width="311" format="[general]" html.valueishtml="0"  name=customer_cust_no visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="942" y="8" height="72" width="809" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="2894" y="8" height="72" width="763" format="[general]" html.valueishtml="0"  name=custname_sort visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="686" y="8" height="72" width="247" format="[general]" html.valueishtml="0"  name=mgr_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="521" y="8" height="72" width="155" format="[general]" html.valueishtml="0"  name=cust_idx visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="72" width="155" format="[general]" html.valueishtml="0"  name=toplevel visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="347" y="8" height="72" width="165" format="[general]" html.valueishtml="0"  name=top_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="1" expression="sum( opeom_amt for all )"border="0" color="0" x="1760" y="8" height="76" width="503" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="76" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( mgr_type for all distinct mgr_type )"border="0" color="0" x="686" y="8" height="76" width="247" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

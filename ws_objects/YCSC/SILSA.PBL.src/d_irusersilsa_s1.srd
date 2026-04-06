@@ -1,0 +1,81 @@
+﻿$PBExportHeader$d_irusersilsa_s1.srd
+$PBExportComments$담당자별item실사재고추가(2001/10/08,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=item_no dbname="ineoymu.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="ineoymu.qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=eom_qoh dbname="eom_qoh" )
+ column=(type=char(2) updatewhereclause=yes name=groupitem_uom dbname="GroupItem.uom" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ retrieve="  SELECT ineoymu.item_no,   
+                   ineoymu.qa,   
+                   eom_qoh = isnull(itemloc.qoh, 0) - isnull(cday.rcpt, 0) + isnull(cday.issue, 0),  
+                   groupitem.uom,   
+                   groupitem.item_name  
+    FROM ineoymu  left outer join (
+                                                        select item_no, 
+                                                                   qa, 
+                                                                   rcpt = sum(rcpt_qty), 
+                                                                   issue = sum(issue_qty) 
+                                                          from ineoday
+                                                			  where cdate > rtrim(:as_year) + rtrim(:as_mon) + '99'
+                                                			    and loc_no = :as_loc 
+                                                				group by item_no, qa
+                                                        ) cday on ineoymu.item_no = cday.item_no 
+                                                        and ineoymu.qa = cday.qa
+                                inner join groupitem on ineoymu.item_no = groupitem.item_no
+                                inner join item on ineoymu.item_no = item.item_no 
+                                         and ineoymu.qa = item.qa
+                                left outer join itemloc on ineoymu.item_no = itemloc.item_no 
+                                               and ineoymu.qa = itemloc.qa 
+                                               and ineoymu.loc_no = itemloc.loc_no
+   WHERE :as_user <> '%' and
+         ( groupitem.use_flag <> 'C' ) and  
+         ( item.use_flag <> 'C' ) and  
+         ( ineoymu.cyear = rtrim(:as_year)) and  
+         ( ineoymu.cmon = rtrim(:as_mon)) and  
+         ( ( ineoymu.user_id = :as_user ) AND  
+         ( ineoymu.loc_no = :as_loc ) )    
+union
+  SELECT ineoym.item_no,   
+         ineoym.qa,   
+         eom_qoh = isnull(itemloc.qoh, 0) - isnull(cday.rcpt, 0) + isnull(cday.issue, 0),  
+         groupitem.uom,   
+         groupitem.item_name  
+    FROM ineoym left outer join itemloc on ineoym.item_no = itemloc.item_no 
+                                            and ineoym.qa = itemloc.qa 
+                                            and ineoym.loc_no = itemloc.loc_no
+                    			   inner join item on ineoym.item_no = item.item_no 
+                                           and ineoym.qa = item.qa
+                             inner join groupitem on ineoym.item_no = groupitem.item_no
+                             left outer join (
+                                                        select item_no, 
+                                                                  qa, 
+                                                                  rcpt = sum(rcpt_qty), 
+                                                                  issue = sum(issue_qty) 
+                                                         from ineoday
+                                                			  where cdate > rtrim(:as_year) + rtrim(:as_mon) + '99'
+                                                			    and loc_no = :as_loc 
+                                                		  group by item_no, qa
+                                                   ) cday on ineoym.item_no = cday.item_no and ineoym.qa = cday.qa
+   WHERE :as_user = '%' and
+         ( groupitem.use_flag <> 'C' ) and  
+         ( item.use_flag <> 'C' ) and  
+         ( ineoym.cyear = rtrim(:as_year)) and  
+         ( ineoym.cmon = rtrim(:as_mon)) and  
+         ( ( ineoym.loc_no = :as_loc ) )    
+" arguments=(("as_year", string),("as_mon", string),("as_user", string),("as_loc", string))  sort="groupitem_item_name A qa A " )
+text(band=header alignment="2" text="품목" border="6" color="33554432" x="9" y="8" height="60" width="727" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="745" y="8" height="60" width="672" html.valueishtml="0"  name=ineoymu_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="월말재고" border="6" color="33554432" x="1426" y="8" height="60" width="411" html.valueishtml="0"  name=eom_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코드" border="6" color="33554432" x="1847" y="8" height="60" width="421" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="727" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1426" y="8" height="60" width="411" format="#,##0.00" html.valueishtml="0"  name=eom_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="745" y="8" height="60" width="672" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="1" tabsequence=32766 border="0" color="33554432" x="1847" y="8" height="60" width="421" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

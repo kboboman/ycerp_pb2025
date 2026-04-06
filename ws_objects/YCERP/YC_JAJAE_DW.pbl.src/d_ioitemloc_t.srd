@@ -1,0 +1,90 @@
+﻿$PBExportHeader$d_ioitemloc_t.srd
+$PBExportComments$저장소별재고현황(1998/05/13,곽용덕)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(3) updatewhereclause=yes name=top15 dbname="top15" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="loc_name" )
+ column=(type=char(10) updatewhereclause=yes name=itemloc_loc_no dbname="loc_no" initial=" " )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="item_name" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" initial=" " )
+ column=(type=char(20) updatewhereclause=yes name=itemloc_qa dbname="qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=itemloc_qoh dbname="qoh" initial=" " )
+ column=(type=char(10) updatewhereclause=yes name=c_date dbname="c_date" )
+ retrieve="  SELECT top15     = (CASE WHEN itemloc.item_no IN ('PACSMBDK00','PACSMBDB00','PACSCACK00','PACSCACB00','PACSCLIB00'
+                                        ,'PAWSSTDK00','PAWSSTDK10','PAWSSTDB00','PAWSSTDB10','PAWSRUNB00'
+                                        ,'PAWSRUNK00','PACSMTBK00','PACSC2FK00','GBMZSMSZ0Z','PBCATL0K0S')
+                           THEN 'TOP' ELSE '' 
+                      END)
+       , loc_name  = location.loc_name
+       , loc_no    = itemloc.loc_no
+       , item_name = groupitem.item_name
+       , item_no   = itemloc.item_no
+       , qa        = itemloc.qa
+       , qoh       = isnull(itemloc.qoh, 0) - isnull(H.rcptqty, 0) + isnull(H.issueqty, 0)
+       , c_date    = convert(char(10),:as_date)
+    FROM itemloc inner join  groupitem on  itemloc.item_no     = groupitem.item_no
+                                     inner join  location on itemloc.loc_no      = location.loc_no
+                                     left outer join  (
+                                                                                SELECT ineoday.item_no
+                                                                                                 , ineoday.qa
+                                                                                                 , rcptqty  = isnull(sum(ineoday.rcpt_qty), 0)
+                                                                                                 , issueqty = isnull(sum(ineoday.issue_qty), 0)
+                                                                                              FROM ineoday
+                                                                                             WHERE ( ineoday.loc_no     = :arg_loc )   
+                                                                                               AND ( :arg_source = 'A' or ( ineoday.item_no LIKE :arg_source ) ) 
+                                                                                               AND NOT ( ineoday.item_no >= 'PZZZFZ' or ( ineoday.item_no LIKE 'M%' AND ineoday.item_no LIKE 'M[13]_[12]%') ) 
+                                                                                                         /* 비용품목 이거나, 원재료 품목코드중에서 M13, M12로 시작하는 것 */
+                                                                                               AND cdate         > :as_date
+                                                                                             GROUP BY ineoday.item_no, ineoday.qa
+                                                                      ) H on itemloc.item_no =  h.item_no and itemloc.qa  = h.qa
+   WHERE ( NOT ( groupitem.uom  = 'M2' AND groupitem.item_no LIKE 'PCY%')   ) 
+                        AND ( 
+                                          ( itemloc.loc_no    = :arg_loc                                  )
+                                              AND  ( :arg_source   = 'A' or ( groupitem.item_no LIKE :arg_source ) )
+                                              AND   NOT ( groupitem.item_no >= 'PZZZFZ' or ( groupitem.item_no LIKE 'M%' AND groupitem.item_no LIKE 'M[13]_[12]%') ) 
+                                      )
+/*
+    FROM itemloc
+       , groupitem
+       , location
+       , (SELECT ineoday.item_no
+               , ineoday.qa
+               , rcptqty  = isnull(sum(ineoday.rcpt_qty), 0)
+               , issueqty = isnull(sum(ineoday.issue_qty), 0)
+            FROM ineoday
+           WHERE ( ineoday.loc_no     = :arg_loc )   
+             AND ( :arg_source = 'A' or ( ineoday.item_no LIKE :arg_source ) ) 
+             AND NOT ( ineoday.item_no >= 'PZZZFZ' or ( ineoday.item_no LIKE 'M%' AND ineoday.item_no LIKE 'M[13]_[12]%') ) 
+                       /* 비용품목 이거나, 원재료 품목코드중에서 M13, M12로 시작하는 것 */
+             AND cdate         > :as_date
+           GROUP BY ineoday.item_no, ineoday.qa
+         ) H
+   WHERE ( itemloc.loc_no      = location.loc_no   ) 
+     AND ( itemloc.item_no     = groupitem.item_no ) 
+     AND ( itemloc.item_no    *= h.item_no         ) 
+     AND ( itemloc.qa         *= h.qa              )
+     AND ( NOT (groupitem.uom  = 'M2' AND groupitem.item_no LIKE 'PCY%')   ) 
+     AND ( ( itemloc.loc_no    = :arg_loc                                  ) AND  
+           ( :arg_source   = 'A' or ( groupitem.item_no LIKE :arg_source ) ) AND  
+           NOT ( groupitem.item_no >= 'PZZZFZ' or ( groupitem.item_no LIKE 'M%' AND groupitem.item_no LIKE 'M[13]_[12]%') ) 
+         )
+*/
+/* 비용품목들 SUBSTRING(ITEM_NO,1,6) >= 'PZZZFZ' AND SUBSTRING(ITEM_NO,1,6) < 'PZZZVR' */" arguments=(("arg_loc", string),("arg_source", string),("as_date", string))  sort="groupitem_item_name A itemloc_qa A " )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1975" y="8" height="60" width="690" html.valueishtml="0"  name=itemloc_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="현재고량" border="6" color="0" x="2674" y="8" height="60" width="526" html.valueishtml="0"  name=itemloc_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="512" y="8" height="60" width="1454" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="품목" border="6" color="0" x="169" y="8" height="60" width="334" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="TOP" border="6" color="0" x="9" y="8" height="60" width="151" html.valueishtml="0"  name=top15_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=6 alignment="2" tabsequence=20 border="0" color="0" x="1975" y="4" height="64" width="690" format="[general]" html.valueishtml="0"  name=itemloc_qa visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=30 border="0" color="0~tif (  itemloc_qoh < 0 , rgb(255, 0, 0) , rgb( 0,0,0))" x="2674" y="4" height="64" width="526" format="#,##0.00" html.valueishtml="0"  name=itemloc_qoh  tag="현재고량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=10 border="0" color="0" x="512" y="4" height="64" width="1454" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="169" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="4" height="64" width="151" format="[general]" html.valueishtml="0"  name=top15 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="169" y="4" height="60" width="334" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( itemloc_qoh )"border="0" color="0" x="2674" y="4" height="60" width="526" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

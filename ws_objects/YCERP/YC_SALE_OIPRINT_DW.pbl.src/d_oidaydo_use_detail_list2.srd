@@ -1,0 +1,67 @@
+﻿$PBExportHeader$d_oidaydo_use_detail_list2.srd
+$PBExportComments$의뢰품명 수량
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=224 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=92 color="8421504" )
+detail(height=96 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_name dbname="scene_name" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(10) updatewhereclause=yes name=inside dbname="inside" )
+ column=(type=decimal(8) updatewhereclause=yes name=calc_amt dbname="calc_amt" )
+ retrieve="       SELECT cust_name   = c.cust_name 
+              , scene_name = scene.scene_desc
+              , item_name   = g.item_name    
+ 	         ,  inside      = (case when v.cust_no IS NULL then '1.일반영업' else '2.계열사' end)
+              , calc_amt    = sum(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty) * dodet.price)/1000
+           FROM do   with (nolock)
+                INNER JOIN dodet       with (nolock) ON do.do_no      = dodet.do_no 
+                LEFT OUTER JOIN customer  C with (nolock) ON do.cust_no    = c.cust_no
+                LEFT OUTER JOIN login     L with (nolock) ON c.salesman    = l.user_id
+                LEFT OUTER JOIN v_cust_inside  V          ON do.cust_no    = v.cust_no
+                LEFT OUTER JOIN groupitem G with (nolock) ON dodet.item_no = g.item_no 
+                LEFT OUTER JOIN (                
+                                                    select a.item_no, a.category, a.item_name, a.type, b.item_nm
+                                                      from itemtop10 a with(nolock) inner join (SELECT item_nm, item_cd  FROM codemst with(nolock) WHERE type = 'ITEMTOP10' AND use_yn = 'Y' ) b on a.category = b.item_cd                
+                                                ) i ON dodet.item_no = i.item_no    
+               LEFT OUTER JOIN scene with(nolock) on do.spot_code = scene.scene_code
+          WHERE  do.cust_no = :as_cust_no
+         and ( do.do_date   BETWEEN convert(datetime, :as_year + '01' + ' 00:00:00') AND convert(datetime, convert(char(8), dateadd(day,-1, dateadd(month, 1, convert(date, :as_year + '01') ) ), 112) + ' 23:59:59') )
+          and (case when v.cust_no IS NULL then '1' else '2' end) like :as_inside
+          and isnull(i.item_nm,'99) 미분류') = :as_category
+  group by (case when v.cust_no IS NULL then '1.일반영업' else '2.계열사' end), c.cust_name, scene.scene_desc, g.item_name" arguments=(("as_year", string),("as_inside", string),("as_category", string),("as_cust_no", string))  sort="inside A cust_name A scene_name A " )
+line(band=header x1="59" y1="112" x2="59" y2="240"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="293" y1="112" x2="293" y2="240"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1810" y1="112" x2="1810" y2="240"  name=l_17 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="현장명" border="0" color="33554432" x="448" y="136" height="60" width="1266" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="금 액(천원)" border="0" color="33554432" x="3291" y="136" height="60" width="347" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="3781" y1="112" x2="3781" y2="240"  name=l_31 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3154" y1="112" x2="3154" y2="240"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="품목명" border="0" color="33554432" x="1842" y="136" height="60" width="1285" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="59" y1="220" x2="3781" y2="220"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="59" y1="112" x2="3781" y2="112"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+button(band=header text=""filename="C:\bmp\PRINT.BMP"action="0" border="0" color="0" x="3378" y="4" height="104" width="201" vtextalign="0" htextalign="0"  name=b_1 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+button(band=header text=""filename="C:\bmp\U_EXCEL.BMP"action="0" border="0" color="0" x="3579" y="4" height="104" width="201" vtextalign="0" htextalign="0"  name=b_2 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+line(band=detail x1="59" y1="0" x2="59" y2="128"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1815" y1="92" x2="3785" y2="92"  name=l_24 visible="1~tif( scene_name[0] = scene_name[1], 1, 0)" pen.style="2" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="293" y1="0" x2="293" y2="128"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1810" y1="0" x2="1810" y2="128"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="320" y="16" height="60" width="1467" format="[general]" html.valueishtml="0"  name=scene_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="91" y="16" height="60" width="178" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="3191" y="16" height="60" width="558" format="#,##0" html.valueishtml="0"  name=calc_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="3781" y1="0" x2="3781" y2="128"  name=l_28 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3154" y1="0" x2="3154" y2="128"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1829" y="16" height="60" width="1312" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="69" y1="92" x2="3790" y2="92"  name=l_3 visible="1~tif( scene_name[0] =  scene_name[1], 0, 1)" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="59" y1="0" x2="59" y2="128"  name=l_20 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="293" y1="0" x2="293" y2="128"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=footer alignment="1" text="총계" border="0" color="33554432" x="87" y="8" height="60" width="178" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=footer x1="3781" y1="0" x2="3781" y2="128"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(calc_amt for all)"border="0" color="33554432" x="2423" y="4" height="72" width="1335" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=footer x1="59" y1="0" x2="3781" y2="0"  name=l_26 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="59" y1="84" x2="3781" y2="84"  name=l_27 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+
+sparse(names="scene_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

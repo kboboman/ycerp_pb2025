@@ -1,0 +1,154 @@
+﻿$PBExportHeader$d_routsaledet_status.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(14) update=yes updatewhereclause=yes key=yes name=sale_no dbname="sale_no" )
+ column=(type=long update=yes updatewhereclause=yes key=yes name=seq_no dbname="seq_no" )
+ column=(type=datetime update=yes updatewhereclause=yes name=order_date dbname="order_date" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=datetime updatewhereclause=yes name=napgi_date dbname="napgi_date" )
+ column=(type=long updatewhereclause=yes name=napgi_chk dbname="napgi_chk" )
+ column=(type=decimal(2) updatewhereclause=yes name=order_qty dbname="order_qty" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=job1 dbname="job1" )
+ column=(type=char(10) updatewhereclause=yes name=w1nm dbname="w1nm" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=job2 dbname="job2" )
+ column=(type=char(10) updatewhereclause=yes name=w2nm dbname="w2nm" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=job3 dbname="job3" )
+ column=(type=char(10) updatewhereclause=yes name=w3nm dbname="w3nm" )
+ column=(type=char(50) updatewhereclause=yes name=sd_rem dbname="sd_rem" )
+ retrieve="  SELECT sale_no    = rc.sale_no
+       , seq_no     = rc.seq_no
+       , order_date = rc.order_date
+       , user_name  = l.user_name
+       , cust_name  = c.cust_name
+       , scene_desc = s1.scene_desc
+       , item_no    = sd.item_no
+       , item_name  = g.item_name
+       , qa         = sd.qa 
+
+       , napgi_date = s.due_date
+       , napgi_chk  = datediff(d, s.order_date, s.due_date)
+       , order_qty  = sd.order_qty
+
+       , job1       = rc.job1
+       , w1nm       = w1.work_name
+
+       , job2       = rc.job2
+       , w2nm       = w2.work_name
+
+       , job3       = rc.job3
+       , w3nm       = w3.work_name
+
+       , sd_rem     = sd.rem
+    FROM routcheck RC
+         LEFT OUTER JOIN sale      S ON rc.sale_no   = s.order_no
+         LEFT OUTER JOIN saledet  SD ON rc.sale_no   = sd.order_no AND rc.seq_no = sd.seq_no
+         LEFT OUTER JOIN customer  C ON s.cust_no    = c.cust_no
+         LEFT OUTER JOIN login     L ON c.salesman   = l.user_id
+         LEFT OUTER JOIN groupitem G ON sd.item_no   = g.item_no
+         LEFT OUTER JOIN scene    S1 ON s.scene_code = s1.scene_code
+         LEFT OUTER JOIN wc       W1 ON rc.job1      = w1.work_no
+         LEFT OUTER JOIN wc       W2 ON rc.job2      = w2.work_no
+         LEFT OUTER JOIN wc       W3 ON rc.job3      = w3.work_no
+         LEFT OUTER JOIN ( 
+              SELECT a.user_name
+                   , a.cust_name
+                   , a.scene_desc
+                   , a.order_no
+                   , a.seq_no
+                   , a.item_no
+                   , a.qa   
+                   , a.qa19 
+                   , wc1 = max((case when r.operation = 1 then r.wc_no else null end))
+                   , wc2 = max((case when r.operation = 2 then r.wc_no else null end))
+                   , wc3 = max((case when r.operation = 3 then r.wc_no else null end))
+                FROM (
+                      SELECT l.user_name
+                           , c.cust_name
+                           , s.scene_desc
+                           , a.order_no
+                           , a.seq_no
+                           , a.item_no
+                           , qa   = left(a.qa ,14) + '00000'
+                           , qa19 = a.qa
+                        FROM saledet A
+                             LEFT OUTER JOIN sale       B ON a.order_no   = b.order_no
+                             LEFT OUTER JOIN customer   C ON b.cust_no    = c.cust_no
+                             LEFT OUTER JOIN scene      S ON b.scene_code = s.scene_code
+                             LEFT OUTER JOIN login      L ON c.salesman   = l.user_id
+                       WHERE (b.order_date between :as_sdate AND :as_edate)
+/*                         AND (b.open_close       <> 'C') 한도초과*/
+                           AND (b.open_close       = 'O')
+                         AND (b.tracking          = 'Y')
+                         AND (a.order_qty - a.rlse_qty > 0 )
+                         AND ((:as_custno  = '%' AND b.cust_no    LIKE '%') OR
+                              (:as_custno <> '%' AND b.cust_no       = :as_custno)
+                             )
+                         AND ((:as_scene   = '%' AND b.scene_code LIKE '%') OR
+                              (:as_scene  <> '%' AND b.scene_code    = :as_scene )
+                             )
+                         AND NOT EXISTS (SELECT * FROM routcheck WHERE sale_no = a.order_no AND seq_no = a.seq_no AND del_yn = 'Y')
+                     ) A
+                     LEFT OUTER JOIN rout R ON a.item_no = r.item_no AND a.qa = r.qa
+               GROUP BY a.user_name, a.cust_name, a.scene_desc, a.order_no, a.seq_no, a.item_no, a.qa, a.qa19
+         ) A  ON rc.sale_no = a.order_no AND rc.seq_no = a.seq_no
+   WHERE rc.order_date between :as_sdate AND :as_edate
+     AND ((:as_work1 <> 'Y' )  OR
+          (:as_work1  = 'Y' AND 
+           NOT ((w1.work_name = '' OR w1.work_name LIKE '성형%' OR w1.work_name LIKE '화성%') AND w2.work_name = '')
+          )
+         )
+" update="routcheck" updatewhere=0 updatekeyinplace=no arguments=(("as_custno", string),("as_scene", string),("as_sdate", string),("as_edate", string),("as_work1", string))  sort="cust_name A scene_desc A item_name A qa A sale_no A seq_no A " )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="56" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="33554432" x="4050" y="8" height="56" width="686" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문수량" border="6" color="16777215" x="1440" y="8" height="56" width="247" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="128" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="864" y="8" height="56" width="567" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="178" y="8" height="56" width="677" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="4745" y="8" height="56" width="261" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="33554432" x="5015" y="8" height="56" width="416" html.valueishtml="0"  name=sale_no_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순번" border="6" color="33554432" x="5440" y="8" height="56" width="119" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="0" x="5568" y="8" height="56" width="1339" html.valueishtml="0"  name=sd_rem_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장3" border="6" color="16777215" x="3191" y="8" height="56" width="334" html.valueishtml="0"  name=w3nm_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="32896" )
+text(band=header alignment="2" text="납기일" border="6" color="16777215" x="2021" y="8" height="56" width="293" html.valueishtml="0"  name=napgi_date_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="32768" )
+text(band=header alignment="2" text="주문일자" border="6" color="16777215" x="1696" y="8" height="56" width="315" html.valueishtml="0"  name=order_date_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="128" )
+text(band=header alignment="2" text="작업장1" border="6" color="33554432" x="2505" y="8" height="56" width="338" html.valueishtml="0"  name=w1nm_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="공정일" border="6" color="16777215" x="2322" y="8" height="56" width="174" html.valueishtml="0"  name=napgi_chk_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="128" )
+text(band=header alignment="2" text="작업장2" border="6" color="33554432" x="2853" y="8" height="56" width="329" html.valueishtml="0"  name=w2nm_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="거래처" border="6" color="33554432" x="3534" y="8" height="56" width="507" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="56" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="4050" y="8" height="56" width="686" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="1440" y="8" height="56" width="247" format="#,##0 " html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="864" y="8" height="56" width="567" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="178" y="8" height="56" width="677" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="4745" y="8" height="56" width="261" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="5015" y="8" height="56" width="416" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="5440" y="8" height="56" width="119" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432" x="5568" y="8" height="56" width="1339" format="[general]" html.valueishtml="0"  name=sd_rem visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="2021" y="8" height="56" width="293" format="yy/mm/dd" html.valueishtml="0"  name=napgi_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="2505" y="8" height="56" width="338" format="[general]" html.valueishtml="0"  name=w1nm visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1696" y="8" height="56" width="315" format="yy/mm/dd" html.valueishtml="0"  name=order_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="2322" y="8" height="56" width="174" format="[general]" html.valueishtml="0"  name=napgi_chk visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="2853" y="8" height="56" width="329" format="[general]" html.valueishtml="0"  name=w2nm visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="33554432" x="3191" y="8" height="56" width="334" format="[general]" html.valueishtml="0"  name=w3nm visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="3534" y="8" height="56" width="507" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="count( w1nm for all distinct w1nm )"border="0" color="33554432" x="2505" y="8" height="60" width="338" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="max( napgi_date  for all )"border="0" color="33554432" x="2021" y="8" height="60" width="293" format="yy/mm/dd" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( w2nm for all distinct w2nm )"border="0" color="33554432" x="2853" y="8" height="60" width="329" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( scene_desc for all distinct cust_name,  scene_desc )"border="0" color="33554432" x="4050" y="8" height="60" width="686" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="33554432" x="3534" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( w3nm for all distinct w3nm )"border="0" color="33554432" x="3191" y="8" height="60" width="334" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( user_name for all distinct user_name )"border="0" color="33554432" x="4745" y="8" height="60" width="261" format="[GENERAL]" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="60" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( qa for all distinct item_name, qa )"border="0" color="33554432" x="864" y="8" height="60" width="567" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( item_name for all distinct item_name )"border="0" color="33554432" x="178" y="8" height="60" width="677" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="item_name	qa	napgi_date	w1nm	w2nm	w3nm")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

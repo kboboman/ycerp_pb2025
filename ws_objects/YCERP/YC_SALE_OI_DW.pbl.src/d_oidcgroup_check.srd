@@ -1,0 +1,55 @@
+﻿$PBExportHeader$d_oidcgroup_check.srd
+$PBExportComments$매출할인 금액과 출고금액 체크
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cat dbname="cat" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(14) updatewhereclause=yes name=do_no dbname="do_no" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_total dbname="do_total" )
+ column=(type=char(10) updatewhereclause=yes name=do_date dbname="do_date" )
+ column=(type=char(14) updatewhereclause=yes name=dc_groupno dbname="dc_groupno" )
+ retrieve="   SELECT a.cat
+        , a.cust_no
+        , a.cust_name
+        , a.do_no
+        , a.do_total
+        , do_date = convert(char(10),a.do_date,111)
+        , a.dc_groupno
+     FROM (
+          SELECT CAT='출고',do.cust_no, c.cust_name, do.do_no, do.do_total, do.do_date, dc_groupno = do.invoice_print
+            FROM do 
+                 LEFT OUTER JOIN customer    c ON do.cust_no    = c.cust_no
+           WHERE do.do_date BETWEEN :as_sdate and :as_edate AND DO.rem LIKE '매출할인_결재%'
+          
+          UNION ALL
+          
+          SELECT CAT='할인',a.cust_no, c.cust_name, DC_DO_NO = b.do_no, price = round(b.price * 1.1, 0), a.dc_appdt5, a.dc_groupno
+            FROM dc_group a 
+                 LEFT OUTER JOIN dc_groupdet b ON a.dc_groupno = b.dc_groupno
+                 LEFT OUTER JOIN customer    c ON a.cust_no    = c.cust_no
+           WHERE a.dc_appdt5 is not null
+             AND a.dc_date   BETWEEN :as_sdate and :as_edate
+          ) A
+    ORDER BY cust_name, do_no, cat
+    " arguments=(("as_sdate", string),("as_edate", string)) )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=cat_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="33554432" x="178" y="8" height="60" width="224" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="411" y="8" height="60" width="882" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고번호" border="6" color="33554432" x="1303" y="8" height="60" width="480" html.valueishtml="0"  name=do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="금액" border="6" color="33554432" x="1792" y="8" height="60" width="384" html.valueishtml="0"  name=do_total_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고/할인" border="6" color="33554432" x="2185" y="8" height="60" width="352" html.valueishtml="0"  name=do_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="계산서/할인번호" border="6" color="33554432" x="2546" y="8" height="60" width="480" html.valueishtml="0"  name=dc_groupno_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=cat visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="178" y="8" height="72" width="224" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="411" y="8" height="72" width="882" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1303" y="8" height="72" width="480" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1792" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=do_total visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2185" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=do_date visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="2546" y="8" height="72" width="480" format="[general]" html.valueishtml="0"  name=dc_groupno visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,73 @@
+﻿$PBExportHeader$d_oecustdiary_s1.srd
+$PBExportComments$고객방문일지판매거래처선택2(1998/03/24, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=diary_date dbname="custdiary.diary_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes key=yes name=emp_no dbname="custdiary.emp_no" )
+ column=(type=long updatewhereclause=yes key=yes name=seq_no dbname="custdiary.seq_no" )
+ column=(type=char(1) updatewhereclause=yes key=yes name=urgent dbname="custdiary.urgent" values="	Y/	N" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=process_flag dbname="custdiary.process_flag" values="	Y/	N" )
+ column=(type=char(100) updatewhereclause=yes name=desc1 dbname="custdiary.desc1" )
+ column=(type=char(10) updatewhereclause=yes name=cust_no dbname="custdiary.cust_no" )
+ column=(type=char(60) updatewhereclause=yes name=cust_name dbname="custdiary.cust_name" )
+ column=(type=char(60) updatewhereclause=yes name=bdcust_name dbname="custdiary.bdcust_name" )
+ column=(type=char(30) updatewhereclause=yes name=team_team_name dbname="team.team_name" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name dbname="login.user_name" )
+ column=(type=char(1) updatewhereclause=yes name=chk_team dbname="chk_team" values="	Y/	N" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=approve_team dbname="custdiary.approve_team" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=approve_top dbname="custdiary.approve_top" )
+ column=(type=char(1) updatewhereclause=yes name=prt_chk dbname="prt_chk" initial="N" values="	Y/	N" )
+ retrieve="  SELECT custdiary.diary_date,   
+         custdiary.emp_no,   
+         custdiary.seq_no,   
+         custdiary.urgent,   
+         custdiary.process_flag,   
+         custdiary.desc1 ,   
+         custdiary.cust_no,   
+         custdiary.cust_name,   
+         custdiary.bdcust_name,   
+         team.team_name,   
+         login.user_name,   
+         chk_team = ( case when ( custdiary.approve_team is null ) or (  custdiary.approve_team = '') then 'N' else 'Y' end ),   
+         custdiary.approve_team,   
+         custdiary.approve_top,
+			' ' as prt_chk  
+   from custdiary left outer join team on custdiary.team_code = team.team_code
+		 		   left outer join login on custdiary.emp_no = login.user_id 
+   WHERE       ( ( custdiary.emp_no like :as_user ) AND  
+         (('%' = :as_chk) OR ( custdiary.process_flag = :as_chk ) ) AND
+			( ( ( custdiary.cust_name like :as_cust ) or ( :as_cust = '%' and custdiary.cust_name is null ) ) 
+				and ( ( custdiary.bdcust_name like :as_com ) or ( :as_com = '%' and custdiary.bdcust_name is null ) )
+				and ( ( custdiary.desc1 like :as_title ) or ( :as_title = '%' and custdiary.desc1 is null ) ) ) AND
+			( ( (:as_all = 'Y') OR ( :as_all = 'N' AND custdiary.diary_date BETWEEN :ad_start and :ad_end) ) ) )
+" update="custdiary" updatewhere=0 updatekeyinplace=yes arguments=(("as_user", string),("as_chk", string),("as_cust", string),("as_com", string),("ad_start", date),("ad_end", date),("as_all", string),("as_title", string))  sort="team_team_name A login_user_name A diary_date D " )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="293" y="12" height="60" width="215" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="팀" border="6" color="0" x="14" y="12" height="60" width="261" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="방문일자" border="6" color="0" x="663" y="12" height="60" width="343" html.valueishtml="0"  name=diary_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="팀장" border="6" color="0" x="1161" y="12" height="60" width="288" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="임원" border="6" color="0" x="1467" y="12" height="60" width="288" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="1774" y="12" height="60" width="786" html.valueishtml="0"  name=t_3  tag="거래처" visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="제목" border="6" color="0" x="3383" y="12" height="60" width="1774" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="2578" y="12" height="60" width="786" html.valueishtml="0"  name=t_7  tag="설계처" visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="긴급" border="6" color="0" x="1029" y="12" height="60" width="110" html.valueishtml="0"  name=urgent_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="출력" border="6" color="0" x="530" y="12" height="60" width="110" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="4" color="0" x="2578" y="4" height="68" width="786" format="[general]" html.valueishtml="0"  name=bdcust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=8 alignment="0" tabsequence=50 border="4" color="0" x="1774" y="4" height="68" width="786" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="4" color="0~tif (  process_flag = ~"Y~" , rgb(255,255,255), rgb(0,0,0))" x="1559" y="4" height="68" width="197" format="[general]" html.valueishtml="0"  name=approve_top visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79741120~tif  (  process_flag = ~"Y~" , rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="4" color="0~tif (   chk_team = ~"Y~" , rgb(255,255,255), rgb(0,0,0))" x="1248" y="4" height="68" width="197" format="[general]" html.valueishtml="0"  name=approve_team visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79219928~tif  (   chk_team = ~"Y~" , rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="4" color="0" x="293" y="4" height="68" width="215" format="[general]" html.valueishtml="0"  name=login_user_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="4" color="0" x="14" y="4" height="68" width="261" format="[general]" html.valueishtml="0"  name=team_team_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=15 alignment="2" tabsequence=10 border="4" color="0" x="530" y="8" height="60" width="105" format="[general]" html.valueishtml="0"  name=prt_chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79219928~tif ( prt_chk = 'Y' , RGB(255,0,0), 78682240)" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="4" color="0" x="1033" y="8" height="60" width="101" format="[general]" html.valueishtml="0"  name=urgent  tag="긴급여부(Y/N)" visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79219928~tif ( urgent = 'Y' , RGB(255,0,0), 78682240)" )
+column(band=detail id=12 alignment="2" tabsequence=30 border="4" color="0" x="1157" y="8" height="60" width="69" format="[general]" html.valueishtml="0"  name=chk_team visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79219928" )
+column(band=detail id=5 alignment="2" tabsequence=40 border="4" color="0" x="1467" y="8" height="60" width="69" format="[general]" html.valueishtml="0"  name=process_flag visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79219928" )
+column(band=detail id=1 alignment="2" tabsequence=20 border="4" color="0" x="663" y="4" height="68" width="343" format="yyyy/mm/dd" html.valueishtml="0"  name=diary_date  tag="방문일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=6 alignment="0" tabsequence=60 border="4" color="0" x="3383" y="4" height="68" width="1774" format="[general]" html.valueishtml="0"  name=desc1 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="67108864~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="14" y="8" height="60" width="261" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="team_team_name	login_user_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

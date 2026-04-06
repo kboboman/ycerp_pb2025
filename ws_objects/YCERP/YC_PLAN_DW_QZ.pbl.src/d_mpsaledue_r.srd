@@ -1,0 +1,147 @@
+﻿$PBExportHeader$d_mpsaledue_r.srd
+$PBExportComments$납기일별 생산계획조회보고서(1998/05/06,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=192 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="536870912" )
+detail(height=72 color="553648127" )
+table(column=(type=datetime updatewhereclause=yes name=routtempnew_work_date dbname="RoutTempNew.work_date" )
+ column=(type=long updatewhereclause=yes name=routtempnew_division dbname="RoutTempNew.division" )
+ column=(type=char(10) updatewhereclause=yes name=routtempnew_wc_no dbname="RoutTempNew.wc_no" )
+ column=(type=long updatewhereclause=yes name=routtempnew_operation dbname="RoutTempNew.operation" )
+ column=(type=char(14) updatewhereclause=yes name=routtempnew_sale_no dbname="RoutTempNew.sale_no" )
+ column=(type=long updatewhereclause=yes name=routtempnew_seq_no dbname="RoutTempNew.seq_no" )
+ column=(type=datetime updatewhereclause=yes name=routtempnew_napgi_date dbname="RoutTempNew.napgi_date" )
+ column=(type=decimal(4) updatewhereclause=yes name=routtempnew_order_qty dbname="RoutTempNew.order_qty" )
+ column=(type=char(10) updatewhereclause=yes name=routtempnew_assy_item dbname="RoutTempNew.assy_item" )
+ column=(type=char(20) updatewhereclause=yes name=routtempnew_assy_qa dbname="RoutTempNew.assy_qa" )
+ column=(type=char(2) updatewhereclause=yes name=routtempnew_uom dbname="RoutTempNew.uom" )
+ column=(type=char(2) updatewhereclause=yes name=cuom dbname="cuom" )
+ column=(type=decimal(4) updatewhereclause=yes name=routtempnew_plan_qty dbname="RoutTempNew.plan_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=routtempnew_make_qty dbname="RoutTempNew.make_qty" )
+ column=(type=char(50) updatewhereclause=yes name=routtempnew_rem dbname="RoutTempNew.rem" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ column=(type=char(10) updatewhereclause=yes name=color_color_name dbname="color.color_name" )
+ column=(type=char(10) updatewhereclause=yes name=wc_work_name dbname="wc.work_name" )
+ column=(type=char(4) updatewhereclause=yes name=pri dbname="pri" )
+ column=(type=char(17) updatewhereclause=yes name=planno dbname="planno" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ retrieve="  SELECT routtempnew.work_date,   
+         routtempnew.division,   
+         routtempnew.wc_no,   
+         routtempnew.operation,   
+         routtempnew.sale_no,   
+         routtempnew.seq_no,   
+         routtempnew.napgi_date,   
+         routtempnew.order_qty,   
+         routtempnew.assy_item,   
+         routtempnew.assy_qa,   
+         routtempnew.uom,   
+         cuom = dbo.uf_getuom(routtempnew.uom),   
+         routtempnew.plan_qty,   
+         routtempnew.make_qty,   
+         routtempnew.rem,   
+         customer.cust_name,   
+         scene.scene_desc,   
+         color.color_name,   
+         wc.work_name,   
+         pri = (case when mpsdet.priority is null then '미' 
+					else (case when mpsdet.mpsorder_order is null then right(  '  ' + convert(char(2), mpsdet.priority), 2 ) 
+									else right(  '  ' + convert(char(2), mpsdet.order_seq), 2 ) end ) end ),   
+         planno = ( case when mpsdet.order_no is null then 'ZZZZZZZZZZZZZZZZZ' 
+							else (case when mpsdet.mpsorder_order is null then mpsdet.order_no 
+									else mpsdet.mpsorder_order end ) end),   
+         groupitem.item_name
+    FROM routtempnew with(nolock) LEFT OUTER JOIN mpsdet with(nolock) on          routtempnew.sale_no = mpsdet.sale_no and  
+                                                                                                                                              routtempnew.seq_no = mpsdet.seq_no and  
+                                                                                                                                              routtempnew.division = mpsdet.division and  
+                                                                                                                                              routtempnew.operation = mpsdet.operation and  
+                                                                                                                                              routtempnew.wc_no = mpsdet.wc_no      
+                                      LEFT OUTER JOIN customer with(nolock) on routtempnew.cust_no = customer.cust_no
+                                      LEFT OUTER JOIN scene with(nolock) on  routtempnew.scene_code = scene.scene_code and  
+                                                                                                              routtempnew.cust_no = scene.cust_no
+                                      LEFT OUTER JOIN color with(nolock) on routtempnew.item_color = color.color_code
+                                      LEFT OUTER JOIN groupitem with(nolock) on routtempnew.assy_item = groupitem.item_no
+                                      INNER JOIN wc with(nolock) on routtempnew.wc_no = wc.work_no
+   WHERE     
+/*         
+    FROM routtempnew,   
+         customer,   
+         scene,   
+         color,   
+         wc,   
+         mpsdet,   
+         groupitem  
+   WHERE ( routtempnew.cust_no *= customer.cust_no) and  
+         ( routtempnew.scene_code *= scene.scene_code) and  
+         ( routtempnew.cust_no *= scene.cust_no) and  
+         ( routtempnew.item_color *= color.color_code) and  
+         ( routtempnew.sale_no *= mpsdet.sale_no) and  
+         ( routtempnew.seq_no *= mpsdet.seq_no) and  
+         ( routtempnew.division *= mpsdet.division) and  
+         ( routtempnew.operation *= mpsdet.operation) and  
+         ( routtempnew.assy_item *= groupitem.item_no) and  
+         ( routtempnew.wc_no *= mpsdet.wc_no) and  
+         ( routtempnew.wc_no = wc.work_no ) and  
+*/         
+         ( wc.work_name like :as_wc ) and  
+         ( ( routtempnew.napgi_date between :as_start and :as_end ) AND  
+         ( routtempnew.plan_flag like :as_flag ) and
+			( routtempnew.area_no = :as_area ) )    " arguments=(("as_wc", string),("as_start", date),("as_end", date),("as_flag", string),("as_area", string))  sort="routtempnew_napgi_date A routtempnew_wc_no A planno A pri A routtempnew_work_date A routtempnew_operation A routtempnew_sale_no A routtempnew_seq_no A routtempnew_assy_qa A " )
+group(level=1 header.height=0 trailer.height=0 by=("routtempnew_napgi_date" ) newpage=yes header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=180 trailer.height=0 by=("routtempnew_wc_no" ) header.color="553648127" trailer.color="536870912" )
+compute(band=header alignment="0" expression="'작성일:' + STRING(today(), 'YYYY/MM/DD')"border="0" color="0" x="4357" y="64" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'페이지:' + page() + ' of ' + pageCount()"border="0" color="0" x="4357" y="132" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="2" expression="string(   routtempnew_napgi_date , ~"yyyy년 mm월 dd일 납기 생산계획~")"border="0" color="0" x="1207" y="12" height="108" width="2592" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-18" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="1207" y1="124" x2="3799" y2="124"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header x1="1207" y1="132" x2="3799" y2="132"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+rectangle(band=header.2 x="14" y="104" height="76" width="4891"  name=r_1 visible="1" brush.hatch="6" brush.color="12632256" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="0" )
+text(band=header.2 alignment="2" text="예정일" border="0" color="0" x="347" y="112" height="56" width="192" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="작업장 :" border="0" color="0" x="9" y="8" height="72" width="361" html.valueishtml="0"  name=routtempnew_wc_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header.2 id=19 alignment="0" tabsequence=32766 border="0" color="0" x="379" y="8" height="72" width="1330" format="[general]" html.valueishtml="0"  name=wc_work_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header.2 alignment="2" text="수주번호" border="0" color="0" x="549" y="112" height="56" width="434" html.valueishtml="0"  name=routtempnew_sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header.2 x1="544" y1="104" x2="544" y2="232"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="983" y1="104" x2="983" y2="232"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="347" y1="104" x2="347" y2="232"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="229" y1="104" x2="229" y2="232"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header.2 alignment="2" text="NO" border="0" color="0" x="238" y="112" height="56" width="101" html.valueishtml="0"  name=routtempnew_operation_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="색상" border="0" color="0" x="4055" y="112" height="56" width="288" html.valueishtml="0"  name=routtempnew_item_color_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="업   체   명" border="0" color="0" x="987" y="112" height="56" width="896" html.valueishtml="0"  name=routtempnew_cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header.2 x1="4050" y1="104" x2="4050" y2="232"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="4343" y1="104" x2="4343" y2="232"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="1888" y1="104" x2="1888" y2="232"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="2469" y1="104" x2="2469" y2="232"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="3008" y1="104" x2="3008" y2="232"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header.2 alignment="2" text="규격" border="0" color="0" x="2473" y="112" height="56" width="535" html.valueishtml="0"  name=routtempnew_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="비          고" border="0" color="0" x="4347" y="112" height="60" width="549" html.valueishtml="0"  name=routtempnew_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="주문수량" border="0" color="0" x="3017" y="112" height="56" width="242" html.valueishtml="0"  name=routtempnew_order_qty_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="계획수량" border="0" color="0" x="3278" y="112" height="56" width="242" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="생산수량" border="0" color="0" x="3799" y="112" height="56" width="242" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header.2 x1="3790" y1="104" x2="3790" y2="232"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="3529" y1="104" x2="3529" y2="232"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header.2 x1="3269" y1="104" x2="3269" y2="232"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header.2 alignment="2" text="수주물품" border="0" color="0" x="1897" y="112" height="60" width="567" html.valueishtml="0"  name=item_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="환산수량" border="0" color="0" x="3538" y="112" height="56" width="242" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header.2 alignment="2" text="납기일" border="0" color="0" x="27" y="112" height="56" width="192" html.valueishtml="0"  name=routtempnew_napgi_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="347" y="8" height="60" width="192" format="mm/dd" html.valueishtml="0"  name=routtempnew_work_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="14" y1="68" x2="4896" y2="68"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="1" background.color="553648127" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="0" x="1353~t763  + len( trim(  customer_cust_name ) ) * 29.5" y="116" height="56" width="1079~tlen( trim(  scene_scene_desc ) ) * 29.5" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="궁서체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="549" y="8" height="60" width="434" format="[general]" html.valueishtml="0"  name=routtempnew_sale_no  tag="수주번호" visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="0" x="238" y="8" height="60" width="101" format="[general]" html.valueishtml="0"  name=pri visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="0" x="4055" y="8" height="60" width="288" format="[general]" html.valueishtml="0"  name=color_color_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0" x="3794" y="8" height="60" width="242" format="#,##0" html.valueishtml="0"  name=routtempnew_make_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="3017" y="8" height="60" width="242" format="#,##0" html.valueishtml="0"  name=routtempnew_order_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="0" x="4347" y="8" height="60" width="549" format="[general]" html.valueishtml="0"  name=routtempnew_rem visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="trim( customer_cust_name ) + if ( isnull(scene_scene_desc), ~"~", ~"[~" + trim( scene_scene_desc ) + ~"]~")"border="0" color="0" x="987" y="8" height="60" width="896" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="궁서체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="2473" y="8" height="60" width="535" format="[general]" html.valueishtml="0"  name=routtempnew_assy_qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=22 alignment="0" tabsequence=32766 border="0" color="0" x="1897" y="8" height="60" width="567" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="3278" y="8" height="60" width="242" format="#,##0" html.valueishtml="0"  name=routtempnew_plan_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression=" if(left(  routtempnew_assy_item   ,1) = 'P' and mid(  routtempnew_assy_item  , 3,1) = 'Y' and (mid(  routtempnew_assy_item  , 7,1) = 'A' or mid(  routtempnew_assy_item , 7,1) = 'B' or mid(  routtempnew_assy_item , 7,1) = 'C' or mid(  routtempnew_assy_item , 7,1) = 'D'),    routtempnew_plan_qty , if(  routtempnew_uom = 'M2' or  routtempnew_uom = 'SS' ,truncate( long(mid(   routtempnew_assy_qa ,5,4)) * long(mid(   routtempnew_assy_qa ,10,4)) *       routtempnew_plan_qty / 1000000, 2), if(  routtempnew_uom = 'M', if (   routtempnew_plan_qty < 0 , truncate(long(mid(  routtempnew_assy_qa , 15,5)) *    routtempnew_plan_qty / 1000 - 0.00001,2), truncate(long(mid(  routtempnew_assy_qa , 15,5)) *   routtempnew_plan_qty / 1000 + 0.00001,2)) ,      routtempnew_plan_qty ))) "border="0" color="0" x="3538" y="8" height="60" width="242" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="27" y="8" height="60" width="192" format="mm/dd" html.valueishtml="0"  name=routtempnew_napgi_date  tag="납기일자" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=footer alignment="0" text="(주) 유창" border="0" color="0" x="23" y="8" height="60" width="283" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=footer alignment="0" text="QP-03-03" border="0" color="0" x="4631" y="4" height="60" width="270" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="routtempnew_work_date")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

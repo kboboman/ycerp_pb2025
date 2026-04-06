@@ -1,0 +1,85 @@
+﻿$PBExportHeader$d_orsale_close.srd
+$PBExportComments$수수마감요청
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=92 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(14) update=yes updatewhereclause=yes name=order_no dbname="order_no" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=datetime update=yes updatewhereclause=yes name=input_date dbname="input_date" )
+ column=(type=char(10) updatewhereclause=yes name=recv_id dbname="recv_id" )
+ column=(type=char(10) updatewhereclause=yes name=recv_name dbname="recv_name" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept_user dbname="accept_user" )
+ column=(type=char(10) updatewhereclause=yes name=accept_name dbname="accept_name" )
+ column=(type=datetime update=yes updatewhereclause=yes name=accept_date dbname="accept_date" )
+ column=(type=char(1) updatewhereclause=yes name=open_close dbname="open_close" values="	C/	O" )
+ column=(type=char(1) updatewhereclause=yes name=close_type dbname="close_type" values="수동	M/자동	A/" )
+ column=(type=datetime updatewhereclause=yes name=close_date dbname="close_date" )
+ column=(type=long updatewhereclause=yes name=ret_time dbname="ret_time" )
+ column=(type=char(4099) updatewhereclause=no name=bigo dbname="bigo" )
+ retrieve="  SELECT order_no     = sc.order_no   
+       , cust_no      = sc.cust_no
+       , cust_name    = c.cust_name
+       , scene_code   = sc.scene_code
+       , scene_desc   = s.scene_desc
+       , user_id      = sc.user_id   
+       , user_name    = l1.user_name
+       , input_date   = sc.input_date   
+       , recv_id      = sc.recv_id
+       , recv_name    = l3.user_name
+       , accept_user  = sc.accept_user  
+       , accept_name  = l2.user_name
+       , accept_date  = sc.accept_date  
+       , open_close   = sale.open_close
+       , close_type   = sale.close_type
+       , close_date   = sale.close_date
+       , ret_time     = datediff(mi, sc.input_date, sale.close_date)
+       , bigo         = sc.bigo
+    FROM sale_close SC
+         LEFT OUTER JOIN login L1   ON sc.user_id     = l1.user_id
+         LEFT OUTER JOIN login L2   ON sc.accept_user = l2.user_id
+         LEFT OUTER JOIN login L3   ON sc.recv_id     = l3.user_id
+         LEFT OUTER JOIN customer C ON sc.cust_no     = c.cust_no  
+         LEFT OUTER JOIN SCENE    S ON sc.scene_code  = s.scene_code
+         LEFT OUTER JOIN sale       ON sc.order_no    = sale.order_no
+   WHERE (sc.input_date  between :as_sdate + ' 00:00:00.000' AND :as_edate + ' 23:59:59.999')
+" arguments=(("as_sdate", string),("as_edate", string))  sort="input_date D " )
+text(band=header alignment="2" text="수주번호" border="6" color="33554432" x="859" y="8" height="60" width="517" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="33554432" x="1385" y="8" height="60" width="681" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="33554432" x="2075" y="8" height="60" width="859" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="요청자" border="6" color="33554432" x="178" y="8" height="60" width="247" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="요청시간" border="6" color="33554432" x="434" y="8" height="60" width="416" html.valueishtml="0"  name=input_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="접수일자" border="6" color="33554432" x="3525" y="8" height="60" width="416" html.valueishtml="0"  name=accept_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="마감" border="6" color="16777215" x="3950" y="8" height="60" width="169" html.valueishtml="0"  name=open_close_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16711680" )
+text(band=header alignment="2" text="TYPE" border="6" color="16777215" x="4128" y="8" height="60" width="160" html.valueishtml="0"  name=close_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16711680" )
+text(band=header alignment="2" text="접수자" border="6" color="33554432" x="3264" y="8" height="60" width="251" html.valueishtml="0"  name=accept_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="수신자" border="6" color="33554432" x="2944" y="8" height="60" width="311" html.valueishtml="0"  name=recv_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="65280" )
+text(band=header alignment="2" text="마감시간" border="6" color="16777215" x="4297" y="8" height="60" width="421" html.valueishtml="0"  name=close_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16711680" )
+text(band=header alignment="2" text="소요(분)" border="6" color="0" x="4727" y="8" height="60" width="361" html.valueishtml="0"  name=ret_time_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16711935" )
+text(band=header alignment="2" text="사유(비고)" border="6" color="0" x="5097" y="8" height="60" width="1463" html.valueishtml="0"  name=bigo_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="3950" y="8" height="72" width="169" format="[general]" html.valueishtml="0"  name=open_close visible="1" checkbox.text="" checkbox.on="C" checkbox.off="O" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="4128" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=close_type visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1385" y="8" height="72" width="681" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="2075" y="8" height="72" width="859" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="178" y="8" height="72" width="247" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="859" y="8" height="72" width="517" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="434" y="8" height="72" width="416" format="mm/dd hh:mm" html.valueishtml="0"  name=input_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="3525" y="8" height="72" width="416" format="mm/dd hh:mm" html.valueishtml="0"  name=accept_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="3264" y="8" height="72" width="251" format="[general]" html.valueishtml="0"  name=accept_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="2944" y="8" height="72" width="311" format="[general]" html.valueishtml="0"  name=recv_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="4297" y="8" height="72" width="421" format="mm/dd hh:mm" html.valueishtml="0"  name=close_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="4727" y="8" height="72" width="361" format="#,##0" html.valueishtml="0"  name=ret_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="5097" y="8" height="72" width="1463" format="[general]" html.valueishtml="0"  name=bigo visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="76" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="avg( ret_time  for all )"border="0" color="33554432" x="4727" y="8" height="76" width="361" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

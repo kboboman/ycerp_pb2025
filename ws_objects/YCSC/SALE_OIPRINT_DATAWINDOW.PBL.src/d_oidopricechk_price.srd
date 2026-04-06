@@ -1,0 +1,60 @@
+﻿$PBExportHeader$d_oidopricechk_price.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=calc_qty dbname="calc_qty" )
+ column=(type=decimal(8) updatewhereclause=yes name=calc_amt dbname="calc_amt" )
+ column=(type=decimal(6) updatewhereclause=yes name=std_cost dbname="std_cost" )
+ retrieve="  SELECT a.item_name
+       , a.item_no
+       , a.qa
+       , a.uom
+       , calc_qty  = sum(a.calc_qty)
+       , calc_amt  = sum(a.calc_amt)
+       , std_cost  = sum(a.calc_amt) / sum(a.calc_qty)
+    FROM (
+         SELECT item_name = g.item_name
+              , dodet.item_no
+              , qa        = (case when dodet.uom = 'M' then substring(dodet.qa,1,13) else dodet.qa end)
+              , g.uom
+              , calc_qty  = dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty)
+              , calc_amt  = dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty) * dodet.price
+           FROM do
+                LEFT OUTER JOIN dodet       ON do.do_no      = dodet.do_no
+                LEFT OUTER JOIN customer  C ON do.cust_no    = c.cust_no
+                LEFT OUTER JOIN groupitem G ON dodet.item_no = g.item_no
+          WHERE ( do.do_date BETWEEN :ad_sdate AND :ad_edate )
+            AND ((:as_itemname  = '%' AND g.item_name LIKE :as_itemname) OR
+                 (:as_itemname <> '%' AND g.item_name    = :as_itemname) 
+                )
+            AND ((:as_inside    = '%' ) OR
+                 (:as_inside   <> '%' AND c.cust_flag <> 'Y')
+                )
+         ) A
+   GROUP BY a.item_name
+          , a.item_no
+          , a.qa
+          , a.uom
+
+" arguments=(("as_itemname", string),("ad_sdate", datetime),("ad_edate", datetime),("as_inside", string)) )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="695" y="8" height="60" width="594" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="33554432" x="1298" y="8" height="60" width="174" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="환산수량" border="6" color="16777215" x="1481" y="8" height="60" width="416" html.valueishtml="0"  name=calc_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="32896" )
+text(band=header alignment="2" text="금액" border="6" color="33554432" x="1906" y="8" height="60" width="498" html.valueishtml="0"  name=calc_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="매출평균" border="6" color="33554432" x="2414" y="8" height="60" width="270" html.valueishtml="0"  name=std_cost_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="9" y="8" height="60" width="677" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="695" y="8" height="72" width="594" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1298" y="8" height="72" width="174" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="677" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="16777215" x="1486" y="8" height="72" width="411" format="#,##0.00" html.valueishtml="0"  name=calc_qty visible="1" editmask.mask="###,###.00" editmask.imemode=0 editmask.focusrectangle=no criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="32896" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="1911" y="8" height="72" width="494" format="#,##0" html.valueishtml="0"  name=calc_amt visible="1" editmask.mask="###,##0" editmask.imemode=0 editmask.focusrectangle=no criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2418" y="8" height="72" width="265" format="#,##0" html.valueishtml="0"  name=std_cost visible="1" editmask.mask="###,##0" editmask.imemode=0 editmask.focusrectangle=no criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

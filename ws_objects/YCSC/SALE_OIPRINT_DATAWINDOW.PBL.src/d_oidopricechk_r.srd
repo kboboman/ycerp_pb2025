@@ -1,0 +1,147 @@
+﻿$PBExportHeader$d_oidopricechk_r.srd
+$PBExportComments$출고단가 체크
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=136 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=datetime updatewhereclause=yes name=do_date dbname="do_date" )
+ column=(type=decimal(0) updatewhereclause=yes name=min_price dbname="min_price" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_cost dbname="do_cost" )
+ column=(type=char(2) updatewhereclause=yes name=catcost dbname="catcost" )
+ column=(type=decimal(0) updatewhereclause=yes name=scost dbname="scost" )
+ column=(type=decimal(0) updatewhereclause=yes name=ccost dbname="ccost" )
+ column=(type=decimal(4) updatewhereclause=yes name=std_cost dbname="std_cost" )
+ column=(type=char(2) updatewhereclause=yes name=price_level dbname="price_level" )
+ column=(type=char(14) updatewhereclause=yes name=do_no dbname="do_no" )
+ column=(type=long updatewhereclause=yes name=oi_no dbname="oi_no" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(10) updatewhereclause=yes name=saler_user dbname="saler_user" )
+ retrieve="  SELECT item_no      = a.item_no
+       , item_name    = a.item_name
+       , qa           = a.do_qa
+       , uom          = a.uom
+       , do_date      = ab.dodate	
+       , min_price    = dbo.UF_GetCustPRICE(a.cust_no, a.item_no, a.do_qa)
+       , do_cost      = a.price
+       , catcost      = (case when a.price > dbo.UF_GetCustPRICE(a.cust_no, a.item_no, a.do_qa) then '▲'
+                              when a.price < dbo.UF_GetCustPRICE(a.cust_no, a.item_no, a.do_qa) then '▼'
+                              when a.price = dbo.UF_GetCustPRICE(a.cust_no, a.item_no, a.do_qa) then '〓'
+                              when dbo.UF_GetCustPRICE(a.cust_no, a.item_no, a.do_qa) = 0       then '●'
+                         end)
+       , scost        = isnull(b.price,0)
+       , ccost        = isnull(f.price,0)
+       , std_cost     = isnull(h.price,0)
+       , price_level  = isnull(a.price_level,'')
+       , do_no        = a.do_no
+       , oi_no        = a.oi_no
+       , cust_no      = a.cust_no
+       , cust_name    = a.cust_name
+       , user_name    = a.user_name
+       , saler_user   = a.saler_user
+    FROM (
+         SELECT item_no      = dodet.item_no
+              , item_name    = g.item_name
+              , do_qa        = dodet.qa
+              , uom          = g.uom
+              , price        = dodet.price
+              , do_no        = do.do_no
+              , oi_no        = dodet.oi_no
+              , qa           = (case when dodet.uom = 'M' then substring(dodet.qa,1,13) 
+                                     when dodet.uom = 'SH' AND substring(g.item_name,1,11) = 'AL 절곡판넬' then substring(dodet.qa,1,13) 
+                                     else dodet.qa 
+                                end)
+              , price_level  = c.price_level
+              , credit_level = c.credit_level
+              , level_grade  = c.level_grade
+              , cust_no      = do.cust_no
+              , cust_name    = c.cust_name
+              , spot_code    = do.spot_code
+              , salesman     = c.salesman
+              , user_name    = l.user_name
+              , saler_user   = e.saler_user
+           FROM do
+                LEFT OUTER JOIN dodet        ON do.do_no      = dodet.do_no
+                LEFT OUTER JOIN customer  C  ON do.cust_no    = c.cust_no
+                LEFT OUTER JOIN groupitem G  ON dodet.item_no = g.item_no
+                LEFT OUTER JOIN login     L  ON c.salesman    = l.user_id
+                LEFT OUTER JOIN aroiinv_esero E ON c.salesman = e.id
+          WHERE ( do.do_date BETWEEN :ad_sdate AND :ad_edate )
+            AND ((:as_salesman  = '%' AND c.salesman LIKE :as_salesman) OR
+                 (:as_salesman <> '%' AND c.salesman    = :as_salesman) 
+                )
+            AND ((:as_custno    = '%' ) OR
+                 (:as_custno   <> '%' AND do.cust_no    = :as_custno) 
+                )
+         ) A
+         LEFT OUTER JOIN custscene B  ON a.cust_no = b.cust_no AND a.spot_code = b.scene_code 
+                                     AND a.item_no = b.item_no AND a.qa = b.qa AND a.uom = b.uom
+         LEFT OUTER JOIN custitem  F  ON a.cust_no = f.cust_no 
+                                     AND a.item_no = f.item_no AND a.qa = f.qa AND a.uom = f.uom
+         LEFT OUTER JOIN itemcost  H  ON a.item_no = h.item_no AND a.qa = h.qa AND a.uom = h.uom
+         LEFT OUTER JOIN (
+              SELECT cust_no  = d.cust_no
+                   , item_no  = d.item_no
+                   , qa       = d.qa
+                   , dodate   = max(d.dodate)
+               FROM (
+                    SELECT DISTINCT a1.cust_no
+                         , b1.item_no
+                         , qa = (case when b1.uom = 'M' then substring(b1.qa,1,13) else b1.qa end)
+                         , dodate = a1.do_date
+                      FROM do A1
+                           LEFT OUTER JOIN dodet     B1 ON a1.do_no   = b1.do_no
+                           LEFT OUTER JOIN customer  C  ON a1.cust_no = c.cust_no
+                     WHERE ( a1.do_date BETWEEN :ad_sdate AND :ad_edate )
+                       AND ((:as_custno    = '%' ) OR
+                            (:as_custno   <> '%' AND a1.cust_no     = :as_custno)
+                           )
+                       AND ((:as_salesman  = '%' AND c.salesman LIKE :as_salesman) OR
+                            (:as_salesman <> '%' AND c.salesman    = :as_salesman) 
+                           )
+                    ) D
+              GROUP BY d.cust_no, d.item_no, d.qa
+        ) AB ON a.cust_no = ab.cust_no AND a.item_no = ab.item_no AND a.qa = ab.qa
+  WHERE ( a.item_name NOT IN ('매출 에누리', '공사비', '운반비') )
+" arguments=(("as_salesman", string),("as_custno", string),("ad_sdate", datetime),("ad_edate", datetime))  sort="item_name A qa A do_cost A price_level A " )
+text(band=header alignment="2" text="출고가" border="6" color="33554432" x="2245" y="8" height="120" width="261" html.valueishtml="0"  name=do_cost_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="출고일" border="6" color="0" x="1902" y="8" height="120" width="334" html.valueishtml="0"  name=do_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="단위" border="6" color="33554432" x="1774" y="8" height="120" width="119" html.valueishtml="0"  name=a_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="1134" y="8" height="120" width="631" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품목" border="6" color="33554432" x="187" y="8" height="120" width="937" html.valueishtml="0"  name=a_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="33554432" x="9" y="8" height="120" width="169" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단가
+등급" border="6" color="33554432" x="2935" y="8" height="120" width="169" html.valueishtml="0"  name=price_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16711935" )
+text(band=header alignment="2" text="순번" border="6" color="33554432" x="3634" y="8" height="120" width="155" html.valueishtml="0"  name=a_oi_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="3799" y="8" height="120" width="768" html.valueishtml="0"  name=a_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="4576" y="8" height="120" width="251" html.valueishtml="0"  name=a_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="마감자" border="6" color="33554432" x="4837" y="8" height="120" width="247" html.valueishtml="0"  name=a_saler_user_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고번호" border="6" color="33554432" x="3113" y="8" height="120" width="512" html.valueishtml="0"  name=a_do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="상태" border="6" color="0" x="2514" y="8" height="120" width="151" html.valueishtml="0"  name=catcost_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단가표" border="6" color="0" x="2674" y="8" height="120" width="251" html.valueishtml="0"  name=min_price_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1774" y="8" height="72" width="119" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="255" x="2935" y="8" height="72" width="169" format="[general]" html.valueishtml="0"  name=price_level visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="3113" y="8" height="72" width="512" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="3634" y="8" height="72" width="155" format="[general]" html.valueishtml="0"  name=oi_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="3799" y="8" height="72" width="768" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432" x="4576" y="8" height="72" width="251" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1134" y="8" height="72" width="631" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="187" y="8" height="72" width="937" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="169" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="2245" y="8" height="72" width="261" format="#,##0" html.valueishtml="0"  name=do_cost visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="1902" y="8" height="72" width="334" format="yy/mm/dd" html.valueishtml="0"  name=do_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="4837" y="8" height="72" width="247" format="[general]" html.valueishtml="0"  name=saler_user visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0~tif ( catcost = '▲', rgb(255, 0, 0), if ( catcost = '▼', rgb(0, 0, 255), rgb(0, 0, 0) ) )" x="2514" y="8" height="72" width="151" format="[general]" html.valueishtml="0"  name=catcost visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2674" y="8" height="72" width="251" format="#,##0" html.valueishtml="0"  name=min_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="68" width="169" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( item_name for all distinct item_name )"border="0" color="33554432" x="187" y="8" height="68" width="937" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( if ( isnull( min_price ), 1, 0) for all )"border="0" color="33554432" x="2674" y="8" height="68" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

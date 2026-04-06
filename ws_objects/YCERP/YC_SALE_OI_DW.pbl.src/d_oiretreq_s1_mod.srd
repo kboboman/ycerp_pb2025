@@ -1,0 +1,53 @@
+﻿$PBExportHeader$d_oiretreq_s1_mod.srd
+$PBExportComments$반품요청서관리반품번호선택(2000/04/27,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=79219928 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=order_no dbname="ret.RET_NO" )
+ column=(type=datetime updatewhereclause=yes name=preret_date dbname="ret.PRERET_DATE" )
+ column=(type=char(14) updatewhereclause=yes name=sale_no dbname="ret.SALE_NO" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="customer.CUST_NAME" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene.SCENE_DESC" )
+ column=(type=decimal(2) updatewhereclause=yes name=ret_qty dbname="ret.RET_QTY" )
+ column=(type=decimal(2) updatewhereclause=yes name=acc_qty dbname="ret.ACC_QTY" )
+ retrieve="SELECT A.RET_NO
+     , RET.PRERET_DATE
+     , A.SALE_NO
+     , CUSTOMER.CUST_NAME
+     , SCENE.SCENE_DESC 
+     , A.RET_QTY
+     , A.ACC_QTY
+  FROM (
+       SELECT RET_NO, SALE_NO, RET_QTY = SUM(RET_QTY), ACC_QTY = SUM(ACC_QTY)
+         FROM RETDET
+        WHERE RET_NO   IN (
+                           SELECT RET.RET_NO
+                             FROM RET
+                            WHERE ( RET.CUST_NO        LIKE :as_cust_no )
+                              AND ( RET.PRERET_DATE BETWEEN :ad_sorder_date AND :ad_eorder_date ) 
+                          )
+        GROUP BY RET_NO, SALE_NO
+       ) A
+         LEFT OUTER JOIN RET      ON A.RET_NO     = RET.RET_NO
+         LEFT OUTER JOIN CUSTOMER ON RET.CUST_NO  = CUSTOMER.CUST_NO
+         LEFT OUTER JOIN SCENE    ON RET.CUST_NO  = SCENE.CUST_NO  AND RET.SPOT_CODE = SCENE.SCENE_CODE 
+ WHERE A.RET_QTY > A.ACC_QTY
+ " arguments=(("as_cust_no", string),("ad_sorder_date", date),("ad_eorder_date", date))  sort="order_no A " )
+text(band=header alignment="2" text="반품번호" border="2" color="0" x="9" y="8" height="60" width="462" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="예정일자" border="2" color="0" x="485" y="8" height="60" width="265" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="거래처명" border="2" color="0" x="763" y="8" height="60" width="608" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="현장명" border="2" color="0" x="1385" y="8" height="60" width="763" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="요구수량" border="2" color="0" x="2162" y="8" height="60" width="329" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="반품입고" border="2" color="0" x="2505" y="8" height="60" width="334" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="2" color="0" x="9" y="8" height="60" width="462" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="0" x="485" y="8" height="60" width="265" format="yy/mm/dd" html.valueishtml="0"  name=preret_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="2" color="0" x="763" y="8" height="60" width="608" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="2" color="0" x="1385" y="8" height="60" width="763" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="2" color="0" x="2162" y="8" height="60" width="329" format="#,##0" html.valueishtml="0"  name=ret_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="2" color="0" x="2505" y="8" height="60" width="334" format="#,##0" html.valueishtml="0"  name=acc_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+compute(band=footer alignment="2" expression="count(  order_no  for all )"border="0" color="16711680" x="9" y="8" height="60" width="462" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

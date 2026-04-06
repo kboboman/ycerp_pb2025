@@ -1,0 +1,131 @@
+﻿$PBExportHeader$d_oiissuereq_ct_amt_old.srd
+$PBExportComments$출고의뢰 집계금액
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=72 color="67108864" )
+summary(height=0 color="8421504" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=wan_nm dbname="wan_nm" )
+ column=(type=char(20) updatewhereclause=yes name=schedule_name dbname="schedule_name" )
+ column=(type=number updatewhereclause=yes name=plan_amt dbname="plan_amt" )
+ retrieve="  SELECT wan_nm          = (case when substring(bb.scene_desc,1,2) IN ('서울','인천','경기','해외')
+                                      AND aa.issue_schedule IN ('A','B','J','I') then '1.수도권'
+                                 when substring(bb.scene_desc,1,2) NOT IN ('서울','인천','경기','해외')
+                                      AND aa.issue_schedule IN ('A','B','J','I') then '2.지방'
+                                 when aa.issue_schedule     IN ('F','E')         then '3.외주'
+                                 when aa.issue_schedule     IN ('K')             then '4.택배'
+                                 when aa.issue_schedule     IN ('D')             then '5.방문'
+                                 when aa.issue_schedule     IN ('G','C')         then '6.기타'
+                            end)
+       , schedule_name   = aa.schedule_name
+       , accept_name     = (case aa.accept_name 
+                                 when '시화' then '1.'
+                                 when '화곡' then '2.'
+                                 when '동부' then '3.'
+                                 when '대전' then '4.'
+                                 when '화성' then '5.'
+                            end) + aa.accept_name
+       , plan_amt        = (case when convert(char(10),bb.rlse_date,111) = :as_reqdate then /* 출고일이 당일이면 상차수량 계산 */
+                                      bb.price * dbo.uf_getqty(bb.item_no, bb.qa, bb.uom, dd.ship_qty)
+                                 else (case when bb.issue_qty > 0 AND bb.rlse_date is null then    /* 미출고는 선정수량으로 계산 */
+                                                 bb.price * dbo.uf_getqty(bb.item_no, bb.qa, bb.uom, bb.issue_qty)
+                                            else 0
+                                       end)
+                            end)
+  FROM (
+            SELECT req_date       = a.req_date                                                               
+                 , salesman       = a.salesman                                                               
+                 , req_seq        = a.req_seq
+                 , accept_area    = a.accept_area                                                                
+                 , accept_name    = replace(c.loc_name,'저장소','')
+                 , accept_user    = a.accept_user                                                            
+                 , sale_no        = b.sale_no                                                                
+                 , confirm_flag   = a.confirm_flag                                                             
+                 , issue_schedule = b.issue_schedule                                                         
+                 , schedule_name  = (case b.issue_schedule                                      
+                                           when 'A' then '직출'                                   
+                                           when 'B' then '생산후직출'                               
+                                           when 'C' then '자동작성'                                 
+                                           when 'D' then '방문'                                   
+                                           when 'E' then '외주(시화)'                                   
+                                           when 'F' then '외주(본사)'                                   
+                                           when 'G' then '유창강건'                                   
+                                           when 'H' then '지점이송'                                   
+                                           when 'I' then '야간도착'                                   
+                                           when 'J' then '저녁상차'                                   
+                                           when 'K' then '택배/정기'                                   
+                                           else           ''                                      
+                                      end)                                                        
+              FROM issuereq   A with (nolock)                                                            
+                   LEFT OUTER JOIN issuereqdet   B with (nolock)
+                     ON a.req_date  = b.req_date AND a.salesman  = b.salesman AND a.req_seq = b.req_seq
+                   LEFT OUTER JOIN location  C with (nolock) ON a.accept_user = c.loc_manager
+             WHERE a.req_date   = :as_reqdate + ' 00:00:00'
+       ) AA
+
+       LEFT OUTER JOIN (                                                                
+            SELECT scene_nm     = substring(s.scene_desc,1,2)
+                 , scene_desc   = s.scene_desc
+                 , order_no     = a.order_no
+                 , seq_no       = a.seq_no
+                 , item_no      = a.item_no                                               
+                 , qa           = a.qa                                                    
+                 , uom          = a.uom                                                   
+                 , order_qty    = a.order_qty                                             
+                 , price        = a.price                                                 
+                 , issue_qty    = a.issue_qty                                                 
+                 , stock_qty    = a.stock_qty                                             
+                 , rlse_date    = a.rlse_date                                             
+                 , rlse_qty     = a.rlse_qty                                              
+              FROM saledet    A with (nolock)
+                   LEFT OUTER JOIN sale      B with (nolock) ON a.order_no    = b.order_no
+                   LEFT OUTER JOIN customer  C with (nolock) ON b.cust_no     = c.cust_no
+                   LEFT OUTER JOIN scene     S with (nolock) ON b.scene_code  = s.scene_code
+             WHERE a.order_no IN ( SELECT sale_no        = b.sale_no                                           
+                                     FROM issuereq   A with (nolock)                                           
+                                          LEFT OUTER JOIN issuereqdet   B with (nolock)
+                                            ON a.req_date  = b.req_date AND a.salesman  = b.salesman AND a.req_seq   = b.req_seq                                         
+                                    WHERE a.req_date  = :as_reqdate + ' 00:00:00'
+                                 )
+               AND ((:as_inside  = 'N') OR
+                    (:as_inside <> 'N') AND (c.salesman <> 'killby')
+                   )                   
+       ) BB ON aa.sale_no = bb.order_no                                                     
+                                                                                        
+       LEFT OUTER JOIN (
+            SELECT a.do_no, a.sale_no, a.seq_no, a.ship_qty, a.price, b.do_date
+              FROM dodet  A
+                   LEFT OUTER JOIN do  B ON a.do_no = b.do_no
+             WHERE b.do_date = :as_reqdate + ' 00:00:00'
+       ) DD ON bb.order_no = dd.sale_no AND bb.seq_no = dd.seq_no
+  WHERE ( aa.confirm_flag    = 'Y'                       )
+    AND ( aa.issue_schedule <> 'H'                       )  /* '지점이송' */
+    AND ( aa.req_date        = :as_reqdate + ' 00:00:00' )
+
+" arguments=(("as_reqdate", string),("as_inside", string))  sort="wan_nm A schedule_name A " )
+group(level=1 header.height=0 trailer.height=80 by=("wan_nm" ) header.color="536870912" trailer.color="15780518" )
+text(band=header[1] alignment="0" text="Sum Of Plan Amt" border="0" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Accept Name" border="0" color="33554432" x="434" y="4" height="60" width="512" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="구분" border="0" color="33554432" x="9" y="8" height="60" width="416" html.valueishtml="0"  name=wan_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header[2] alignment="2" text="출고예정 금액" border="0" color="33554432" x="434" y="8" height="60" width="512" html.valueishtml="0"  name=schedule_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header[2] alignment="1" text="@accept_name" border="0" color="33554432" x="955" y="8" height="60" width="421" html.valueishtml="0"  name=plan_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header[2] alignment="1" text="총 합 계" border="0" color="33554432" x="1385" y="8" height="60" width="599" html.valueishtml="0"  name=grand_sum_plan_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=wan_nm visible="1" edit.limit=8 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="434" y="4" height="72" width="512" format="[general]" html.valueishtml="0"  name=schedule_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="955" y="4" height="72" width="421" format="#,##0" html.valueishtml="0"  name=plan_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1385" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=grand_sum_plan_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="wan_nm + ~"계~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(plan_amt for group 1)"border="0" color="33554432" x="955" y="4" height="72" width="421" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_plan_amt for group 1)"border="0" color="33554432" x="1385" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="0" expression="~"총 합 계~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(plan_amt for all )"border="0" color="33554432" x="955" y="4" height="72" width="421" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_plan_amt for all )"border="0" color="33554432" x="1385" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression=" compute_4 "border="0" color="33554432" x="9" y="4" height="72" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_5 "border="0" color="33554432" x="955" y="4" height="72" width="421" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_6 "border="0" color="16711680" x="1385" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "accept_name" rows = "wan_nm, schedule_name" values = "sum(plan_amt for crosstab)" sourcenames = "wan_nm, schedule_name, accept_name, plan_amt")
+sparse(names="wan_nm")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

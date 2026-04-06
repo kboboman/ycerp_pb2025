@@ -1,0 +1,172 @@
+﻿$PBExportHeader$d_cdmycustomer_s.srd
+$PBExportComments$매출집계조직별 거래처
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(10) updatewhereclause=yes name=rank dbname="rank" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=ref_user dbname="ref_user" )
+ column=(type=decimal(2) updatewhereclause=yes name=amt dbname="AMT" )
+ retrieve="  SELECT DISTINCT user_id    = a.user_id    
+       , user_name  = a.user_name  
+       , rank       = a.rank       
+       , cust_no    = a.cust_no    
+       , cust_name  = a.cust_name  
+       , ref_user   = (SELECT user_name FROM login WHERE user_id = :as_userid)
+	  , B.AMT
+    FROM (
+         SELECT a.user_id
+              , l.user_name
+              , a.rank 
+              , c.cust_no
+              , c.cust_name              
+           FROM ( /* 매출조직도별 거래처목록 */
+                     SELECT DISTINCT user_id = a.user_id, rank = a.rank
+                       FROM (
+								 SELECT user_id, rank FROM opeom_org WHERE area_mgr   = :as_userid   /* 권역장 */
+								 UNION ALL
+								 SELECT user_id, rank FROM opeom_org WHERE sector_mgr = :as_userid   /* 본부장 */
+								 UNION ALL
+								 SELECT user_id, rank FROM opeom_org WHERE team_mgr   = :as_userid   /* 팀장   */
+								 UNION ALL
+								 SELECT user_id, rank FROM opeom_org WHERE user_id    = :as_userid   /* 담당   */
+                            ) A
+                      WHERE (:as_userid <> 'insite' AND a.user_id <> 'insite')
+                ) A 
+                LEFT OUTER JOIN customer C ON a.user_id = c.salesman AND c.open_close = 'O'
+                LEFT OUTER JOIN login    L ON a.user_id = l.user_id
+       
+         UNION ALL
+       
+         SELECT user_id   = c.salesman
+              , user_name = l.user_name
+              , rank      = ''
+              , cust_no   = c.cust_no
+              , cust_name = c.cust_name
+           FROM customer C
+                LEFT OUTER JOIN login  L ON c.salesman = l.user_id
+          WHERE c.cust_no IN (SELECT DISTINCT rtrim(item_cd)
+                                FROM codemst (NOLOCK)  
+                               WHERE (type = '내부업체' AND use_yn = 'Y')
+                                 AND (:as_userid  = '%'      OR 
+                                      :as_userid  = 'insite' OR
+                                      :as_userid IN (SELECT item_cd FROM codemst WHERE type = '내부업체열람' AND use_yn = 'Y')
+                                     )
+                             )
+            AND c.open_close = 'O'
+       
+         UNION ALL
+       
+         SELECT user_id   = c.salesman
+              , user_name = l.user_name
+              , rank      = ''
+              , cust_no   = c.cust_no
+              , cust_name = c.cust_name
+           FROM customer C
+                LEFT OUTER JOIN login  L ON c.salesman = l.user_id
+          WHERE c.mgr_type   = 'H'
+            AND c.open_close = 'O'
+         ) A left outer join
+         (
+			  SELECT opeom.cust_no   
+					, balbf_amount +
+					  inv_01   + inv_02   +  inv_03   +   inv_04   +  inv_05   +   inv_06   +  inv_07   +   inv_08   +   inv_09   +   inv_10   +   inv_11   +   inv_12   -
+					  coll_01  -  coll_02  -   coll_03  -    coll_04  -    coll_05  -    coll_06  -    coll_07  -    coll_08  -    coll_09  -     coll_10  - coll_11  - coll_12   amt
+				 FROM opeom  
+				WHERE ( datepart(year,opeom.eom_year) = convert(char(4), getdate(), 121) )    
+
+	  ) B ON A.CUST_NO = B.CUST_NO
+union all
+  SELECT DISTINCT user_id    = a.user_id    
+       , user_name  = a.user_name  
+       , rank       = a.rank       
+       , cust_no    = a.cust_no    
+       , cust_name  = a.cust_name  
+       , ref_user   = (SELECT user_name FROM login WHERE user_id = :as_userid)
+	  , B.AMT
+    FROM (
+         SELECT a.user_id
+              , l.user_name
+              , a.rank 
+              , c.cust_no
+              , c.cust_name              
+           FROM ( /* 매출조직도별 거래처목록 */
+                     SELECT DISTINCT user_id = a.user_id, rank = a.rank
+                       FROM (
+								 SELECT user_id, rank FROM opeom_org WHERE area_mgr   = :as_userid   /* 권역장 */
+								 UNION ALL
+								 SELECT user_id, rank FROM opeom_org WHERE sector_mgr = :as_userid   /* 본부장 */
+								 UNION ALL
+								 SELECT user_id, rank FROM opeom_org WHERE team_mgr   = :as_userid   /* 팀장   */
+								 UNION ALL
+								 SELECT user_id, rank FROM opeom_org WHERE user_id    = :as_userid   /* 담당   */
+                            ) A
+                      WHERE (:as_userid <> 'insite' AND a.user_id <> 'insite')
+                ) A 
+                LEFT OUTER JOIN customer C ON a.user_id = c.imwon_user_id AND c.open_close = 'O'
+                LEFT OUTER JOIN login    L ON a.user_id = l.user_id
+       
+         UNION ALL
+       
+         SELECT user_id   = c.imwon_user_id
+              , user_name = l.user_name
+              , rank      = ''
+              , cust_no   = c.cust_no
+              , cust_name = c.cust_name
+           FROM customer C
+                LEFT OUTER JOIN login  L ON c.imwon_user_id = l.user_id
+          WHERE c.cust_no IN (SELECT DISTINCT rtrim(item_cd)
+                                FROM codemst (NOLOCK)  
+                               WHERE (type = '내부업체' AND use_yn = 'Y')
+                                 AND (:as_userid  = '%'      OR 
+                                      :as_userid  = 'insite' OR
+                                      :as_userid IN (SELECT item_cd FROM codemst WHERE type = '내부업체열람' AND use_yn = 'Y')
+                                     )
+                             )
+            AND c.open_close = 'O'
+       
+         UNION ALL
+       
+         SELECT user_id   = c.imwon_user_id
+              , user_name = l.user_name
+              , rank      = ''
+              , cust_no   = c.cust_no
+              , cust_name = c.cust_name
+           FROM customer C
+                LEFT OUTER JOIN login  L ON c.imwon_user_id = l.user_id
+          WHERE c.mgr_type   = 'H'
+            AND c.open_close = 'O'
+         ) A left outer join
+         (
+			  SELECT opeom.cust_no   
+					, balbf_amount +
+					  inv_01   + inv_02   +  inv_03   +   inv_04   +  inv_05   +   inv_06   +  inv_07   +   inv_08   +   inv_09   +   inv_10   +   inv_11   +   inv_12   -
+					  coll_01  -  coll_02  -   coll_03  -    coll_04  -    coll_05  -    coll_06  -    coll_07  -    coll_08  -    coll_09  -     coll_10  - coll_11  - coll_12   amt
+				 FROM opeom  
+				WHERE ( datepart(year,opeom.eom_year) = convert(char(4), getdate(), 121) )    
+
+	  ) B ON A.CUST_NO = B.CUST_NO
+" arguments=(("as_userid", string))  sort="user_name A cust_name A cust_no A " )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="174" y="4" height="68" width="247" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="33554432" x="430" y="4" height="68" width="215" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="4" height="68" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="654" y="4" height="68" width="965" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="권한자" border="6" color="0" x="1627" y="4" height="68" width="256" html.valueishtml="0"  name=ref_user_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="잔액" border="6" color="0" x="1893" y="4" height="68" width="530" html.valueishtml="0"  name=amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="68" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="174" y="4" height="68" width="247" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="430" y="4" height="68" width="215" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="654" y="4" height="68" width="965" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="1627" y="4" height="68" width="256" format="[general]" html.valueishtml="0"  name=ref_user visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="1893" y="0" height="60" width="530" format="#,##0" html.valueishtml="0"  name=amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="68" width="155" format="[General]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( user_name for all distinct user_name )"border="0" color="33554432" x="174" y="4" height="68" width="247" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="user_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

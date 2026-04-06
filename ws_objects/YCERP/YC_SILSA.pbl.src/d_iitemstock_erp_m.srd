@@ -1,0 +1,144 @@
+﻿$PBExportHeader$d_iitemstock_erp_m.srd
+$PBExportComments$재고수불부
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes name=loc_no dbname="loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=pre_qty dbname="pre_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_qty dbname="in_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=out_qty dbname="out_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=stock_qty dbname="stock_qty" )
+ column=(type=decimal(0) updatewhereclause=yes name=plan_out_qty dbname="plan_out_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=plan_make_qty dbname="plan_make_qty" )
+ retrieve="	select  
+			 a.loc_no,
+			 a.item_no,
+			 a.qa,
+			 sum(a.pre_qty) pre_qty,
+			 sum(a.in_qty) in_qty,
+			 sum(a.out_qty) out_qty,
+			 sum(a.pre_qty) + sum(a.in_qty) - sum(a.out_qty) stock_qty,
+			 sum(a.PLAN_OUT_qty) plan_out_qty,
+			 sum(a.PLAN_MAKE_QTY) plan_make_qty
+		from 
+		(
+				select  
+						  a.loc_no, 
+						  a.item_no, 
+						  a.qa, 
+						  sum(isnull(a.rcpt_qty,0)) in_qty,  
+						  sum(isnull(a.issue_qty ,0)) out_qty,
+						  0 pre_qty,
+              0 PLAN_OUT_qty,
+              0 PLAN_MAKE_QTY
+				from ineoday a with(nolock) INNER JOIN groupitem b with(nolock) on a.item_no = b.item_no
+				where a.loc_no =  :as_locno
+              and a.cdate between substring(:as_date,1,6) +'01' and   :as_date						
+              AND b.p1 like :as_gubun
+              and  b.cost_yn <> 'Y'
+				group by a.loc_no, a.item_no, a.qa
+				union all
+				select  
+						  a.loc_no,                                 
+						  a.item_no,
+						  a.qa,
+						  0 in_qty,
+						  0 out_qty,
+						  a.stock_qty pre_qty,
+              0 PLAN_OUT_qty,
+              0 PLAN_MAKE_QTY
+				from item_stock a with(nolock) INNER JOIN groupitem b with(nolock) on a.item_no = b.item_no
+				where a.loc_no  LIKE :as_locno
+              AND a.stock_date =  convert(char(10), dateadd(day, -1, convert(datetime, substring(:as_date,1,6) +'01') ),112)	          
+              AND b.p1 like :as_gubun
+              and  b.cost_yn <> 'Y'                
+        union all
+        									SELECT    C.DEF_LOC
+													  ,  A.ITEM_NO 
+													  ,  A.QA
+                  					,	  0 in_qty
+                  					,	  0 out_qty
+													  ,  before_qty = 0 		
+                            , PLAN_OUT_qty = 0
+													  , PLAN_MAKE_QTY = SUM(ISNULL(D.plan_qty,0))
+													FROM MPSDET A  WITH(NOLOCK) INNER JOIN mps B  WITH(NOLOCK) ON A.order_no = B.ORDER_NO
+              																					  INNER JOIN WC C ON A.WC_NO = C.WORK_NO							
+                                                          INNER JOIN routtempnew D WITH(NOLOCK) ON D.division        = A.division AND
+                                                                                                                  D.sale_no         = A.sale_no AND
+                                                                                                                  D.seq_no          = A.seq_no AND
+                                                                                                                  D.wc_no           = A.wc_no AND
+                                                                                                                  D.assy_item       = A.item_no AND
+                                                                                                                  D.assy_qa         = A.qa
+										 where D.WORK_date BETWEEN convert(datetime,  :as_date +' 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+											 AND A.DUE_date between convert(datetime,  convert(char(8), dateadd(day, -60, convert(datetime, :as_date) ), 112) + ' 23:59:59' ) and convert(datetime,  convert(char(8), dateadd(day, +60, convert(datetime, :as_date) ), 112) + ' 23:59:59' ) 
+											 AND C.DEF_LOC LIKE :as_locno
+										GROUP BY C.DEF_LOC, 
+														 A.ITEM_NO, 
+														 A.QA
+			  union all
+        							 SELECT loc_no         = isnull( l.loc_no, (  case when a.accept_area = 'B0001'    then 'WS00000006'
+																						  when a.accept_area = 'H0001'    then 'WS00000007'
+																						  when a.accept_area = 'S0001'    then 'WS00000000'
+																						  when a.accept_area = 'T0001'    then 'WS00000008'
+																						  when a.accept_area = 'Z0001'    then 'WS00000011'
+																						  else 'WS99999999'
+																				  end
+																				)
+																 )	
+										, c.item_no
+										, qa             = c.qa
+        						,  0 in_qty
+        						,  0 out_qty
+										, before_qty = 0 
+										, PLAN_OUT_qty      = ISNULL(c.issue_qty,0)
+										, plan_make_qty = 0
+								 FROM issuereq   A WITH (NOLOCK)
+								  inner JOIN issuereqdet   B WITH (NOLOCK) ON a.req_date  = b.req_date AND a.salesman = b.salesman AND a.req_seq = b.req_seq
+								  inner JOIN issuereqdet_sale c with(nolock) on b.req_date = c.req_date and b.salesman = c.salesman and b.req_seq = c.req_seq and  b.seq = c.seq
+								  inner JOIN location L WITH (NOLOCK) ON a.accept_user = l.loc_manager
+							  	WHERE a.req_date BETWEEN  convert(datetime,  :as_date +' 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+									 AND isnull( l.loc_no, (  case when a.accept_area = 'B0001'    then 'WS00000006'
+																															  when a.accept_area = 'H0001'    then 'WS00000007'
+																															  when a.accept_area = 'S0001'    then 'WS00000000'
+																															  when a.accept_area = 'T0001'    then 'WS00000008'
+																															  when a.accept_area = 'Z0001'    then 'WS00000011'
+																															  else 'WS99999999'
+																													  end
+																													)
+																									 )	LIKE :as_locno
+									 AND ( c.item_no    is not null         )
+									 AND ( b.req_flag    = 'A'              ) /* 출고의뢰 */
+									 AND ( a.confirm_flag= 'Y'              ) /* 확정     */	
+		) a 
+		group by  
+					 a.loc_no,
+					 a.item_no,
+					 a.qa" arguments=(("as_gubun", string),("as_locno", string),("as_date", string))  sort="loc_no A item_no A qa A " )
+text(band=header alignment="2" text="품명코드" border="6" color="33554432" x="9" y="8" height="60" width="347" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="370" y="8" height="60" width="640" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사용유무" border="6" color="33554432" x="1024" y="8" height="60" width="274" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고가능" border="6" color="33554432" x="1312" y="8" height="60" width="402" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="347" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="370" y="8" height="72" width="640" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+compute(band=detail alignment="2" expression="/* if ( use_flag = 'Y' , '사용', '중단' ) */"border="0" color="33554432" x="1024" y="8" height="72" width="274" format="[GENERAL]" html.valueishtml="0"  name=use_yn visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+compute(band=detail alignment="1" expression="/* if( (real_stock_qty -  real_plan_out_qty) > 0, (real_stock_qty -  real_plan_out_qty), 0) */"border="0" color="33554432" x="1312" y="8" height="60" width="402" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+compute(band=footer alignment="1" expression="/* sum( if( (real_stock_qty -  real_plan_out_qty) > 0, (real_stock_qty -  real_plan_out_qty), 0)  for all) */"border="0" color="33554432" x="1312" y="4" height="72" width="402" format="#,##0" html.valueishtml="0"  name=compute_21 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=0 border="0" color="33554432" x="1728" y="0" height="60" width="2775" html.valueishtml="0"  name=stock_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Stock Qty" border="0" color="0" x="1723" y="4" height="100" width="2779" html.valueishtml="0"  name=stock_qty_t visible="1"  font.face="Arial" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=0 border="0" color="33554432" x="4517" y="0" height="60" width="2775" html.valueishtml="0"  name=pre_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Pre Qty" border="0" color="33554432" x="4512" y="4" height="60" width="2779" html.valueishtml="0"  name=pre_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=0 border="0" color="33554432" x="7305" y="0" height="60" width="2775" html.valueishtml="0"  name=in_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="In Qty" border="0" color="33554432" x="7301" y="4" height="60" width="2779" html.valueishtml="0"  name=in_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=0 border="0" color="33554432" x="10094" y="0" height="60" width="2775" html.valueishtml="0"  name=out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Out Qty" border="0" color="33554432" x="10089" y="4" height="60" width="2779" html.valueishtml="0"  name=out_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=0 border="0" color="33554432" x="12882" y="0" height="60" width="2775" html.valueishtml="0"  name=plan_out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Plan Out Qty" border="0" color="33554432" x="12878" y="4" height="60" width="2779" html.valueishtml="0"  name=plan_out_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=0 border="0" color="33554432" x="15671" y="0" height="60" width="2775" html.valueishtml="0"  name=plan_make_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Plan Make Qty" border="0" color="33554432" x="15666" y="4" height="60" width="2779" html.valueishtml="0"  name=plan_make_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

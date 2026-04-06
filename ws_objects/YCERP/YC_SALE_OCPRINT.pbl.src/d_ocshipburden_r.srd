@@ -1,0 +1,205 @@
+﻿$PBExportHeader$d_ocshipburden_r.srd
+$PBExportComments$운반비부담내역서 (2002/08/28,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=612 color="536870912" )
+summary(height=132 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=160 color="553648127" )
+table(column=(type=char(14) updatewhereclause=yes name=do_do_no dbname="do.do_no" )
+ column=(type=decimal(0) updatewhereclause=yes name=ship_amount dbname="do.ship_amount" )
+ column=(type=char(60) updatewhereclause=yes name=do_driver dbname="do.driver" )
+ column=(type=char(1) updatewhereclause=yes name=do_shipamt_case dbname="do.shipamt_case" )
+ column=(type=char(4) updatewhereclause=yes name=do_cust_no dbname="do.cust_no" )
+ column=(type=char(10) updatewhereclause=yes name=docar_name dbname="docar.name" )
+ column=(type=char(40) updatewhereclause=yes name=docar_cargo_name dbname="docar.cargo_name" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ column=(type=char(1) updatewhereclause=yes name=do_ship_close dbname="do.ship_close" )
+ column=(type=datetime updatewhereclause=yes name=do_ship_date dbname="do.ship_date" )
+ column=(type=char(10) updatewhereclause=yes name=do_close_user dbname="do.close_user" )
+ column=(type=char(10) updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=char(10) updatewhereclause=yes name=edate dbname="edate" )
+ column=(type=char(180) updatewhereclause=yes name=sale_no dbname="sale_no" )
+ retrieve="  SELECT do.do_no             
+       , do.ship_amount       
+       , do.driver            
+       , do.shipamt_case      
+       , do.cust_no           
+       , docar.name           
+       , docar.cargo_name     
+       , customer.cust_name   
+       , scene.scene_desc     
+       , do.ship_close        
+       , do.ship_date         
+       , do.close_user     
+       , sdate   = (case when :as_sdate = '' then '          ' else :as_sdate end)   
+       , edate   = (case when :as_edate = '' then '          ' else :as_edate end)   
+       , sale_no = DBO.uf_getdosaleno(do.do_no)
+    FROM do with(nolock) inner join customer with(nolock) on do.cust_no = customer.cust_no
+				left outer join scene with(nolock) on do.spot_code = scene.scene_code
+				left outer join docar with(nolock) on do.driver = docar.driver
+   WHERE  ( ( do.do_no               like :as_area + '%'        ) AND  
+           ( convert(char(10),do.ship_date,111) between :as_sdate and :as_edate ) AND  
+           ( do.ship_flag              = 'B'                   ) AND  
+           ( do.ship_close          like :as_flag              ) AND  
+           ( do.cust_no             like :as_cust              ) AND  
+           ( do.driver              like :as_drv               ) AND  
+           ( (:as_amt =  '1' or ( :as_amt = '2' and ship_amount <> 0 ) or  ( :as_amt = '3' and ship_amount = 0 )  ) ) 
+         )
+/*
+   FROM customer   
+       , do         
+       , scene      
+       , docar  
+   WHERE ( do.spot_code               *= scene.scene_code )   
+     AND ( do.driver                  *= docar.driver     )   
+     AND ( do.cust_no                  = customer.cust_no )   
+     AND ( ( do.do_no               like :as_area + '%'        ) AND  
+           ( convert(char(10),do.ship_date,111) between :as_sdate and :as_edate ) AND  
+           ( do.ship_flag              = 'B'                   ) AND  
+           ( do.ship_close          like :as_flag              ) AND  
+           ( do.cust_no             like :as_cust              ) AND  
+           ( do.driver              like :as_drv               ) AND  
+           ( (:as_amt =  '1' or ( :as_amt = '2' and ship_amount <> 0 ) or  ( :as_amt = '3' and ship_amount = 0 )  ) ) 
+         )
+*/
+         
+  UNION ALL
+  
+  SELECT ask_head.ask_no             
+       , ask_head.ship_amount        
+       , ask_head.driver             
+       , shipamt_case = ''        
+       , cust_no      = ''           
+       , docar.name                  
+       , docar.cargo_name            
+       , cust_name    = '(주)유창'  
+       , scene_desc   = '시화사업장'
+       , ask_head.ship_close         
+       , ask_head.ship_date          
+       , ask_head.close_user      
+       , sdate   = (case when :as_sdate = '' then '          ' else :as_sdate end)   
+       , edate   = (case when :as_edate = '' then '          ' else :as_edate end)   
+       , sale_no      = ''
+    FROM ask_head with(nolock) left outer join docar with(nolock) on ask_head.driver = docar.driver
+   WHERE ( ( :as_area                  = 'S'          ) AND
+           ( convert(char(10),ask_head.ship_date,111)  between :as_sdate and :as_edate ) AND  
+           ( ask_head.ship_close    like :as_flag     ) AND  
+           ( :as_cust                  = '%'          ) AND  
+           ( ask_head.driver        like :as_drv      ) AND  
+           ( (:as_amt =  '1' or ( :as_amt = '2' and ship_amount <> 0 ) or  ( :as_amt = '3' and ship_amount = 0 )  ) ) 
+         )
+/*
+  FROM ask_head,   
+         docar
+   WHERE ( ask_head.driver            *= docar.driver )   
+     AND ( ( :as_area                  = 'S'          ) AND
+           ( convert(char(10),ask_head.ship_date,111)  between :as_sdate and :as_edate ) AND  
+           ( ask_head.ship_close    like :as_flag     ) AND  
+           ( :as_cust                  = '%'          ) AND  
+           ( ask_head.driver        like :as_drv      ) AND  
+           ( (:as_amt =  '1' or ( :as_amt = '2' and ship_amount <> 0 ) or  ( :as_amt = '3' and ship_amount = 0 )  ) ) 
+         )
+*/         
+
+  UNION ALL
+  
+  SELECT dbo.uf_getdatestring(doshipetc.etc_date)
+       , doshipetc.ship_amount    
+       , doshipetc.driver         
+       , doshipetc.shipamt_case   
+       , doshipetc.cust_no        
+       , doshipetc.drv_name       
+       , doshipetc.cargo_name     
+       , customer.cust_name       
+       , scene.scene_desc         
+       , doshipetc.ship_close     
+       , doshipetc.etc_date       
+       , doshipetc.user_id     
+       , sdate   = (case when :as_sdate = '' then '          ' else :as_sdate end)   
+       , edate   = (case when :as_edate = '' then '          ' else :as_edate end)   
+       , sale_no = doshipetc.sale_no
+    FROM doshipetc with(nolock) inner join customer with(nolock) on doshipetc.cust_no = customer.cust_no
+				            left outer join scene with(nolock) on doshipetc.scene_code = scene.scene_code
+   WHERE  ( ( doshipetc.etc_area     like :as_area + '%'        ) AND  
+           ( convert(char(10),doshipetc.etc_date,111)  between :as_sdate and :as_edate ) AND  
+           ( doshipetc.ship_flag       = 'B'                   ) AND  
+           ( doshipetc.etc_flag     like :as_flag              ) AND  
+           ( doshipetc.cust_no      like :as_cust              ) AND  
+           ( doshipetc.driver       like :as_drv               ) AND  
+           ( (:as_amt =  '1' or ( :as_amt = '2' and ship_amount <> 0 ) or  ( :as_amt = '3' and ship_amount = 0 )  ) ) 
+         )
+
+/*
+ FROM customer    
+       , doshipetc   
+       , scene  
+   WHERE ( doshipetc.scene_code       *= scene.scene_code )   
+     AND ( doshipetc.cust_no           = customer.cust_no )   
+     AND ( ( doshipetc.etc_area     like :as_area + '%'        ) AND  
+           ( convert(char(10),doshipetc.etc_date,111)  between :as_sdate and :as_edate ) AND  
+           ( doshipetc.ship_flag       = 'B'                   ) AND  
+           ( doshipetc.etc_flag     like :as_flag              ) AND  
+           ( doshipetc.cust_no      like :as_cust              ) AND  
+           ( doshipetc.driver       like :as_drv               ) AND  
+           ( (:as_amt =  '1' or ( :as_amt = '2' and ship_amount <> 0 ) or  ( :as_amt = '3' and ship_amount = 0 )  ) ) 
+         )
+
+*/
+" arguments=(("as_area", string),("as_sdate", string),("as_edate", string),("as_flag", string),("as_cust", string),("as_drv", string),("as_amt", string))  sort="customer_cust_name A scene_scene_desc A do_do_no A " )
+group(level=1 header.height=116 trailer.height=92 by=("customer_cust_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="차량번호" border="0" color="0" x="23" y="452" height="60" width="910" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="MID(string(sdate, 'yyyymmdd'), 5,2) + ' 월 운반비 부담 내역서'"border="0" color="0" x="603" y="20" height="160" width="2112" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-26" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="일자: " border="0" color="0" x="887" y="236" height="96" width="261" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-16" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=13 alignment="1" tabsequence=32766 border="0" color="0" x="1157" y="236" height="96" width="507" format="[General]" html.valueishtml="0"  name=sdate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-16" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="~~" border="0" color="0" x="1678" y="220" height="132" width="73" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-22" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=14 alignment="0" tabsequence=32766 border="0" color="0" x="1765" y="236" height="96" width="507" format="[General]" html.valueishtml="0"  name=edate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-16" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="5" y1="608" x2="3378" y2="608"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="5" y1="440" x2="5" y2="660"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="3378" y1="440" x2="3378" y2="660"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="946" y1="436" x2="946" y2="520"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header x1="2245" y1="440" x2="2245" y2="524"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header x1="2816" y1="440" x2="2816" y2="524"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header x1="5" y1="440" x2="3378" y2="440"  name=l_7 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="5" y1="520" x2="3378" y2="520"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="현  장  명" border="0" color="0" x="978" y="452" height="60" width="1234" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="송장번호" border="0" color="0" x="2286" y="452" height="60" width="494" html.valueishtml="0"  name=do_do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="수주번호" border="0" color="0" x="64" y="536" height="60" width="3301" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="운송금액" border="0" color="0" x="2839" y="452" height="60" width="521" html.valueishtml="0"  name=do_ship_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header.1 alignment="0" text="" border="0" color="0" x="14" y="4" height="100" width="3355" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-14" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+line(band=header.1 x1="5" y1="112" x2="3378" y2="112"  name=l_9 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header.1 x1="5" y1="0" x2="5" y2="220"  name=l_10 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header.1 x1="3378" y1="0" x2="3378" y2="220"  name=l_11 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+column(band=header.1 id=8 alignment="0" tabsequence=32766 border="0" color="0" x="453" y="8" height="88" width="910" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-14" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header.1 alignment="0" text="거래처 : " border="0" color="0" x="18" y="8" height="88" width="439" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-14" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="0" x="23" y="84" height="60" width="3342" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=detail x1="3378" y1="0" x2="3378" y2="220"  name=l_12 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="5" y1="0" x2="5" y2="220"  name=l_13 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="2816" y1="0" x2="2816" y2="72"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=detail x1="2245" y1="0" x2="2245" y2="72"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=detail x1="946" y1="0" x2="946" y2="72"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=detail x1="9" y1="72" x2="3383" y2="72"  name=l_17 visible="1" pen.style="2" pen.width="5" pen.color="12632256"  background.mode="1" background.color="553648127" )
+line(band=detail x1="9" y1="152" x2="3383" y2="152"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="2286" y="4" height="60" width="494" format="[general]" html.valueishtml="0"  name=do_do_no  tag="출고번호" visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="0" x="2839" y="4" height="60" width="498" format="#,##0" html.valueishtml="0"  name=ship_amount  tag="운송금액" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="978" y="4" height="60" width="1234" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="562" y="4" height="60" width="370" format="[general]" html.valueishtml="0"  name=docar_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="23" y="4" height="60" width="512" format="[general]" html.valueishtml="0"  name=do_driver visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="0" y1="4" x2="3374" y2="4"  name=l_19 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="0" y1="88" x2="3374" y2="88"  name=l_20 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="5" y1="0" x2="5" y2="220"  name=l_21 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="3378" y1="0" x2="3378" y2="220"  name=l_22 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="1" text="합계=" border="0" color="0" x="2565" y="16" height="60" width="215" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" sum( ship_amount for group 1 )"border="0" color="0" x="2839" y="16" height="60" width="498" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=trailer.1 id=8 alignment="1" tabsequence=32766 border="0" color="0" x="690" y="16" height="60" width="1851" format="[general]" html.valueishtml="0"  name=customer_cust_name_1 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="0" text="" border="0" color="0" x="14" y="12" height="108" width="3355" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-14" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+line(band=summary x1="0" y1="4" x2="3374" y2="4"  name=l_23 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="5" y1="128" x2="3378" y2="128"  name=l_24 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="5" y1="0" x2="5" y2="220"  name=l_25 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="3378" y1="0" x2="3378" y2="220"  name=l_26 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=summary alignment="0" text="전체" border="0" color="0" x="23" y="24" height="88" width="256" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-14" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="1" text="총계=" border="0" color="0" x="2569" y="28" height="72" width="210" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" sum( ship_amount for all )"border="0" color="0" x="2839" y="28" height="72" width="498" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

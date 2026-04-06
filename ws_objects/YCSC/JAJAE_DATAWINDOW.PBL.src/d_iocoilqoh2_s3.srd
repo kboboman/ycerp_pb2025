@@ -1,0 +1,400 @@
+﻿$PBExportHeader$d_iocoilqoh2_s3.srd
+$PBExportComments$코일 당월 입출 현황(YSP사업부)(2004/02/24, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="553648127" )
+footer(height=68 color="12639424" )
+detail(height=76 color="536870912" )
+table(column=(type=char(2) updatewhereclause=yes name=sort1 dbname="sort1" )
+ column=(type=char(1) updatewhereclause=yes name=sort dbname="sort" )
+ column=(type=datetime updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=char(255) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=decimal(2) updatewhereclause=yes name=bal_qty dbname="bal_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=drcpt_qty dbname="drcpt_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=rcpt_qty dbname="rcpt_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=dused_qty dbname="dused_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=used_qty dbname="used_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=qoh dbname="qoh" )
+ retrieve="	SELECT sort1,
+			sort = a.sort,
+			sdate = convert(smalldatetime, :ad_date, 111),   
+         item_name = REPLACE(A.item_name,'스리팅 ','') ,
+			bal_qty = ( sum(A.qoh) - isnull(sum(A.lrcpt_qty), 0) + isnull(sum(A.lused_qty), 0) 
+										  - isnull(sum(A.drcpt_qty), 0) + isnull(sum(A.dused_qty), 0) ),	/*전일재고*/
+			drcpt_qty = isnull(sum(A.drcpt_qty), 0),																/*당일입고*/
+			rcpt_qty = isnull(sum(A.rcpt_qty), 0) - isnull(sum(A.lrcpt_qty), 0),							/*당월입고 누계*/
+			dused_qty = isnull(sum(A.dused_qty), 0),																/*당일사용*/
+			used_qty = isnull(sum(A.used_qty), 0) - isnull(sum(A.lused_qty), 0),							/*당월사용 누계*/
+			qoh = ( sum(A.qoh) - isnull(sum(A.lrcpt_qty), 0) + isnull(sum(A.lused_qty), 0) )			/*당일재고*/
+	from (
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(inspdet.item_no),/*당일 입고*/
+				item_name = groupitem.item_name,  
+				drcpt_qty = isnull(sum(inspdet.comqty), 0),
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+		 FROM insp,   
+				inspdet,   
+				groupitem,   
+				supp  
+		WHERE ( insp.insp_no = inspdet.insp_no ) and  
+				( inspdet.item_no = groupitem.item_no ) and  
+				( insp.supp_no = supp.supp_no ) and  
+				( insp.insp_flag = 'W' ) and  
+				( insp.insp_date = :ad_date ) and
+				( inspdet.loc_no = 'WS00000006' or inspdet.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), inspdet.item_no, item_name
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(inspdet.item_no), /* 당월입고 누계*/
+				item_name = groupitem.item_name,  
+				drcpt_qty = 0,
+				rcpt_qty = isnull(sum(inspdet.comqty), 0),
+				dused_qty = 0,
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+		 FROM insp,   
+				inspdet,   
+				groupitem,   
+				supp  
+		WHERE ( insp.insp_no = inspdet.insp_no ) and  
+				( inspdet.item_no = groupitem.item_no ) and  
+				( insp.supp_no = supp.supp_no ) and  
+				( insp.insp_flag = 'W' ) and  
+				( datepart(year,insp.insp_date) = :ai_year ) and  
+				( datepart(month,insp.insp_date) = :ai_mon ) and
+				( inspdet.loc_no = 'WS00000006' or inspdet.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), inspdet.item_no, item_name
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(sfcuse.item_no),/*당일 사용 1*/
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = isnull(sum(( isnull(sfcuse.unit_qty, 0) * isnull(sfcuse.cnt, 0) ) - (  isnull(sfcuse.rem_qty, 0) ) - ( isnull(sfcret.unit_qty, 0) )), 0),
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+FROM sfcuse with(nolock) INNER JOIN  groupitem with(nolock) ON sfcuse.item_no = groupitem.item_no
+            			                            left outer join sfcret with(nolock) on    sfcuse.use_date = sfcret.ret_date
+                                                                                                				and  sfcuse.coil_no = sfcret.wcoil_no 
+                                                                                                				and sfcuse.loc_no = sfcret.loc_no               
+      where ( 
+                     ( sfcuse.use_date   = :ad_date        ) AND  
+                     ( sfcuse.coil_no   is not null        )                   
+                   ) AND ( sfcuse.loc_no IN ('WS00000006', 'WW04') )
+           GROUP BY substring(groupitem.item_no, 3, 1), sfcuse.item_no, item_name                                                                                                        
+/*               
+            FROM groupitem with (nolock)
+               , sfcuse    with (nolock)
+               , sfcret    with (nolock)
+           WHERE ( sfcuse.item_no      = groupitem.item_no)
+             AND ( ( sfcuse.use_date   = :ad_date        ) AND  
+                   ( sfcuse.coil_no   is not null        ) AND 
+                   ( sfcuse.use_date  *= sfcret.ret_date ) AND 
+                   ( sfcuse.coil_no   *= sfcret.wcoil_no ) AND 
+                   ( sfcuse.loc_no    *= sfcret.loc_no   ) 
+                 )
+             AND ( sfcuse.loc_no IN ('WS00000006', 'WW04') )
+           GROUP BY substring(groupitem.item_no, 3, 1), sfcuse.item_no, item_name
+*/    
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(coilsubuse.item_no),/*당일 사용 2*/
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = isnull(sum(( isnull(coilsubuse.unit_qty, 0) * isnull(coilsubuse.cnt, 0) ) - (  isnull(coilsubuse.rem_qty, 0) )), 0),
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+		 FROM groupitem,
+				coilsubuse
+		 WHERE ( coilsubuse.item_no = groupitem.item_no) and  
+				( coilsubuse.use_date = :ad_date ) and
+				( coilsubuse.loc_no = 'WS00000006' or coilsubuse.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), coilsubuse.item_no, item_name 
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(dodet.item_no),/*당일 사용 3*/
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = isnull(sum( isnull(dodet.ship_qty, 0) ), 0),
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+		 FROM groupitem,
+				dodet,
+				do
+		 WHERE ( dodet.item_no = groupitem.item_no) and  
+				( dodet.coil_no is not null) and  
+				( dodet.do_no = do.do_no) and  
+				( do.do_date = :ad_date ) and
+				( dodet.loc_no = 'WS00000006' or dodet.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), dodet.item_no, item_name
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(sfcuse.item_no),/* 당월사용 누계 1*/
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = isnull(sum(( isnull(sfcuse.unit_qty, 0) * isnull(sfcuse.cnt, 0) ) - (  isnull(sfcuse.rem_qty, 0) ) - ( isnull(sfcret.unit_qty, 0) )), 0),
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+		 FROM sfcuse with(nolock) INNER JOIN  groupitem with(nolock) ON sfcuse.item_no = groupitem.item_no
+		                                              left outer join sfcret with(nolock) on    sfcuse.use_date = sfcret.ret_date
+                                                                                                  				and  sfcuse.coil_no = sfcret.wcoil_no 
+                                                                                                  				and sfcuse.loc_no = sfcret.loc_no                
+    where ( ( datepart(year,sfcuse.use_date)  = :ai_year ) AND  
+                   ( datepart(month,sfcuse.use_date) = :ai_mon  ) AND  
+                   ( sfcuse.coil_no  is not null                )      
+                 )
+             AND ( sfcuse.loc_no IN ('WS00000006', 'WW04') )
+           GROUP BY substring(groupitem.item_no, 3, 1), sfcuse.item_no, item_name                                                                                                          
+/*               
+            FROM groupitem with (nolock)
+               , sfcuse    with (nolock)
+               , sfcret    with (nolock)
+           WHERE ( sfcuse.item_no     = groupitem.item_no       ) 
+             AND ( ( datepart(year,sfcuse.use_date)  = :ai_year ) AND  
+                   ( datepart(month,sfcuse.use_date) = :ai_mon  ) AND  
+                   ( sfcuse.coil_no  is not null                ) AND 
+                   ( sfcuse.use_date *= sfcret.ret_date         ) AND 
+                   ( sfcuse.coil_no  *= sfcret.wcoil_no         ) AND 
+                   (sfcuse.loc_no    *= sfcret.loc_no           ) 
+                 )
+             AND ( sfcuse.loc_no IN ('WS00000006', 'WW04') )
+           GROUP BY substring(groupitem.item_no, 3, 1), sfcuse.item_no, item_name
+*/  
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(coilsubuse.item_no),/* 당월사용 누계 2*/
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = isnull(sum(( isnull(coilsubuse.unit_qty, 0) * isnull(coilsubuse.cnt, 0) ) - (  isnull(coilsubuse.rem_qty, 0) )), 0),
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+		 FROM groupitem,
+				coilsubuse
+		 WHERE ( coilsubuse.item_no = groupitem.item_no) and  
+				( datepart(year,coilsubuse.use_date) = :ai_year ) and  
+				( datepart(month,coilsubuse.use_date) = :ai_mon )and
+				( coilsubuse.loc_no = 'WS00000006' or coilsubuse.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), coilsubuse.item_no, item_name 
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(dodet.item_no),/* 당월사용 누계 3*/
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = isnull(sum( isnull(dodet.ship_qty, 0) ), 0),
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = 0
+		 FROM groupitem,
+				dodet,
+				do
+		 WHERE ( dodet.item_no = groupitem.item_no) and  
+				( dodet.coil_no is not null) and  
+				( dodet.do_no = do.do_no) and  
+				( datepart(year,do.do_date) = :ai_year ) and  
+				( datepart(month,do.do_date) = :ai_mon ) and
+				( dodet.loc_no = 'WS00000006' or dodet.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), dodet.item_no, item_name
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(inspdet.item_no),  /* 이후 일자 입고 */
+				item_name = groupitem.item_name,  
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = 0,
+				lrcpt_qty = isnull(sum(inspdet.comqty), 0),
+				lused_qty = 0,
+				qoh = 0
+		 FROM insp,   
+				inspdet,   
+				groupitem,   
+				supp  
+		WHERE ( insp.insp_no = inspdet.insp_no ) and  
+				( inspdet.item_no = groupitem.item_no ) and  
+				( insp.supp_no = supp.supp_no ) and  
+				( insp.insp_flag = 'W' ) and  
+				( insp.insp_date > :ad_date ) and
+				( inspdet.loc_no = 'WS00000006' or inspdet.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), inspdet.item_no, item_name
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(sfcuse.item_no), /*이후 일자 사용 1 */
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = isnull(sum(( isnull(sfcuse.unit_qty, 0) * isnull(sfcuse.cnt, 0) ) - (  isnull(sfcuse.rem_qty, 0) ) - ( isnull(sfcret.unit_qty, 0) )), 0),
+				qoh = 0
+		 FROM sfcuse with(nolock) INNER JOIN  groupitem with(nolock) ON sfcuse.item_no = groupitem.item_no
+ 		                                               left outer join sfcret with(nolock) on    sfcuse.use_date = sfcret.ret_date
+                                                                                                    				and  sfcuse.coil_no = sfcret.wcoil_no 
+                                                                                                    				and  sfcuse.loc_no = sfcret.loc_no       
+   where ( ( sfcuse.use_date  > :ad_date         ) AND  
+                   ( sfcuse.coil_no  is not null         )                    
+                 )
+             AND ( sfcuse.loc_no IN ('WS00000006', 'WW04') )
+          GROUP BY substring(groupitem.item_no, 3, 1), sfcuse.item_no, item_name                                                                                                            
+/*               
+            FROM groupitem with (nolock)
+               , sfcuse    with (nolock)
+               , sfcret    with (nolock)
+           WHERE ( sfcuse.item_no     = groupitem.item_no)
+             AND ( ( sfcuse.use_date  > :ad_date         ) AND  
+                   ( sfcuse.coil_no  is not null         ) AND
+                   ( sfcuse.use_date *= sfcret.ret_date  ) AND
+                   ( sfcuse.coil_no  *= sfcret.wcoil_no  ) AND
+                   ( sfcuse.loc_no   *= sfcret.loc_no    ) 
+                 )
+             AND ( sfcuse.loc_no IN ('WS00000006', 'WW04') )
+          GROUP BY substring(groupitem.item_no, 3, 1), sfcuse.item_no, item_name
+*/   
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(coilsubuse.item_no), /*이후 일자 사용 2 */
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = isnull(sum(( isnull(coilsubuse.unit_qty, 0) * isnull(coilsubuse.cnt, 0) ) - (  isnull(coilsubuse.rem_qty, 0) )), 0),
+				qoh = 0
+		 FROM groupitem,
+				coilsubuse
+		 WHERE ( coilsubuse.item_no = groupitem.item_no) and  
+				( coilsubuse.use_date > :ad_date ) and
+				( coilsubuse.loc_no = 'WS00000006' or coilsubuse.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), coilsubuse.item_no, item_name 
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(dodet.item_no), /* 이후 사용 3 */
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = isnull(sum( isnull(dodet.ship_qty, 0) ), 0),
+				qoh = 0
+		 FROM groupitem,
+				dodet,
+				do
+		 WHERE ( dodet.item_no = groupitem.item_no) and  
+				( dodet.coil_no is not null) and  
+				( dodet.do_no = do.do_no) and  
+				( do.do_date > :ad_date ) and
+				( dodet.loc_no = 'WS00000006' or dodet.loc_no = 'WW04')
+		GROUP BY substring(groupitem.item_no, 3, 1), dodet.item_no, item_name
+
+		UNION ALL
+
+		SELECT sort1 = substring(groupitem.item_no, 3, 1),
+				sort = dbo.uf_getcoilsort(coilmst.item_no), /* 현재고*/
+				item_name = groupitem.item_name,
+				drcpt_qty = 0,
+				rcpt_qty = 0,
+				dused_qty = 0,
+				used_qty = 0,
+				lrcpt_qty = 0,
+				lused_qty = 0,
+				qoh = isnull(sum(coilmst.unit_qty * coilmst.qcnt), 0)
+		 FROM groupitem,
+				coilmst
+		 WHERE ( coilmst.item_no = groupitem.item_no)   AND  
+         ( substring(coilmst.item_no, 3, 1) IN ('S','A') ) AND  
+         ( coilmst.open_close <> 'C' ) AND  
+			( coilmst.loc_no = 'WS00000006' or coilmst.loc_no = 'WW04') AND
+			not exists ( select * from lossitem where loss_item = coilmst.item_no)
+ 		GROUP BY substring(groupitem.item_no, 3, 1),coilmst.item_no, item_name ) A
+
+
+GROUP BY sort1, a.sort,
+		 REPLACE(A.item_name,'스리팅 ','')
+having ISNULL(SUM(A.QOH), 0) <> 0" filter=" qoh <> 0"arguments=(("ai_year", number),("ai_mon", number),("ad_date", date))  sort="sort1 D sort A item_name A " )
+group(level=1 header.height=0 trailer.height=72 by=("sort1" ) header.color="536870912" trailer.color="15780518" )
+group(level=2 header.height=0 trailer.height=72 by=("sort" ) header.color="536870912" trailer.color="12632256" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="9" y="12" height="60" width="978" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전일재고" border="6" color="0" x="997" y="12" height="60" width="416" html.valueishtml="0"  name=bal_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="현재고" border="6" color="0" x="3045" y="12" height="60" width="411" html.valueishtml="0"  name=qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="당일입고" border="6" color="0" x="1422" y="12" height="60" width="402" html.valueishtml="0"  name=drcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="당일사용" border="6" color="0" x="2245" y="12" height="60" width="393" html.valueishtml="0"  name=dused_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="당월입고누계" border="6" color="0" x="1833" y="12" height="60" width="402" html.valueishtml="0"  name=rcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당월사용누계" border="6" color="0" x="2647" y="12" height="60" width="389" html.valueishtml="0"  name=used_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="60" width="978" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="997" y="8" height="60" width="416" format="#,##0" html.valueishtml="0"  name=bal_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="1422" y="8" height="60" width="402" format="#,##0" html.valueishtml="0"  name=drcpt_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="1833" y="8" height="60" width="402" format="#,##0" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2245" y="8" height="60" width="393" format="#,##0" html.valueishtml="0"  name=dused_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="2647" y="8" height="60" width="389" format="#,##0" html.valueishtml="0"  name=used_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="3045" y="8" height="60" width="411" format="#,##0" html.valueishtml="0"  name=qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(drcpt_qty for group 2)"border="0" color="33554432" x="1422" y="4" height="60" width="402" format="#,##0" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(rcpt_qty for group 2)"border="0" color="33554432" x="1833" y="4" height="60" width="402" format="#,##0" html.valueishtml="0"  name=compute_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(dused_qty for group 2)"border="0" color="33554432" x="2245" y="4" height="60" width="393" format="#,##0" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(used_qty for group 2)"border="0" color="33554432" x="2647" y="4" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(qoh for group 2)"border="0" color="33554432" x="3045" y="4" height="60" width="411" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(bal_qty for group 2)"border="0" color="33554432" x="997" y="4" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="1" text="소   계 =   " border="0" color="0" x="9" y="4" height="60" width="978" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(qoh for group 1)"border="0" color="33554432" x="3045" y="4" height="60" width="411" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(used_qty for group 1)"border="0" color="33554432" x="2647" y="4" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(rcpt_qty for group 1)"border="0" color="33554432" x="1833" y="4" height="60" width="402" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(bal_qty for group 1)"border="0" color="33554432" x="997" y="4" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(drcpt_qty for group 1)"border="0" color="33554432" x="1422" y="4" height="60" width="402" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(dused_qty for group 1)"border="0" color="33554432" x="2245" y="4" height="60" width="393" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="IF ( sort1 = 'S' , 'GI 소 계 =', 'AL 소 계=') + '           '"border="0" color="33554432" x="9" y="4" height="60" width="978" format="[GENERAL]" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(used_qty for all)"border="0" color="33554432" x="2647" y="4" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(qoh for all)"border="0" color="33554432" x="3045" y="4" height="60" width="411" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=footer alignment="1" text="총   계 =             " border="0" color="0" x="9" y="4" height="60" width="978" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(bal_qty for all)"border="0" color="33554432" x="997" y="4" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(drcpt_qty for ALL)"border="0" color="33554432" x="1422" y="4" height="60" width="402" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(dused_qty for ALL )"border="0" color="33554432" x="2245" y="4" height="60" width="393" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(rcpt_qty for all)"border="0" color="33554432" x="1833" y="4" height="60" width="402" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,114 @@
+﻿$PBExportHeader$d_osaroi_duzon_r.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(12) updatewhereclause=yes name=aroiinv_no dbname="aroiinv.AROIINV_NO" )
+ column=(type=char(20) updatewhereclause=yes name=register_no dbname="aroiinv.REGISTER_NO" )
+ column=(type=char(3) updatewhereclause=yes name=inv_area dbname="aroiinv.INV_AREA" )
+ column=(type=datetime updatewhereclause=yes name=oi_date dbname="aroiinv.OI_DATE" )
+ column=(type=decimal(4) updatewhereclause=yes name=aroiinv_cash dbname="aroiinv.AROIINV_CASH" )
+ column=(type=decimal(4) updatewhereclause=yes name=aroiinv_aroiinv_rate dbname="aroiinv.AROIINV_RATE" )
+ column=(type=decimal(4) updatewhereclause=yes name=ship_cost dbname="aroiinv.SHIP_COST" )
+ column=(type=char(1) updatewhereclause=yes name=esero dbname="aroiinv.ESERO" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="customer.CUST_NAME" )
+ column=(type=char(12) updatewhereclause=yes name=vat_no dbname="gltrana.VAT_NO" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="aroiinv.CUST_NO" )
+ column=(type=decimal(0) updatewhereclause=yes name=dc dbname="aroiinv.DC" )
+ column=(type=decimal(0) updatewhereclause=yes name=aroiinv_dc_rate dbname="aroiinv.DC_RATE" )
+ column=(type=decimal(0) updatewhereclause=yes name=aroiinv_discount dbname="aroiinv.DISCOUNT" )
+ column=(type=long updatewhereclause=yes name=chk dbname="CHK" values="	0/	1" )
+ column=(type=char(1) updatewhereclause=yes name=aroiinv_open_close dbname="aroiinv.OPEN_CLOSE" )
+ column=(type=char(12) updatewhereclause=yes name=glreg dbname="GLREG" )
+ column=(type=char(10) updatewhereclause=yes name=glsubcode_sub_code dbname="glsubcode.SUB_CODE" )
+ retrieve="  SELECT DISTINCT A.AROIINV_NO   
+       , A.REGISTER_NO   
+       , A.INV_AREA   
+       , A.OI_DATE   
+       , A.AROIINV_CASH   
+       , A.AROIINV_RATE   
+       , A.SHIP_COST   
+       , A.ESERO   
+       , B.CUST_NAME   
+       , C.VAT_NO   
+       , A.CUST_NO   
+       , A.DC   
+       , A.DC_RATE   
+       , A.DISCOUNT   
+       , CHK = 1   
+       , A.OPEN_CLOSE  
+       , GLREG   = (D.REG1+'-'+D.REG2+'-'+D.REG3)
+       , D.SUB_CODE
+    FROM AROIINV A
+         LEFT OUTER JOIN CUSTOMER  B ON A.CUST_NO     = B.CUST_NO 
+         LEFT OUTER JOIN GLTRANA   C ON A.AROIINV_NO  = C.VAT_NO  
+         LEFT OUTER JOIN GLSUBCODE D ON D.SUB_CLASS = '01'
+          AND SUBSTRING(A.REGISTER_NO,1,3)  = D.REG1
+          AND SUBSTRING(A.REGISTER_NO,5,2)  = D.REG2
+          AND SUBSTRING(A.REGISTER_NO,8,5)  = D.REG3
+          AND A.CUST_NO                     = D.SUB_CODE
+   WHERE ( CONVERT(CHAR(7),A.OI_DATE,111)   = :as_yyyymm ) 
+     AND ( A.DELETE_FLAG       = 'N' ) 
+     AND ( A.OPEN_CLOSE        = :as_openclose ) 
+     AND ( A.INV_AREA       LIKE :as_area  )    
+
+/*
+-- 매출전표 SELECT --
+CODE,    거래처,             전자,          공급가액,               부가세(공),   운반비,    부가세(운),
+cust_no, customer_cust_name, aroiinv_esero, aroiinv_cash - tot_dis, aroiinv_rate, ship_cost, truncate(ship_cost * 0.1 + 0.0000001, 0),
+
+합계,
+aroiinv_cash + aroiinv_rate + ship_cost + ship_vat - tot_dis,
+
+계산서번호, 계산서일자, 사업장,   사업등록번호, 사업자(회계), 코드
+aroiinv_no, oi_date,    inv_area, register_no,  glreg,        glsubcode_sub_code
+*/
+
+/*
+ 사업장 S01 : 시화, H01 : 화곡, Z01 : 대전     
+ PART   03,         02,         08
+ 
+ 일반공제분
+*/
+" arguments=(("as_yyyymm", string),("as_openclose", string),("as_area", string)) )
+text(band=header alignment="2" text="사업자등록번호" border="6" color="33554432" x="608" y="8" height="60" width="480" html.valueishtml="0"  name=aroiinv_register_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사업장" border="6" color="33554432" x="1097" y="8" height="60" width="256" html.valueishtml="0"  name=aroiinv_inv_area_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출일자" border="6" color="33554432" x="1362" y="8" height="60" width="407" html.valueishtml="0"  name=aroiinv_oi_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출금액" border="6" color="33554432" x="1778" y="8" height="60" width="384" html.valueishtml="0"  name=aroiinv_aroiinv_cash_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부과세" border="6" color="33554432" x="2171" y="8" height="60" width="384" html.valueishtml="0"  name=aroiinv_aroiinv_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송비" border="6" color="33554432" x="2565" y="8" height="60" width="375" html.valueishtml="0"  name=aroiinv_ship_cost_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전자" border="6" color="33554432" x="2949" y="8" height="60" width="133" html.valueishtml="0"  name=aroiinv_esero_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="상호" border="6" color="33554432" x="3090" y="8" height="60" width="791" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="세금계산서번호" border="6" color="33554432" x="3890" y="8" height="60" width="494" html.valueishtml="0"  name=gltrana_vat_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="판매거래처" border="6" color="33554432" x="4393" y="8" height="60" width="325" html.valueishtml="0"  name=aroiinv_cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="에누리" border="6" color="33554432" x="4727" y="8" height="60" width="366" html.valueishtml="0"  name=aroiinv_dc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="할인율" border="6" color="33554432" x="5102" y="8" height="60" width="366" html.valueishtml="0"  name=aroiinv_dc_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="할인액" border="6" color="33554432" x="5477" y="8" height="60" width="338" html.valueishtml="0"  name=aroiinv_discount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="마감" border="6" color="33554432" x="5824" y="8" height="60" width="178" html.valueishtml="0"  name=aroiinv_open_close_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="회계사업자" border="6" color="33554432" x="6011" y="8" height="60" width="416" html.valueishtml="0"  name=glreg_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="회계거래처" border="6" color="33554432" x="6437" y="8" height="60" width="334" html.valueishtml="0"  name=glsubcode_sub_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="세금계산서번호" border="6" color="33554432" x="137" y="8" height="60" width="462" html.valueishtml="0"  name=aroiinv_aroiinv_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="선택" border="6" color="33554432" x="9" y="8" height="60" width="119" html.valueishtml="0"  name=chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="608" y="8" height="64" width="480" format="[general]" html.valueishtml="0"  name=register_no  tag="사업자등록번호" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1097" y="8" height="64" width="256" format="[general]" html.valueishtml="0"  name=inv_area  tag="사업장" visible="1" edit.limit=3 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1362" y="8" height="64" width="407" format="yyyy/mm/dd" html.valueishtml="0"  name=oi_date  tag="매출일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3090" y="8" height="64" width="791" format="[general]" html.valueishtml="0"  name=cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="3890" y="8" height="64" width="494" format="[general]" html.valueishtml="0"  name=vat_no  tag="세금계산서번호" visible="1" edit.limit=12 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="4393" y="8" height="64" width="325" format="[general]" html.valueishtml="0"  name=cust_no  tag="판매거래처코드" visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="5824" y="8" height="64" width="178" format="[general]" html.valueishtml="0"  name=aroiinv_open_close  tag="마감유무" visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="6011" y="8" height="64" width="416" format="[general]" html.valueishtml="0"  name=glreg visible="1" edit.limit=12 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="33554432" x="6437" y="8" height="64" width="334" format="[general]" html.valueishtml="0"  name=glsubcode_sub_code  tag="보조코드" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="2949" y="8" height="64" width="133" format="[general]" html.valueishtml="0"  name=esero visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1778" y="8" height="64" width="384" format="#,##0" html.valueishtml="0"  name=aroiinv_cash  tag="매출금액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2171" y="8" height="64" width="384" format="#,##0" html.valueishtml="0"  name=aroiinv_aroiinv_rate  tag="부과세" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2565" y="8" height="64" width="375" format="#,##0" html.valueishtml="0"  name=ship_cost  tag="운송비" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="4727" y="8" height="64" width="366" format="#,##0" html.valueishtml="0"  name=dc  tag="에누리" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="5102" y="8" height="64" width="366" format="#,##0.00" html.valueishtml="0"  name=aroiinv_dc_rate  tag="할인율" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="5477" y="8" height="64" width="338" format="#,##0" html.valueishtml="0"  name=aroiinv_discount  tag="할인액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="137" y="8" height="64" width="462" format="[general]" html.valueishtml="0"  name=aroiinv_no  tag="세금계산서번호" visible="1" edit.limit=12 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="60" width="119" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="0" checkbox.off="1" checkbox.scale=yes checkbox.threed=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count(  aroiinv_no  for all )"border="0" color="0" x="137" y="4" height="60" width="462" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

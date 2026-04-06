@@ -1,0 +1,118 @@
+﻿$PBExportHeader$d_oiissuereq_timeamt.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(255) updatewhereclause=yes name=sys_date dbname="sys_date" )
+ column=(type=decimal(8) updatewhereclause=yes name=plan_amt dbname="plan_amt" )
+ retrieve="  SELECT sys_date
+       , plan_amt   = sum( plan_amt )
+    FROM (
+         SELECT sys_date     = replace(convert(char(13),aa.sys_date,120),'-','/')
+              , plan_amt     = (case when convert(char(10),bb.rlse_date,111) = :as_reqdate then /* 출고일이 당일이면 상차수량 계산 */
+                                          bb.price * dbo.uf_getqty(bb.item_no, bb.qa, bb.uom, dd.ship_qty)
+                                     else (case when bb.issue_qty > 0 AND bb.rlse_date is null then    /* 미출고는 선정수량으로 계산 */
+                                                     bb.price * dbo.uf_getqty(bb.item_no, bb.qa, bb.uom, bb.issue_qty)
+                                                else 0
+                                           end)
+                                end)
+           FROM (
+                     SELECT DISTINCT 
+                            sys_date       = convert(char(13),b.sys_date,120)
+                          , req_date       = a.req_date                                                               
+                          , salesman       = a.salesman                                                               
+                          , req_seq        = a.req_seq
+                          , accept_area    = a.accept_area                                                                
+                          , accept_name    = replace(c.loc_name,'저장소','')
+                          , accept_user    = a.accept_user                                                            
+                          , sale_no        = b.sale_no                                                                
+                          , seq_no         = isnull(i.seq_no, 1)
+                          , confirm_flag   = a.confirm_flag                                                             
+                          , issue_schedule = b.issue_schedule                                                         
+                          , schedule_name  = (case b.issue_schedule                                      
+                                                    when 'A' then '직출'                                   
+                                                    when 'B' then '생산후직출'                               
+                                                    when 'C' then '자동작성'                                 
+                                                    when 'D' then '방문'                                   
+                                                    when 'E' then '외주(시화)'                                   
+                                                    when 'F' then '외주(본사)'                                   
+                                                    when 'G' then '유창강건'                                   
+                                                    when 'H' then '지점이송'                                   
+                                                    when 'I' then '야간도착'                                   
+                                                    when 'J' then '저녁상차'                                   
+                                                    when 'K' then '택배/정기'                                   
+                                                    else           ''                                      
+                                               end)                                                        
+                       FROM issuereq   A with (nolock)                                                            
+                            LEFT OUTER JOIN issuereqdet   B with (nolock)
+                              ON a.req_date  = b.req_date AND a.salesman  = b.salesman AND a.req_seq = b.req_seq
+                            LEFT OUTER JOIN issuereqdet_sale I with (nolock)
+                              ON a.req_date  = i.req_date AND a.salesman  = i.salesman AND a.req_seq = i.req_seq
+                            LEFT OUTER JOIN location  C with (nolock) ON a.accept_user = c.loc_manager
+                      WHERE a.req_date        = :as_reqdate + ' 00:00:00'
+                        AND a.confirm_flag    = 'Y'  
+                        AND b.issue_schedule <> 'H'  /* 지점이송 */
+                        AND b.req_flag        = 'A'  /* 출고의뢰 */
+                ) AA
+         
+                LEFT OUTER JOIN (                                                                
+                     SELECT DISTINCT
+                            scene_nm     = substring(s.scene_desc,1,2)
+                          , scene_desc   = s.scene_desc
+                          , order_no     = a.order_no
+                          , seq_no       = a.seq_no
+                          , item_no      = a.item_no                                               
+                          , qa           = a.qa                                                    
+                          , uom          = a.uom                                                   
+                          , order_qty    = a.order_qty                                             
+                          , price        = a.price                                                 
+                          , issue_qty    = a.issue_qty                                                 
+                          , stock_qty    = a.stock_qty                                             
+                          , rlse_date    = a.rlse_date                                             
+                          , rlse_qty     = a.rlse_qty                                              
+                       FROM issuereq    IR with (nolock)                                           
+                            LEFT OUTER JOIN issuereqdet  IB with (nolock)
+                              ON ir.req_date  = ib.req_date AND ir.salesman  = ib.salesman AND ir.req_seq = ib.req_seq                                                       
+                            LEFT OUTER JOIN issuereqdet_sale I
+                              ON ir.req_date  = i.req_date  AND ir.salesman  = i.salesman  AND ir.req_seq = i.req_seq
+                            LEFT OUTER JOIN saledet   A with (nolock) ON i.order_no = a.order_no AND i.seq_no = a.seq_no
+                            LEFT OUTER JOIN sale      B with (nolock) ON a.order_no    = b.order_no
+                            LEFT OUTER JOIN customer  C with (nolock) ON b.cust_no     = c.cust_no
+                            LEFT OUTER JOIN scene     S with (nolock) ON b.scene_code  = s.scene_code
+                      WHERE ir.req_date        = :as_reqdate + ' 00:00:00'
+                        AND ir.confirm_flag    = 'Y'  
+                        AND ib.issue_schedule <> 'H'  /* 지점이송 */
+                        AND ib.req_flag        = 'A'  /* 출고의뢰 */
+                        AND ((:as_inside  = 'N') OR
+                             (:as_inside <> 'N') AND (c.salesman <> 'killby')
+                            )                   
+                ) BB ON aa.sale_no = bb.order_no AND aa.seq_no = bb.seq_no                                                    
+                                                                                                 
+                LEFT OUTER JOIN (
+                     SELECT a.do_no, a.sale_no, a.seq_no, a.ship_qty, a.price, b.do_date
+                       FROM dodet  A
+                            LEFT OUTER JOIN do  B ON a.do_no = b.do_no
+                      WHERE convert(char(10),b.do_date,111)  = :as_reqdate
+                ) DD ON bb.order_no = dd.sale_no AND bb.seq_no = dd.seq_no
+           WHERE ( aa.confirm_flag    = 'Y'                        )
+             AND ( aa.issue_schedule <> 'H'                        )  /* '지점이송' */
+             AND ( aa.req_date  = :as_reqdate + ' 00:00:00' )
+         ) A
+     GROUP BY a.sys_date
+
+" arguments=(("as_reqdate", string),("as_inside", string)) )
+text(band=header alignment="2" text="등록일자(시간)" border="6" color="33554432" x="178" y="8" height="60" width="503" html.valueishtml="0"  name=sys_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="출고예정금액" border="6" color="33554432" x="690" y="8" height="60" width="425" html.valueishtml="0"  name=plan_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="금액(적산)" border="6" color="33554432" x="1125" y="8" height="60" width="430" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="178" y="8" height="72" width="503" format="[general]" html.valueishtml="0"  name=sys_date visible="1" edit.limit=13 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="690" y="8" height="72" width="425" format="#,##0" html.valueishtml="0"  name=plan_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="cumulativeSum(  plan_amt  for all )"border="0" color="0" x="1125" y="8" height="72" width="430" format="#,##0" html.valueishtml="0"  name=cplan_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( plan_amt for all )"border="0" color="33554432" x="690" y="8" height="72" width="425" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="cumulativeSum(  plan_amt  for all )"border="0" color="0" x="1125" y="8" height="72" width="430" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

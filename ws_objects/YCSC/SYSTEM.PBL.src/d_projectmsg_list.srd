@@ -1,0 +1,101 @@
+﻿$PBExportHeader$d_projectmsg_list.srd
+$PBExportComments$고객센터용 목록
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=long updatewhereclause=yes identity=yes name=id dbname="ID" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="CUST_NO" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="CUST_NAME" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="SCENE_CODE" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="SCENE_DESC" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="USER_NAME" )
+ column=(type=char(14) updatewhereclause=yes name=order_no dbname="ORDER_NO" )
+ column=(type=char(2) updatewhereclause=yes name=cat dbname="CAT" values="납기//생산	1/재고	2/품질	3/출고	4/" )
+ column=(type=char(1) updatewhereclause=yes name=status dbname="STATUS" values="접수	1/진행	2/완료	3/" )
+ column=(type=char(100) updatewhereclause=yes name=item_no dbname="ITEM_NO" )
+ column=(type=char(10) updatewhereclause=yes name=flogin dbname="FLOGIN" )
+ column=(type=char(10) updatewhereclause=yes name=fuser dbname="FUSER" )
+ column=(type=datetime updatewhereclause=yes name=msgdate dbname="MSGDATE" )
+ column=(type=char(4099) updatewhereclause=yes name=msg dbname="MSG" )
+ column=(type=char(1) updatewhereclause=yes name=del dbname="DEL" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="CNT" )
+ retrieve="SELECT ID         = AA.ID
+     , CUST_NO    = AA.CUST_NO
+     , CUST_NAME  = AA.CUST_NAME
+     , SCENE_CODE = AA.SCENE_CODE
+     , SCENE_DESC = AA.SCENE_DESC
+     , USER_NAME  = AA.USER_NAME
+     , ORDER_NO   = AA.ORDER_NO
+     , CAT        = AA.CAT
+     , STATUS     = AA.STATUS
+     , ITEM_NO    = AA.ITEM_NO
+     , FLOGIN     = AA.FLOGIN
+     , FUSER      = AA.FUSER
+     , MSGDATE    = AA.MSGDATE
+     , MSG        = AA.MSG
+     , DEL        = AA.DEL
+     , CNT        = ISNULL(BB.CNT,0)
+  FROM (
+        SELECT ID         =  A.ID
+             , CUST_NO    =  A.CUST_NO
+             , CUST_NAME  =  B.CUST_NAME
+             , SCENE_CODE =  A.SCENE_CODE
+             , SCENE_DESC =  C.SCENE_DESC
+             , USER_NAME  =  D.USER_NAME
+             , ORDER_NO   =  A.ORDER_NO
+             , CAT        =  A.CAT
+             , STATUS     =  A.STATUS
+             , ITEM_NO    =  A.ITEM_NO
+             , FLOGIN     =  A.FLOGIN
+             , FUSER      =  E.USER_NAME
+             , MSGDATE    =  A.MSGDATE
+             , MSG        =  A.MSG
+             , DEL        =  A.DEL
+          FROM PROJECTMSG A
+               LEFT OUTER JOIN CUSTOMER B  ON A.CUST_NO  = B.CUST_NO
+               LEFT OUTER JOIN SCENE    C  ON A.CUST_NO  = C.CUST_NO  AND A.SCENE_CODE  = C.SCENE_CODE
+               LEFT OUTER JOIN LOGIN    D  ON A.SALESMAN = D.USER_ID
+               LEFT OUTER JOIN LOGIN    E  ON A.FLOGIN   = E.USER_ID
+         WHERE A.CUST_NO  IS NOT NULL
+           AND A.DEL       = 'N'
+       ) AA
+       LEFT OUTER JOIN 
+       (
+        SELECT PKID, CNT = COUNT(*) 
+          FROM PROJECTMSGDET 
+         WHERE TLOGIN    LIKE :as_userid
+         GROUP BY PKID 
+       )  BB 
+       ON AA.ID      = BB.PKID
+   ORDER BY AA.MSGDATE DESC
+
+" arguments=(("as_userid", string))  sort="msgdate D " )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="4453" y="8" height="60" width="320" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="요청사항" border="6" color="33554432" x="4782" y="8" height="60" width="1563" html.valueishtml="0"  name=msg_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="분류" border="6" color="33554432" x="4110" y="8" height="60" width="334" html.valueishtml="0"  name=cat_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="처리결과" border="6" color="0" x="4453" y="8" height="60" width="320" html.valueishtml="0"  name=status_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작성일자" border="6" color="33554432" x="224" y="8" height="60" width="553" html.valueishtml="0"  name=msgdate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="번호" border="6" color="0" x="9" y="8" height="60" width="206" html.valueishtml="0"  name=id_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="영업담당" border="6" color="0" x="1303" y="8" height="60" width="293" html.valueishtml="0"  name=user_name_t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="1605" y="8" height="60" width="791" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작성자" border="6" color="0" x="786" y="8" height="60" width="293" html.valueishtml="0"  name=fuser_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="처리자" border="6" color="0" x="1088" y="8" height="60" width="206" html.valueishtml="0"  name=cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="33554432" x="2405" y="8" height="60" width="1198" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="3611" y="8" height="60" width="489" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="4782" y="4" height="68" width="1563" format="[general]" html.valueishtml="0"  name=msg visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="4110" y="4" height="68" width="334" format="[general]" html.valueishtml="0"  name=cat visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.required=yes ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="4453" y="4" height="68" width="320" format="[general]" html.valueishtml="0"  name=status visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="224" y="4" height="68" width="553" format="yyyy/mm/dd hh:mm" html.valueishtml="0"  name=msgdate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="9" y="4" height="68" width="206" format="[general]" html.valueishtml="0"  name=id visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="1303" y="4" height="68" width="293" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="1605" y="4" height="68" width="791" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="0~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="786" y="4" height="68" width="293" format="[general]" html.valueishtml="0"  name=fuser visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="0~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="1088" y="4" height="68" width="206" format="#,##0" html.valueishtml="0"  name=cnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="2405" y="4" height="68" width="1198" format="[general]" html.valueishtml="0"  name=scene_desc  tag="현장명" visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0~tif (  del  = 'Y', rgb(255,0,0), rgb(0,0,0) )" x="3611" y="4" height="68" width="489" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count(  cust_no  for all )"border="0" color="0" x="9" y="4" height="68" width="206" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

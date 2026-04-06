@@ -1,0 +1,106 @@
+﻿$PBExportHeader$d_apinspdetprt_r1.srd
+$PBExportComments$입고라벨 출력
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N" )
+ column=(type=char(14) updatewhereclause=yes name=inspdet_insp_no dbname="inspdet.insp_no" )
+ column=(type=long updatewhereclause=yes name=oi_no dbname="inspdet.oi_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="inspdet.item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="inspdet.qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="inspdet.uom" )
+ column=(type=char(1) updatewhereclause=yes name=item_source dbname="item.source" )
+ column=(type=char(14) updatewhereclause=yes name=inspdet_pur_no dbname="inspdet.pur_no" )
+ column=(type=long updatewhereclause=yes name=inspdet_seq_no dbname="inspdet.seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=inspdet_loc_no dbname="inspdet.loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ column=(type=char(1) updatewhereclause=yes name=loc_type dbname="location.loc_type" values="사내	N/작업장	W/사외	Y/" )
+ column=(type=long updatewhereclause=yes name=inspdet_cnt dbname="inspdet.cnt" )
+ column=(type=decimal(4) updatewhereclause=yes name=inspdet_comqty dbname="inspdet.comqty" )
+ column=(type=decimal(2) updatewhereclause=yes name=rcpt_qty dbname="inspdet.rcpt_qty" )
+ column=(type=char(1) updatewhereclause=yes name=pur_subcon dbname="pur.subcon" )
+ column=(type=char(1) updatewhereclause=yes name=work_type dbname="purdet.work_type" )
+ column=(type=decimal(4) updatewhereclause=yes name=inspdet_unit_qty dbname="inspdet.unit_qty" )
+ column=(type=char(17) updatewhereclause=yes name=purdet_product_no dbname="purdet.product_no" )
+ column=(type=char(20) updatewhereclause=yes name=inspdet_coil_no dbname="inspdet.coil_no" )
+ column=(type=char(2) updatewhereclause=yes name=coilmst_etc_no dbname="coilmst.etc_no" )
+ column=(type=char(14) updatewhereclause=yes name=sale_no dbname="purdet.sale_no" )
+ column=(type=long updatewhereclause=yes name=sale_seq dbname="purdet.sale_seq" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_name dbname="SCENE.scene_name" )
+ column=(type=char(10) updatewhereclause=yes name=insp_date dbname="insp_date" )
+ retrieve="  SELECT chk   = 'N'
+       , inspdet.insp_no     
+       , inspdet.oi_no       
+       , inspdet.item_no     
+       , item.item_name      
+       , inspdet.qa          
+       , inspdet.uom         
+       , item.source         
+       , inspdet.pur_no      
+       , inspdet.seq_no      
+       , inspdet.loc_no      
+       , location.loc_name   
+       , location.loc_type   
+       , inspdet.cnt         
+       , inspdet.comqty      
+       , inspdet.rcpt_qty
+       , pur.subcon          
+       , purdet.work_type    
+       , inspdet.unit_qty    
+       , purdet.product_no   
+       , inspdet.coil_no     
+       , coilmst.etc_no
+       , purdet.sale_no
+       , purdet.sale_seq
+       , customer.cust_name
+       , scene.scene_desc scene_name
+       , convert(char(10), insp.insp_date, 121) insp_date
+    FROM  inspdet with(nolock) inner join insp with(nolock) on inspdet.insp_no = insp.insp_no
+                                      inner join item with(nolock) on  inspdet.item_no    = item.item_no and inspdet.qa         = item.qa    
+                                      left outer join  pur with(nolock) on inspdet.pur_no    = pur.order_no
+                                      left outer join  purdet  with(nolock) on  inspdet.pur_no  = purdet.order_no and inspdet.seq_no  = purdet.seq_no 
+                                      left outer join  supp with(nolock) on insp.supp_no       = supp.supp_no   
+                                      left outer join location with(nolock) on inspdet.loc_no = location.loc_no
+                                      left outer join coilmst with(nolock) on inspdet.coil_no = coilmst.coil_no and inspdet.loc_no = coilmst.loc_no
+                                      left outer join sale with(nolock) on purdet.sale_no = sale.order_no
+                                      left outer join customer with(nolock) on sale.cust_no = customer.cust_no
+                                      left outer join scene with(nolock) on sale.scene_code = scene.scene_code
+where ( insp.insp_no    LIKE :as_inspno )" arguments=(("as_inspno", string))  sort="sale_no A sale_seq A " )
+text(band=header alignment="2" text="순번" border="6" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=inspdet_oi_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="선택" border="6" color="33554432" x="178" y="8" height="60" width="192" html.valueishtml="0"  name=chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="379" y="8" height="60" width="759" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=oi_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="33554432" x="192" y="8" height="72" width="165" format="[general]" html.valueishtml="0" protect="0~tif (work_type = 'L', 1, if ( loc_type = 'Y', 1, 0) )"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="2" color="33554432" x="379" y="8" height="72" width="759" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( if( chk = 'Y', 1, 0) for all )"border="0" color="33554432" x="192" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=tchk visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="수주순번" border="6" color="0" x="1147" y="8" height="60" width="270" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=24 alignment="2" tabsequence=32766 border="2" color="33554432" x="1147" y="8" height="72" width="274" format="[general]" html.valueishtml="0"  name=sale_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="1426" y="8" height="60" width="763" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="2199" y="8" height="60" width="1477" html.valueishtml="0"  name=scene_scene_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="3685" y="8" height="60" width="773" html.valueishtml="0"  name=item_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="4466" y="8" height="60" width="763" html.valueishtml="0"  name=inspdet_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="33554432" x="5221" y="8" height="60" width="192" html.valueishtml="0"  name=inspdet_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고수량" border="6" color="33554432" x="5403" y="8" height="60" width="384" html.valueishtml="0"  name=inspdet_comqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="2" color="33554432" x="5239" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=uom  tag="단위" visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="2" color="33554432" x="3685" y="8" height="72" width="773" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="2" color="33554432" x="4466" y="8" height="72" width="763" format="[general]" html.valueishtml="0"  name=qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="2" color="33554432" x="5408" y="8" height="72" width="384" format="#,##0" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=25 alignment="0" tabsequence=32766 border="2" color="33554432" x="1431" y="8" height="72" width="759" format="[general]" html.valueishtml="0"  name=customer_cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="2" color="33554432" x="2199" y="8" height="72" width="1477" format="[general]" html.valueishtml="0"  name=scene_scene_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

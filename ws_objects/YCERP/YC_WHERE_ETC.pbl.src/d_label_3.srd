@@ -1,0 +1,70 @@
+﻿$PBExportHeader$d_label_3.srd
+$PBExportComments$10 x 3 코일 속(분리)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 3 print.margin.right = 1 print.margin.top = 1 print.margin.bottom = 1 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no label.name="Pin Fed Address 3.5x.94  4097,4145/63/77" label.width=1740 label.height=770 label.rows=1 label.rows.spacing=0 label.columns=1 label.columns.spacing=0 label.topdown=no label.sheet=no label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=772 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=inspdet_oi_no dbname="inspdet.oi_no" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(26) updatewhereclause=yes name=thin dbname="thin" )
+ column=(type=long updatewhereclause=yes name=inspdet_cnt dbname="inspdet.cnt" )
+ column=(type=char(20) updatewhereclause=yes name=inspdet_coil_no dbname="inspdet.coil_no" )
+ column=(type=char(26) updatewhereclause=yes name=one dbname="one" )
+ column=(type=char(20) updatewhereclause=yes name=coilmst_coil_no dbname="coilmst.coil_no" )
+ retrieve="  SELECT inspdet.oi_no
+       , groupitem.item_name
+       , thin = (case when isnull(substring(coilS.qa, 2,2),0) <> 0
+							 then ( convert(varchar(6), convert (decimal (3,2), substring(coilS.qa,1,1) + '.' 
+									+ substring(coilS.qa, 2,2))) + ' * ' 
+									+ convert(varchar(6), convert (decimal (5,1), substring(coilS.qa,5,4) + '.' 
+									+ substring(coilS.qa, 10,1))) )
+							 else '' 
+                 end) + ' * ' + convert(varchar(8), convert(decimal(5), coilS.unit_qty))
+       , inspdet.cnt
+       , inspdet.coil_no
+       , one  = (case when isnull(substring(coilW.qa, 2,2),0) <> 0 
+							 then ( convert(varchar(6), convert (decimal (3,2), substring(coilS.qa,1,1) + '.' 
+									+ substring(coilS.qa, 2,2))) + ' * ' 
+									+ convert(varchar(6), convert(decimal(5,1), substring(coilW.qa,5,4) + '.' 
+									+ substring(coilW.qa, 10,1))) ) 
+							 else '' 
+                 end) + ' * ' + convert(varchar(8), convert(decimal(5), coilW.unit_qty))
+       , coilW.coil_no
+   FROM inspdet inner join purdet on purdet.order_no   = inspdet.pur_no  and purdet.seq_no     = inspdet.seq_no
+                             inner join  groupitem on inspdet.item_no   = groupitem.item_no       
+                             left outer join coilmst coilW on  purdet.coil_no   = coilW.coil_no and  purdet.rcpt_loc = coilW.loc_no
+                             left outer join coilmst coilS on  purdet.coil_no   = coilS.coil_no and  purdet.rcpt_loc = coilS.loc_no
+WHERE ( inspdet.item_no NOT IN ( SELECT lossitem.loss_item FROM lossitem ) ) 
+     AND ( inspdet.insp_no   = :as_order_no   ) 
+     AND ( inspdet.oi_no     = :ai_oi_no      )
+   ORDER BY inspdet.oi_no
+/*
+    FROM inspdet
+       , groupitem
+       , purdet
+       , coilmst coilW
+       , coilmst coilS
+   WHERE ( purdet.order_no   = inspdet.pur_no ) 
+     and ( purdet.seq_no     = inspdet.seq_no ) 
+     and ( purdet.coil_no   *= coilW.coil_no  ) 
+     and ( purdet.rcpt_loc  *= coilW.loc_no   ) 
+     and ( inspdet.coil_no  *= coilS.coil_no  ) 
+     and ( inspdet.loc_no   *= coilS.loc_no   ) 
+     and ( inspdet.item_no   = groupitem.item_no ) 
+     and ( inspdet.item_no NOT IN ( SELECT lossitem.loss_item FROM lossitem ) ) 
+     AND ( inspdet.insp_no   = :as_order_no   ) 
+     AND ( inspdet.oi_no     = :ai_oi_no      )
+   ORDER BY inspdet.oi_no
+*/" arguments=(("as_order_no", string),("ai_oi_no", number)) )
+line(band=detail x1="23" y1="228" x2="1723" y2="228"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="23" y1="244" x2="1723" y2="244"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="37" y="36" height="68" width="571" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="'*' + inspdet_coil_no + '*'"border="0" color="33554432" x="37" y="164" height="68" width="1678" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="3 of 9 Barcode" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="'*' + inspdet_coil_no + '*'"border="0" color="33554432" x="37" y="328" height="64" width="1678" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="3 of 9 Barcode" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="'*' + inspdet_coil_no + '*'"border="0" color="33554432" x="37" y="384" height="56" width="1678" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="3 of 9 Barcode" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="원코일" border="0" color="33554432" x="933" y="264" height="52" width="165" html.valueishtml="0"  name=t_3 visible="1"  font.face="HY헤드라인M" font.height="-9" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression="'*' + inspdet_coil_no + '*'"border="0" color="33554432" x="37" y="112" height="68" width="1678" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="3 of 9 Barcode" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="622" y="28" height="84" width="1093" format="[general]" html.valueishtml="0"  name=thin visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-16" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="37" y="248" height="72" width="891" format="[general]" html.valueishtml="0"  name=inspdet_coil_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-14" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1106" y="256" height="60" width="603" format="[general]" html.valueishtml="0"  name=one visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

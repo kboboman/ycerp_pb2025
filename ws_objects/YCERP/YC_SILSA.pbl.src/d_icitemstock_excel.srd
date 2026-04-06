@@ -1,0 +1,50 @@
+﻿$PBExportHeader$d_icitemstock_excel.srd
+$PBExportComments$장기재고 현황
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912"  height.autosize=yes)
+table(column=(type=char(10) updatewhereclause=yes name=itemstockdet_loc_no dbname="itemstockdet.loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ column=(type=char(10) updatewhereclause=yes name=itemstockdet_item_no dbname="itemstockdet.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=itemstockdet_qa dbname="itemstockdet.qa" )
+ column=(type=decimal(0) updatewhereclause=yes name=longstock_qty dbname="longstock_qty" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ retrieve="  SELECT itemstockdet.loc_no   
+       , location.loc_name 
+       , itemstockdet.item_no   
+       , itemstockdet.qa   
+       , sum(itemstockdet.qty) longstock_qty
+       , groupitem.item_name   
+    FROM itemstockdet inner join groupitem on  itemstockdet.item_no = groupitem.item_no
+						  inner join location on itemstockdet.loc_no = location.loc_no
+						  left outer join itemloc on itemstockdet.loc_no = itemloc.loc_no and itemstockdet.item_no = itemloc.item_no and itemstockdet.qa = itemloc.qa			
+   WHERE  ( itemstockdet.loc_no      = :as_loc )  
+group by itemstockdet.loc_no   
+       , location.loc_name 
+       , itemstockdet.item_no   
+       , itemstockdet.qa   
+       , groupitem.item_name   
+/*
+    FROM itemstock,
+			groupitem,   
+         location,
+			itemloc
+   WHERE ( itemstock.item_no = groupitem.item_no ) and  
+         ( itemstock.loc_no = location.loc_no ) and
+			( itemstock.loc_no *= itemloc.loc_no ) and
+			( itemstock.item_no *= itemloc.item_no ) and  
+         ( itemstock.qa *= itemloc.qa ) and
+			  itemstock.loc_no = :as_loc
+*/" arguments=(("as_loc", string))  sort="groupitem_item_name A " )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="12" height="60" width="1015" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=0 border="0" color="33554432" x="1042" y="12" height="60" width="805" html.valueishtml="0"  name=itemstockdet_qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=0 border="0" color="33554432" x="1861" y="12" height="60" width="617" html.valueishtml="0"  name=longstock_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="품명" border="0" color="33554432" x="9" y="8" height="60" width="1015" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="장기재고" border="0" color="0" x="1856" y="8" height="60" width="622" html.valueishtml="0"  name=longstock_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="규격" border="0" color="0" x="1038" y="8" height="60" width="809" html.valueishtml="0"  name=itemstockdet_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+
+sparse(names="groupitem_item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

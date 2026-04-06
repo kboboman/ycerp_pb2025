@@ -1,0 +1,131 @@
+﻿$PBExportHeader$d_oicustdoewol_r22.srd
+$PBExportComments$거래처별 이월내역
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="79741120" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=do_spot_code dbname="spot_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_cash dbname="do_cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_rate dbname="do_rate" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_total dbname="do_total" )
+ retrieve="  SELECT cust_no      = a.cust_no       
+       , cust_name    = a.cust_name  
+       , spot_code    = a.spot_code     
+       , scene_desc   = a.scene_desc    
+       , salesman     = a.salesman
+       , do_cash      = sum(a.do_cash)
+       , do_rate      = sum(a.do_rate)
+       , do_total     = sum(a.do_total)
+    FROM (
+					SELECT cust_no      = do.cust_no       
+						  , cust_name    = customer.cust_name  
+						  , spot_code    = do.spot_code     
+						  , scene_desc   = scene.scene_desc    
+						  , salesman     = login.user_name
+						  , do_rate      = do.do_rate
+						  , do_cash      = do.do_cash
+						  , do_total     = do.do_total
+							FROM  do with(nolock)  inner join customer with(nolock)  on do.cust_no = customer.cust_no
+														    left outer join login with(nolock) on customer.salesman  = login.user_id
+														    left outer join scene  with(nolock) on do.cust_no = scene.cust_no and do.spot_code = scene.scene_code
+							where ( do.do_date         BETWEEN :as_sdate AND :as_edate )
+									and ( do.ewol            = 'Y'               )
+									and customer.salesman like :as_salesman
+									and do.area_no  LIKE :as_areano
+									and do.cust_no  LIKE :as_custno
+
+         ) A
+   GROUP BY a.cust_no       
+       , a.cust_name  
+       , a.spot_code     
+       , a.scene_desc    
+       , a.salesman
+
+/*
+  SELECT cust_no      = a.cust_no       
+       , cust_name    = a.cust_name  
+       , spot_code    = a.spot_code     
+       , scene_desc   = a.scene_desc    
+       , salesman     = a.salesman
+       , do_cash      = sum(a.do_cash)
+       , do_rate      = sum(a.do_rate)
+       , do_total     = sum(a.do_total)
+    FROM (
+         SELECT cust_no      = do.cust_no       
+              , cust_name    = customer.cust_name  
+              , spot_code    = do.spot_code     
+              , scene_desc   = scene.scene_desc    
+              , salesman     = login.user_name
+              , do_rate      = do.do_rate
+              , do_cash      = do.do_cash
+              , do_total     = do.do_total
+           FROM do          
+              , customer 
+              , scene
+              , login
+          WHERE ( do.cust_no         = customer.cust_no  )   
+            AND ( do.ewol            = 'Y'               )   
+            AND ( do.spot_code      *= scene.scene_code  )   
+            AND ( customer.salesman *= login.user_id     )   
+            AND ( do.do_date    BETWEEN :as_sdate AND :as_edate )
+            AND ( :as_salesman  = '%' AND customer.salesman  LIKE :as_salesman
+                  OR
+                  :as_salesman <> '%' AND customer.salesman     = :as_salesman
+                )
+            AND ( :as_areano  = '%' AND do.area_no  LIKE :as_areano
+                 OR
+                  :as_areano <> '%' AND do.area_no     = :as_areano
+                )
+            AND ( :as_custno  = '%' AND do.cust_no  LIKE :as_custno
+                 OR
+                  :as_custno <> '%' AND do.cust_no     = :as_custno
+                )
+         ) A
+   GROUP BY a.cust_no       
+       , a.cust_name  
+       , a.spot_code     
+       , a.scene_desc    
+       , a.salesman
+         
+*/" arguments=(("as_salesman", string),("as_areano", string),("as_custno", string),("as_sdate", string),("as_edate", string))  sort="salesman A cust_name A scene_desc A " )
+group(level=1 header.height=0 trailer.height=80 by=("salesman" ) header.color="553648127" trailer.color="12639424" )
+group(level=2 header.height=0 trailer.height=80 by=("cust_name" ) header.color="536870912" trailer.color="553648127" )
+text(band=header alignment="2" text="현장" border="6" color="0" x="1047" y="8" height="64" width="1111" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="합계금액" border="6" color="0" x="3282" y="8" height="64" width="603" html.valueishtml="0"  name=do_total_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고금액" border="6" color="0" x="2167" y="8" height="64" width="585" html.valueishtml="0"  name=do_cash_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부가세" border="6" color="0" x="2761" y="8" height="64" width="512" html.valueishtml="0"  name=do_rate_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="265" y="8" height="64" width="773" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="9" y="8" height="64" width="247" html.valueishtml="0"  name=salesman_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1047" y="4" height="72" width="1111" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="3282" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=do_total visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="2761" y="4" height="72" width="512" format="#,##0" html.valueishtml="0"  name=do_rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2167" y="4" height="72" width="585" format="#,##0" html.valueishtml="0"  name=do_cash visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="265" y="4" height="72" width="773" format="[general]" html.valueishtml="0"  name=cust_name pointer="HyperLink!" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=salesman visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="0" text="거래처 소계" border="0" color="0" x="1047" y="4" height="72" width="1111" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.2 alignment="2" text="" border="0" color="0" x="265" y="4" height="72" width="773" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.2 alignment="2" text="" border="0" color="0" x="9" y="4" height="72" width="247" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( do_total for group 2 )"border="0" color="0" x="3282" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum( do_rate for group 2 )"border="0" color="0" x="2761" y="4" height="72" width="512" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum( do_cash for group 2 )"border="0" color="0" x="2167" y="4" height="72" width="585" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="1047" y="4" height="72" width="1111" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="0" text="담당자 소계" border="0" color="0" x="265" y="4" height="72" width="773" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="9" y="4" height="72" width="247" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( do_cash for group 1 )"border="0" color="0" x="2167" y="4" height="72" width="585" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( do_rate for group 1 )"border="0" color="0" x="2761" y="4" height="72" width="512" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( do_total for group 1 )"border="0" color="0" x="3282" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( do_cash for all )"border="0" color="0" x="2167" y="4" height="72" width="585" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( do_rate for all )"border="0" color="0" x="2761" y="4" height="72" width="512" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( do_total for all )"border="0" color="0" x="3282" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="1047" y="4" height="72" width="1111" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="0" x="265" y="4" height="72" width="773" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( salesman for all distinct salesman )"border="0" color="0" x="9" y="4" height="72" width="247" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+
+sparse(names="salesman	cust_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

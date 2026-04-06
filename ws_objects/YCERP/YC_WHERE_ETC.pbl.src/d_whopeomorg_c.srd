@@ -1,0 +1,74 @@
+﻿$PBExportHeader$d_whopeomorg_c.srd
+$PBExportComments$매출조직도(담당자)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(20) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(20) updatewhereclause=yes name=team_name dbname="team_name" )
+ column=(type=char(10) updatewhereclause=yes name=ref_user dbname="ref_user" )
+ column=(type=long updatewhereclause=yes name=seq dbname="seq" )
+ retrieve="  SELECT DISTINCT user_id    = a.user_id    
+       , user_name  = a.user_name  
+       , team_name  = a.team_name  
+       , ref_user   = (SELECT user_name FROM login WHERE user_id = :as_userid)
+       , seq        = 99
+    FROM (
+         SELECT a.user_id
+              , l.user_name
+              , team_name  = a.team 
+           FROM ( /* 매출조직도별 거래처목록 */
+                     SELECT DISTINCT user_id = a.user_id, rank = a.rank, team = a.team
+                       FROM (
+                            SELECT user_id, rank, team FROM opeom_org 
+                             WHERE ((:as_userid  = '%' AND area_mgr   LIKE '%') OR
+                                    (:as_userid <> '%' AND area_mgr      = :as_userid)
+                                   ) /* 권역장 */
+                            
+                            UNION ALL
+                            SELECT user_id, rank, team FROM opeom_org 
+                             WHERE ((:as_userid  = '%' AND sector_mgr LIKE '%') OR
+                                    (:as_userid <> '%' AND sector_mgr    = :as_userid) 
+                                   ) /* 본부장 */
+                            
+                            UNION ALL
+                            SELECT user_id, rank, team FROM opeom_org 
+                             WHERE ((:as_userid  = '%' AND team_mgr   LIKE '%') OR
+                                    (:as_userid <> '%' AND team_mgr      = :as_userid) 
+                                   ) /* 팀장   */
+                            
+                            UNION ALL
+                            SELECT user_id, rank, team FROM opeom_org 
+                             WHERE ((:as_userid  = '%' AND user_id    LIKE '%') OR
+                                    (:as_userid  = '%' AND user_id       = :as_userid)
+                                   ) /* 담당   */
+                            ) A
+                      WHERE (:as_userid <> 'insite' AND a.user_id <> 'insite')
+                ) A 
+                LEFT OUTER JOIN customer C ON a.user_id = c.salesman AND c.open_close = 'O'
+                LEFT OUTER JOIN login    L ON a.user_id = l.user_id
+       
+         UNION ALL
+       
+         SELECT user_id    = c.salesman
+              , user_name  = l.user_name
+              , team_name  = l.team 
+           FROM customer C
+                LEFT OUTER JOIN opeom_org  L ON c.salesman = l.user_id
+          WHERE c.cust_no IN (SELECT DISTINCT rtrim(item_cd)
+                                FROM codemst   
+                               WHERE (:as_userid  = '%' OR :as_userid = 'insite')
+                                 AND (type = '내부업체' AND use_yn = 'Y')
+                            )
+            AND c.open_close = 'O'
+         ) A
+" arguments=(("as_userid", string))  sort="seq A " )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="5" y="4" height="60" width="329" format="[general]" html.valueishtml="0"  name=user_id visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="635" y="4" height="60" width="503" format="[general]" html.valueishtml="0"  name=team_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="352" y="4" height="60" width="265" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1157" y="4" height="60" width="265" format="[general]" html.valueishtml="0"  name=ref_user visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="1440" y="4" height="60" width="96" format="[general]" html.valueishtml="0"  name=seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

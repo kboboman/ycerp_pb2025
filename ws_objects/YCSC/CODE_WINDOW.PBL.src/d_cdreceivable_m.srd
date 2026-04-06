@@ -1,0 +1,127 @@
+﻿$PBExportHeader$d_cdreceivable_m.srd
+$PBExportComments$고액채권 관리
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes key=yes name=user_id dbname="user_id" )
+ column=(type=char(4) update=yes updatewhereclause=yes key=yes name=cust_no dbname="cust_no" )
+ column=(type=decimal(1) updatewhereclause=yes name=rotate dbname="rotate" )
+ column=(type=char(255) update=yes updatewhereclause=yes name=bigo dbname="bigo" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=char(2) updatewhereclause=yes name=price_level dbname="price_level" )
+ column=(type=decimal(2) updatewhereclause=yes name=sinv dbname="sinv" )
+ column=(type=decimal(2) updatewhereclause=yes name=balanceamt dbname="balanceAMT" )
+ column=(type=decimal(2) updatewhereclause=yes name=invamt dbname="invAMT" )
+ column=(type=decimal(2) updatewhereclause=yes name=collamt dbname="collAMT" )
+ column=(type=char(10) updatewhereclause=yes name=prt_date dbname="prt_date" )
+ retrieve="  SELECT receivable.user_id
+       , receivable.cust_no	
+       , rotate      = c.rotate
+       , bigo        = receivable.bigo
+       , cust_name   = c.cust_name
+       , salesman    = login.user_name
+       , price_level = c.price_level
+       , sinv        = dbo.UF_GetOPEOM_SINV( receivable.cust_no, DatePart(Year, GetDate()), DatePart(Month, GetDate()) )
+       , balanceAMT  = v.balanceAMT
+       , invAMT      = o.invAMT
+       , collAMT     = o.collAMT
+       , prt_date    = convert(char(10), :ad_date, 111)
+    FROM receivable
+         LEFT OUTER JOIN customer   C ON receivable.cust_no = c.cust_no   
+         LEFT OUTER JOIN login        ON c.salesman  = login.user_id
+         LEFT OUTER JOIN (
+              SELECT cyear       = v.cyear
+                   , cust_no     = v.cust_no
+                   , balanceAMT  = (case datepart(month, dateadd(month, -1, :ad_date)) 
+													 when 01 then balbf_amount + sinv01 - scoll01
+													 when 02 then balbf_amount + sinv02 - scoll02
+													 when 03 then balbf_amount + sinv03 - scoll03
+													 when 04 then balbf_amount + sinv04 - scoll04
+													 when 05 then balbf_amount + sinv05 - scoll05
+													 when 06 then balbf_amount + sinv06 - scoll06
+													 when 07 then balbf_amount + sinv07 - scoll07
+													 when 08 then balbf_amount + sinv08 - scoll08
+													 when 09 then balbf_amount + sinv09 - scoll09
+													 when 10 then balbf_amount + sinv10 - scoll10
+													 when 11 then balbf_amount + sinv11 - scoll11
+													 when 12 then balbf_amount + sinv12 - scoll12
+											  end)
+                FROM V_OPEOM  V
+               WHERE cyear       = datepart(year, dateadd(month, -1, :ad_date))
+         ) V ON receivable.cust_no = v.cust_no
+         LEFT OUTER JOIN (
+              SELECT cust_no     = opeom.cust_no
+                   , invAMT      = (case datepart(month, :ad_date) 
+													 when 01 then inv_01
+													 when 02 then inv_02
+													 when 03 then inv_03
+													 when 04 then inv_04
+													 when 05 then inv_05
+													 when 06 then inv_06
+													 when 07 then inv_07
+													 when 08 then inv_08
+													 when 09 then inv_09
+													 when 10 then inv_10
+													 when 11 then inv_11
+													 when 12 then inv_12
+											  end)
+                   , collAMT     = (case datepart(month, :ad_date) 
+													 when 01 then coll_01
+													 when 02 then coll_02
+													 when 03 then coll_03
+													 when 04 then coll_04
+													 when 05 then coll_05
+													 when 06 then coll_06
+													 when 07 then coll_07
+													 when 08 then coll_08
+													 when 09 then coll_09
+													 when 10 then coll_10
+													 when 11 then coll_11
+													 when 12 then coll_12
+											  end)
+                 FROM opeom
+                WHERE datepart(year, opeom.eom_year)  = datepart(year, :ad_date)
+         ) O ON receivable.cust_no = o.cust_no
+   WHERE ((:as_userid   = '%' AND receivable.user_id LIKE :as_userid) OR
+          (:as_userid  <> '%' AND receivable.user_id    = :as_userid)
+         )
+     AND ((:as_custno   = '%' AND receivable.cust_no LIKE :as_custno) OR
+          (:as_custno  <> '%' AND receivable.cust_no    = :as_custno)
+         )
+
+" update="receivable" updatewhere=0 updatekeyinplace=no arguments=(("ad_date", date),("as_userid", string),("as_custno", string))  sort="balanceamt D cust_name A " )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당월매출" border="6" color="33554432" x="2761" y="8" height="60" width="594" html.valueishtml="0"  name=invamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당월수금" border="6" color="33554432" x="3365" y="8" height="60" width="599" html.valueishtml="0"  name=collamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현재 미수채권" border="6" color="0" x="3973" y="8" height="60" width="594" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="178" y="8" height="60" width="251" html.valueishtml="0"  name=salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="439" y="8" height="60" width="855" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단가" border="6" color="33554432" x="1303" y="8" height="60" width="238" html.valueishtml="0"  name=price_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전월말 잔액" border="6" color="0" x="2158" y="8" height="60" width="594" html.valueishtml="0"  name=balanceamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출누계" border="6" color="33554432" x="1550" y="8" height="60" width="599" html.valueishtml="0"  name=sinv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="특기사항" border="6" color="0" x="4841" y="8" height="60" width="1381" html.valueishtml="0"  name=bigo_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="회전월" border="6" color="33554432" x="4576" y="8" height="60" width="256" html.valueishtml="0"  name=rotate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="439" y="8" height="72" width="855" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="2761" y="8" height="72" width="594" format="#,##0" html.valueishtml="0"  name=invamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="3365" y="8" height="72" width="599" format="#,##0" html.valueishtml="0"  name=collamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression=" balanceamt + invamt -  collamt "border="0" color="33554432" x="3973" y="8" height="72" width="594" format="#,##0" html.valueishtml="0"  name=jan visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="178" y="8" height="72" width="251" format="[general]" html.valueishtml="0"  name=salesman visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="1303" y="8" height="72" width="238" format="[general]" html.valueishtml="0"  name=price_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="2158" y="8" height="72" width="594" format="#,##0" html.valueishtml="0"  name=balanceamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="1550" y="8" height="72" width="599" format="#,##0" html.valueishtml="0"  name=sinv visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="4841" y="8" height="72" width="1381" format="[general]" html.valueishtml="0"  name=bigo visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="4576" y="8" height="72" width="256" format="#,##0.0" html.valueishtml="0"  name=rotate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( invamt for all )"border="0" color="0" x="2761" y="8" height="72" width="594" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( collamt for all )"border="0" color="0" x="3365" y="8" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( balanceamt for all )"border="0" color="0" x="2158" y="8" height="72" width="594" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( sinv for all )"border="0" color="0" x="1550" y="8" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( jan for all )"border="0" color="0" x="3973" y="8" height="72" width="594" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg( rotate for all )"border="0" color="0" x="4576" y="8" height="72" width="256" format="#,##0.0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

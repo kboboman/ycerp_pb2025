@@ -1,0 +1,97 @@
+﻿$PBExportHeader$d_sliting_h.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=88 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=92 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=save_chk dbname="save_chk" values="대	M/완	C/" )
+ column=(type=char(14) updatewhereclause=yes name=order_no dbname="coilorder.order_no" )
+ column=(type=char(14) updatewhereclause=yes key=yes name=coilorderdet_order_no dbname="coilorderdet.order_no" )
+ column=(type=long updatewhereclause=yes name=order_seq dbname="coilorderdet.order_seq" )
+ column=(type=char(20) updatewhereclause=yes name=coil_no dbname="coilorderdet.coil_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="GroupItem.item_name" )
+ column=(type=decimal(2) updatewhereclause=yes name=thin dbname="thin" )
+ column=(type=decimal(1) updatewhereclause=yes name=wid dbname="coilorderdet.wid" )
+ column=(type=long updatewhereclause=yes name=wlen dbname="wlen" )
+ column=(type=long update=yes updatewhereclause=yes name=length dbname="length" initial="0" )
+ column=(type=long updatewhereclause=yes name=pri dbname="pri" )
+ column=(type=char(1) updatewhereclause=yes name=coilorderdet_work_type dbname="coilorderdet.work_type" values="합체	S/" )
+ column=(type=long updatewhereclause=yes name=coilorderdet_div dbname="coilorderdet.div" initial="0" )
+ column=(type=decimal(0) updatewhereclause=yes name=coilmst_length dbname="coilmst_length" )
+ retrieve="SELECT distinct save_chk = coilorderdet.proc_flag
+	, coilorder.order_no                           
+     , coilorderdet.order_no                        
+     , coilorderdet.order_seq                       
+     , coilorderdet.coil_no                         
+     , groupitem.item_name                          
+     , thin   = convert (decimal (3,2), substring(coilmst.qa,1,1) + '.' + substring(coilmst.qa, 2,2))
+     , coilorderdet.wid   
+     , wlen   = coilmst.unit_qty * coilmst.qcnt   
+     , length = isnull(coilorderdet.length,0) /* 2019.02.08  jowonsuk */ /*(case when isnull(coilmst.length,0) = 0 then coilorderdet.length else  isnull(coilmst.length,0) end )*/ /* 2018-06-18  jowonsuk */
+	, pri    = 0
+	, coilorderdet.work_type
+     , coilorderdet.div
+	, round(convert(decimal,  coilmst.unit_qty /  coilmst.bi_qty / coilmst.thin / coilmst.wid * 1000 ),0) coilmst_length 
+  FROM (
+							SELECT coilmst.coil_no,   /*코일번호*/
+									coilmst.loc_no,
+									 coilmst.item_no,
+									 coilmst.qa,
+									 coilmst.qcnt,
+									 coilmst.wid,               /*폭*/ 
+									 coilmst.unit_qty,        /*단중*/  
+									 thin = convert (decimal (3,2) , substring(qa,1,1) + '.' + substring(qa, 2,2)),   /*두께*/   
+									(CASE WHEN groupitem.COIL_GRP = 'A10' THEN 2.72  /*AL*/
+														  WHEN groupitem.COIL_GRP = 'A11' THEN 2.72 /*AL*/
+														  WHEN groupitem.COIL_GRP = 'A50' THEN 8.12 /*GI*/
+														  WHEN groupitem.COIL_GRP = 'A51' THEN 8.12 /*GI*/
+														  WHEN groupitem.COIL_GRP = 'A60' THEN 1 /*GL*/
+														  WHEN groupitem.COIL_GRP = 'A61' THEN 1 /*GL*/
+										 END ) bi_qty
+							  FROM coilmst INNER JOIN groupitem WITH(NOLOCK) ON coilmst.item_no = groupitem.item_no 
+
+		   ) coilmst        
+     , coilorder      
+     , coilorderdet   
+     , coilsliting    
+     , groupitem  
+ WHERE ( coilorderdet.order_no = coilsliting.order_no         )   
+   and ( coilorder.order_no    = coilorderdet.coilorder_order )   
+   and ( coilorderdet.coil_no  = coilmst.coil_no              )   
+   and ( coilmst.item_no       = groupitem.item_no            )   
+   and ( coilorderdet.loc_no   = coilmst.loc_no               )   
+   and ( ( coilorderdet.proc_flag in ( 'M','C' ) ) AND  
+         ( coilorder.wc_place      = 'I'         ) AND  
+         ( coilorder.order_date    = :ad_start   ) 
+       )    
+" update="coilorderdet" updatewhere=0 updatekeyinplace=no arguments=(("ad_start", date))  sort="order_no A order_seq A " )
+text(band=header alignment="2" text="작업지시번호" border="6" color="33554432" x="219" y="8" height="72" width="544" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="773" y="8" height="72" width="82" html.valueishtml="0"  name=order_seq_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코일번호" border="6" color="33554432" x="864" y="8" height="72" width="535" html.valueishtml="0"  name=coil_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="1408" y="8" height="72" width="736" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실두께" border="6" color="33554432" x="2322" y="8" height="72" width="233" html.valueishtml="0"  name=thin_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="S" border="6" color="33554432" x="128" y="8" height="72" width="82" html.valueishtml="0"  name=save_chk_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="72" width="110" html.valueishtml="0"  name=pri_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="폭" border="6" color="33554432" x="2565" y="8" height="72" width="306" html.valueishtml="0"  name=wid_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="중량" border="6" color="33554432" x="2880" y="8" height="72" width="302" html.valueishtml="0"  name=wlen_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="유형" border="6" color="33554432" x="2153" y="8" height="72" width="160" html.valueishtml="0"  name=coilorderdet_work_type_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="길이" border="6" color="33554432" x="3191" y="8" height="72" width="306" html.valueishtml="0"  name=coilorderdet_length_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="이론길이" border="6" color="16777215" x="3506" y="8" height="76" width="306" html.valueishtml="0"  name=이론길이 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="32768" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2153" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=coilorderdet_work_type visible="1~tif ( coilorderdet_work_type = 'S', 1, 0 )" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+text(band=detail alignment="2" text="등분" border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2153" y="8" height="72" width="160" html.valueishtml="0"  name=t_1 visible="1~tif (  coilorderdet_div = 1, 0 , 1)"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="128" y="8" height="72" width="82" format="[general]" html.valueishtml="0"  name=save_chk visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif( save_chk = 'M' , rgb(0,255,0) , if ( save_chk = 'C' , rgb(255,0,0) , if(getrow()=currentrow(), rgb(254, 252, 175), 1087434968) ) )" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="110" format="[general]" html.valueishtml="0"  name=pri visible="1~tif ( save_chk = 'C' or pri < 1, 0 , 1)" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2322" y="8" height="72" width="233" format="0.00" html.valueishtml="0"  name=thin visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1408" y="8" height="72" width="736" format="[general]" html.valueishtml="0"  name=item_name  tag="품명" visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="864" y="8" height="72" width="535" format="[general]" html.valueishtml="0"  name=coil_no  tag="코일번호" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="773" y="8" height="72" width="82" format="[General]" html.valueishtml="0"  name=order_seq  tag="작업지시순번" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="219" y="8" height="72" width="544" format="[general]" html.valueishtml="0"  name=order_no  tag="생산계획번호" visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2565" y="8" height="72" width="306" format="#,##0.0" html.valueishtml="0"  name=wid  tag="폭" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2880" y="8" height="72" width="302" format="#,##0" html.valueishtml="0"  name=wlen visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+compute(band=detail alignment="0" expression="if (getrow() = currentrow(), '◀', '')"border="0" color="33554432" x="3822" y="4" height="72" width="96" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-16" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="1" tabsequence=10 border="5" color="33554432" x="3191" y="8" height="72" width="306" format="#,##0" html.valueishtml="0"  name=length visible="1" edit.limit=0 edit.case=any edit.format="#,##0" edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.imemode=2  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="12639424~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="5" color="16777215" x="3506" y="8" height="72" width="306" format="#,##0" html.valueishtml="0"  name=coilmst_length visible="1" edit.limit=0 edit.case=any edit.format="#,##0" edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="32768" )
+
+sparse(names="order_no	order_seq	coil_no	item_name	thin	wid	wlen")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

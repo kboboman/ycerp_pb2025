@@ -1,0 +1,127 @@
+﻿$PBExportHeader$gf_menu_check.srf
+$PBExportComments$사용가능한 메뉴를 enable 시킨다.
+global type gf_menu_check from function_object
+end type
+
+forward prototypes
+global function integer gf_menu_check (string ag_menu)
+end prototypes
+
+global function integer gf_menu_check (string ag_menu);
+// ------------------------------------------------------
+// 사용이 허가된 메뉴를 enable 시킨다. 2000.09.18 POSDATA
+// ------------------------------------------------------
+Long	ll_Level1, ll_Level2
+String	ls_WindowID, ls_Tag
+Menu	lm_Menu
+
+// 메뉴 set
+//CHOOSE CASE gw_main
+//	CASE w_main_ast  // 자산
+//		lm_Menu = m_a_ast10
+//		IF ag_menu = '0' THEN	lm_Menu = m_a_ast00
+//		ag_menu = 'J'
+//	CASE w_main_acc  // 회계
+//		lm_Menu = m_h_acc10
+//		IF ag_menu = '0' THEN lm_Menu = m_h_acc00
+//		ag_menu = 'H'
+//	CASE w_main_cul  // 출판
+//		lm_Menu = m_c_cul10
+//		IF ag_menu = '0' THEN lm_Menu = m_c_cul00
+//		ag_menu = 'C'
+//	CASE w_main_evt  // 사업
+//		lm_Menu = m_b_evt10
+//		IF ag_menu = '0' THEN lm_Menu = m_b_evt00
+//		ag_menu = 'B'
+//	CASE w_main_ins  // 인사
+//		lm_Menu = m_i_ins10
+//		IF ag_menu = '0' THEN lm_Menu = m_i_ins00
+//		ag_menu = 'I'
+//	CASE w_main_jak  // 자금
+//		lm_Menu = m_f_jak10
+//		IF ag_menu = '0' THEN lm_Menu = m_f_jak00
+//		ag_menu = 'F'
+//	CASE w_main_mat  // 자재
+//		lm_Menu = m_m_mat10
+//		IF ag_menu = '0' THEN lm_Menu = m_m_mat00
+//		ag_menu = 'M'
+//	CASE w_main_prd  // 제작
+//		lm_Menu = m_p_prd10
+//		IF ag_menu = '0' THEN lm_Menu = m_p_prd00
+//		ag_menu = 'P'
+//	CASE w_main_pub  // 광고
+//		lm_Menu = m_k_pub10
+//		IF ag_menu = '0' THEN lm_Menu = m_k_pub00
+//		ag_menu = 'K'
+//	CASE w_main_sal  // 판매
+//		lm_Menu = m_s_sal10
+//		IF ag_menu = '0' THEN lm_Menu = m_s_sal00
+//		ag_menu = 'S'
+//	CASE w_main_won   // 원가
+//		lm_Menu = m_w_won10
+//		IF Right(ag_menu, 1) = '0' THEN lm_Menu = m_w_won00
+//		ag_menu = 'W'
+//	CASE w_main_isg   // 인사고과
+//		lm_Menu = m_g_isg10
+//		IF Right(ag_menu, 1) = '0' THEN lm_Menu = m_g_isg00
+//		ag_menu = 'G'
+//END CHOOSE
+//
+//// 등록된 permission select
+// DECLARE Menu_Cursor CURSOR FOR
+//  SELECT WINDOWID
+//    FROM AT_GRANT
+//   WHERE EMPNO   = : gs_User_Id 
+//     AND GRANTYN = 'Y' 
+//ORDER BY 1;
+//
+//OPEN Menu_Cursor ;
+//
+//// permission이 등록된 메뉴 를 찾아서 menu를 푼다.
+//DO WHILE(TRUE)
+//	FETCH Menu_Cursor INTO :ls_WindowId ;
+//	IF SQLCA.SQLCODE < 0 THEN
+//		MessageBox('Error', SQLCA.SQLERRTEXT)
+//		CLOSE  Menu_Cursor ;
+//		RETURN -1
+//	ELSEIF SQLCA.SQLCODE > 0 THEN
+//		EXIT
+//	END IF
+//	IF Left(ls_WindowId, 1) <> ag_menu THEN CONTINUE
+//	ls_WindowId = 'm_' + Lower(ls_WindowId)
+//	Long	i, j, k
+//	String	ls_SubTitle
+//	
+//	// 기준정모, 게재/예약등의 큰 메뉴
+//	ls_SubTitle = Left(ls_WindowId, 6)
+//	// 메뉴 처음부터 끝메뉴까지
+//	FOR i = 1 TO UpperBound(lm_Menu.item)
+//	// 메뉴 이름이 title을 검색한다.
+////	IF Lower(lm_Menu.item[i].Tag) <> ls_SubTitle THEN CONTINUE
+//		// 메뉴의 m_title 메뉴에서 차례로 검색
+//		FOR j = 1 TO UpperBound(lm_Menu.item[i].item)			
+//			IF Right(lm_Menu.item[i].item[j].tag, 3) = 'sub' THEN
+//				FOR k = 1 TO UpperBound(lm_Menu.item[i].item[j].item)			
+//					IF Lower(lm_Menu.item[i].item[j].item[k].tag) = ls_WindowId THEN
+//						ls_Tag = Lower(lm_Menu.item[i].item[j].item[k].tag)
+//						lm_Menu.item[i].item[j].item[k].enabled = TRUE
+//						EXIT
+//					END IF
+//				NEXT
+//			END IF
+//			IF Lower(lm_Menu.item[i].item[j].tag) = ls_WindowId THEN
+//				ls_Tag = Lower(lm_Menu.item[i].item[j].tag)
+//				lm_Menu.item[i].item[j].enabled = TRUE
+//				EXIT
+//			END IF
+//		NEXT		
+//	NEXT
+//	//ll_Level1 = Long(Mid(ls_WindowId, 2, 2))
+//	//ll_Level2 = Long(Mid(ls_WindowId, 5, 3))
+//	//lm_Menu.Item[ll_Level1].Item[ll_Level2].Enabled = TRUE
+//LOOP
+//CLOSE Menu_Cursor ;
+//
+RETURN 1
+end function
+

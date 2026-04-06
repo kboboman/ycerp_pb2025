@@ -1,0 +1,90 @@
+﻿$PBExportHeader$d_iocoilqoh3_s2.srd
+$PBExportComments$품목별 코일재고 현황(화성사업장)(2004/02/24,정갑용)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(255) updatewhereclause=yes name=groupitem_item_name dbname="item_name" )
+ column=(type=char(7) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=long updatewhereclause=yes name=q_cnt_1 dbname="q_cnt_1" )
+ column=(type=long updatewhereclause=yes name=q_cnt_3 dbname="q_cnt_3" )
+ column=(type=long updatewhereclause=yes name=t_cnt_3 dbname="t_cnt_3" )
+ column=(type=char(2) updatewhereclause=yes name=sort1 dbname="sort1" )
+ column=(type=char(1) updatewhereclause=yes name=gb dbname="gb" )
+ retrieve="SELECT item_name = REPLACE(A.item_name,'스리팅 ',''), 
+		qa,
+		q_cnt_1 = sum(q_cnt_1),
+		q_cnt_3 = sum(q_cnt_3),
+		t_cnt_3 = sum(q_cnt_1) + sum(q_cnt_3),
+		sort1,
+		gb
+from 			
+(
+	  SELECT sort1 = substring(coilmst.item_no, 3, 1),
+				item_name = groupitem.item_name,
+				qa = substring(qa,1,1) + '.' + substring(qa,2,2),
+				q_cnt_1 = sum(coilmst.unit_qty * coilmst.qcnt),
+				q_cnt_3 = 0,
+				gb = dbo.uf_getcoilsort(coilmst.item_no)
+		 FROM coilmst,   
+				groupitem, location
+		WHERE ( coilmst.item_no = groupitem.item_no) and  
+				( coilmst.loc_no = location.loc_no) and  
+				( ( coilmst.loc_no = 'WS00000008') AND  
+				  ( coilmst.flag = 'W' ) AND  
+				  ( coilmst.open_close <> 'C' ) AND
+				  ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) ) and
+				not exists ( select * from lossitem where loss_item = coilmst.item_no)
+	group by substring(coilmst.item_no, 3, 1),dbo.uf_getcoilsort(coilmst.item_no), groupitem.item_name, substring(qa,1,1) + '.' + substring(qa,2,2)
+	
+	union all
+	
+	  SELECT sort1 = substring(coilmst.item_no, 3, 1),
+				item_name = groupitem.item_name,
+				qa = substring(qa,1,1) + '.' + substring(qa,2,2),
+				q_cnt_1 = 0,
+				q_cnt_3 = sum(coilmst.unit_qty * coilmst.qcnt),
+				gb = dbo.uf_getcoilsort(coilmst.item_no)
+		 FROM coilmst,   
+				groupitem, location
+		WHERE ( coilmst.item_no = groupitem.item_no) and  
+				( coilmst.loc_no = location.loc_no) and  
+				( ( coilmst.loc_no = 'WS00000008') AND  
+				  ( coilmst.flag = 'S' ) AND  
+				  ( coilmst.open_close <> 'C' ) AND
+				  ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) ) and
+				not exists ( select * from lossitem where loss_item = coilmst.item_no)
+	group by substring(coilmst.item_no, 3, 1),dbo.uf_getcoilsort(coilmst.item_no), groupitem.item_name, substring(qa,1,1) + '.' + substring(qa,2,2)
+	
+) A
+
+GROUP BY sort1, gb , REPLACE(A.item_name,'스리팅 ',''),qa
+"  sort="sort1 D gb A groupitem_item_name A " )
+group(level=1 header.height=0 trailer.height=80 by=("sort1" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=88 by=("gb" ) header.color="536870912" trailer.color="553648127" )
+text(band=header alignment="2" text="품      명" border="6" color="33554432" x="9" y="4" height="68" width="1157" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="1175" y="4" height="68" width="261" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="원코일" border="6" color="0" x="1445" y="4" height="68" width="617" html.valueishtml="0"  name=q_cnt_1_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="스리팅" border="6" color="0" x="2071" y="4" height="68" width="635" html.valueishtml="0"  name=q_cnt_3_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="총  계" border="6" color="0" x="2715" y="4" height="68" width="672" html.valueishtml="0"  name=t_cnt_3_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=trailer.2 alignment="1" text="소    계  " border="0" color="0" x="9" y="8" height="72" width="1157" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.2 alignment="1" expression="sum(q_cnt_1 for group 2)"border="0" color="0" x="1445" y="8" height="72" width="617" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.2 alignment="1" expression="sum(t_cnt_3 for group 2)"border="0" color="0" x="2715" y="8" height="72" width="672" format="#,##0" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.2 alignment="1" expression="sum(q_cnt_3 for group 2)"border="0" color="0" x="2071" y="8" height="72" width="635" format="#,##0" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.1 alignment="1" expression="sum(  t_cnt_3  for group 1 )"border="0" color="0" x="2715" y="4" height="68" width="672" format="#,##0" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(  q_cnt_3  for group 1 )"border="0" color="0" x="2071" y="4" height="68" width="635" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(  q_cnt_1  for group 1 )"border="0" color="0" x="1445" y="4" height="68" width="617" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="0" expression="if( sort1= 'S', 'GI 소계 =','AL 소계 =')"border="0" color="0" x="9" y="4" height="68" width="1157" format="[GENERAL]" html.valueishtml="0"  name=compute_22 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=footer alignment="1" expression="sum(  q_cnt_3  for all )"border="0" color="0" x="2071" y="4" height="68" width="635" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=footer alignment="1" expression="sum(  t_cnt_3  for all )"border="0" color="0" x="2715" y="4" height="68" width="672" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=footer alignment="1" expression="sum(  q_cnt_1  for all )"border="0" color="0" x="1445" y="4" height="68" width="617" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=footer alignment="1" text="총    계  " border="0" color="0" x="9" y="4" height="68" width="1157" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2715" y="8" height="72" width="672" format="#,##0" html.valueishtml="0"  name=t_cnt_3 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2071" y="8" height="72" width="635" format="#,##0" html.valueishtml="0"  name=q_cnt_3 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1445" y="8" height="72" width="617" format="#,##0" html.valueishtml="0"  name=q_cnt_1 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="1157" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="1175" y="8" height="72" width="261" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,55 @@
+﻿$PBExportHeader$d_mpproc1106_r.srd
+$PBExportComments$작업진행상태
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=68 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=routtempnew_operation dbname="operation" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="seq_no" )
+ column=(type=char(20) updatewhereclause=yes name=routtempnew_assy_qa dbname="assy_qa" )
+ column=(type=char(1) updatewhereclause=yes name=type1 dbname="type1" )
+ column=(type=decimal(4) updatewhereclause=yes name=plan_qty dbname="plan_qty" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="item_name" initial=" " )
+ column=(type=char(17) updatewhereclause=yes name=mpsdet_plan_no dbname="plan_no" )
+ column=(type=char(17) updatewhereclause=yes name=mpsdet_order_no dbname="order_no" initial=" " )
+ column=(type=char(10) updatewhereclause=yes name=routtempnew_assy_item dbname="assy_item" )
+ retrieve="  SELECT operation = r.operation   
+       , seq_no    = r.seq_no   
+       , assy_qa   = r.assy_qa   
+       , type1     = dbo.uf_getmpsproc(m.plan_no, m.order_no)
+       , plan_qty  = r.plan_qty   
+       , item_name = g.item_name   
+       , plan_no   = m.plan_no   
+       , order_no  = m.order_no   
+       , assy_item = r.assy_item  
+    FROM routtempnew R (nolock)  
+         LEFT OUTER JOIN mpsdet    M (nolock) ON r.assy_item = m.item_no 
+                       AND r.assy_qa   = m.qa  AND r.sale_no = m.sale_no AND r.seq_no = m.seq_no AND r.division = m.division
+         LEFT OUTER JOIN groupitem G (nolock) ON r.assy_item = g.item_no
+         LEFT OUTER JOIN mpsorder MO (nolock) ON M.mpsorder_order = mo.order_no
+   WHERE ( r.sale_no    = :arg_str )    
+   ORDER BY r.seq_no ASC
+          , r.operation ASC   
+" arguments=(("arg_str", string)) )
+text(band=header alignment="2" text="공정" border="6" color="0" x="352" y="8" height="60" width="169" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="순번" border="6" color="0" x="183" y="8" height="60" width="160" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="계획수량" border="6" color="0" x="3328" y="8" height="60" width="375" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="2638" y="8" height="60" width="681" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="작업진행상태" border="6" color="0" x="530" y="8" height="60" width="512" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="생산지시번호" border="6" color="0" x="1051" y="8" height="60" width="544" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="1605" y="8" height="60" width="1024" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=detail alignment="0" expression="case(  trim(type1)  when '0' then '계획없음'  when 'A' then '생산계획생성'  when '1' then '생산계획확정' when '2' then '외주구매청구중' when '3' then '외주구매발주중' when '4' then '외주구매입고완료' when '5' then '외주가공청구중' when '6' then '외주가공발주중' when '7' then '외주가공입고완료' when '8' then '작업완료' when '9' then '완료작업취소'  )"border="0" color="255" x="530" y="4" height="60" width="512" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="16711680" x="1051" y="4" height="60" width="544" format="[general]" html.valueishtml="0"  name=mpsdet_plan_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="352" y="4" height="60" width="169" format="[general]" html.valueishtml="0"  name=routtempnew_operation visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="1605" y="4" height="60" width="1024" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="2638" y="4" height="60" width="681" format="[general]" html.valueishtml="0"  name=routtempnew_assy_qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="3328" y="4" height="60" width="375" format="#,##0.00" html.valueishtml="0"  name=plan_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="183" y="4" height="60" width="160" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="60" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="64" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="seq_no")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

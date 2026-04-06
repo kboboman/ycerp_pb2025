@@ -1,0 +1,47 @@
+﻿$PBExportHeader$d_sysusercnt_t2.srd
+$PBExportComments$프로그램별 사용현황(2001/08/14,이대준)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=84 color="536870912" )
+table(column=(type=char(5) updatewhereclause=yes name=syswindow_module_id dbname="syswindow.module_id" )
+ column=(type=char(20) updatewhereclause=yes name=sysmodule_module_name dbname="sysmodule.module_name" )
+ column=(type=char(30) updatewhereclause=yes name=syswindow_window_id dbname="syswindow.window_id" )
+ column=(type=char(80) updatewhereclause=yes name=syswindow_window_name dbname="syswindow.window_name" )
+ column=(type=char(1) updatewhereclause=yes name=sysusercnt_flag dbname="sysusercnt.flag" values="조회	R/저장	S/출력	P/열기	O/엑셀	E/" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="cnt" )
+ column=(type=datetime updatewhereclause=yes name=start_date dbname="start_date" )
+ column=(type=datetime updatewhereclause=yes name=end_date dbname="end_date" )
+ retrieve="  SELECT distinct syswindow.module_id,
+			sysmodule.module_name,
+			syswindow.window_id,   
+         syswindow.window_name,   
+         sysusercnt.flag,   
+         cnt = sum(sysusercnt.use_count),
+         start_date = convert(smalldatetime, :ad_start, 111),   
+         end_date = convert(smalldatetime, :ad_end, 111)
+    FROM syswindow left outer join sysusercnt on syswindow.window_id = sysusercnt.window_id
+						    inner join  sysmodule on  syswindow.module_id = sysmodule.module_id
+   WHERE sysusercnt.use_day  between :ad_start and :ad_end 
+group by syswindow.module_id,
+			sysmodule.module_name,
+			syswindow.window_id,   
+         syswindow.window_name,   
+         sysusercnt.flag  
+" arguments=(("ad_start", date),("ad_end", date))  sort="syswindow_module_id A syswindow_window_name A sysusercnt_flag A sysusercnt_flag A " )
+text(band=header alignment="2" text="모듈" border="6" color="0" x="9" y="12" height="60" width="315" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="상태" border="6" color="0" x="2354" y="12" height="60" width="169" html.valueishtml="0"  name=sysusercnt_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="사용" border="6" color="0" x="2533" y="12" height="60" width="160" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="프로그램 명" border="6" color="0" x="334" y="12" height="60" width="1051" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="프로그램 ID" border="6" color="0" x="1394" y="12" height="60" width="951" html.valueishtml="0"  name=syswindow_window_id_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="8" height="68" width="315" format="[general]" html.valueishtml="0"  name=sysmodule_module_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="2354" y="8" height="68" width="169" format="[general]" html.valueishtml="0"  name=sysusercnt_flag  tag="버튼분류" visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="2533" y="8" height="68" width="160" format="#,##0" html.valueishtml="0"  name=cnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0~tIF ( isnull( cnt ) , rgb(250,0,0), rgb(0,0,0))" x="334" y="8" height="68" width="1051" format="[general]" html.valueishtml="0"  name=syswindow_window_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0~tIF ( isnull( cnt ) , rgb(250,0,0), rgb(0,0,0))" x="1394" y="8" height="68" width="951" format="[general]" html.valueishtml="0"  name=syswindow_window_id visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count(  syswindow_window_id  for all )"border="0" color="0" x="9" y="8" height="60" width="315" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="sysmodule_module_name	syswindow_window_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

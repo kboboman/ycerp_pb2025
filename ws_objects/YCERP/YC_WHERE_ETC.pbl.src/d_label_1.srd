@@ -1,0 +1,99 @@
+﻿$PBExportHeader$d_label_1.srd
+$PBExportComments$13 x 10 코일 겉면(주로 AL 찍을때 사용)(2004/04/16,정갑용)
+release 8;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.documentname="" print.orientation = 1 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no label.name="Laser-A4 Full Sheet L7167" label.width=13000 label.height=10000 label.rows=1 label.rows.spacing=0 label.columns=1 label.columns.spacing=0 label.topdown=no label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=10001 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=inspdet_oi_no dbname="inspdet.oi_no" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(21) updatewhereclause=yes name=thin dbname="thin" )
+ column=(type=decimal(4) updatewhereclause=yes name=inspdet_unit_qty dbname="inspdet.unit_qty" )
+ column=(type=long updatewhereclause=yes name=inspdet_cnt dbname="inspdet.cnt" )
+ column=(type=char(20) updatewhereclause=yes name=coil_no dbname="coil_no" )
+ column=(type=char(21) updatewhereclause=yes name=one dbname="one" )
+ column=(type=long updatewhereclause=yes name=length dbname="coilmst.length" )
+ column=(type=long updatewhereclause=yes name=coilmst_unit_qty dbname="coilmst.unit_qty" )
+ column=(type=char(20) updatewhereclause=yes name=coil_now dbname="coil_noW" )
+ retrieve="  SELECT inspdet.oi_no
+               , groupitem.item_name
+               , thin      = substring(inspdet.qa,1,1) + '.' 
+                             + substring(inspdet.qa,2,2) + ' * ' + substring(inspdet.qa,5,4) + '.' + substring(inspdet.qa, 10,1)
+               , inspdet.unit_qty   
+               , inspdet.cnt   
+               , coil_no   = rtrim(inspdet.coil_no)
+               , one       = (case when isnull(substring(coilW.qa, 2,2),0) <> 0 
+                                        then ( substring(coilW.qa, 1,1) + '.' 
+                                             + substring(coilW.qa, 2,2) + ' * ' 
+                                             + substring(coilW.qa,5,4) + '.' + substring(coilW.qa, 10,1) 
+                                             ) 
+                                   else '' 
+                              end)
+               , coilS.length
+               , coilW.unit_qty
+               , coil_noW = coilW.coil_no
+    FROM inspdet inner join purdet on purdet.order_no   = inspdet.pur_no  and purdet.seq_no     = inspdet.seq_no
+                             inner join  groupitem on inspdet.item_no   = groupitem.item_no       
+                             left outer join coilmst coilW on  purdet.coil_no   = coilW.coil_no and  purdet.rcpt_loc = coilW.loc_no
+                             left outer join coilmst coilS on  purdet.coil_no   = coilS.coil_no and  purdet.rcpt_loc = coilS.loc_no
+  WHERE ( inspdet.item_no NOT IN ( SELECT lossitem.loss_item FROM lossitem ) ) 
+        AND ( inspdet.insp_no   = :as_inspno )
+  ORDER BY inspdet.oi_no
+/*
+  SELECT inspdet.oi_no
+       , groupitem.item_name
+       , thin      = substring(inspdet.qa,1,1) + '.' 
+                   + substring(inspdet.qa,2,2) + ' * ' + convert(varchar(6), convert(decimal(5,1), substring(inspdet.qa,5,4) + '.' + substring(inspdet.qa, 10,1)))
+       , inspdet.unit_qty   
+       , inspdet.cnt   
+       , coil_no   = rtrim(inspdet.coil_no)
+       , one       = (case when isnull(substring(coilW.qa, 2,2),0) <> 0 
+                                then ( substring(coilW.qa, 1,1) + '.' 
+                                     + substring(coilW.qa, 2,2) + ' * ' 
+                                     + convert(varchar(6), convert(decimal(5,1), substring(coilW.qa,5,4) + '.' + substring(coilW.qa, 10,1))) 
+                                     ) 
+                           else '' 
+                      end)
+       , coilS.length
+       , coilW.unit_qty
+       , coil_noW = coilW.coil_no
+    FROM inspdet   
+       , groupitem
+       , purdet
+       , coilmst coilS
+       , coilmst coilW
+  WHERE ( purdet.order_no   = inspdet.pur_no ) 
+    AND ( purdet.seq_no     = inspdet.seq_no ) 
+    AND ( purdet.coil_no   *= coilW.coil_no  ) 
+    AND ( purdet.rcpt_loc  *= coilW.loc_no   ) 
+    AND ( inspdet.coil_no  *= coilS.coil_no  )   
+    AND ( inspdet.loc_no   *= coilS.loc_no   )   
+    AND ( inspdet.item_no   = groupitem.item_no )
+    AND ( inspdet.item_no NOT IN ( SELECT lossitem.loss_item FROM lossitem ) ) 
+    AND ( inspdet.insp_no   = :as_inspno )
+  ORDER BY inspdet.oi_no
+*/" arguments=(("as_inspno", string)) )
+text(band=detail alignment="0" text="Kg" border="0" color="33554432" x="11006" y="3148" height="687" width="740" html.valueishtml="0"  name=t_10 visible="1"  font.face="HY헤드라인M" font.height="-17" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="8360" y="3095" height="740" width="2566" format="#,##0" html.valueishtml="0"  name=coilmst_unit_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-18" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="1613" y="2883" height="740" width="2487" format="#,##0" html.valueishtml="0"  name=inspdet_unit_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-22" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="1613" y="3889" height="740" width="2487" format="[general]" html.valueishtml="0"  name=length visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-22" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1613" y="4894" height="740" width="2487" format="#,##0" html.valueishtml="0"  name=inspdet_cnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-22" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="EA" border="0" color="33554432" x="4524" y="4974" height="661" width="687" html.valueishtml="0"  name=t_2 visible="1"  font.face="HY헤드라인M" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="0" text="M" border="0" color="33554432" x="4524" y="3968" height="661" width="687" html.valueishtml="0"  name=t_11 visible="1"  font.face="HY헤드라인M" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Kg" border="0" color="33554432" x="4524" y="2963" height="661" width="687" html.valueishtml="0"  name=t_12 visible="1"  font.face="HY헤드라인M" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="0" text="스리팅" border="0" color="33554432" x="211" y="2090" height="476" width="1322" html.valueishtml="0"  name=t_1 visible="1"  font.face="HY헤드라인M" font.height="-12" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="단 중" border="0" color="33554432" x="211" y="2963" height="635" width="1322" html.valueishtml="0"  name=t_4 visible="1"  font.face="HY헤드라인M" font.height="-16" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="길 이" border="0" color="33554432" x="211" y="3968" height="635" width="1322" html.valueishtml="0"  name=t_5 visible="1"  font.face="HY헤드라인M" font.height="-16" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="수 량" border="0" color="33554432" x="211" y="4974" height="635" width="1322" html.valueishtml="0"  name=t_8 visible="1"  font.face="HY헤드라인M" font.height="-16" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="0" text="YOOCHANG CO.,LTD." border="0" color="33554432" x="2857" y="8863" height="1058" width="9128" html.valueishtml="0"  name=t_6 visible="1"  font.face="HY헤드라인M" font.height="-26" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+bitmap(band=detail filename="C:\bmp\유창마크(black).bmp" x="1481" y="8757" height="1058" width="1217" border="0"  name=p_1 visible="1" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1613" y="1878" height="740" width="5291" format="[general]" html.valueishtml="0"  name=thin visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-22" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="8387" y="1878" height="740" width="4445" format="[general]" html.valueishtml="0"  name=one visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-18" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="132" y="502" height="873" width="12726" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="HY헤드라인M" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="132" y1="1587" x2="12858" y2="1587"  name=l_1 visible="1" pen.style="0" pen.width="52" pen.color="128"  background.mode="2" background.color="16777215" )
+line(band=detail x1="132" y1="5741" x2="12858" y2="5741"  name=l_2 visible="1" pen.style="0" pen.width="26" pen.color="128"  background.mode="2" background.color="16777215" )
+text(band=detail alignment="0" text="원코일" border="0" color="33554432" x="6958" y="2090" height="476" width="1322" html.valueishtml="0"  name=t_3 visible="1"  font.face="HY헤드라인M" font.height="-12" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="0" text="총중량" border="0" color="33554432" x="6958" y="3280" height="476" width="1322" html.valueishtml="0"  name=t_9 visible="1"  font.face="HY헤드라인M" font.height="-12" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="211" y="5979" height="978" width="12567" format="[general]" html.valueishtml="0"  name=coil_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="HY헤드라인M" font.height="-26" font.weight="700"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression="~"*~"+coil_no+~"*~""border="0" color="0" x="211" y="7196" height="661" width="12567" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="3 of 9 Barcode" font.height="-26" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="2" expression="~"*~"+coil_no+~"*~""border="0" color="0" x="211" y="7778" height="661" width="12567" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="3 of 9 Barcode" font.height="-26" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

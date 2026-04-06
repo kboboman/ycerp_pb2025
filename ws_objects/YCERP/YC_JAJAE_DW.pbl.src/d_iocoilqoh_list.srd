@@ -1,0 +1,319 @@
+﻿$PBExportHeader$d_iocoilqoh_list.srd
+$PBExportComments$코일 당월 입출 현황(2004/02/24, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="553648127" )
+footer(height=72 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(21) updatewhereclause=yes name=cat dbname="cat" )
+ column=(type=char(2) updatewhereclause=yes name=sort1 dbname="sort1" )
+ column=(type=char(1) updatewhereclause=yes name=sort dbname="sort" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(17) updatewhereclause=yes name=insp_no dbname="insp_no" )
+ column=(type=decimal(4) updatewhereclause=yes name=qty dbname="qty" )
+ retrieve="  SELECT cat            = '01.당일입고'
+       , sort1          = substring(b.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(b.item_no) 
+       , item_name      = c.item_name  
+       , qa             = b.qa
+       , insp_no        = b.insp_no
+       , qty            = isnull(b.comqty, 0)
+    FROM insp       a                                           /* 입고헤드 */
+         LEFT OUTER JOIN inspdet    b  ON b.insp_no = a.insp_no /* 입고상세 */
+         LEFT OUTER JOIN groupitem  c  ON b.item_no = c.item_no /* 품목 */
+         LEFT OUTER JOIN supp       d  ON a.supp_no = d.supp_no /* 구매처 */
+   WHERE ( a.insp_flag     = 'W'           )    /* W(원자재), S(상품), B(부자재), S(외주가공) */
+     AND ( a.insp_date     = :ad_date      )
+     AND ( b.loc_no      NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')  )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '02.당월입고누계'
+       , sort1          = substring(b.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(b.item_no)
+       , item_name      = c.item_name
+       , qa             = b.qa
+       , insp_no        = b.insp_no
+       , qty            = isnull(b.comqty, 0)
+    FROM insp      a                                             /* 입고헤드 */
+         LEFT OUTER JOIN inspdet   b  ON b.insp_no  = a.insp_no  /* 입고상세 */
+         LEFT OUTER JOIN groupitem c  ON b.item_no  = c.item_no 
+         LEFT OUTER JOIN supp      d  ON a.supp_no  = d.supp_no 
+   WHERE ( a.insp_flag      = 'W'         )    /* W(원자재), S(상품), B(부자재), S(외주가공) */
+     AND ( datepart(year, a.insp_date) = :ai_year )
+     AND ( datepart(month,a.insp_date) = :ai_mon  )
+     AND ( b.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')    )  /* YSP저장소, YSP원재료 */
+
+  UNION ALL
+  SELECT cat            = '03.당일사용(사내)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = c.item_name
+       , qa             = a.qa
+       , order_no       = a.order_no
+       , qty            = (case when a.unit_qty <> 0 then
+                                     ( a.unit_qty * a.cnt ) - isnull(a.rem_qty, 0) - isnull(a.unit_qty, 0) 
+                                else (case when (a.unit_qty * a.cnt - a.rem_qty) = 0 then
+                                                /* SHEET코일 사용량 */
+                                                (case when ( a.unit_qty * a.cnt) = 0 AND substring(a.item_no, 3,1) = 'A' then
+                                                           convert(int, (cast(replace(substring(a.qa, 1,3),'X','') as decimal) / 100) *
+                                                                        (cast(replace(substring(a.qa, 5,4),'X','') as int)   ) * 
+                                                                        (cast(replace(substring(a.qa,10,4),'X','') as int)   ) / 1000000 * 2.72 * a.cnt)
+                                                      when ( a.unit_qty * a.cnt) = 0 AND substring(a.item_no, 3,1) = 'S' then
+                                                           convert(int, (cast(replace(substring(a.qa, 1,3),'X','') as decimal) / 100) *
+                                                                        (cast(replace(substring(a.qa, 5,4),'X','') as int)   ) * 
+                                                                        (cast(replace(substring(a.qa,10,4),'X','') as int)   ) / 1000000 * 8.12 * a.cnt)
+                                                      else (a.unit_qty * a.cnt)
+                                                 end)
+                                            else (a.unit_qty * a.cnt - a.rem_qty)
+                                       end)
+                           end)
+    FROM sfcuse     a               /* 작업일보사용내역 */
+         LEFT OUTER JOIN sfcret  b  /* 작업장반납내역 */
+                      ON a.use_date = b.ret_date AND a.coil_no = b.wcoil_no AND a.loc_no = b.loc_no
+         LEFT OUTER JOIN groupitem  c ON a.item_no = c.item_no
+   WHERE ( a.use_date    = :ad_date     )
+     AND ((a.coil_no    IS NOT NULL     ) OR
+          (a.coil_no    IS NULL       AND 
+           substring(a.item_no,1,4) IN ( 'M1A1', 'M1A2', 'M1S1', 'M1S2', 'M1Z1', 'M1Z2', 'M3A1', 'M3A2', 'M3S1', 'M3S2', 'M3Z1', 'M3Z2', 'MZZZ' ) 
+          )
+         )
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '04.당일사용(외주)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = b.item_name
+       , qa             = a.qa
+       , insp_no        = a.insp_no
+       , qty            = ( isnull(a.unit_qty, 0) * isnull(a.cnt, 0) - isnull(a.rem_qty, 0) )
+    FROM coilsubuse  a /* 외주일보사용내역 */
+         LEFT OUTER JOIN groupitem  b  ON a.item_no = b.item_no
+   WHERE ( a.use_date      = :ad_date         )
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '05.당일사용(출고)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = c.item_name
+       , qa             = a.qa
+       , do_no          = a.do_no
+       , qty            = isnull(a.ship_qty, 0)
+    FROM dodet      a                                 /* 출고상세 */
+         LEFT OUTER JOIN do  b   ON a.do_no = b.do_no /* 출고헤드 */
+         LEFT OUTER JOIN groupitem  c  ON a.item_no = c.item_no
+   WHERE ( b.do_date        = :ad_date                    )
+     AND ( a.coil_no   IS NOT NULL                        )
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '06.당월사용누계(사내)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = c.item_name
+       , qa             = a.qa
+       , order_no       = a.order_no
+     /*, used_qty       = isnull(sum(( isnull(a.unit_qty, 0) * isnull(a.cnt, 0) ) - ( isnull(a.rem_qty, 0) ) - ( isnull(b.unit_qty, 0) )), 0)*/
+       , qty            = (case when a.unit_qty <> 0 then
+                                     ( a.unit_qty * a.cnt ) - isnull(a.rem_qty, 0) - isnull(b.unit_qty, 0) 
+                                else (case when (a.unit_qty * a.cnt - a.rem_qty) = 0 then
+                                                /* SHEET코일 사용량 */
+                                                (case when a.unit_qty * a.cnt = 0 AND substring(a.item_no, 3,1) = 'A' then
+                                                           convert(int, (cast(replace(substring(a.qa, 1,3),'X','') as decimal) / 100) *
+                                                                        (cast(replace(substring(a.qa, 5,4),'X','') as int)   ) * 
+                                                                        (cast(replace(substring(a.qa,10,4),'X','') as int)   ) / 1000000 * 2.72 * a.cnt)
+                                                      when ((a.unit_qty * a.cnt) = 0 ) and (substring(a.item_no, 3,1) = 'S') then
+                                                           convert(int, (cast(replace(substring(a.qa, 1,3),'X','') as decimal) / 100) *
+                                                                        (cast(replace(substring(a.qa, 5,4),'X','') as int)   ) * 
+                                                                        (cast(replace(substring(a.qa,10,4),'X','') as int)   ) / 1000000 * 8.12 * a.cnt)                                          
+                                                      else (a.unit_qty * a.cnt)
+                                                 end)
+                                            else (a.unit_qty * a.cnt - a.rem_qty)
+                                       end)
+                           end)
+    FROM sfcuse     a              /* 작업일보사용내역 */
+         LEFT OUTER JOIN sfcret  b /* 작업장반납내역 */
+                      ON a.use_date = b.ret_date  AND a.coil_no  = b.wcoil_no  AND a.loc_no = b.loc_no
+         LEFT OUTER JOIN groupitem  c  ON a.item_no  = c.item_no 
+   WHERE ( datepart(year, a.use_date) = :ai_year )
+     AND ( datepart(month,a.use_date) = :ai_mon  ) 
+     AND ((a.coil_no    IS NOT NULL )  OR
+          (a.coil_no    IS NULL       AND 
+           substring(a.item_no,1,4)    IN ( 'M1A1', 'M1A2', 'M1S1', 'M1S2', 'M1Z1', 'M1Z2', 'M3A1', 'M3A2', 'M3S1', 'M3S2', 'M3Z1', 'M3Z2', 'MZZZ' )             
+          )
+         )                   
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '07.당월사용누계(외주)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = b.item_name
+       , qa             = a.qa
+       , insp_no        = a.insp_no
+       , qty            = ( a.unit_qty * a.cnt - a.rem_qty )
+    FROM coilsubuse  a                  /* 외주일보사용내역 */
+         LEFT OUTER JOIN groupitem   b  ON a.item_no = b.item_no
+   WHERE ( datepart(year, a.use_date)  = :ai_year )
+     AND ( datepart(month,a.use_date)  = :ai_mon  )   
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '08.당월사용누계(출고)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = c.item_name
+       , qa             = a.qa
+       , do_no          = a.do_no
+       , qty            = isnull(a.ship_qty, 0)
+    FROM dodet     a /* 출고상세 */
+         LEFT OUTER JOIN do        b  ON a.do_no   = b.do_no   /* 출고헤드 */
+         LEFT OUTER JOIN groupitem c  ON a.item_no = c.item_no
+   WHERE ( a.coil_no       IS NOT NULL           )
+     AND ( datepart(year, b.do_date)  = :ai_year )
+     AND ( datepart(month,b.do_date)  = :ai_mon  )
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '09.이후일자입고'
+       , sort1          = substring(b.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(b.item_no)
+       , item_name      = c.item_name
+       , qa             = b.qa
+       , insp_no        = a.insp_no
+       , qty            = isnull(b.comqty, 0)
+    FROM insp       a                                           /* 입고헤드 */
+         LEFT OUTER JOIN inspdet    b ON b.insp_no = a.insp_no  /* 입고상세 */
+         LEFT OUTER JOIN groupitem  c ON b.item_no = c.item_no
+         LEFT OUTER JOIN supp       d ON a.supp_no = d.supp_no
+   WHERE ( a.insp_flag    = 'W'           )    /* W(원자재), S(상품), B(부자재), S(외주가공) */
+     AND ( a.insp_date    > :ad_date      )
+     AND ( b.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '10.이후사용(사내)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = c.item_name
+       , qa             = a.qa
+       , order_no       = a.order_no
+       , qty            = ( isnull(a.unit_qty, 0) * isnull(a.cnt, 0) - isnull(a.rem_qty, 0) - isnull(b.unit_qty, 0) )
+    FROM sfcuse     a                 /* 작업일보사용내역 */
+         LEFT OUTER JOIN sfcret     b /* 작업장반납내역 */
+                      ON a.use_date = b.ret_date AND a.coil_no = b.wcoil_no AND a.loc_no = b.loc_no
+         LEFT OUTER JOIN groupitem  c  ON a.item_no = c.item_no
+   WHERE ( a.use_date      > :ad_date      ) 
+     AND ((a.coil_no      IS NOT NULL  )  OR
+          (a.coil_no      IS NULL    AND
+           substring(a.item_no,1,4)   IN ( 'M1A1', 'M1A2', 'M1S1', 'M1S2', 'M1Z1', 'M1Z2', 'M3A1', 'M3A2', 'M3S1', 'M3S2', 'M3Z1', 'M3Z2', 'MZZZ' )
+          )
+         )
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '11.이후사용(외주)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = b.item_name
+       , qa             = a.qa
+       , insp_no        = a.insp_no
+       , qty            = ( isnull(a.unit_qty, 0) * isnull(a.cnt, 0) - isnull(a.rem_qty, 0) )
+    FROM coilsubuse  a                    /* 외주일보사용내역 */
+         LEFT OUTER JOIN groupitem  b  ON a.item_no  = b.item_no
+   WHERE ( a.use_date      > :ad_date       )
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '12.이후사용(출고)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no)
+       , item_name      = c.item_name
+       , qa             = a.qa
+       , do_no          = a.do_no
+       , qty            = isnull(a.ship_qty, 0)
+    FROM dodet     a                                           /* 출고상세 */
+         LEFT OUTER JOIN do        b  ON a.do_no    = b.do_no  /* 출고헤드 */
+         LEFT OUTER JOIN groupitem c  ON a.item_no  = c.item_no
+   WHERE ( a.coil_no      IS NOT NULL          )
+     AND ( b.do_date       > :ad_date          )
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+  
+  UNION ALL
+  SELECT cat            = '13.현재고(코일)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no) /* 현재고*/
+       , item_name      = b.item_name
+       , qa             = a.qa
+       , coil_no        = ''
+       , qty            = sum( a.unit_qty * a.qcnt )
+    FROM coilmst   a                     /* 코일마스터 */
+         LEFT OUTER JOIN groupitem b  ON a.item_no  = b.item_no
+   WHERE ( substring(a.item_no, 3, 1) IN ('S','A') ) 
+     AND ( a.open_close    <> 'C'                  )  /* 완료 */
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+     AND NOT EXISTS (SELECT * FROM lossitem WHERE loss_item = a.item_no)
+   GROUP BY substring(a.item_no, 3, 1), dbo.uf_getcoilsort(a.item_no), b.item_name, a.qa
+
+  UNION ALL
+  SELECT cat            = '13.현재고(쉬트)'
+       , sort1          = substring(a.item_no, 3, 1)
+       , sort           = dbo.uf_getcoilsort(a.item_no) /* 현재고*/
+       , item_name      = b.item_name
+       , qa             = a.qa
+       , coil_no        = ''
+       , qty            = sum( a.unit_qty * a.qcnt )
+    FROM sheetmst   a                     /* 쉬트마스터 */
+         LEFT OUTER JOIN groupitem b  ON a.item_no  = b.item_no
+   WHERE ( substring(a.item_no, 3, 1) IN ('S','A') ) 
+     AND ( a.open_close    <> 'C'                  )  /* 완료 */
+     AND ( a.loc_no       NOT IN ('WS00000006', 'WW04', 'G0086','WS00000003')   )  /* YSP저장소, YSP원재료 */
+     AND NOT EXISTS (SELECT * FROM lossitem WHERE loss_item = a.item_no)
+   GROUP BY substring(a.item_no, 3, 1), dbo.uf_getcoilsort(a.item_no), b.item_name, a.qa
+/*=============================================================================*/
+  /* 전일재고     = 현재고 - 이후일자입고 + 이후사용 - 당일입고 + 당일사용   */
+  /* 당일입고                                                                */
+  /* 당월입고누계 = 당월입고누계 - 이후일자입고                              */
+  /* 당일사용                                                                */
+  /* 당월사용누계 = 당월사용누계 - 이후사용                                  */
+  /* 당일재고     = 현재고 - 이후일자입고 + 이후사용                         */
+/*=============================================================================*/
+/*
+  SELECT cat            = '01.당일입고'
+  SELECT cat            = '02.당월입고누계'
+
+  SELECT cat            = '03.당일사용(사내)'
+  SELECT cat            = '04.당일사용(외주)'
+  SELECT cat            = '05.당일사용(출고)'
+
+  SELECT cat            = '06.당월사용누계(사내)'
+  SELECT cat            = '07.당월사용누계(외주)'
+  SELECT cat            = '08.당월사용누계(출고)'
+
+  SELECT cat            = '09.이후일자입고'
+  SELECT cat            = '10.이후사용(사내)'
+  SELECT cat            = '11.이후사용(외주)'
+  SELECT cat            = '12.이후사용(출고)'
+
+  SELECT cat            = '13.현재고(코일)'
+*/
+" arguments=(("ai_year", number),("ai_mon", number),("ad_date", date))  sort="item_name A cat A qa A " )
+text(band=header alignment="2" text="번호" border="6" color="33554432" x="2011" y="12" height="60" width="512" html.valueishtml="0"  name=insp_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="1371" y="12" height="60" width="631" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="338" y="12" height="60" width="1024" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순서" border="6" color="33554432" x="174" y="12" height="60" width="155" html.valueishtml="0"  name=sort_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="9" y="12" height="60" width="155" html.valueishtml="0"  name=sort1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="2533" y="12" height="60" width="704" html.valueishtml="0"  name=cat_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수량" border="6" color="33554432" x="3246" y="12" height="60" width="416" html.valueishtml="0"  name=qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2011" y="8" height="60" width="512" format="[general]" html.valueishtml="0"  name=insp_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1371" y="8" height="60" width="631" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="338" y="8" height="60" width="1024" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="174" y="8" height="60" width="155" format="[general]" html.valueishtml="0"  name=sort visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="60" width="155" format="[general]" html.valueishtml="0"  name=sort1 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="2533" y="8" height="60" width="704" format="[general]" html.valueishtml="0"  name=cat visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="3246" y="8" height="60" width="416" format="#,##0" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="0" expression="rowcount()"border="0" color="33554432" x="338" y="4" height="64" width="1024" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

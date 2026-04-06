@@ -1,0 +1,71 @@
+﻿$PBExportHeader$d_cdinvcoll_r5.srd
+$PBExportComments$거래처 master조회(1999/04/20,조현춘)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=360 color="536870912" )
+table(column=(type=char(255) updatewhereclause=yes name=outamt dbname="customer.OUTAMT" )
+ column=(type=char(255) updatewhereclause=yes name=ceo_his dbname="ceo_his" )
+ column=(type=char(255) updatewhereclause=yes name=com_char dbname="com_char" )
+ column=(type=char(255) updatewhereclause=yes name=dambo_bigo dbname="customer.dambo_bigo" )
+ column=(type=char(255) updatewhereclause=yes name=bogo dbname="customer.bogo" )
+ retrieve="SELECT 
+	 CUSTOMER.OUTAMT
+	,(	SELECT replace(replace( substring(A.BIGO,1, 2000), char(13), ' ' ), char(10), ' ')
+		FROM CUSTOMER_BASE A INNER JOIN  (
+													SELECT A.CUST_NO, A.ITEM_CD, A.SORT, A.INPUT_DATE, MAX(SEQ) SEQ
+													 FROM CUSTOMER_BASE A INNER JOIN
+													 (
+														SELECT CUST_NO, ITEM_CD, SORT, MAX(input_date) input_date
+														FROM CUSTOMER_BASE
+														WHERE CUST_NO = customer.cust_no
+														GROUP BY CUST_NO, ITEM_CD, SORT
+													  ) B ON A.CUST_NO = B.CUST_NO AND A.ITEM_CD = B.ITEM_CD AND A.SORT = B.SORT AND A.input_date = B.input_date
+													  GROUP BY A.CUST_NO, A.ITEM_CD, A.SORT, A.INPUT_DATE
+																			 ) B 
+																			ON A.CUST_NO = B.CUST_NO AND A.ITEM_CD = B.ITEM_CD AND A.SORT = B.SORT AND A.input_date = B.input_date AND A.SEQ = B.SEQ
+											  INNER JOIN CODEMST C ON A.SORT = C.SORT AND C.BIGO LIKE '%(여신관리항목)%'
+		WHERE A.CUST_NO = customer.cust_no
+		AND  A.SORT = '108') ceo_his 
+	,(	SELECT substring(A.BIGO,1, 2000)
+		FROM CUSTOMER_BASE A INNER JOIN  (
+													SELECT A.CUST_NO, A.ITEM_CD, A.SORT, A.INPUT_DATE, MAX(SEQ) SEQ
+													 FROM CUSTOMER_BASE A INNER JOIN
+													 (
+														SELECT CUST_NO, ITEM_CD, SORT, MAX(input_date) input_date
+														FROM CUSTOMER_BASE
+														WHERE CUST_NO = customer.cust_no
+														GROUP BY CUST_NO, ITEM_CD, SORT
+													  ) B ON A.CUST_NO = B.CUST_NO AND A.ITEM_CD = B.ITEM_CD AND A.SORT = B.SORT AND A.input_date = B.input_date
+													  GROUP BY A.CUST_NO, A.ITEM_CD, A.SORT, A.INPUT_DATE
+																			 ) B 
+																			ON A.CUST_NO = B.CUST_NO AND A.ITEM_CD = B.ITEM_CD AND A.SORT = B.SORT AND A.input_date = B.input_date AND A.SEQ = B.SEQ
+											  INNER JOIN CODEMST C ON A.SORT = C.SORT AND C.BIGO LIKE '%(여신관리항목)%'
+		WHERE A.CUST_NO = customer.cust_no
+		AND  A.SORT = '117') com_char
+	,dambo_bigo
+	,bogo
+FROM 
+	customer
+WHERE 
+	cust_no = :as_cust_no
+" arguments=(("as_cust_no", string)) )
+column(band=detail id=5 alignment="0" tabsequence=0 border="0" color="33554432" x="521" y="100" height="60" width="4325" html.valueishtml="0"  name=bogo visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=detail alignment="0" text="" border="0" color="0" x="5" y="8" height="80" width="4855" html.valueishtml="0"  name=t_5 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=detail alignment="0" text="" border="0" color="0" x="5" y="176" height="80" width="4855" html.valueishtml="0"  name=t_6 visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+line(band=detail x1="5" y1="4" x2="4864" y2="4"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="521" y="16" height="60" width="4325" format="[general]" html.valueishtml="0"  name=outamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=detail x1="5" y1="356" x2="4864" y2="356"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="521" y="284" height="60" width="4325" format="[general]" html.valueishtml="0"  name=com_char visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=detail alignment="0" text="[업체특성]" border="0" color="0" x="133" y="284" height="60" width="375" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=detail alignment="0" text="NO" border="0" color="0" x="27" y="284" height="60" width="69" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=detail x1="5" y1="172" x2="4864" y2="172"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5" y1="88" x2="4864" y2="88"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5" y1="256" x2="4864" y2="256"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="521" y="188" height="60" width="4325" format="[general]" html.valueishtml="0"  name=dambo_bigo visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=detail alignment="0" text="[담보상세]" border="0" color="0" x="133" y="188" height="60" width="375" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=detail alignment="0" text="[공사실적]" border="0" color="0" x="133" y="16" height="60" width="375" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=detail alignment="0" text="[공시보고]" border="0" color="0" x="133" y="100" height="60" width="375" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

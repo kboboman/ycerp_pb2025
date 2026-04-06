@@ -1,0 +1,494 @@
+﻿$PBExportHeader$d_osmsale_custtotal_r.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="12632256" )
+footer(height=68 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(8) updatewhereclause=yes name=yyyy dbname="yyyy" )
+ column=(type=char(1) updatewhereclause=yes name=credit_level dbname="credit_level" )
+ column=(type=char(2) updatewhereclause=yes name=colllevel dbname="colllevel" )
+ column=(type=char(1) updatewhereclause=yes name=level_grade dbname="level_grade" )
+ column=(type=char(10) updatewhereclause=yes name=terms dbname="terms" )
+ column=(type=long updatewhereclause=yes name=credit_day dbname="credit_day" )
+ column=(type=decimal(4) updatewhereclause=yes name=credit_limit dbname="credit_limit" )
+ column=(type=decimal(4) updatewhereclause=yes name=credit_over dbname="credit_over" )
+ column=(type=decimal(2) updatewhereclause=yes name=remainder_amt dbname="remainder_amt" )
+ column=(type=decimal(2) updatewhereclause=yes name=balbf_amount dbname="balbf_amount" )
+ column=(type=decimal(2) updatewhereclause=yes name=curr_inv dbname="curr_inv" )
+ column=(type=decimal(2) updatewhereclause=yes name=mm_01 dbname="mm_01" )
+ column=(type=decimal(2) updatewhereclause=yes name=mm_02 dbname="mm_02" )
+ column=(type=decimal(2) updatewhereclause=yes name=mm_03 dbname="mm_03" )
+ column=(type=decimal(2) updatewhereclause=yes name=pre_mm_coll dbname="pre_mm_coll" )
+ column=(type=decimal(2) updatewhereclause=yes name=normal_amt dbname="normal_amt" )
+ column=(type=decimal(2) updatewhereclause=yes name=remainder_over dbname="remainder_over" )
+ column=(type=decimal(2) updatewhereclause=yes name=curr_coll dbname="curr_coll" )
+ column=(type=decimal(7) updatewhereclause=yes name=day_saleamt dbname="day_saleamt" )
+ column=(type=long updatewhereclause=yes name=day_doamt dbname="day_doamt" )
+ column=(type=decimal(9) updatewhereclause=yes name=un_outamt dbname="un_outamt" )
+ column=(type=decimal(0) updatewhereclause=yes name=coll_target dbname="coll_target" )
+ column=(type=char(10) updatewhereclause=yes name=ref_date dbname="ref_date" )
+ column=(type=decimal(0) updatewhereclause=yes name=mod_target dbname="mod_target" )
+ column=(type=char(10) updatewhereclause=yes name=top_level dbname="top_level" )
+ retrieve="SELECT 
+	salesman         = a.salesman       
+	, user_name        = a.user_name      
+	, cust_no          = a.cust_no        
+	, cust_name        = a.cust_name   
+	, yyyy             = a.yyyy
+	, credit_level     = a.credit_level   
+	, colllevel        = v_customer.colllevel
+	, level_grade      = a.level_grade    
+	, terms            = a.terms
+	, credit_day       = a.credit_day     
+	, credit_limit     = a.credit_limit   
+	, credit_over      = a.credit_over 
+	, remainder_amt    = a.remainder_amt
+	, balbf_amount     = a.balbf_amount   
+	, curr_inv         = a.curr_inv                        /* 당월매출 */
+	, mm_01            = a.mm_01                           /* 매출(-1월) */
+	, mm_02            = a.mm_02                           /* 매출(-2월) */
+	, mm_03            = a.mm_03                           /* 매출(-3월) */
+	, pre_mm_coll      = a.pre_mm_coll                     /* 전월수금 */
+	, normal_amt       = a.normal_amt                      /* 정상미수채권 */
+	, remainder_over   = (a.remainder_amt - a.normal_amt)  /* 미수초과액 */
+	, curr_coll        = a.curr_coll                       /* 당월수금 */
+	, day_saleamt      = a.day_saleamt                     /* 당일수주 */
+	, day_doamt        = a.day_doamt                       /* 당일출고 */
+	, un_outamt        = a.un_outamt                       /* 미출고(-30,+30) */
+	, coll_target      = a.coll_target                     /* 수금목표(월) */
+	, ref_date         = convert(char(10), :ad_date,111)   /* 조회일자 */
+	, mod_target    	 = a.mod_target							 /*매출목표(월)*/
+	, top_level			 = b.top_level
+FROM 
+	(                     
+	SELECT 
+		salesman      = aa.salesman       
+	  , user_name     = isnull(aa.user_name,'')      
+	  , cust_no       = aa.cust_no        
+	  , cust_name     = aa.cust_name   
+	  , yyyy          = aa.yyyy
+	  , credit_level  = aa.credit_level   
+	  , level_grade   = aa.level_grade    
+	  , terms         = aa.terms
+	  , credit_day    = aa.credit_day     
+	  , credit_limit  = aa.credit_limit   
+	  , credit_over   = aa.credit_over 
+	  , remainder_amt = aa.remainder_amt
+	  , balbf_amount  = aa.balbf_amount   
+	  , curr_inv      = aa.curr_inv
+		 /* 매출(-1월) */
+	  , mm_01          = (case :as_month
+										when '01' then bb.inv_12
+										when '02' then aa.inv_01
+										when '03' then aa.inv_02
+										when '04' then aa.inv_03
+										when '05' then aa.inv_04
+										when '06' then aa.inv_05
+										when '07' then aa.inv_06
+										when '08' then aa.inv_07
+										when '09' then aa.inv_08
+										when '10' then aa.inv_09
+										when '11' then aa.inv_10
+										when '12' then aa.inv_11
+								 end)
+		 /* 매출(-2월) */
+	  , mm_02          = (case :as_month
+										when '01' then bb.inv_11
+										when '02' then bb.inv_12
+										when '03' then aa.inv_01
+										when '04' then aa.inv_02
+										when '05' then aa.inv_03
+										when '06' then aa.inv_04
+										when '07' then aa.inv_05
+										when '08' then aa.inv_06
+										when '09' then aa.inv_07
+										when '10' then aa.inv_08
+										when '11' then aa.inv_09
+										when '12' then aa.inv_10
+								 end)
+		 /* 매출(-3월) */
+	  , mm_03          = (case :as_month
+										when '01' then bb.inv_10
+										when '02' then bb.inv_11
+										when '03' then bb.inv_12
+										when '04' then aa.inv_01
+										when '05' then aa.inv_02
+										when '06' then aa.inv_03
+										when '07' then aa.inv_04
+										when '08' then aa.inv_05
+										when '09' then aa.inv_06
+										when '10' then aa.inv_07
+										when '11' then aa.inv_08
+										when '12' then aa.inv_09
+								 end)
+		 /* 전월수금 */
+	  , pre_mm_coll    = (case :as_month
+										when '01' then bb.coll_12
+										when '02' then aa.coll_01
+										when '03' then aa.coll_02
+										when '04' then aa.coll_03
+										when '05' then aa.coll_04
+										when '06' then aa.coll_05
+										when '07' then aa.coll_06
+										when '08' then aa.coll_07
+										when '09' then aa.coll_08
+										when '10' then aa.coll_09
+										when '11' then aa.coll_10
+										when '12' then aa.coll_11
+								 end)
+		 /* 정상미수채권 */
+	  , normal_amt     = (case when aa.credit_day >= 0 and aa.credit_day <= 29 then 
+											  (case :as_month
+													  when '01' then aa.inv_01
+													  when '02' then aa.inv_02
+													  when '03' then aa.inv_03
+													  when '04' then aa.inv_04
+													  when '05' then aa.inv_05
+													  when '06' then aa.inv_06
+													  when '07' then aa.inv_07
+													  when '08' then aa.inv_08
+													  when '09' then aa.inv_09
+													  when '10' then aa.inv_10
+													  when '11' then aa.inv_11
+													  when '12' then aa.inv_12
+												end)
+										when aa.credit_day >= 30 then 
+											  (case :as_month
+													  when '01' then aa.inv_01 + bb.inv_12
+													  when '02' then aa.inv_02 + aa.inv_01
+													  when '03' then aa.inv_03 + aa.inv_02
+													  when '04' then aa.inv_04 + aa.inv_03
+													  when '05' then aa.inv_05 + aa.inv_04
+													  when '06' then aa.inv_06 + aa.inv_05
+													  when '07' then aa.inv_07 + aa.inv_06
+													  when '08' then aa.inv_08 + aa.inv_07
+													  when '09' then aa.inv_09 + aa.inv_08
+													  when '10' then aa.inv_10 + aa.inv_09
+													  when '11' then aa.inv_11 + aa.inv_10
+													  when '12' then aa.inv_12 + aa.inv_11
+												end)
+										when aa.credit_day >= 31 and aa.credit_day <= 60 then 
+											  (case :as_month
+													  when '01' then aa.inv_01 + bb.inv_12 + bb.inv_11
+													  when '02' then aa.inv_02 + aa.inv_01 + bb.inv_12
+													  when '03' then aa.inv_03 + aa.inv_02 + aa.inv_01
+													  when '04' then aa.inv_04 + aa.inv_03 + aa.inv_02
+													  when '05' then aa.inv_05 + aa.inv_04 + aa.inv_03
+													  when '06' then aa.inv_06 + aa.inv_05 + aa.inv_04
+													  when '07' then aa.inv_07 + aa.inv_06 + aa.inv_05
+													  when '08' then aa.inv_08 + aa.inv_07 + aa.inv_06
+													  when '09' then aa.inv_09 + aa.inv_08 + aa.inv_07
+													  when '10' then aa.inv_10 + aa.inv_09 + aa.inv_08
+													  when '11' then aa.inv_11 + aa.inv_10 + aa.inv_09
+													  when '12' then aa.inv_12 + aa.inv_11 + aa.inv_10
+												end)
+										when aa.credit_day >= 61 and aa.credit_day <= 90 then 
+											  (case :as_month
+													  when '01' then aa.inv_01 + bb.inv_12 + bb.inv_11 + bb.inv_10 
+
+													  when '02' then aa.inv_02 + aa.inv_01 + bb.inv_12 + bb.inv_11 
+													  when '03' then aa.inv_03 + aa.inv_02 + aa.inv_01 + bb.inv_12
+													  when '04' then aa.inv_04 + aa.inv_03 + aa.inv_02 + aa.inv_01 
+													  when '05' then aa.inv_05 + aa.inv_04 + aa.inv_03 + aa.inv_02 
+													  when '06' then aa.inv_06 + aa.inv_05 + aa.inv_04 + aa.inv_03 
+													  when '07' then aa.inv_07 + aa.inv_06 + aa.inv_05 + aa.inv_04 
+													  when '08' then aa.inv_08 + aa.inv_07 + aa.inv_06 + aa.inv_05 
+													  when '09' then aa.inv_09 + aa.inv_08 + aa.inv_07 + aa.inv_06 
+													  when '10' then aa.inv_10 + aa.inv_09 + aa.inv_08 + aa.inv_07 
+													  when '11' then aa.inv_11 + aa.inv_10 + aa.inv_09 + aa.inv_08 
+													  when '12' then aa.inv_12 + aa.inv_11 + aa.inv_10 + aa.inv_09 
+												end)
+								end)
+	  , normal_amt_over = 0
+	  , curr_coll       = aa.curr_coll             /* 당월수금 */
+	  , day_saleamt     = isnull(dd.amt, 0)        /* 당일수주 */
+	  , day_doamt       = 0                        /* 당일출고 */
+	  , un_outamt       = isnull(cc.un_outamt, 0)  /* 미출고(-30,+30) */
+	  , coll_target     = isnull(aa.b_del ,0)      /* 수금목표(월) */
+	  , mod_target   = isnull(aa.b_mod,0)   /*수정매출목표(월)*/
+	FROM 
+		( /* 당년도 전체 */
+		SELECT 
+			salesman      = c.salesman       
+			, user_name     = d.user_name      
+			, cust_no       = a.cust_no        
+			, cust_name     = c.cust_name   
+			, yyyy          = substring(convert(char(10),a.eom_year,111),1,4)
+			, credit_level  = c.credit_level   
+			, level_grade   = c.level_grade    
+			, terms         = isnull(c.terms,'')
+			, credit_day    = convert(int, isnull(c.credit_day,0))
+			, credit_limit  = c.credit_limit   
+			, credit_over   = (case :as_month
+											when '01' then a.inv_01
+											when '02' then a.inv_02
+											when '03' then a.inv_03
+											when '04' then a.inv_04
+											when '05' then a.inv_05
+											when '06' then a.inv_06
+											when '07' then a.inv_07
+											when '08' then a.inv_08
+											when '09' then a.inv_09
+											when '10' then a.inv_10
+											when '11' then a.inv_11
+											when '12' then a.inv_12
+									 end) - c.credit_limit
+			, remainder_amt = (case :as_month
+											 when '01' then a.inv_01 - a.coll_01
+											 when '02' then a.inv_01 + a.inv_02 
+															  - a.coll_01 - a.coll_02
+											 when '03' then a.inv_01 + a.inv_02 + a.inv_03 
+															  - a.coll_01 - a.coll_02 - a.coll_03
+											 when '04' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04
+											 when '05' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05
+											 when '06' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06
+											 when '07' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 + a.inv_07 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06 - a.coll_07
+											 when '08' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 + a.inv_07 + a.inv_08 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06 - a.coll_07 - a.coll_08
+											 when '09' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 + a.inv_07 + a.inv_08 + a.inv_09 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06 - a.coll_07 - a.coll_08 - a.coll_09
+											 when '10' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 + a.inv_07 + a.inv_08 + a.inv_09 + a.inv_10 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06 - a.coll_07 - a.coll_08 - a.coll_09 - a.coll_10
+											 when '11' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 + a.inv_07 + a.inv_08 + a.inv_09 + a.inv_10 + a.inv_11 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06 - a.coll_07 - a.coll_08 - a.coll_09 - a.coll_10 - a.coll_11
+											 when '12' then a.inv_01 + a.inv_02 + a.inv_03 + a.inv_04 + a.inv_05 + a.inv_06 + a.inv_07 + a.inv_08 + a.inv_09 + a.inv_10 + a.inv_11 + a.inv_12 
+															  - a.coll_01 - a.coll_02 - a.coll_03 - a.coll_04 - a.coll_05 - a.coll_06 - a.coll_07 - a.coll_08 - a.coll_09 - a.coll_10 - a.coll_11 - a.coll_12
+									  end) + a.balbf_amount
+			, balbf_amount   = a.balbf_amount   
+			, curr_inv       = (case :as_month
+											 when '01' then a.inv_01
+											 when '02' then a.inv_02
+											 when '03' then a.inv_03
+											 when '04' then a.inv_04
+											 when '05' then a.inv_05
+											 when '06' then a.inv_06
+											 when '07' then a.inv_07
+											 when '08' then a.inv_08
+											 when '09' then a.inv_09
+											 when '10' then a.inv_10
+											 when '11' then a.inv_11
+											 when '12' then a.inv_12
+									  end)
+			, mm_01           = 0
+			, mm_02           = 0
+			, mm_03           = 0
+			, pre_mm_coll     = 0
+			, normal_amt      = 0
+			, normal_amt_over = 0
+			, curr_coll       = (case :as_month
+											 when '01' then a.coll_01
+											 when '02' then a.coll_02
+											 when '03' then a.coll_03
+											 when '04' then a.coll_04
+											 when '05' then a.coll_05
+											 when '06' then a.coll_06
+											 when '07' then a.coll_07
+											 when '08' then a.coll_08
+											 when '09' then a.coll_09
+											 when '10' then a.coll_10
+											 when '11' then a.coll_11
+											 when '12' then a.coll_12
+									  end)
+			, a.inv_01,  a.inv_02,  a.inv_03,  a.inv_04,  a.inv_05,  a.inv_06,  a.inv_07,  a.inv_08,  a.inv_09,  a.inv_10,  a.inv_11,  a.inv_12     
+			, a.coll_01, a.coll_02, a.coll_03, a.coll_04, a.coll_05, a.coll_06, a.coll_07, a.coll_08, a.coll_09, a.coll_10, a.coll_11, a.coll_12
+			, b_inv          = (case :as_month
+											 when '01' then b.inv_01
+											 when '02' then b.inv_02
+											 when '03' then b.inv_03
+											 when '04' then b.inv_04
+											 when '05' then b.inv_05
+											 when '06' then b.inv_06
+											 when '07' then b.inv_07
+											 when '08' then b.inv_08
+											 when '09' then b.inv_09
+											 when '10' then b.inv_10
+											 when '11' then b.inv_11
+											 when '12' then b.inv_12
+									  end)                  
+			, b_coll         = (case :as_month
+											 when '01' then b.coll_01
+											 when '02' then b.coll_02
+											 when '03' then b.coll_03
+											 when '04' then b.coll_04
+											 when '05' then b.coll_05
+											 when '06' then b.coll_06
+											 when '07' then b.coll_07
+											 when '08' then b.coll_08
+											 when '09' then b.coll_09
+											 when '10' then b.coll_10
+											 when '11' then b.coll_11
+											 when '12' then b.coll_12
+									  end)                  
+			, b_mod          = (case :as_month
+											 when '01' then b.mod_01
+											 when '02' then b.mod_02
+											 when '03' then b.mod_03
+											 when '04' then b.mod_04
+											 when '05' then b.mod_05
+											 when '06' then b.mod_06
+											 when '07' then b.mod_07
+											 when '08' then b.mod_08
+											 when '09' then b.mod_09
+											 when '10' then b.mod_10
+											 when '11' then b.mod_11
+											 when '12' then b.mod_12
+									  end)                  
+			, b_del          = (case :as_month
+											 when '01' then b.del_01
+											 when '02' then b.del_02
+											 when '03' then b.del_03
+											 when '04' then b.del_04
+											 when '05' then b.del_05
+											 when '06' then b.del_06
+											 when '07' then b.del_07
+											 when '08' then b.del_08
+											 when '09' then b.del_09
+											 when '10' then b.del_10
+											 when '11' then b.del_11
+											 when '12' then b.del_12
+									  end)
+		FROM opeom     A  
+			  LEFT OUTER JOIN cust_aim  B ON a.cust_no  = b.cust_code and  datepart(year,a.eom_year) = datepart(year, b.tar_year)
+			  LEFT OUTER JOIN customer  C ON a.cust_no  = c.cust_no
+			  LEFT OUTER JOIN login     D ON c.salesman = d.user_id
+		WHERE ( datepart(year,a.eom_year)    = :as_year    )
+		AND ( datepart(year,b.tar_year)    = :as_year    )
+		AND ( c.salesman                like :as_salesman)
+		AND ( c.open_close              like :as_openclose )
+		AND ( c.credit_level              in ( :as_level ) )
+	) AA
+	LEFT OUTER JOIN 
+		( /* 전년도(12,11,10) */
+		SELECT 
+			salesman  = c.salesman       
+			, user_name = isnull(d.user_name,'')      
+			, cust_no   = c.cust_no        
+			, cust_name = c.cust_name   
+			, yyyy      = substring(convert(char(10),a.eom_year,111),1,4)
+			, inv_12    = isnull(a.inv_12,0)
+			, inv_11    = isnull(a.inv_11,0)     
+			, inv_10    = isnull(a.inv_10,0)  
+			, coll_12   = isnull(a.coll_12,0)  
+			, coll_11   = isnull(a.coll_11,0) 
+			, coll_10   = isnull(a.coll_10,0) 
+		FROM opeom     A  
+			LEFT OUTER JOIN customer  C ON c.cust_no  = a.cust_no
+			LEFT OUTER JOIN login     D ON c.salesman = d.user_id
+		WHERE ( datepart(year,a.eom_year)    = :as_year - 1  )
+		AND ( c.salesman                LIKE :as_salesman  )
+		AND ( c.credit_level              IN ( :as_level ) )
+		) BB ON aa.cust_no = bb.cust_no
+			LEFT OUTER JOIN 
+				( /* 미출고 30일 */
+				SELECT 
+					cust_no   = a.cust_no
+					, un_outamt = sum(a.un_outamt)
+				FROM 
+					(
+					SELECT 
+						cust_no   = a.cust_no             
+						, un_outamt = dbo.uf_getqty(b.item_no, b.qa ,b.uom,( b.order_qty - b.rlse_qty ) ) * b.price
+					FROM sale      A   
+						LEFT OUTER JOIN saledet   B ON a.order_no = b.order_no
+                  LEFT OUTER JOIN customer  C ON a.cust_no  = c.cust_no
+					WHERE /*( b.order_qty       <> b.rlse_qty  )
+					AND */( b.order_qty        > b.rlse_qty  )
+					AND ( a.open_close       = 'O'           )
+					AND ( a.due_date   BETWEEN DateAdd(day, -30, :ad_date) AND DateAdd(day, 30, :ad_date) )
+					AND ( c.salesman      LIKE :as_salesman  )
+					AND ( c.credit_level    IN ( :as_level ) )) A
+					GROUP BY a.cust_no) CC ON aa.cust_no = cc.cust_no
+			LEFT OUTER JOIN 
+				( /* 당일수주 */
+				SELECT 
+					a.cust_no
+					, amt     = sum((b.acc_qty * b.price) * 1.1)                
+				FROM sale      A                                                    
+					LEFT OUTER JOIN saledet   B ON a.order_no = b.order_no
+					LEFT OUTER JOIN customer  C ON a.cust_no  = c.cust_no
+/*				WHERE ( a.open_close   NOT IN ('X','C')     ) 한도초과 */
+				WHERE ( a.open_close   = 'O' ) 
+				AND ( a.sale_flag        IN ('D','L','E') ) 
+				AND ( a.order_date        = :ad_date      )
+				AND ( c.salesman       LIKE :as_salesman  )
+				AND ( c.credit_level     IN ( :as_level ) )
+				GROUP BY a.cust_no) DD ON aa.cust_no = dd.cust_no
+         ) A
+LEFT OUTER JOIN V_CUSTOMER  ON a.cust_no  = v_customer.cid
+LEFT OUTER JOIN customer b  ON a.cust_no  = b.cust_no
+ORDER BY a.user_name, a.cust_name
+" arguments=(("as_year", string),("as_month", string),("ad_date", date),("as_salesman", string),("as_level", stringlist),("as_openclose", string)) )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="9" y="8" height="64" width="247" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="823" y="8" height="64" width="681" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="결재조건" border="6" color="0" x="2016" y="8" height="64" width="325" html.valueishtml="0"  name=terms_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="여신" border="6" color="0" x="2350" y="8" height="64" width="178" html.valueishtml="0"  name=credit_day_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="여신초과" border="6" color="16711680" x="3401" y="8" height="64" width="421" html.valueishtml="0"  name=credit_over_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="월말잔액" border="6" color="0" x="3831" y="8" height="64" width="425" html.valueishtml="0"  name=remainder_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="정상미수채권" border="6" color="0" x="4265" y="8" height="64" width="503" html.valueishtml="0"  name=normal_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출" border="6" color="255" x="1847" y="8" height="64" width="160" html.valueishtml="0"  name=level_grade_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출(-2월)" border="6" color="0" x="8393" y="8" height="64" width="503" html.valueishtml="0"  name=mm_02_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출(-3월)" border="6" color="0" x="8905" y="8" height="64" width="503" html.valueishtml="0"  name=mm_03_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="여신한도액" border="6" color="0" x="2537" y="8" height="64" width="425" html.valueishtml="0"  name=credit_limit_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당월매출" border="6" color="0" x="2971" y="8" height="64" width="421" html.valueishtml="0"  name=curr_inv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="미수초과액" border="6" color="16711680" x="4777" y="8" height="64" width="507" html.valueishtml="0"  name=remainder_over_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출(-1월)" border="6" color="0" x="7881" y="8" height="64" width="503" html.valueishtml="0"  name=mm_01_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전월수금" border="6" color="0" x="7369" y="8" height="64" width="503" html.valueishtml="0"  name=pre_mm_coll_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당일수주" border="6" color="0" x="5294" y="8" height="64" width="503" html.valueishtml="0"  name=day_saleamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당일출고(운-)" border="6" color="0" x="5806" y="8" height="64" width="503" html.valueishtml="0"  name=day_doamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="신용" border="6" color="16711680" x="1678" y="8" height="64" width="160" html.valueishtml="0"  name=credit_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수금" border="6" color="0" x="1513" y="8" height="64" width="155" html.valueishtml="0"  name=colllevel_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수금목표(월)" border="6" color="0" x="9417" y="8" height="64" width="421" html.valueishtml="0"  name=coll_target_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출목표(월)" border="6" color="0" x="9847" y="8" height="64" width="421" html.valueishtml="0"  name=mod_target_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="조회일자" border="6" color="0" x="10277" y="8" height="64" width="325" html.valueishtml="0"  name=ref_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당월수금" border="6" color="0" x="6857" y="8" height="64" width="503" html.valueishtml="0"  name=curr_coll_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="미출고(-30,+30)" border="6" color="0" x="6318" y="8" height="64" width="530" html.valueishtml="0"  name=un_outamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처코드" border="6" color="0" x="480" y="8" height="64" width="334" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등급" border="6" color="0" x="265" y="8" height="64" width="206" html.valueishtml="0"  name=top_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="480" y="4" height="72" width="334" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="823" y="4" height="72" width="681" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="2350" y="4" height="72" width="178" format="[general]" html.valueishtml="0"  name=credit_day visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="2016" y="4" height="72" width="325" format="[general]" html.valueishtml="0"  name=terms visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="16711680~tif (  credit_over  > 0 , rgb(255, 0, 0), rgb(0, 0, 255) )" x="3401" y="4" height="72" width="421" format="#,###,###,##0" html.valueishtml="0"  name=credit_over visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="3831" y="4" height="72" width="425" format="#,###,###,##0" html.valueishtml="0"  name=remainder_amt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="0" x="4265" y="4" height="72" width="503" format="#,###,###,##0" html.valueishtml="0"  name=normal_amt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="255" x="1847" y="4" height="72" width="160" format="[general]" html.valueishtml="0"  name=level_grade visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="0" x="8393" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=mm_02 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" color="0" x="8905" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=mm_03 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="2537" y="4" height="72" width="425" format="#,###,###,##0" html.valueishtml="0"  name=credit_limit visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0" x="2971" y="4" height="72" width="421" format="#,##0" html.valueishtml="0"  name=curr_inv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="0" color="16711680~tif ( remainder_over > 0 , rgb(255, 0, 0), rgb(0, 0, 255) )" x="4777" y="4" height="72" width="507" format="#,###,###,##0" html.valueishtml="0"  name=remainder_over visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=23 alignment="1" tabsequence=32766 border="0" color="0" x="5294" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=day_saleamt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=24 alignment="1" tabsequence=32766 border="0" color="0" x="5806" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=day_doamt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=25 alignment="1" tabsequence=32766 border="0" color="0" x="6318" y="4" height="72" width="530" format="#,##0" html.valueishtml="0"  name=un_outamt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=22 alignment="1" tabsequence=32766 border="0" color="0" x="6857" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=curr_coll visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="0" x="7369" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=pre_mm_coll visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" color="0" x="7881" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=mm_01 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="16711680" x="1678" y="4" height="72" width="160" format="[general]" html.valueishtml="0"  name=credit_level visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="1513" y="4" height="72" width="155" format="[general]" html.valueishtml="0"  name=colllevel visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=26 alignment="1" tabsequence=32766 border="0" color="0" x="9417" y="4" height="72" width="421" format="#,###,###,##0" html.valueishtml="0"  name=coll_target visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=27 alignment="2" tabsequence=32766 border="0" color="0" x="10277" y="4" height="72" width="325" format="[general]" html.valueishtml="0"  name=ref_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=28 alignment="1" tabsequence=32766 border="0" color="0" x="9847" y="4" height="72" width="421" format="#,###,###,##0" html.valueishtml="0"  name=mod_target visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=29 alignment="2" tabsequence=32766 border="0" color="0" x="265" y="4" height="72" width="206" format="[general]" html.valueishtml="0"  name=top_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="count(  user_name  for all )"border="0" color="0" x="823" y="4" height="60" width="681" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(   curr_inv  for all)"border="0" color="0" x="2971" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( day_saleamt   for all)"border="0" color="0" x="5294" y="4" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(   day_doamt  for all)"border="0" color="0" x="5806" y="4" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(   un_outamt  for all)"border="0" color="0" x="6318" y="4" height="60" width="530" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(   curr_coll   for all)"border="0" color="0" x="6857" y="4" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(   remainder_amt   for all)"border="0" color="0" x="3831" y="4" height="60" width="425" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  normal_amt  for all )"border="0" color="0" x="4265" y="4" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(   pre_mm_coll   for all)"border="0" color="0" x="7369" y="4" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  coll_target  for all )"border="0" color="0" x="9417" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  mod_target  for all )"border="0" color="0" x="9847" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,47 @@
+﻿$PBExportHeader$d_osmsale_custtotal_r_do.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="12632256" )
+footer(height=68 color="12639424" )
+detail(height=80 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=decimal(6) updatewhereclause=yes name=day_doamt dbname="day_doamt" )
+ retrieve="  SELECT cust_no          = a.cust_no        
+       , day_doamt        = a.amt
+    FROM (                     
+           SELECT aa.cust_no   
+                , amt = aa.amt /* + BB.SHIP_AMOUNT 운반비 제외 */
+             FROM (/* 출고 합계금액으로 변경 */
+                   SELECT a.cust_no, amt = sum(a.do_total) / 1.1
+                     FROM do  A
+                          LEFT OUTER JOIN customer  C ON a.cust_no = c.cust_no
+                    WHERE ( a.do_date         = :ad_date      )
+                      AND ( a.sale_flag      IN ('D','L','E') )
+                      AND ( c.credit_level   IN ( :as_level ) )
+                      AND ( c.salesman     LIKE :as_salesman  )
+                      AND ( c.open_close   LIKE :as_openclose )
+                    GROUP BY a.cust_no
+                  ) AA,
+                  (SELECT a.cust_no
+                        , ship_amount = sum(a.ship_amount * 1.1)
+                     FROM do  A
+                          LEFT OUTER JOIN customer  C ON a.cust_no = c.cust_no
+                    WHERE ( a.do_date         = :ad_date      )
+                      AND ( a.sale_flag      IN ('D','L','E') )
+                      AND ( c.credit_level   IN ( :as_level ) )
+                      AND ( c.salesman     LIKE :as_salesman  )
+                      AND ( c.open_close   LIKE :as_openclose )
+                    GROUP BY a.cust_no
+                   ) BB
+             WHERE aa.cust_no   = bb.cust_no
+         ) A
+     ORDER BY a.cust_no
+" arguments=(("ad_date", date),("as_salesman", string),("as_level", stringlist),("as_openclose", string)) )
+text(band=header alignment="2" text="당일출고" border="6" color="0" x="265" y="8" height="64" width="503" html.valueishtml="0"  name=day_doamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="거래처" border="6" color="0" x="9" y="8" height="64" width="247" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="0" x="265" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=day_doamt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  day_doamt  for all )"border="0" color="0" x="265" y="4" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

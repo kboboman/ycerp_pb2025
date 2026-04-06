@@ -1,0 +1,46 @@
+﻿$PBExportHeader$d_personal_r.srd
+$PBExportComments$부자재 리스트(수주관련)
+release 8;
+datawindow(units=0 timer_interval=0 color=134217750 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="553648127" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=104 color="536870912" )
+table(column=(type=decimal(0) updatewhereclause=yes name=personal_id dbname="personal_id" )
+ column=(type=char(20) updatewhereclause=yes name=name dbname="name" )
+ column=(type=char(50) updatewhereclause=yes name=company dbname="company" )
+ column=(type=long updatewhereclause=yes name=bogo_personal_connection_det_yc_count dbname="yc_count" )
+ retrieve="select distinct a.personal_id,
+				  a.name,
+				  a.company,
+				  a.yc_count
+from 
+(
+      select  bogo_personal_connection.gubun,
+                  bogo_personal_connection.personal_id,
+                  bogo_personal_connection.name, 
+                  case when bogo_personal_connection.kind = '01' then sale_bogo_code.code_name else bogo_personal_connection.company end  company,
+      		        bogo_personal_connection_det.yc_count, 
+                  b.yc_user_id
+      from bogo_personal_connection with(nolock) left outer join sale_bogo_code with(nolock) on bogo_personal_connection.company_code = sale_bogo_code.code
+      												   left outer join bogo_personal_connection_det b with(nolock) on bogo_personal_connection.personal_id = b.personal_id
+            										 left outer join	(
+                                        																		select gubun, personal_id, count(*) yc_count
+                                        																		from bogo_personal_connection_det with(nolock)
+                                        																		 group by gubun, personal_id
+      													                  				) bogo_personal_connection_det on bogo_personal_connection.personal_id = bogo_personal_connection_det.personal_id
+       																						                                                  				    and bogo_personal_connection.gubun = bogo_personal_connection_det.gubun
+                 where bogo_personal_connection.gubun = :as_gubun                                                                                                                
+) a
+where isnull(a.yc_user_id,'') like :as_person" arguments=(("as_person", string),("as_gubun", string)) )
+text(band=header alignment="2" text="순번" border="0" color="0" x="9" y="4" height="76" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="이름" border="0" color="0" x="183" y="4" height="76" width="270" html.valueishtml="0"  name=name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="기관(회사)명" border="0" color="0" x="462" y="4" height="76" width="901" html.valueishtml="0"  name=company_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="인맥수" border="0" color="0" x="1371" y="4" height="76" width="215" html.valueishtml="0"  name=bogo_personal_connection_det_yc_count_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="0" height="100" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175),134217750 )" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="183" y="0" height="100" width="270" format="[general]" html.valueishtml="0"  name=name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175),134217750 )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="462" y="0" height="100" width="901" format="[general]" html.valueishtml="0"  name=company visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175),134217750 )" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="1371" y="0" height="100" width="215" format="[general]" html.valueishtml="0"  name=bogo_personal_connection_det_yc_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="553648127~tif ( getrow() = currentrow(), rgb(254,252,175),134217750 )" )
+compute(band=footer alignment="1" expression="sum( bogo_personal_connection_det_yc_count for all)"border="0" color="0" x="1371" y="4" height="60" width="215" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

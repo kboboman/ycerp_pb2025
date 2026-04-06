@@ -1,0 +1,226 @@
+﻿$PBExportHeader$gf_iteminsert.srf
+global type gf_iteminsert from function_object
+end type
+
+forward prototypes
+global function boolean gf_iteminsert (string arg_item, string arg_qa)
+end prototypes
+
+global function boolean gf_iteminsert (string arg_item, string arg_qa);//////////////////////////////////////////////////////////////////////////////
+// 품목의 규격추가 하기
+//////////////////////////////////////////////////////////////////////////////
+// string arg_item
+// string arg_qa
+// RETURN boolean
+//////////////////////////////////////////////////////////////////////////////
+string   arg_uom, arg_type, ls_qa, ls_qa0000, ls_item_no1, ls_uom, ls_name, ls_loc, ls_source, ls_rule
+string   ls_qa_split[], ls_chk1, ls_chk2, ls_chk3, ls_chk4, ls_val1, ls_val2, ls_val3, ls_val4
+
+decimal  lr_price
+datetime ldt_today
+int      li_pat, ll_row, li_cnt
+pointer  oldpointer 
+
+arg_type = MidA(arg_qa,4,1) + MidA(arg_qa,9,1) + MidA(arg_qa,14,1)
+if arg_type = 'XXX' then
+	arg_type = 'J'
+else 
+	arg_type = 'P'
+end if
+
+oldpointer = SetPointer(HourGlass!)
+arg_qa = upper(arg_qa)
+
+// 도료규격추가시작// arg_type 파라메타 P = 도료 / J = 철골
+if arg_type = 'J' then
+	if LenA(trim(arg_qa)) <> 19 then
+		rollback;
+		SetPointer(oldpointer)
+		MessageBox("저장", "규격 = [" + arg_qa + "] 의 길이를 확인하십시요!",exclamation!)
+		return false
+	end if
+	//1234567890123456789
+	//000X0000X0000X00000
+end if
+
+//////////////////////////////////////////////////////////////////////////////////
+// 품목규격 패턴관리 CHECK
+//////////////////////////////////////////////////////////////////////////////////
+SELECT rtrim(uom)  INTO :arg_uom FROM groupitem WHERE item_no = :arg_item;
+
+ls_qa = ""		// 초기화
+SELECT rtrim(qa), chk1, chk2, chk3, chk4, qa1, qa2, qa3, qa4 
+  INTO :ls_qa, :ls_chk1, :ls_chk2, :ls_chk3, :ls_chk4, :ls_val1, :ls_val2, :ls_val3, :ls_val4 
+  FROM itemqa_pattern 
+ WHERE item_no = :arg_item AND uom = :arg_uom AND use_yn = 'Y';
+ 
+if isnull(ls_qa) or ls_qa = "" then		// 해당사항 없음
+else	
+	if PosA(arg_qa, "X") > 0 then
+		GF_SPLIT( arg_qa, "X", ls_qa_split )
+
+		if ls_chk1 = "Y" then
+			if ls_val1 <> ls_qa_split[1] then
+				rollback;
+				SetPointer(oldpointer)
+				MessageBox("확인","품목의 패턴규격1 오류. " + ls_val1 + " 으로 시작해야 합니다.", exclamation!)
+				RETURN false
+			end if
+		end if
+
+		if ls_chk2 = "Y" then
+			if ls_val2 <> ls_qa_split[2] then
+				rollback;
+				SetPointer(oldpointer)
+				MessageBox("확인","품목의 패턴규격2 오류. " + ls_val2 + " 으로 시작해야 합니다.", exclamation!)
+				RETURN false
+			end if
+		end if
+
+		if ls_chk3 = "Y" then
+			if ls_val3 <> ls_qa_split[3] then
+				rollback;
+				SetPointer(oldpointer)
+				MessageBox("확인","품목의 패턴규격3 오류. " + ls_val3 + " 으로 시작해야 합니다.", exclamation!)
+				RETURN false
+			end if
+		end if
+
+		if ls_chk4 = "Y" then
+			if ls_val4 <> ls_qa_split[4] then
+				rollback;
+				SetPointer(oldpointer)
+				MessageBox("확인","품목의 패턴규격4 오류. " + ls_val4 + " 으로 시작해야 합니다.", exclamation!)
+				RETURN false
+			end if
+		end if
+	end if		
+end if
+//////////////////////////////////////////////////////////////////////////////////
+		
+//
+SELECT uom, item_name, source, qa_rule INTO :ls_uom, :ls_name, :ls_source, :ls_rule 
+  FROM groupitem
+ WHERE item_no = :arg_item;
+if ls_rule <> 'N' then
+	if arg_type = 'J' Then
+		if MidA(arg_qa,4,1) <> 'X' or MidA(arg_qa,9,1) <> 'X' or MidA(arg_qa,14,1) <> 'X' OR &
+			isnumber(MidA(arg_qa,1 ,3)) = false or isnumber(MidA(arg_qa, 5,4)) = false OR &
+			isnumber(MidA(arg_qa,10,4)) = false or isnumber(MidA(arg_qa,15,5)) = false then
+			rollback;
+			SetPointer(oldpointer)
+			MessageBox("저장", "규격 = [" + arg_qa + "] 을 확인하십시요!",exclamation!)
+			return false
+		end if
+	end if
+end if
+
+SELECT count(*) INTO :ll_row FROM item WHERE item_no = :arg_item AND qa = :arg_qa;
+if ll_row > 0 then
+	rollback;
+	SetPointer(oldpointer)
+	MessageBox("확인", "이미 규격이 있습니다. 물품RELOAD를 하십시요")
+	return false
+end if
+
+/* 2022-06-17 jowonsuk 주석처리 무조건 1개가 등록되어 있어야는데 굳이 그럴 필요가 있는지??*/
+SELECT top 1 qa INTO :ls_qa FROM item WHERE item_no = :arg_item ORDER BY qa;
+if sqlca.sqlcode = 100 OR isnull(ls_qa) or ls_qa = '' then
+	rollback;
+	MessageBox("확인","품목코드[" + arg_item + "]에 해당하는 규격이 존재하지 않습니다.",exclamation!)
+	SetPointer(oldpointer)
+	return false
+end if
+
+
+if ls_uom = 'M' then
+	ls_qa0000 = LeftA(arg_qa, 13)
+elseif ls_uom = 'M2' then
+	ls_qa0000 = LeftA(arg_qa, 3)
+else
+	ls_qa0000 = arg_qa
+end if
+
+SELECT item_no, price INTO :ls_item_no1, :lr_price FROM itemcost WHERE item_no = :arg_item AND qa = :ls_qa0000;
+if sqlca.sqlcode = 100 OR isnull(ls_item_no1) or ls_item_no1 = '' then
+	ldt_today = datetime(date(string(today(),'yyyy/mm/dd')))
+	INSERT INTO itemcost(item_no, qa, uom, price, old_price, tran_date, user_id, rem, upda_chk)
+	VALUES (:arg_item, :ls_qa0000, :ls_uom, 0, 0, :ldt_today, :gs_userid, '', 'N');
+	if sqlca.sqlcode <> 0 then
+		rollback;
+		SetPointer(oldpointer)
+		MessageBox("저장1","itemcost 저장중 오류가 발생하였습니다!",exclamation!)
+		return false
+	end if
+end if
+
+if arg_type = 'J' then
+	ls_qa0000 = LeftA(arg_qa, 13) + "X00000"
+else
+	ls_qa0000 = arg_type
+end if
+
+if MidA(arg_item,1,1) = 'P' then
+	SELECT pat_no  INTO :li_pat      FROM groupitem   WHERE item_no = :arg_item;
+	SELECT item_no INTO :ls_item_no1 FROM itempattern WHERE item_no = :arg_item AND qa1 = :ls_qa0000;
+	if sqlca.sqlcode <> 0 then
+		INSERT INTO itempattern (item_no,qa1,pat_no)	VALUES (:arg_item,:ls_qa0000,:li_pat);
+		if sqlca.sqlcode <> 0 then
+			rollback;
+			SetPointer(oldpointer)
+			MessageBox("저장3",SQLCA.SQLERRTEXT,exclamation!)
+			return false
+		end if
+	end if
+end if
+
+INSERT INTO item (item_no ,			qa,				loc_no,				item_name,
+						product_group,		uom,				source,				leadtime,
+						count_code,			qoh,				sales_reserved,	prodn_reserved,
+						pur_reserved,		item_wc,			supplier,			reorder,
+						safety_stock,		lot,				obsolete_code,		scrap_qty,
+						price_a,				price_b,			price_c,				std_setup,
+						std_material,		std_labor,		std_burden,			std_subcontract,
+						std_machine,		heft,				volume,				rem,
+						target_item ,		target_qa,		last_tran_date,	month_qty,
+						safety_day,			qa1,				pat_no,				use_flag )						
+SELECT 				:arg_item ,			:arg_qa,			loc_no,				item_name,
+						product_group,		uom,				source,				leadtime,
+						count_code,			0,					0,						0,
+						0,						item_wc,			supplier,			0,
+						safety_stock,		lot,				obsolete_code,		0,
+						:lr_price,			0,					0,						0,
+						std_material,		std_labor,		std_burden,			std_subcontract,
+						std_machine,		heft,				volume,				rem,
+						target_item ,		target_qa,		getdate(),			month_qty,
+						safety_day,			:ls_qa0000,			pat_no,			"Y"
+  FROM item
+ WHERE item_no = :arg_item AND qa = :ls_qa;
+if sqlca.sqlcode <> 0 then
+	MessageBox("저장5",string(sqlca.sqlerrtext) + "~r~n" &
+				+ "ITEM = [" + arg_item + "]  규격 = [" + arg_qa + "] 저장중 오류가 발생하였습니다!",exclamation!)
+	rollback;
+	SetPointer(oldpointer)
+	return false
+end if
+COMMIT;
+
+SELECT loc_no INTO :ls_loc FROM item WHERE item_no = :arg_item AND qa = :arg_qa;
+
+ll_row = gs_ds_qaall.insertrow(1)
+gs_ds_qaall.object.loc_no[ll_row]  = ls_loc
+gs_ds_qaall.object.uom[ll_row]     = ls_uom
+gs_ds_qaall.object.source[ll_row]  = ls_source
+gs_ds_qaall.object.item_no[ll_row] = arg_item
+gs_ds_qaall.object.qa[ll_row]      = arg_qa
+gs_ds_qaall.object.item_name[ll_row] = ls_name
+
+gs_ds_qaall.setfilter('')
+gs_ds_qaall.filter()
+FileDelete("QAAll.TXT") 
+gs_ds_qaall.SaveAs("QAAll.TXT", text!, FALSE)
+SetPointer(oldpointer)
+
+return true
+end function
+

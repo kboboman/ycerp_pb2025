@@ -1,0 +1,396 @@
+﻿$PBExportHeader$gf_sollun.srf
+$PBExportComments$양력->음력
+global type gf_sollun from function_object
+end type
+
+forward prototypes
+global function integer gf_sollun (string as_date, string as_week, string as_lun_date, boolean ab_yundal, string as_year60, string as_day60)
+end prototypes
+
+global function integer gf_sollun (string as_date, string as_week, string as_lun_date, boolean ab_yundal, string as_year60, string as_day60);// **************************************************************************
+// 함 수 명 : GF_sollun
+// 함수기능 : 양력을 음력으로 변환
+// 내    용 : 1. Argument                      
+//           입력
+//           1.1 as_date   - 양력일자 (8자리 숫자 string)
+//           출력
+//           1.2 as_week       - 요일     (2자리 한글)
+//           1.3 as_lun_date   - 음력일자 (8자리 숫자 string)
+//           1.4 ab_yundal     - 음력의 윤달 여부 (boolean  True = 윤달 False = 일반)
+//           1.5 as_year60     - 해당년도의 육십갑자 (4자리 한글)
+//           1.6 as_day60      - 해당일의 육십갑자   (4자리 한글)
+// Return
+//           -1            - 오류
+//           1             - 정상 처리
+// **************************************************************************
+
+STRING  lv_s_ltbl[]
+LONG    lv_l_dt[]
+STRING  lv_s_yuk[]
+STRING  lv_s_gap[]
+LONG    lv_l_day_per_month[]
+STRING  lv_s_week[]
+
+LONG    i
+LONG    j
+LONG    m1
+LONG    m2
+LONG    lv_l_month
+Long    lv_l_total_day0
+Long    lv_l_total_day
+Long    lv_l_total_day1
+Long    lv_l_total_day2
+Long    lv_l_k11
+LONG    lv_l_count
+LONG    lv_l_lun_year
+
+LONG    lv_l_in_year
+LONG    lv_l_in_month
+LONG    lv_l_in_day
+
+// 1881
+lv_s_ltbl[1]   = "1212122322121"
+lv_s_ltbl[2]   = "1212121221220"
+lv_s_ltbl[3]   = "1121121222120"
+lv_s_ltbl[4]   = "2112132122122"
+lv_s_ltbl[5]   = "2112112121220"
+lv_s_ltbl[6]   = "2121211212120"
+lv_s_ltbl[7]   = "2212321121212"
+lv_s_ltbl[8]   = "2122121121210"
+lv_s_ltbl[9]   = "2122121212120"
+lv_s_ltbl[10]  = "1232122121212"
+// 1891
+lv_s_ltbl[11]  = "1212121221220"
+lv_s_ltbl[12]  = "1121123221222"
+lv_s_ltbl[13]  = "1121121212220"
+lv_s_ltbl[14]  = "1212112121220"
+lv_s_ltbl[15]  = "2121231212121"
+lv_s_ltbl[16]  = "2221211212120"
+lv_s_ltbl[17]  = "1221212121210"
+lv_s_ltbl[18]  = "2123221212121"
+lv_s_ltbl[19]  = "2121212212120"
+lv_s_ltbl[20]  = "1211212232212"
+// 1901
+lv_s_ltbl[21]  = "1211212122210"
+lv_s_ltbl[22]  = "2121121212220"
+lv_s_ltbl[23]  = "1212132112212"
+lv_s_ltbl[24]  = "2212112112210"
+lv_s_ltbl[25]  = "2212211212120"
+lv_s_ltbl[26]  = "1221412121212"
+lv_s_ltbl[27]  = "1212122121210"
+lv_s_ltbl[28]  = "2112212122120"
+lv_s_ltbl[29]  = "1231212122212"
+lv_s_ltbl[30]  = "1211212122210"
+// 1911
+lv_s_ltbl[31]  = "2121123122122"
+lv_s_ltbl[32]  = "2121121122120"
+lv_s_ltbl[33]  = "2212112112120"
+lv_s_ltbl[34]  = "2212231212112"
+lv_s_ltbl[35]  = "2122121212120"
+lv_s_ltbl[36]  = "1212122121210"
+lv_s_ltbl[37]  = "2132122122121"
+lv_s_ltbl[38]  = "2112121222120"
+lv_s_ltbl[39]  = "1211212322122"
+lv_s_ltbl[40]  = "1211211221220"
+// 1921
+lv_s_ltbl[41]  = "2121121121220"
+lv_s_ltbl[42]  = "2122132112122"
+lv_s_ltbl[43]  = "1221212121120"
+lv_s_ltbl[44]  = "2121221212110"
+lv_s_ltbl[45]  = "2122321221212"
+lv_s_ltbl[46]  = "1121212212210"
+lv_s_ltbl[47]  = "2112121221220"
+lv_s_ltbl[48]  = "1231211221222"
+lv_s_ltbl[49]  = "1211211212220"
+lv_s_ltbl[50]  = "1221123121221"
+// 1931
+lv_s_ltbl[51]  = "2221121121210"
+lv_s_ltbl[52]  = "2221212112120"
+lv_s_ltbl[53]  = "1221241212112"
+lv_s_ltbl[54]  = "1212212212120"
+lv_s_ltbl[55]  = "1121212212210"
+lv_s_ltbl[56]  = "2114121212221"
+lv_s_ltbl[57]  = "2112112122210"
+lv_s_ltbl[58]  = "2211211412212"
+lv_s_ltbl[59]  = "2211211212120"
+lv_s_ltbl[60]  = "2212121121210"
+// 1941
+lv_s_ltbl[61]  = "2212214112121"
+lv_s_ltbl[62]  = "2122122121120"
+lv_s_ltbl[63]  = "1212122122120"
+lv_s_ltbl[64]  = "1121412122122"
+lv_s_ltbl[65]  = "1121121222120"
+lv_s_ltbl[66]  = "2112112122120"
+lv_s_ltbl[67]  = "2231211212122"
+lv_s_ltbl[68]  = "2121211212120"
+lv_s_ltbl[69]  = "2212121321212"
+lv_s_ltbl[70]  = "2122121121210"
+// 1951
+lv_s_ltbl[71]  = "2122121212120"
+lv_s_ltbl[72]  = "1212142121212"
+lv_s_ltbl[73]  = "1211221221220"
+lv_s_ltbl[74]  = "1121121221220"
+lv_s_ltbl[75]  = "2114112121222"
+lv_s_ltbl[76]  = "1212112121220"
+lv_s_ltbl[77]  = "2121211232122"
+lv_s_ltbl[78]  = "1221211212120"
+lv_s_ltbl[79]  = "1221212121210"
+lv_s_ltbl[80]  = "2121223212121"
+// 1961
+lv_s_ltbl[81]  = "2121212212120"
+lv_s_ltbl[82]  = "1211212212210"
+lv_s_ltbl[83]  = "2121321212221"
+lv_s_ltbl[84]  = "2121121212220"
+lv_s_ltbl[85]  = "1212112112210"
+lv_s_ltbl[86]  = "2223211211221"
+lv_s_ltbl[87]  = "2212211212120"
+lv_s_ltbl[88]  = "1221212321212"
+lv_s_ltbl[89]  = "1212122121210"
+lv_s_ltbl[90]  = "2112212122120"
+// 1971
+lv_s_ltbl[91]  = "1211232122212"
+lv_s_ltbl[92]  = "1211212122210"
+lv_s_ltbl[93]  = "2121121122210"
+lv_s_ltbl[94]  = "2212312112212"
+lv_s_ltbl[95]  = "2212112112120"
+lv_s_ltbl[96]  = "2212121232112"
+lv_s_ltbl[97]  = "2122121212110"
+lv_s_ltbl[98]  = "2212122121210"
+lv_s_ltbl[99]  = "2112124122121"
+lv_s_ltbl[100] = "2112121221220"
+// 1981
+lv_s_ltbl[101] = "1211211221220" 
+lv_s_ltbl[102] = "2121321122122"
+lv_s_ltbl[103] = "2121121121220"
+lv_s_ltbl[104] = "2122112112322"
+lv_s_ltbl[105] = "1221212112120"
+lv_s_ltbl[106] = "1221221212110"
+lv_s_ltbl[107] = "2122123221212"
+lv_s_ltbl[108] = "1121212212210"
+lv_s_ltbl[109] = "2112121221220"
+lv_s_ltbl[110] = "1211231212222"
+// 1991
+lv_s_ltbl[111] = "1211211212220"
+lv_s_ltbl[112] = "1221121121220"
+lv_s_ltbl[113] = "1223212112121"
+lv_s_ltbl[114] = "2221212112120"
+lv_s_ltbl[115] = "1221221232112"
+lv_s_ltbl[116] = "1212212122120"
+lv_s_ltbl[117] = "1121212212210"
+lv_s_ltbl[118] = "2112132212221"
+lv_s_ltbl[119] = "2112112122210"
+lv_s_ltbl[120] = "2211211212210"
+// 2001
+lv_s_ltbl[121] = "2221321121212"
+lv_s_ltbl[122] = "2212121121210"
+lv_s_ltbl[123] = "2212212112120"
+lv_s_ltbl[124] = "1232212122112"
+lv_s_ltbl[125] = "1212122122120"
+lv_s_ltbl[126] = "1121212322122"
+lv_s_ltbl[127] = "1121121222120"
+lv_s_ltbl[128] = "2112112122120"
+lv_s_ltbl[129] = "2211231212122"
+lv_s_ltbl[130] = "2121211212120"
+// 2011
+lv_s_ltbl[131] = "2122121121210"
+lv_s_ltbl[132] = "2124212112121"
+lv_s_ltbl[133] = "2122121212120"
+lv_s_ltbl[134] = "1212121223212"
+lv_s_ltbl[135] = "1211212221220"
+lv_s_ltbl[136] = "1121121221220"
+lv_s_ltbl[137] = "2112132121222"
+lv_s_ltbl[138] = "1212112121220"
+lv_s_ltbl[139] = "2121211212120"
+lv_s_ltbl[140] = "2122321121212"
+// 2021
+lv_s_ltbl[141] = "1221212121210"
+lv_s_ltbl[142] = "2121221212120"
+lv_s_ltbl[143] = "1232121221212"
+lv_s_ltbl[144] = "1211212212210"
+lv_s_ltbl[145] = "2121123212221"
+lv_s_ltbl[146] = "2121121212220"
+lv_s_ltbl[147] = "1212112112220"
+lv_s_ltbl[148] = "1221231211221"
+lv_s_ltbl[149] = "2212211211220"
+lv_s_ltbl[150] = "1212212121210"
+// 2031
+lv_s_ltbl[151] = "2123212212121"
+lv_s_ltbl[152] = "2112122122120"
+lv_s_ltbl[153] = "1211212322212"
+lv_s_ltbl[154] = "1211212122210"
+lv_s_ltbl[155] = "2121121122120"
+lv_s_ltbl[156] = "2212114112122"
+lv_s_ltbl[157] = "2212112112120"
+lv_s_ltbl[158] = "2212121211210"
+lv_s_ltbl[159] = "2212232121211"
+lv_s_ltbl[160] = "2122122121210"
+// 2041
+lv_s_ltbl[161] = "2112122122120"
+lv_s_ltbl[162] = "1231212122212"
+lv_s_ltbl[163] = "1211211221220"
+
+lv_s_yuk[1]    = "갑"
+lv_s_yuk[2]    = "을"
+lv_s_yuk[3]    = "병"
+lv_s_yuk[4]    = "정"
+lv_s_yuk[5]    = "무"
+lv_s_yuk[6]    = "기"
+lv_s_yuk[7]    = "경"
+lv_s_yuk[8]    = "신"
+lv_s_yuk[9]    = "임"
+lv_s_yuk[10]   = "계"
+
+lv_s_gap[1]    = "자"
+lv_s_gap[2]    = "축"
+lv_s_gap[3]    = "인"
+lv_s_gap[4]    = "묘"
+lv_s_gap[5]    = "진"
+lv_s_gap[6]    = "사"
+lv_s_gap[7]    = "오"
+lv_s_gap[8]    = "미"
+lv_s_gap[9]    = "신"
+lv_s_gap[10]   = "유"
+lv_s_gap[11]   = "술"
+lv_s_gap[12]   = "해"
+
+lv_s_week[1]   = "일"
+lv_s_week[2]   = "월"
+lv_s_week[3]   = "화"
+lv_s_week[4]   = "수"
+lv_s_week[5]   = "목"
+lv_s_week[6]   = "금"
+lv_s_week[7]   = "토"
+
+lv_l_day_per_month[1]  = 31
+lv_l_day_per_month[2]  = 0
+lv_l_day_per_month[3]  = 31
+lv_l_day_per_month[4]  = 30
+lv_l_day_per_month[5]  = 31
+lv_l_day_per_month[6]  = 30
+lv_l_day_per_month[7]  = 31
+lv_l_day_per_month[8]  = 31
+lv_l_day_per_month[9]  = 30
+lv_l_day_per_month[10] = 31
+lv_l_day_per_month[11] = 30
+lv_l_day_per_month[12] = 31
+
+
+lv_l_total_day = 0
+
+if NOT IsDate(as_date) then
+	MessageBox("오류", "날짜의 입력이 잘못되었습니다.", StopSign!)
+	RETURN -1
+end if
+ 
+lv_l_in_year  = long(LeftA(as_date, 4))
+lv_l_in_month = long(MidA(as_date, 5, 2))
+lv_l_in_day   = long(RightA(as_date, 2))
+
+if lv_l_in_year < 1881 OR lv_l_in_year > 2043 then
+	MessageBox("오류", "계산할 수 없는 날짜입니다.", StopSign!)
+	RETURN -1
+end if
+
+for i = 1 to 163
+	lv_l_dt[i] = 0
+	
+	for j = 1 to 12
+		choose case MidA(lv_s_ltbl[i], j, 1)
+			case "1" , "3"
+				lv_l_dt[i] = lv_l_dt[i] + 29
+			case "2" , "4"
+				lv_l_dt[i] = lv_l_dt[i] + 30
+		end choose
+	next
+        
+	choose case MidA(lv_s_ltbl[i], 13, 1)
+		case "0"
+		case "1" , "3"
+			lv_l_dt[i] = lv_l_dt[i] + 29
+		case "2" , "4"
+			lv_l_dt[i] = lv_l_dt[i] + 30
+	end choose
+next
+
+// 1880년 1월 30일까지의 총일수
+lv_l_total_day1 = 1880 * 365 + 1880 / 4 - 1880 / 100 + 1880 / 400 + 30
+lv_l_k11        = lv_l_in_year - 1
+
+// 입력된 년도 1년전까지의 총일수
+lv_l_total_day2 = lv_l_k11 * 365 + lv_l_k11 / 4 - lv_l_k11 / 100 + lv_l_k11 / 400
+    
+if Mod(lv_l_in_year, 400) = 0 OR Mod(lv_l_in_year, 100) <> 0 AND Mod(lv_l_in_year, 4) = 0 then
+	lv_l_day_per_month[2] = 29
+else
+	lv_l_day_per_month[2] = 28
+end if
+    
+for i = 1 to lv_l_in_month - 1
+	lv_l_total_day2 = lv_l_total_day2 + lv_l_day_per_month[i]
+next
+
+// 입력된 일자까지의 총일수
+lv_l_total_day2 = lv_l_total_day2 + lv_l_in_day
+
+// 1880-01-30 부터 현재까지의 총일수
+lv_l_total_day  = lv_l_total_day2 - lv_l_total_day1 // + 1
+
+// 1881년부터 현재까지의 총일수와 Table상의 숫자(음력)들의 합을 비교 반복
+lv_l_total_day0 = lv_l_dt[1]
+for i = 1 to 163
+	if lv_l_total_day <= lv_l_total_day0 then EXIT
+	
+	lv_l_total_day0 = lv_l_total_day0 + lv_l_dt[i + 1]
+Next
+
+// 음력년도
+lv_l_lun_year = i + 1880
+
+as_lun_date = as_lun_date + String(lv_l_lun_year, "0000")
+
+// 현재년도의 음력일수 감산
+lv_l_total_day0 = lv_l_total_day0 - lv_l_dt[i]
+
+// 양력 총일수에서 음력 총일수 감산 
+lv_l_total_day  = lv_l_total_day - lv_l_total_day0
+    
+if MidA(lv_s_ltbl[i], 13, 1) = "0" then
+	lv_l_count = 12
+else
+	lv_l_count = 13
+end if
+
+m2 = 0
+for j = 1 to lv_l_count
+	if MidA(lv_s_ltbl[i], j, 1) <= "2" then
+		m2 ++
+		m1 = Long(MidA(lv_s_ltbl[i], j, 1)) + 28
+	else
+		m1 = Long(MidA(lv_s_ltbl[i], j, 1)) + 26
+	end if
+
+	if lv_l_total_day <= m1 then EXIT
+	
+	lv_l_total_day = lv_l_total_day - m1
+Next
+
+// 요일(양력)
+as_week = lv_s_week[daynumber(Date(String(as_date, "@@@@-@@-@@")))]
+// 음력일자
+as_lun_date = as_lun_date + String(m2, "00") + String(lv_l_total_day, "00")
+
+// 윤달 여부 판단
+if (MidA(lv_s_ltbl[lv_l_lun_year - 1880], 13, 1) <> "0" AND MidA(lv_s_ltbl[lv_l_lun_year - 1880], j, 1) > "2" ) then
+	ab_yundal = TRUE
+else
+	ab_yundal = FALSE
+end if
+
+// 육십갑자
+as_year60 = lv_s_yuk[Mod(lv_l_lun_year   + 7, 10)] + lv_s_gap[Mod(lv_l_lun_year   + 9, 12)]
+as_day60  = ''  // lv_s_yuk[Mod(lv_l_total_day2 + 5, 10)] + lv_s_gap[Mod(lv_l_total_day2 + 3, 12)]
+
+RETURN 1
+
+end function
+

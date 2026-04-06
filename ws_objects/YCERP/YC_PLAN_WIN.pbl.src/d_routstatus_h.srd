@@ -1,0 +1,39 @@
+﻿$PBExportHeader$d_routstatus_h.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ retrieve="  SELECT DISTINCT cust_no   = s1.cust_no   
+       , cust_name   = c.cust_name
+       , scene_code  = s.scene_code
+       , scene_desc  = s.scene_desc
+    FROM saledet sd (nolock)
+         LEFT OUTER JOIN sale       S1 (nolock) ON sd.order_no   = s1.order_no
+         LEFT OUTER JOIN customer    C (nolock) ON s1.cust_no    = c.cust_no
+         LEFT OUTER JOIN scene       S (nolock) ON s1.scene_code = s.scene_code 
+         LEFT OUTER JOIN routtempnew R (nolock) ON sd.order_no   = r.sale_no AND sd.seq_no = r.seq_no
+         LEFT OUTER JOIN wc         W1 (nolock) ON r.wc_no       = w1.work_no
+
+   WHERE ( s1.tracking        = 'Y'          )
+     AND ( sd.order_qty - sd.rlse_qty   > 0    )
+     AND ((:as_work1  = 'Y' AND NOT ( w1.work_name = '' OR w1.work_name LIKE '성형%' OR w1.work_name LIKE '화성%' )) OR
+          (:as_work1 <> 'Y' )
+         )
+" arguments=(("as_work1", string))  sort="cust_name A scene_desc A " )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="56" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="183" y="8" height="56" width="594" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="786" y="8" height="56" width="855" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="56" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="56" width="594" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="786" y="8" height="56" width="855" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="60" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="33554432" x="183" y="8" height="60" width="594" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( scene_desc for all distinct cust_name, scene_desc )"border="0" color="33554432" x="786" y="8" height="60" width="855" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,61 @@
+﻿$PBExportHeader$d_cdcustomer_name_c.srd
+$PBExportComments$고객명별 고객리스트(1998/3/12,성삼지)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(1) updatewhereclause=yes name=open_close dbname="open_close" )
+ column=(type=char(3) updatewhereclause=yes name=curr_code dbname="curr_code" )
+ column=(type=decimal(4) updatewhereclause=yes name=balance_amt dbname="balance_amt" )
+ column=(type=decimal(4) updatewhereclause=yes name=bill_amount dbname="bill_amount" )
+ column=(type=decimal(2) updatewhereclause=yes name=opeomamt dbname="opeomamt" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=char(15) updatewhereclause=yes name=icube_no dbname="icube_no" )
+ retrieve="  SELECT cust_name    = a.cust_name   
+       , cust_no      = a.cust_no   
+       , open_close   = a.open_close   
+       , curr_code    = a.curr_code   
+       , balance_amt  = a.balance_amt   
+       , bill_amount  = a.bill_amount   
+       , opeomamt     = a.opeomamt
+       , salesman     = a.salesman   
+       , icube_no     = a.icube_no  
+    FROM (
+         SELECT cust_name  = c.cust_name   
+              , cust_no    = c.cust_no   
+              , open_close = c.open_close   
+              , curr_code  = c.curr_code   
+              , balance_amt= c.balance_amt   
+              , bill_amount= c.bill_amount   
+              , opeomamt   = d.balbf_amount +                                                          
+                           ( d.inv_01  + d.inv_02  + d.inv_03  + d.inv_04  + d.inv_05  + d.inv_06    + 
+                             d.inv_07  + d.inv_08  + d.inv_09  + d.inv_10  + d.inv_11  + d.inv_12  ) - 
+                           ( d.coll_01 + d.coll_02 + d.coll_03 + d.coll_04 + d.coll_05 + d.coll_06   + 
+                             d.coll_07 + d.coll_08 + d.coll_09 + d.coll_10 + d.coll_11 + d.coll_12 )   
+              , salesman   = c.salesman   
+              , icube_no   = c.icube_no  
+           FROM customer C 
+                LEFT OUTER JOIN opeom D (nolock) ON c.cust_no = d.cust_no AND ( datepart(year,d.eom_year) = year(getdate()) )
+          WHERE ( ( :as_open = 'O' and c.open_close    = 'O' ) OR
+                  ( :as_open = '%' and c.open_close LIKE '%' )
+                )
+            AND ( ( :as_salesman  = '%' and c.salesman LIKE '%'          ) OR
+                  ( :as_salesman <> '%' and c.salesman    = :as_salesman )           
+                )
+         ) A
+   WHERE (( :as_zero = 'Y' AND a.opeomamt <> 0   ) OR ( :as_zero = '%' ))
+   ORDER BY a.cust_name ASC,   
+            a.cust_no ASC   
+" arguments=(("as_open", string),("as_zero", string),("as_salesman", string)) )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0~tif( open_close = 'C' , rgb(255,0,0), rgb(0,0,0) )" x="5" y="4" height="64" width="178" format="[general]" html.valueishtml="0"  name=cust_no  tag="판매거래처코드" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif( open_close = 'C' , rgb(255,0,0), rgb(0,0,0) )" x="192" y="4" height="64" width="1349" format="[general]" html.valueishtml="0"  name=cust_name  tag="상호" visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0~tif( open_close = 'C' , rgb(255,0,0), rgb(0,0,0) )" x="2103" y="4" height="64" width="338" format="[general]" html.valueishtml="0"  name=icube_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0~tif( open_close = 'C' , rgb(255,0,0), rgb(0,0,0) )" x="2459" y="4" height="64" width="73" format="[general]" html.valueishtml="0"  name=open_close visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0~tif( open_close = 'C' , rgb(255,0,0), rgb(0,0,0) )" x="1563" y="4" height="64" width="512" format="#,##0" html.valueishtml="0"  name=opeomamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="192" y="8" height="64" width="1349" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( opeomamt for all )"border="0" color="0" x="1563" y="8" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="0" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

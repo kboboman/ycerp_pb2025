@@ -1,0 +1,247 @@
+﻿$PBExportHeader$d_osmtotal_h3_month.srd
+$PBExportComments$매출실적 집계현황 당월매출
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=salesman dbname="SALESMAN" )
+ column=(type=char(10) updatewhereclause=yes name=user_id2 dbname="USER_ID2" )
+ column=(type=char(5) updatewhereclause=yes name=team_code dbname="TEAM_CODE" )
+ column=(type=char(30) updatewhereclause=yes name=team_name dbname="TEAM_NAME" )
+ column=(type=char(13) updatewhereclause=yes name=user_name dbname="USER_NAME" )
+ column=(type=char(10) updatewhereclause=yes name=rank_no dbname="RANK_NO" )
+ column=(type=char(20) updatewhereclause=yes name=rank dbname="RANK" )
+ column=(type=char(1) updatewhereclause=yes name=tteam dbname="TTEAM" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_minv dbname="CUR_MINV" )
+ column=(type=decimal(6) updatewhereclause=yes name=last_day dbname="LAST_DAY" )
+ retrieve="  SELECT SALESMAN      = AA.USER_ID                            
+       , USER_ID2      = AA.USER_ID2                           
+       , TEAM_CODE     = AA.TEAM_CODE                          
+       , TEAM_NAME     = AA.TEAM_NAME                          
+       , USER_NAME     = AA.USER_NAME                          
+       , RANK_NO       = AA.RANK_NO                            
+       , RANK          = AA.RANK                               
+       , TTEAM         = AA.TTEAM                              
+       , CUR_MINV      = ISNULL((AA.CUR_MINV / 1.1) / 1000,0)  
+       , LAST_DAY      = ISNULL((AA.LAST_DAY / 1.1) / 1000,0)  
+  FROM (
+        SELECT TEAM_CODE = (CASE WHEN UT.TEAM_CODE  = '78000' THEN '73999' ELSE UT.TEAM_CODE END)
+             , TEAM_NAME = UT.TEAM_NAME
+             , USER_NAME = UT.USER_NAME
+             , RANK_NO   = UT.RANK_NO
+             , RANK      = UT.RANK
+             , TTEAM     = (CASE UT.TEAM_CODE  
+                                WHEN '71000' THEN '1' /*영업1팀   */
+                                WHEN '73000' THEN '1' /*특판1팀   */
+                                WHEN '76000' THEN '1' /*중부호남  */
+                                WHEN '77000' THEN '1' /*서부점    */
+                                WHEN '78000' THEN '1' /*특판2팀   */
+                                WHEN '74000' THEN '2' /*동부점    */
+                                WHEN '72000' THEN '3' /*영업2팀   */
+                                WHEN '75000' THEN '4' /*시화점    */
+                                WHEN '79000' THEN '4' /*채권팀    */
+                                ELSE              '5' 
+                            END)
+             , CUR_MINV  = SUM(DO.DO_TOTAL)
+             , LAST_DAY  = SUM(CASE WHEN CONVERT(CHAR(10),DO.DO_DATE,111) = :AS_END THEN DO.DO_TOTAL ELSE 0 END)
+             , USER_ID   = MIN(UT.USER_ID)
+             , USER_ID2  = MIN(UT.USER_ID2)
+          FROM CUSTOMER   
+             , (SELECT USER_ID
+                     , USER_ID2  = USER_ID
+                     , TEAM_CODE = (CASE  WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                               LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000' 
+                                               THEN LOGIN.TEAM_CODE 
+                                          ELSE '99000' 
+                                    END)   
+                     , TEAM_NAME = (CASE  WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                               LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000'
+                                               THEN RTRIM(TEAM.TEAM_NAME )
+                                          ELSE '기타' 
+                                    END)   
+                     , USER_NAME = (CASE  WHEN LOGIN.USER_ID   = 'W_POS'   THEN '기타'
+                                          WHEN LOGIN.USER_ID   = 'USE_NO'  THEN '길병학'
+                                          WHEN LOGIN.USER_ID   = 'killby'  THEN '길병학'
+                                          WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                               LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000'
+                                               THEN RTRIM(LOGIN.USER_NAME )
+                                          ELSE '공장,현금판매' 
+                                    END) 
+                     , RANK_NO   = ISNULL((CASE WHEN LOGIN.USER_ID   = 'W_POS'   THEN '999'
+                                                WHEN LOGIN.USER_ID   = 'USE_NO'  THEN '120'
+                                                WHEN LOGIN.USER_ID   = 'killby'  THEN '120'                                                                                    
+                                                WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                                     LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000' 
+                                                     THEN LOGIN.RANK_NO 
+                                                ELSE '00' 
+                                           END),'00')
+                     , RANK      = ISNULL((CASE WHEN LOGIN.USER_ID   = 'USE_NO'  THEN '대리'
+                                                WHEN LOGIN.USER_ID   = 'killby'  THEN '대리'                                                                                    
+                                                WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                                     LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000' 
+                                                     THEN LOGIN.RANK 
+                                                ELSE '外' 
+                                           END),'')
+                 FROM LOGIN left outer join TEAM on    LOGIN.TEAM_CODE   = TEAM.TEAM_CODE
+                WHERE  LOGIN.USE_FLAG           LIKE 'Y'
+/*
+          FROM LOGIN
+                     , TEAM
+                WHERE LOGIN.TEAM_CODE           *= TEAM.TEAM_CODE
+                      AND LOGIN.USE_FLAG           LIKE 'Y'
+*/
+               ) UT
+             , DO  
+         WHERE ( CUSTOMER.CUST_FLAG               = 'N' )
+           AND ( CUSTOMER.CUST_TYPE              <> 'E' )
+           AND ( CUSTOMER.CREDIT_LEVEL           <> 'Z' )
+           AND ( CUSTOMER.SALESMAN             LIKE '%' ) 
+           AND ( CUSTOMER.SALESMAN                = UT.USER_ID )
+           AND ( CUSTOMER.CUST_NO                 = DO.CUST_NO )
+           AND ( CUSTOMER.CUST_NO   NOT IN ('U580','S396','N002','K023','H479','N014') ) /* 계열사 */
+           AND ( CONVERT(CHAR(10),DO.DO_DATE,111)   BETWEEN :AS_START AND :AS_END ) 
+         GROUP BY UT.TEAM_CODE, UT.TEAM_NAME, UT.USER_NAME, UT.RANK_NO, UT.RANK
+      /*---------------------*/      
+       UNION
+      /*---------------------*/      
+       SELECT TEAM_CODE = UT.TEAM_CODE
+            , TEAM_NAME = UT.TEAM_NAME
+            , USER_NAME = '내부업체' /*CUSTOMER.CUST_NAME*/
+            , RANK_NO   = ''
+            , RANK      = ''
+            , TTEAM     = (CASE UT.TEAM_CODE  
+                                WHEN '71000' THEN '1' /*영업1팀   */
+                                WHEN '73000' THEN '1' /*특판1팀   */
+                                WHEN '76000' THEN '1' /*중부호남  */
+                                WHEN '77000' THEN '1' /*서부점    */
+                                WHEN '78000' THEN '1' /*특판2팀   */
+                                WHEN '74000' THEN '2' /*동부점    */
+                                WHEN '72000' THEN '3' /*영업2팀   */
+                                WHEN '75000' THEN '4' /*시화점    */
+                                WHEN '79000' THEN '4' /*채권팀    */
+                                ELSE              '5' 
+                           END)
+            , CUR_MINV  = SUM(DO.DO_TOTAL)
+            , LAST_DAY  = SUM(CASE WHEN CONVERT(CHAR(10),DO.DO_DATE,111) = :AS_END THEN DO.DO_TOTAL ELSE 0 END)
+            , USER_ID   = 'YCIN1'
+            , USER_ID2  = 'YCIN1'        
+         FROM CUSTOMER,   
+              (SELECT USER_ID
+                    , USER_ID2  ='YCIN1' 
+                    , TEAM_CODE = (CASE  WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                              LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000'
+                                              THEN LOGIN.TEAM_CODE 
+                                         ELSE '99000' 
+                                   END)   
+                    , TEAM_NAME = (CASE  WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                              LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000'
+                                              THEN RTRIM(TEAM.TEAM_NAME)
+                                         ELSE '기타' 
+                                   END)   
+                    , USER_NAME = (CASE  WHEN LOGIN.USER_ID   = 'USE_NO' THEN '기타'
+                                         WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                              LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000'
+                                              THEN RTRIM(LOGIN.USER_NAME)
+                                         ELSE '공장,현금판매' 
+                                   END) 
+                    , RANK_NO   = ISNULL((CASE  WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                                     LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000' 
+                                                     THEN LOGIN.RANK_NO 
+                                                ELSE '00' 
+                                          END),'00')
+                    , RANK      = ISNULL((CASE  WHEN LOGIN.TEAM_CODE = '71000' OR LOGIN.TEAM_CODE = '72000' OR LOGIN.TEAM_CODE = '73000' OR LOGIN.TEAM_CODE = '74000' OR
+                                                     LOGIN.TEAM_CODE = '75000' OR LOGIN.TEAM_CODE = '76000' OR LOGIN.TEAM_CODE = '77000' OR LOGIN.TEAM_CODE = '78000' OR LOGIN.TEAM_CODE = '79000' 
+                                                     THEN LOGIN.RANK 
+                                                ELSE '外' 
+                                          END),'')
+                 FROM LOGIN left outer join TEAM on LOGIN.TEAM_CODE    = TEAM.TEAM_CODE
+          WHERE LOGIN.USER_ID              = 'killby' /* 길병학 */
+                  AND LOGIN.USE_FLAG          LIKE 'Y'
+/*
+      FROM LOGIN
+                    , TEAM
+                WHERE LOGIN.TEAM_CODE           *= TEAM.TEAM_CODE
+                  AND LOGIN.USER_ID              = 'killby' /* 길병학 */
+                  AND LOGIN.USE_FLAG          LIKE 'Y'
+*/
+              ) UT   
+            , DO  
+        WHERE ( CUSTOMER.CUST_FLAG               = 'N' ) 
+          AND ( CUSTOMER.CUST_TYPE              <> 'E' )
+          AND ( CUSTOMER.CREDIT_LEVEL            = 'Z' )
+          AND ( CUSTOMER.SALESMAN             LIKE '%' )
+          AND ( CUSTOMER.CUST_NO                IN ('N002','K023','S396','H479','N014'))
+          AND ( CUSTOMER.SALESMAN                = UT.USER_ID )
+          AND ( CUSTOMER.CUST_NO                 = DO.CUST_NO)
+          AND ( CONVERT(CHAR(10),DO.DO_DATE,111)   BETWEEN :AS_START AND :AS_END ) 
+        GROUP BY UT.TEAM_CODE, UT.TEAM_NAME, UT.USER_NAME
+
+      /*---------------------*/      
+       UNION
+      /*---------------------*/      
+       SELECT TEAM_CODE = UT.TEAM_CODE
+            , TEAM_NAME = UT.TEAM_NAME
+            , USER_NAME = '송천건업' /*CUSTOMER.CUST_NAME*/
+            , RANK_NO   = ''
+            , RANK      = ''
+            , TTEAM     = (CASE UT.TEAM_CODE  
+                                WHEN '71000' THEN '1' /*영업1팀   */
+                                WHEN '73000' THEN '1' /*특판1팀   */
+                                WHEN '76000' THEN '1' /*중부호남  */
+                                WHEN '77000' THEN '1' /*서부점    */
+                                WHEN '78000' THEN '1' /*특판2팀   */
+                                WHEN '74000' THEN '2' /*동부점    */
+                                WHEN '72000' THEN '3' /*영업2팀   */
+                                WHEN '75000' THEN '4' /*시화점    */
+                                WHEN '79000' THEN '4' /*채권팀    */
+                                ELSE              '5' 
+                           END)
+            , CUR_MINV  = SUM(DO.DO_TOTAL)
+            , LAST_DAY  = SUM(CASE WHEN CONVERT(CHAR(10),DO.DO_DATE,111) = :AS_END THEN DO.DO_TOTAL ELSE 0 END)
+            , USER_ID   = 'YCIN2'
+            , USER_ID2  = 'YCIN2'        
+         FROM CUSTOMER,   
+              (SELECT USER_ID
+                    , USER_ID2  ='YCIN2' 
+                    , TEAM_CODE = '75000'
+                    , TEAM_NAME = '75000'
+                    , USER_NAME = '송천건업' 
+                    , RANK_NO   = '00'
+                    , RANK      = ''
+                 FROM LOGIN left outer join TEAM   on  LOGIN.TEAM_CODE     = TEAM.TEAM_CODE
+               WHERE  LOGIN.USE_FLAG          LIKE 'Y'
+/*
+                 FROM LOGIN
+                    , TEAM
+                WHERE LOGIN.TEAM_CODE           *= TEAM.TEAM_CODE
+                  AND LOGIN.USE_FLAG          LIKE 'Y'
+*/
+
+              ) UT   
+            , DO  
+        WHERE ( CUSTOMER.SALESMAN             LIKE '%' )
+          AND ( CUSTOMER.CUST_NO                 = 'U580' )
+          AND ( CUSTOMER.SALESMAN                = UT.USER_ID )
+          AND ( CUSTOMER.CUST_NO                 = DO.CUST_NO)
+          AND ( CONVERT(CHAR(10),DO.DO_DATE,111)   BETWEEN :AS_START AND :AS_END ) 
+        GROUP BY UT.TEAM_CODE, UT.TEAM_NAME, UT.USER_NAME
+   ) AA
+   ORDER BY AA.TTEAM, AA.TEAM_CODE, AA.RANK_NO 
+/*
+19981214 S396   (주)유창금속
+19981214 N002   (주)세화내장건설
+19981214 K023   (주)로뎀유창
+ASH      H479   (주)유창강건
+sjh4279  N014   (주)유창플러스
+*/
+" arguments=(("as_start", string),("as_end", string)) )
+text(band=header alignment="2" text="당일" border="6" color="0" x="329" y="8" height="60" width="457" html.valueishtml="0"  name=last_day_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="당월" border="6" color="0" x="9" y="8" height="60" width="311" html.valueishtml="0"  name=salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전체" border="6" color="0" x="795" y="8" height="60" width="539" html.valueishtml="0"  name=cur_minv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="329" y="8" height="60" width="457" format="[General]" html.valueishtml="0"  name=last_day visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="311" format="[general]" html.valueishtml="0"  name=salesman visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="795" y="8" height="60" width="539" format="[general]" html.valueishtml="0"  name=cur_minv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

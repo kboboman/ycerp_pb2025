@@ -1,0 +1,99 @@
+﻿$PBExportHeader$d_ormondo_s2.srd
+$PBExportComments$출고일자별 수주현황2(1999/7/19,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=1 selected.mouse=no )
+header(height=160 color="12632256" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="553648127" )
+table(column=(type=char(2) updatewhereclause=yes name=area dbname="area" values="반월	B/화곡동	H/부산	P/시화	S/" )
+ column=(type=datetime updatewhereclause=yes name=due_date dbname="sale.due_date" )
+ column=(type=decimal(2) updatewhereclause=yes name=issueum dbname="issueum" )
+ column=(type=decimal(2) updatewhereclause=yes name=orderum dbname="orderum" )
+ column=(type=long updatewhereclause=yes name=prodcnt dbname="prodcnt" )
+ column=(type=char(1) updatewhereclause=yes name=prod dbname="prod" values="재고	J/       	P/" )
+ column=(type=char(5) updatewhereclause=yes name=do_date dbname="do_date" )
+ column=(type=char(14) updatewhereclause=yes name=order_no dbname="sale.order_no" )
+ column=(type=char(4) updatewhereclause=yes name=sale_cust_no dbname="sale.cust_no" )
+ column=(type=char(11) updatewhereclause=yes name=sale_scene_code dbname="sale.scene_code" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="customer.user_name" )
+ retrieve="  SELECT DISTINCT area = substring(do.do_no,1,1),   
+         sale.due_date,   
+         issueum = sum(dodet.ship_qty),   
+         orderum = sum(saledet.order_qty),   
+         prodcnt =  count(itemjaego.item_no),   
+         prod = case when  count(itemjaego.item_no) > 0 then 'J' else 'P' end,   
+         do_date = convert(char(5), (substring( convert(char(8), do_date,11), 4,5))),   
+         sale.order_no,   
+         sale.cust_no,   
+         sale.scene_code,
+			customer.salesman user_name
+from saledet with(nolock) inner join sale with(nolock) on  sale.order_no = saledet.order_no
+                       inner join customer with(nolock) on sale.cust_no = customer.cust_no 
+                       left outer  join scene with(nolock) on sale.cust_no    = scene.cust_no and sale.scene_code     = scene.scene_code
+                       left outer join itemjaego with(nolock) on saledet.item_no = itemjaego.item_no and saledet.qa = itemjaego.qa
+                                                                                  and ( itemjaego.area_no like :as_area )
+                       inner join dodet with(nolock) on sale.order_no = dodet.sale_no
+                       inner join do      with(nolock) on dodet.do_no = do.do_no                    
+where   ( sale.open_close = 'O' ) and  
+			        ( sale.salesman like :as_userid) and
+               ( ( do.do_no like :as_area )  and 
+      			  ( do.do_date between :ad_from and :ad_to )  and 
+      			  ( customer.salesman like :as_user ))   
+GROUP BY do.do_date,   
+			   substring(do.do_no,1,1),
+         sale.due_date,   
+         sale.order_no,   
+         sale.cust_no,   
+         sale.scene_code,
+		   	customer.salesman  
+
+/*
+    FROM sale,   
+         saledet,   
+         itemjaego,   
+         dodet,
+			customer,
+			scene  
+   WHERE ( saledet.item_no *= itemjaego.item_no) and  
+         ( saledet.qa *= itemjaego.qa) and  
+         ( itemjaego.area_no like :as_area ) and  
+         ( saledet.order_no *= dodet.sale_no) and  
+         ( saledet.seq_no *= dodet.seq_no) and  
+         ( sale.order_no = saledet.order_no ) and  
+         ( sale.cust_no = customer.cust_no ) and  
+         ( sale.scene_code *= scene.scene_code ) and  
+         ( sale.open_close = ~"O~" ) and  
+			( sale.salesman like :as_userid) and 
+         ( ( sale.order_no like :as_area ) and 
+			  ( sale.order_date between :ad_from and :ad_to ) and 
+			  ( customer.salesman like :as_user ) )   
+GROUP BY sale.order_no,   
+			substring(dodet.do_no,1,1),
+         sale.due_date,   
+         sale.cust_no,
+         sale.scene_code,
+			customer.cust_name,
+			scene.scene_desc,
+			customer.salesman
+*/
+" arguments=(("as_area", string),("ad_from", date),("ad_to", date),("as_user", string),("as_userid", string))  sort="do_date A order_no A " )
+group(level=1 header.height=0 trailer.height=60 by=("do_date" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="1" text="영업사원" border="0" color="0" x="9" y="12" height="60" width="306" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+column(band=header id=11 alignment="0" tabsequence=32766 border="0" color="0" x="325" y="12" height="60" width="265" format="[general]" html.valueishtml="0"  name=user_name visible="1" dddw.name=d_whsale_login_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="출고일" border="6" color="0" x="9" y="92" height="60" width="306" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="지역" border="6" color="0" x="325" y="92" height="60" width="265" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="599" y="92" height="60" width="366" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="생산" border="6" color="0" x="974" y="92" height="60" width="247" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="납기일자" border="6" color="0" x="1230" y="92" height="60" width="407" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="1646" y="92" height="60" width="750" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="현장" border="6" color="0" x="2405" y="92" height="60" width="974" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12632256" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0~tif (   orderum <=  issueum  , rgb(0,0,0),rgb(0,0,255))" x="9" y="4" height="60" width="306" format="" html.valueishtml="0"  name=do_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="325" y="4" height="60" width="265" format="[general]" html.valueishtml="0"  name=area visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="2" expression=" mid( order_no ,7,8)  "border="0" color="0~tif (trim( do_date ) = ~"A~" , rgb(0,0,0), if ( trim(do_date ) = ~"B~" , rgb(0,0,0),rgb(0,0,255)))" x="599" y="4" height="60" width="366" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="974" y="4" height="60" width="247" format="[general]" html.valueishtml="0"  name=prod visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=10 border="0" color="0" x="1230" y="4" height="60" width="407" format="yyyy/mm/dd" html.valueishtml="0"  name=due_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="1646" y="4" height="60" width="750" format="[general]" html.valueishtml="0"  name=sale_cust_no visible="1" dddw.name=d_cdcustomer_c dddw.displaycolumn=cust_name dddw.datacolumn=cust_no dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="2405" y="4" height="60" width="974" format="[general]" html.valueishtml="0"  name=sale_scene_code visible="1" dddw.name=d_cdscene_c dddw.displaycolumn=scene_desc dddw.datacolumn=scene_code dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

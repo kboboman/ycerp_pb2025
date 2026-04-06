@@ -1,0 +1,133 @@
+﻿$PBExportHeader$d_mpsliting_r2.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=528 color="536870912" )
+summary(height=96 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=96 color="536870912" )
+table(column=(type=char(6) updatewhereclause=yes name=order_date dbname="order_date" )
+ column=(type=char(6) updatewhereclause=yes name=tw dbname="tw" )
+ column=(type=decimal(1) updatewhereclause=yes name=swid dbname="swid" )
+ column=(type=char(60) updatewhereclause=yes name=r_item_name dbname="r_item_name" )
+ column=(type=char(10) updatewhereclause=yes name=r_qa dbname="r_qa" )
+ column=(type=decimal(2) updatewhereclause=yes name=length dbname="length" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="cnt" )
+ column=(type=decimal(4) updatewhereclause=yes name=tot_qty dbname="tot_qty" )
+ column=(type=char(1) updatewhereclause=yes name=gbn dbname="gbn" )
+ column=(type=char(1) updatewhereclause=yes name=gbn2 dbname="gbn2" )
+ retrieve="  SELECT tb_a.order_date                 
+       , tb_a.tw                         
+       , tb_a.swid                       
+       , tb_a.r_item_name                
+       , tb_a.r_qa                       
+       , tb_a.length                     
+       , cnt     = SUM(tb_a.cnt)         
+       , tot_qty = SUM(tb_a.tot_qty)     
+       , gbn     = tb_a.gbn
+       , gbn2    = tb_a.gbn2
+    FROM (
+         SELECT DISTINCT item_name = ga.item_name                                                          
+              , qa           = coilmst.qa                                                            
+              , cnt          = coilsliting.cnt                                                       
+              , unit_qty     = coilsliting.unit_qty                                                   
+              , start_date   = :as_start                                                             
+              , end_date     = :as_end                                                               
+              , tot_qty      = coilsliting.unit_qty  * coilsliting.cnt                               
+              , rate         = (coilsliting.unit_qty * coilsliting.cnt) * 100 / coilmst.unit_qty     
+              , co_order_no  = coilorder.order_no                                                    
+              , cod_order_no = coilorderdet.order_no                                                 
+              , tw           = LEFT(coilmst.qa, 3)                                                
+              , swid         = (CASE WHEN sheet = 'C'
+                                          THEN convert (decimal(5,1), substring(coilsliting.qa,5,4) + '.' + substring(coilsliting.qa, 10,1)) 
+                                     WHEN sheet = 'S' 
+                                          THEN convert (decimal(5,0), substring(coilsliting.qa,5,4)) 
+                                     WHEN sheet = 'L' 
+                                          THEN (CASE WHEN substring(coilsliting.qa,5,4) = '0000' 
+                                                          THEN substring(coilsliting.qa,5,4) + '.' + substring(coilsliting.qa, 10,1)
+                                                     ELSE convert(decimal(5,0), substring(coilsliting.qa,5,4)) 
+                                                END)
+                                END)
+              , wc_place     = coilorder.wc_place                                
+              , seq          = coilsliting.seq                                   
+              , cm_unit_qty  = coilmst.unit_qty                                  
+              , item_no      = coilsliting.item_no                            
+              , order_date   = CONVERT(varchar(6), coilorder.order_date, 112) 
+              , gbn          = (CASE WHEN (LEFT(coilsliting.item_no,2) =  'M3' AND substring(coilsliting.item_no, 6,1) = 'L') THEN 'L' ELSE 'C' END)
+              , r_item_name  = gb.item_name
+              , r_qa         = isnull(coilsliting.r_qa,'')
+              , length       = coilsliting.length
+              , gbn2         = coilorder.wc_place
+FROM coilsliting inner join coilorderdet on coilsliting.order_no =  coilorderdet.order_no
+                            inner join coilorder on coilorder.order_no = coilorderdet.coilorder_order 
+                            inner join coilmst on coilorderdet.coil_no = coilmst.coil_no
+                            inner join groupitem ga on coilmst.item_no = ga.item_no
+                            left  outer join groupitem gb on coilsliting.r_item_no = gb.item_no              
+where       ( ( convert(varchar(6), coilorder.order_date, 112) BETWEEN :as_start AND :as_end) AND
+                    ( coilorder.wc_place     LIKE :as_wc_place ) 
+                  )    
+/*              
+           FROM coilmst        
+              , groupitem ga   
+              , groupitem gb   
+              , coilorder      
+              , coilorderdet   
+              , coilsliting  
+          WHERE ( coilorderdet.order_no       = coilsliting.order_no         )   
+            AND ( coilorder.order_no          = coilorderdet.coilorder_order )   
+            AND ( coilorderdet.coil_no        = coilmst.coil_no              )   
+            AND ( coilmst.item_no             = ga.item_no                   )   
+            AND ( coilsliting.r_item_no      *= gb.item_no                   )   
+            AND ( ( convert(varchar(6), coilorder.order_date, 112) BETWEEN :as_start AND :as_end) AND
+                  ( coilorder.wc_place     LIKE :as_wc_place ) 
+                )   
+*/                
+        ) tb_a
+    GROUP BY tb_a.gbn, tb_a.tw, tb_a.swid, tb_a.r_item_name, tb_a.r_qa, tb_a.length, tb_a.order_date, tb_a.gbn2
+    ORDER BY gbn, order_date, swid, tw, r_item_name, r_qa
+" arguments=(("as_start", string),("as_end", string),("as_wc_place", string)) )
+group(level=1 header.height=0 trailer.height=92 by=("r_item_name" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=92 by=("r_qa" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="스리팅 생산계획(월별)" border="0" color="33554432" x="901" y="88" height="148" width="2363" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-24" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="1189" y1="236" x2="2962" y2="236"  name=l_7 visible="1" pen.style="0" pen.width="14" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="년월" border="0" color="33554432" x="41" y="440" height="60" width="302" html.valueishtml="0"  name=order_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="제품명" border="0" color="33554432" x="357" y="440" height="60" width="946" html.valueishtml="0"  name=r_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="규격" border="0" color="33554432" x="1321" y="440" height="60" width="480" html.valueishtml="0"  name=r_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="스리팅폭" border="0" color="33554432" x="1815" y="440" height="60" width="293" html.valueishtml="0"  name=swid_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="두께" border="0" color="33554432" x="2126" y="440" height="60" width="261" html.valueishtml="0"  name=tw_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="수량" border="0" color="33554432" x="2400" y="440" height="60" width="343" html.valueishtml="0"  name=cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="길이" border="0" color="33554432" x="2757" y="440" height="60" width="466" html.valueishtml="0"  name=length_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="총중량" border="0" color="33554432" x="3241" y="440" height="60" width="462" html.valueishtml="0"  name=tot_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="수량*길이" border="0" color="33554432" x="3717" y="440" height="60" width="462" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="23" y1="412" x2="4178" y2="412"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="23" y1="520" x2="4178" y2="520"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="2715" y="512" height="72" width="64" format="[general]" html.valueishtml="0"  name=gbn visible="1" edit.limit=1 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="41" y="8" height="72" width="302" format="@@@@-@@" html.valueishtml="0"  name=order_date visible="1" edit.limit=6 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="357" y="8" height="72" width="946" format="[general]" html.valueishtml="0"  name=r_item_name visible="1" edit.limit=60 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1321" y="8" height="72" width="480" format="[general]" html.valueishtml="0"  name=r_qa visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1815" y="8" height="72" width="293" format="[general]" html.valueishtml="0"  name=swid visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="2126" y="8" height="72" width="261" format="[general]" html.valueishtml="0"  name=tw visible="1" edit.limit=6 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2400" y="8" height="72" width="343" format="#,##0" html.valueishtml="0"  name=cnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2757" y="8" height="72" width="466" format="#,##0" html.valueishtml="0"  name=length visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" cnt  *  length2 "border="0" color="33554432" x="3717" y="8" height="72" width="462" format="#,##0" html.valueishtml="0"  name=mtot visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="3241" y="8" height="72" width="462" format="#,##0.00" html.valueishtml="0"  name=tot_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="2126" y1="92" x2="4174" y2="92"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=detail alignment="0" expression="mid(tw,1,1)+'.'+mid(tw,2,2)"border="0" color="33554432" x="3520" y="212" height="60" width="256" format="[GENERAL]" html.valueishtml="0"  name=tw2 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression=" case( gbn2 when 'I' then length when 'O' then tot_qty/8.12/dec(tw2)/swid*1000 else 0) "border="0" color="33554432" x="3099" y="228" height="60" width="256" format="[GENERAL]" html.valueishtml="0"  name=length2 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="' 규격별 소계 '"border="0" color="33554432" x="1125" y="8" height="64" width="1051" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(  mtot  for group 2 )"border="0" color="33554432" x="3717" y="8" height="64" width="462" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(  cnt  for group 2 )"border="0" color="33554432" x="2400" y="8" height="64" width="343" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(  tot_qty  for group 2 )"border="0" color="33554432" x="3241" y="8" height="64" width="462" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="1143" y1="84" x2="4183" y2="84"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression=" r_item_name +'   제품별 합계 '"border="0" color="33554432" x="1125" y="12" height="64" width="1051" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  mtot  for group 1 )"border="0" color="33554432" x="3717" y="12" height="64" width="462" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  cnt  for group 1 )"border="0" color="33554432" x="2400" y="12" height="64" width="343" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  tot_qty  for group 1 )"border="0" color="33554432" x="3246" y="12" height="64" width="462" format="#,##0.00" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="23" y1="88" x2="4178" y2="88"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(  mtot  for all )"border="0" color="33554432" x="3717" y="12" height="64" width="462" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  cnt  for all )"border="0" color="33554432" x="2400" y="12" height="64" width="343" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  tot_qty  for all )"border="0" color="33554432" x="3246" y="12" height="64" width="462" format="#,##0.00" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="1" text="총      계" border="0" color="0" x="1582" y="12" height="60" width="590" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=summary x1="23" y1="92" x2="4178" y2="92"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+
+sparse(names="order_date	r_item_name	r_qa	swid	tw")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

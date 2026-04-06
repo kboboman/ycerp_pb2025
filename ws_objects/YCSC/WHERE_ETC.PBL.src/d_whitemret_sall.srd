@@ -1,0 +1,156 @@
+﻿$PBExportHeader$d_whitemret_sall.srd
+$PBExportComments$품목별 재고현황(생산계획)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=68 color="12639424" )
+footer(height=80 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="incounu.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="incounu.qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=itemloc_qoh dbname="qoh" )
+ column=(type=datetime updatewhereclause=yes name=cdate dbname="cdate" )
+ column=(type=decimal(4) updatewhereclause=yes name=rcptqty dbname="rcptqty" )
+ column=(type=decimal(4) updatewhereclause=yes name=issueqty dbname="issueqty" )
+ column=(type=decimal(2) updatewhereclause=yes name=notissueqty dbname="notissueqty" )
+ column=(type=long updatewhereclause=yes name=incounu_save_qty dbname="incounu.save_qty" )
+ retrieve="  SELECT    groupitem.item_name
+                   , incounu.item_no    
+                   , incounu.qa            
+                   , uom         = (case groupitem.uom when 'M'  then 'EA' when 'M2' then 'EA' else groupitem.uom  end) 
+                   , qoh         = isnull(itemloc.qoh, 0) - isnull(couteoday.rcptqty, 0) + isnull(couteoday.issueqty, 0) 
+                   , cdate       = convert(smalldatetime, :ad_date, 111)   
+                   , rcptqty     = isnull(cineoday.rcptqty, 0)             
+                   , issueqty    = isnull(cineoday.issueqty, 0)         
+                   , notissueqty = isnull(csaledet.order_qty, 0) + isnull(crout.order_qty, 0)
+                   , incounu.save_qty
+    FROM incounu left outer join itemloc on  incounu.item_no  = itemloc.item_no
+                                                         and incounu.qa  = itemloc.qa
+                                                         and incounu.loc_no = itemloc.loc_no          
+                              left outer join (SELECT incounu.item_no
+                                                         , incounu.qa
+                                                         , rcptqty  = isnull(sum(ineoday.rcpt_qty) , 0)
+                                                         , issueqty = isnull(sum(ineoday.issue_qty), 0)
+                                                      FROM incounu    /* 담당자별 실사품목 */    
+                                                         , ineoday    /* 저장소일별 물품재고 */
+                                                     WHERE incounu.user_id = :as_user
+                                                       AND incounu.loc_no  = :as_loc
+                                                       AND ineoday.item_no = incounu.item_no
+                                                       AND ineoday.qa      = incounu.qa
+                                                       AND ineoday.loc_no  = incounu.loc_no
+                                                       AND cdate           = :as_date
+                                                     GROUP BY incounu.item_no, incounu.qa
+                                                    UNION
+                                                    SELECT item_no  = '', qa = '', rcptqty = 0 , issueqty = 0 
+                                                   ) cineoday on  incounu.item_no = cineoday.item_no 
+                                                                  AND incounu.qa = cineoday.qa 
+                             left outer join (SELECT incounu.item_no
+                                                           , incounu.qa
+                                                           , rcptqty  = isnull(sum(ineoday.rcpt_qty) , 0)
+                                                           , issueqty = isnull(sum(ineoday.issue_qty), 0)
+                                                        FROM incounu    /* 담당자별 실사품목 */ 
+                                                           , ineoday    /* 저장소일별 물품재고 */
+                                                       WHERE incounu.user_id  = :as_user
+                                                         AND incounu.loc_no   = :as_loc
+                                                         AND ineoday.item_no  = incounu.item_no
+                                                         AND ineoday.qa       = incounu.qa
+                                                         AND ineoday.loc_no   = incounu.loc_no
+                                                         AND cdate            > :as_date
+                                                       GROUP BY incounu.item_no, incounu.qa
+                                                      UNION
+                                                      SELECT item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+                                                     ) couteoday on incounu.item_no = couteoday.item_no 
+                                                                      AND incounu.qa  = couteoday.qa 
+                              left outer join (SELECT incounu.item_no
+                                                             , incounu.qa
+                                                             , order_qty = isnull(sum( saledet.order_qty  -  saledet.rlse_qty ), 0)
+                                                          FROM incounu     /* 담당자별 실사품목 */
+                                                             , sale        /* 판매수주헤더 */  
+                                                             , saledet     /* 판매수주상세 */  
+                                                         WHERE incounu.loc_no   = :as_loc
+                                                           AND incounu.user_id  = :as_user
+                                                           AND saledet.item_no  = incounu.item_no 
+                                                           AND saledet.qa       = incounu.qa 
+                                                           AND ( ( :as_area = 'S0001' and ( ( sale.area_no like :as_area ) or (sale.area_no = 'H0001') ) )
+                                                              Or ( :as_area = 'B0001' and ( sale.area_no = :as_area ) )
+                                                              Or ( :as_area = 'T0001' and ( sale.area_no = :as_area ) )
+                                                              Or ( :as_area = '%'     and ( sale.area_no like :as_area ) ) 
+                                                               )
+                                                           AND sale.order_no      = saledet.order_no
+                                                           AND sale.open_close    = 'O'
+                                                           AND order_date        >= DATEADD(month, -2, convert(smalldatetime, :ad_date, 111))
+                                                           AND order_date        <= :ad_date
+                                                           AND saledet.order_qty  > saledet.rlse_qty
+                                                         GROUP BY incounu.item_no, incounu.qa
+                                                        UNION
+                                                        SELECT item_no = '', qa = '', order_qty = 0 
+                                                       ) csaledet on incounu.item_no = csaledet.item_no 
+                                                                     AND incounu.qa = csaledet.qa 
+                               left outer join (SELECT item_no   = rout.assembly
+                                                             , qa        = rout.assy_qa
+                                                             , order_qty = isnull(sum( saledet.order_qty  -  saledet.rlse_qty ), 0)
+                                                          FROM incounu     /* 담당자별 실사품목 */ 
+                                                             , sale        /* 판매수주헤더 */
+                                                             , saledet     /* 판매수주상세 */
+                                                             , rout        /* 공정(제품별작업장) */
+                                                         WHERE incounu.loc_no    = :as_loc
+                                                           AND incounu.user_id   = :as_user
+                                                           AND rout.assembly     = incounu.item_no 
+                                                           AND rout.assy_qa      = incounu.qa 
+                                                           AND rout.item_no     <> rout.assembly
+                                                           AND saledet.item_no   = rout.item_no
+                                                           AND saledet.qa        = rout.qa
+                                                           AND ( ( :as_area = 'S0001' and ( ( sale.area_no like :as_area ) or (sale.area_no = 'H0001') ) )
+                                                              Or ( :as_area = 'B0001' and ( sale.area_no = :as_area ) )
+                                                              Or ( :as_area = 'T0001' and ( sale.area_no = :as_area ) )
+                                                              Or ( :as_area = '%'     and ( sale.area_no like :as_area ) ) 
+                                                               )
+                                                           AND sale.order_no       = saledet.order_no
+                                                           AND sale.open_close     = 'O'
+                                                           AND sale.order_date    >= DATEADD(month, -2, convert(smalldatetime, :ad_date, 111))
+                                                           AND saledet.order_qty   > saledet.rlse_qty
+                                                           AND sale.order_date    <= :ad_date
+                                                         GROUP BY rout.assembly, rout.assy_qa
+                                                        UNION
+                                                        SELECT item_no = '', qa = '', order_qty = 0 
+                                                       ) crout on incounu.item_no = crout.item_no 
+                                                             AND incounu.qa = crout.qa 
+                              inner join  groupitem on incounu.item_no     = groupitem.item_no                                      
+   WHERE incounu.loc_no      = :as_loc
+          AND incounu.user_id     = :as_user
+" arguments=(("ad_date", date),("as_date", string),("as_user", string),("as_loc", string),("as_area", string))  sort="groupitem_item_name A qa A " )
+text(band=header alignment="2" text="품명" border="6" color="0" x="9" y="8" height="60" width="681" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="699" y="8" height="60" width="133" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="전일" border="6" color="0" x="1847" y="8" height="60" width="347" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입고" border="6" color="0" x="2203" y="8" height="60" width="329" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고" border="6" color="0" x="2542" y="8" height="60" width="325" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현재고" border="6" color="0" x="2875" y="8" height="60" width="306" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수주잔량" border="6" color="0" x="3191" y="8" height="60" width="297" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="적정재고량" border="6" color="0" x="3497" y="8" height="60" width="402" html.valueishtml="0"  name=incounu_save_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="발주량" border="6" color="0" x="3909" y="8" height="60" width="439" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="841" y="8" height="60" width="626" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="코드" border="6" color="0" x="1477" y="8" height="60" width="361" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="699" y="4" height="64" width="133" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="3191" y="4" height="64" width="297" format="#,##0" html.valueishtml="0"  name=notissueqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="9" y="4" height="64" width="681" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="841" y="4" height="64" width="626" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="1477" y="4" height="64" width="361" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=detail alignment="1" expression=" itemloc_qoh  -  rcptqty  +  issueqty "border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="1847" y="4" height="64" width="347" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="2203" y="4" height="64" width="329" format="#,##0" html.valueishtml="0"  name=rcptqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="2542" y="4" height="64" width="325" format="#,##0" html.valueishtml="0"  name=issueqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="2875" y="4" height="64" width="306" format="#,##0" html.valueishtml="0"  name=itemloc_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="3497" y="4" height="64" width="402" format="###,###" html.valueishtml="0"  name=incounu_save_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=detail alignment="1" expression="if(incounu_save_qty = 0, 0, incounu_save_qty - (itemloc_qoh - notissueqty))"border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="3909" y="4" height="64" width="439" format="[General]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=summary alignment="1" expression="sum(rcptqty for all)"border="0" color="0" x="2203" y="4" height="60" width="329" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(issueqty for all)"border="0" color="0" x="2542" y="4" height="60" width="325" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(itemloc_qoh for all)"border="0" color="0" x="2875" y="4" height="60" width="306" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(notissueqty for all)"border="0" color="0" x="3191" y="4" height="60" width="297" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(incounu_save_qty for all)"border="0" color="0" x="3497" y="4" height="60" width="402" format="###,###" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(if(incounu_save_qty = 0, 0, incounu_save_qty - (itemloc_qoh - notissueqty)) for all)"border="0" color="0" x="3909" y="4" height="60" width="439" format="[General]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( itemloc_qoh  -  rcptqty  +  issueqty  for all)"border="0" color="0" x="1847" y="4" height="60" width="347" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="2" expression="count(  item_no  for all )"border="0" color="0" x="9" y="4" height="60" width="681" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count(  item_no  for all )"border="0" color="0" x="9" y="8" height="64" width="681" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

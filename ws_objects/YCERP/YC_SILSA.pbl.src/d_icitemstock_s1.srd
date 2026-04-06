@@ -1,0 +1,81 @@
+﻿$PBExportHeader$d_icitemstock_s1.srd
+$PBExportComments$장기재고조회(2003/08/25, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=72 color="536870912"  height.autosize=yes)
+table(column=(type=char(10) updatewhereclause=yes name=loc_no dbname="itemstock.loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="itemstock.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="itemstock.qa" )
+ column=(type=decimal(0) updatewhereclause=yes name=qty dbname="itemstock.qty" )
+ column=(type=char(60) updatewhereclause=yes name=reason1 dbname="itemstock.reason1" )
+ column=(type=char(60) updatewhereclause=yes name=reason2 dbname="itemstock.reason2" )
+ column=(type=char(60) updatewhereclause=yes name=reason3 dbname="itemstock.reason3" )
+ column=(type=char(10) updatewhereclause=yes name=chk1_user dbname="itemstock.chk1_user" )
+ column=(type=char(10) updatewhereclause=yes name=chk2_user dbname="itemstock.chk2_user" )
+ column=(type=datetime updatewhereclause=yes name=user_date dbname="itemstock.user_date" )
+ column=(type=char(1) updatewhereclause=yes name=reason_code dbname="itemstock.reason_code" )
+ column=(type=char(20) updatewhereclause=yes name=stockreason_reason_name dbname="stockreason.reason_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=loc_qoh dbname="loc_qoh" )
+ column=(type=char(184) updatewhereclause=yes name=reason dbname="reason" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ retrieve="  SELECT itemstock.loc_no                   
+       , itemstock.item_no                  
+       , itemstock.qa                       
+       , itemstock.qty                      
+       , itemstock.reason1                  
+       , itemstock.reason2                  
+       , itemstock.reason3                  
+       , itemstock.chk1_user                
+       , itemstock.chk2_user                
+       , itemstock.user_date                
+       , itemstock.reason_code              
+       , stockreason.reason_name              
+       , loc_qoh = isnull(itemloc.qoh, 0)   
+       , reason  = rtrim(itemstock.reason1) 
+                 + (case when itemstock.reason1 is null or rtrim(itemstock.reason1) = '' then '' else char(13) + char(10) end)
+                 + rtrim(itemstock.reason2) 
+                 + (case when itemstock.reason2 is null or rtrim(itemstock.reason2) = '' then '' else char(13) + char(10) end)
+                 + rtrim(itemstock.reason3)
+       , groupitem.item_name   
+       , location.loc_name 
+    FROM itemstock inner join groupitem on  itemstock.item_no = groupitem.item_no
+                                          inner join location on itemstock.loc_no = location.loc_no
+                                         inner join stockreason on itemstock.reason_code = stockreason.reason_code
+                                          left outer join itemloc on itemstock.loc_no = itemloc.loc_no 
+                                                                                       and itemstock.item_no = itemloc.item_no 
+                                                                                       and itemstock.qa = itemloc.qa			
+
+   WHERE itemstock.loc_no = :as_loc
+/*
+    FROM itemstock
+       , groupitem   
+       , location 
+       , itemloc
+       , stockreason
+   WHERE ( itemstock.item_no  = groupitem.item_no ) 
+     and ( itemstock.loc_no   = location.loc_no   ) 
+     and ( itemstock.loc_no  *= itemloc.loc_no    ) 
+     and ( itemstock.item_no *= itemloc.item_no   ) 
+     and ( itemstock.qa      *= itemloc.qa        ) 
+     and ( itemstock.loc_no   = :as_loc           )
+     and ( itemstock.reason_code = stockreason.reason_code )             
+*/" arguments=(("as_loc", string))  sort="groupitem_item_name A qa A " )
+text(band=header alignment="2" text="품   목" border="6" color="0" x="9" y="8" height="60" width="713" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217739" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="731" y="8" height="60" width="622" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217739" )
+text(band=header alignment="2" text="장기재고" border="6" color="33554432" x="1362" y="8" height="60" width="379" html.valueishtml="0"  name=qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217739" )
+text(band=header alignment="2" text="현재고" border="6" color="0" x="1751" y="8" height="60" width="389" html.valueishtml="0"  name=loc_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217739" )
+text(band=header alignment="2" text="사유" border="6" color="0" x="2149" y="8" height="60" width="1934" html.valueishtml="0"  name=reason_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217739" )
+text(band=header alignment="2" text="재고사유" border="6" color="0" x="4091" y="8" height="60" width="567" html.valueishtml="0"  name=itemstock_reason_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="134217739" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="60" width="713" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="731" y="8" height="60" width="622" format="[general]" html.valueishtml="0"  name=qa  tag="규격" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="1362" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="553648127~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="4091" y="8" height="60" width="567" format="[general]" html.valueishtml="0"  name=reason_code visible="1" dddw.name=d_cdstockreason_c dddw.displaycolumn=reason_name dddw.datacolumn=reason_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="1751" y="8" height="60" width="389" format="#,##0" html.valueishtml="0"  name=loc_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="2149" y="8" height="60" width="1934" format="[general]" html.valueishtml="0"  name=reason visible="1"  slideleft=yes height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="count(  item_no  for all )"border="0" color="0" x="9" y="8" height="64" width="713" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

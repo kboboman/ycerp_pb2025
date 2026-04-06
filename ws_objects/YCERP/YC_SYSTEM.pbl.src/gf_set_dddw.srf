@@ -1,0 +1,47 @@
+﻿$PBExportHeader$gf_set_dddw.srf
+$PBExportComments$조회 조건이 있는 dddw
+global type gf_set_dddw from function_object
+end type
+
+forward prototypes
+global function integer gf_set_dddw (datawindow adw_dw, ref datawindowchild adwc_dddw, string as_col, string as_arg[])
+end prototypes
+
+global function integer gf_set_dddw (datawindow adw_dw, ref datawindowchild adwc_dddw, string as_col, string as_arg[]);////////////////////////////////////////////////////////////
+// Function : gf_set_dddw
+// Function Description : DDDW 조회
+// 인수 : 	adw_dw 		- datawindow명
+//				adwc_dddw	- datawindwchild
+//				as_col		- column명
+//				as_arg[]		- 조회 인수
+// 사용법: 
+//			datawindowchild		ldwc_dddw
+//			gf_set_dddw(datawindow명, ldwc_dddw, '컬럼명', {'H', 'H02'})
+//// return : -1 -> Fail
+////////////////////////////////////////////////////////////
+Long		ll_rtn, ll_argcnt
+
+ll_rtn = adw_dw.getChild(as_col, adwc_dddw)
+
+If ll_rtn = -1 Then
+	MessageBox("Error", as_col + " is Not a DataWindowChild")
+	Return ll_rtn
+End If
+adwc_dddw.setTransObject(sqlca)
+
+ll_rtn		= 0
+ll_argcnt	= UpperBound(as_arg[])
+Choose Case ll_argcnt
+	case 0
+		ll_rtn = adwc_dddw.Retrieve( )
+	Case 1
+		ll_rtn = adwc_dddw.Retrieve( as_arg[1] )
+	Case 2
+		ll_rtn = adwc_dddw.Retrieve( as_arg[1], as_arg[2] )
+	Case 3
+		ll_rtn = adwc_dddw.Retrieve( as_arg[1], as_arg[2], as_arg[3] )
+End Choose
+
+Return ll_rtn
+end function
+

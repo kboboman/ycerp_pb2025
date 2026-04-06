@@ -1,0 +1,119 @@
+﻿$PBExportHeader$d_mpmonth_ct.srd
+$PBExportComments$생산계획집계
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=72 color="536870912" )
+header[2](height=72 color="536870912" )
+summary(height=80 color="12632256" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=작업장명 dbname="작업장명" )
+ column=(type=char(20) updatewhereclause=yes name=품목 dbname="품목" )
+ column=(type=char(20) updatewhereclause=yes name=수주물품 dbname="수주물품" )
+ column=(type=number updatewhereclause=yes name=환산수량 dbname="환산수량" )
+ retrieve="SELECT '작업장명'    = a.[작업장명]
+     , '품목'        = a.[품목]
+     , '수주물품'    = a.[수주물품]
+     , '납기일자'    = convert(char(10),a.[납기일자],111)
+     , '환산수량'    = SUM(a.[환산수량])
+  FROM ( /* 생산계획 조정 */    
+       SELECT '순위'        = rn.operation       
+            , '캐파'        = rn.qpa             
+            , '작업장'      = rn.wc_no           
+            , '작업장명'    = wc.work_name
+            , '수주물품'    = (case when rn.item_no = 'NO_ITEM' then g1.item_name else g2.item_name end )
+            , '품목'        = rn.item_no         
+            , '규격'        = rn.qa              
+            , '예정일자'    = rn.work_date       
+            , '납기일자'    = rn.napgi_date      
+            , '주문량'      = rn.order_qty       
+            , '계획량'      = rn.plan_qty        
+            , '계획량ORG'   = rn.plan_qty        
+            , '환산수량'    = (case when rn.qa = 'NO_QA' then rn.plan_qty else dbo.uf_getqty(rn.item_no, rn.qa, rn.uom, rn.plan_qty ) end)
+       
+            , '출고량'      = dbo.uf_getdosumqty(rn.sale_no, rn.seq_no) 
+            , '분할'        = rn.division        
+            , '색상'        = rn.item_color      
+            , '색상명'      = color.color_name   
+            , '거래처'      = rn.cust_no         
+            , '거래처명'    = c.cust_name        
+            , '현장'        = rn.scene_code      
+            , '현장명'      = sc.scene_desc      
+            , '진행'        = rn.process_flag    
+            , '수주번호'    = rn.sale_no         
+            , '수주순번'    = rn.seq_no          
+            , '비고'        = rn.rem             
+            
+            , '제조물품'    = rn.assy_item       
+            , '제조품목'    = g1.item_name       
+            , '제조규격'    = rn.assy_qa         
+            , '제조단위'    = rn.uom             
+       
+            , '설치시간'    = rn.setup_time      
+            , '작업단위시간'= rn.work_time       
+            , '제조수량'    = rn.make_qty        
+       
+            , '작업인원'    = rn.work_per        
+            , '수주형태'    = rn.suju_type       
+            , 'BOM순서'     = rn.bom_no          
+            , '계획유무'    = rn.plan_flag       
+            , '예약수량'    = rn.reserved_qty    
+            , '사업장'      = rn.area_no         
+            , '마감'        = s.open_close       
+		 /*            
+						 FROM routtempnew rn  (nolock)
+							 , groupitem   g1  (nolock)
+							 , groupitem   g2  (nolock)
+							 , customer     c  (nolock)
+							 , scene       sc  (nolock)
+							 , sale         s  (nolock)
+							 , color           (nolock)
+							 , wc              (nolock)
+						WHERE ( rn.cust_no          *= c.cust_no          )  
+						  AND ( rn.scene_code       *= sc.scene_code      )  
+						  AND ( rn.sale_no          *= s.order_no         )  
+						  AND ( rn.item_no          *= g2.item_no         )  
+						  AND ( rn.assy_item         = g1.item_no         )  
+						  AND ( rn.item_color       *= color.color_code   )  
+						  AND ( rn.wc_no            *= wc.work_no         )
+			 */          
+						 FROM routtempnew rn  (nolock) LEFT OUTER JOIN customer     c  (nolock) ON  rn.cust_no        = c.cust_no
+																								  LEFT OUTER JOIN groupitem   g1  (nolock) ON rn.assy_item     = g1.item_no
+																								  LEFT OUTER JOIN groupitem   g2  (nolock) ON rn.item_no        = g2.item_no
+																								  LEFT OUTER JOIN  scene       sc  (nolock) ON  rn.scene_code = sc.scene_code
+																								  LEFT OUTER  JOIN sale         s  (nolock) ON rn.sale_no             = s.order_no
+																																											and s.open_close       = 'O'                         
+																																											and s.order_date      >= DATEADD(year, -1, getdate()) 
+																								  LEFT OUTER JOIN color           (nolock) on rn.item_color           = color.color_code
+																								  LEFT OUTER JOIN wc               (nolock) on rn.wc_no                 = wc.work_no
+			 WHERE  ( rn.process_flag   <> 'C'                           )
+						AND ( rn.work_date      >= DATEADD(year, -1, getdate()) )
+						AND ( rn.plan_flag         = 'N'                )
+						AND ( rn.area_no           = :as_area           ) 
+						AND ( (:as_wcno  = '%' AND rn.wc_no  LIKE '%'      ) OR (:as_wcno <> '%' AND rn.wc_no  LIKE :as_wcno ) )
+       ) A
+   GROUP BY a.[작업장명], a.[품목], a.[수주물품], a.[납기일자]
+" arguments=(("as_wcno", string),("as_area", string))  sort="작업장명 A 품목 A 수주물품 A " )
+group(level=1 header.height=0 trailer.height=80 by=("작업장명" ) header.color="536870912" trailer.color="15780518" )
+text(band=header[1] alignment="0" text="Sum Of 환산수량" border="0" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[1] alignment="0" text="납기일자" border="0" color="33554432" x="434" y="4" height="60" width="343" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="0" text="작업장명" border="6" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=작업장명_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="0" text="품목" border="6" color="33554432" x="434" y="4" height="60" width="343" html.valueishtml="0"  name=품목_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="0" text="수주물품" border="6" color="33554432" x="786" y="4" height="60" width="855" html.valueishtml="0"  name=수주물품_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="@납기일자" border="6" color="33554432" x="1650" y="4" height="60" width="389" html.valueishtml="0"  name=환산수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="1" text="합계" border="6" color="33554432" x="2048" y="4" height="60" width="366" html.valueishtml="0"  name=grand_sum_환산수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=작업장명 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="434" y="4" height="72" width="343" format="[general]" html.valueishtml="0"  name=품목 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="786" y="4" height="72" width="855" format="[general]" html.valueishtml="0"  name=수주물품 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1650" y="4" height="72" width="389" format="#,##0" html.valueishtml="0"  name=환산수량 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2048" y="4" height="72" width="366" format="#,##0" html.valueishtml="0"  name=grand_sum_환산수량 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="작업장명 + ~" 계~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(환산수량 for group 1)"border="0" color="33554432" x="1650" y="4" height="72" width="389" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_환산수량 for group 1)"border="0" color="33554432" x="2048" y="4" height="72" width="366" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"총 합 계~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(환산수량 for all )"border="0" color="33554432" x="1650" y="4" height="72" width="389" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_환산수량 for all )"border="0" color="33554432" x="2048" y="4" height="72" width="366" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "납기일자" rows = "작업장명, 품목, 수주물품" values = "sum(환산수량 for crosstab)" sourcenames = "작업장명, 품목, 수주물품, 납기일자, 환산수량")
+sparse(names="작업장명	품목")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

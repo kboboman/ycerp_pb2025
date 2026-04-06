@@ -1,0 +1,678 @@
+﻿$PBExportHeader$d_iitemplanout_qty_r.srd
+$PBExportComments$재고수불부(제품별일수불)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=84 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes name=loc_no dbname="GroupItem.loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=loc_name dbname="location.loc_name" )
+ column=(type=char(10) updatewhereclause=yes name=stock_date dbname="stock_date" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="GroupItem.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="GroupItem.qa" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="GroupItem.item_name" )
+ column=(type=char(30) updatewhereclause=yes name=gubun dbname="code1.GUBUN" )
+ column=(type=decimal(4) updatewhereclause=yes name=real_before_qty dbname="real_before_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=real_in_qty dbname="real_in_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=real_out_qty dbname="real_out_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=real_jaje_qty dbname="real_jaje_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=real_intemp_qty dbname="real_intemp_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=real_ret_qty dbname="real_ret_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=real_plan_out_qty dbname="real_plan_out_qty" )
+ column=(type=long updatewhereclause=yes name=real_plan_make_qty dbname="real_plan_make_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=real_etc_qty dbname="real_etc_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=real_stock_qty dbname="real_stock_qty" )
+ column=(type=char(1) updatewhereclause=yes name=note dbname="note" )
+ retrieve="
+select		  a.loc_no,
+                  e.loc_name,
+                  convert(char(10), a.stock_date, 121) stock_date,
+			 a.item_no,
+			 a.qa,                                         
+			 b.item_name,
+			 F.code_name  GUBUN,
+			  sum(isnull(a.before_qty,0)) real_before_qty,
+			  sum(isnull(a.make_qty,0)) real_in_qty,                                                             /*입고(생산, 구매, 가입고, 반품, 물품요청입고, 코일이동입고 )*/
+			  sum(isnull(a.ship_qty,0)) real_out_qty,                                                             /*출고( 판매, 대체물품,  물품요청출고, 코일이동출고 */
+			  sum(isnull(a.jaje_qty,0)) real_jaje_qty,							                                                /* 출고(생산투입) */
+			  sum(isnull(a.intemp_qty,0)) real_intemp_qty,                                                 /*가입고*/
+			  sum(isnull(a.ret_qty,0)) real_ret_qty,                                                                 /*반품     */
+			  sum(isnull(a.plan_out_qty,0)) real_plan_out_qty,                                            /*출고예정 */
+			  sum(isnull(a.plan_make_qty,0)) real_plan_make_qty,                                     /*생산예정 */
+			  sum(isnull(a.etc_qty,0)) real_etc_qty,                                                                 /*기타출고 (제품폐기, 기타출고유형 추가 )*/
+			  sum(
+						isnull(a.before_qty,0) +                                                                                    /* 당일재고 = 전일재고 + 입고+가입고+반품-출고-생산투입-기타 */
+						isnull(a.make_qty,0) +
+						isnull(a.intemp_qty,0) -
+						isnull(a.ship_qty,0) -
+						isnull(a.jaje_qty,0) +
+						isnull(a.ret_qty,0)  -
+						isnull(a.etc_qty,0) 
+							) real_stock_qty,
+				' ' note
+				from 
+				(                              
+
+		select   loc_no,
+                  					  /* convert(datetime, substring(stock_date,1,4)+'-'+substring(stock_date,5,2)+'-'+substring(stock_date,7,4)+ ' 00:00') stock_date,*/
+								  dateadd(day, 1, stock_date ) stock_date,
+								  item_no,
+								  qa,
+								  isnull(stock_qty,0) before_qty,
+								  make_qty = 0,
+								  ship_qty = 0,
+								  JAJE_QTY = 0,
+								  ret_qty =0,
+								  etc_qty =0,
+								  intemp_qty = 0,
+								  plan_out_qty =0,
+								  plan_make_qty = 0
+						 from item_stock
+						 where stock_date   between  convert(char(10), dateadd(day, -1, convert(datetime, substring(:as_date,1,6)+'01') ),112) and convert(char(10), dateadd(day, -1, convert(datetime, :as_date) ),112)
+			                    AND loc_no  = :as_locno
+                          AND ITEM_NO = :as_item_no
+                          AND QA = :as_qa
+
+							 union all                                           
+
+						  SELECT  loc_no     = s.loc_no		
+									  , batchdate  = s.sfc_date
+									  , item_no    = s.assembly
+									  , qa         = s.assembly_qa
+									  , before_qty = 0 
+									  , make_qty   = sum(s.make_qty)
+									  , ship_qty   = 0
+								  	  , JAJE_QTY = 0
+									  , ret_qty    = 0
+									  , etc_qty    = 0
+									  , intemp_qty = 0
+									  , plan_out_qty = 0
+									  , plan_make_qty = 0
+						  FROM sfcday S WITH (NOLOCK)
+								 LEFT OUTER JOIN wc  W WITH (NOLOCK) ON s.wc_no   = w.work_no
+						 WHERE  s.sfc_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+			                       AND s.loc_no  = :as_locno
+                             AND s.assembly = :as_item_no
+                             AND s.assembly_qa = :as_qa
+						 group by s.loc_no,  s.sfc_date, s.assembly, s.assembly_qa
+								 union all
+							select   s.loc_no
+                          , batchdate  = s.use_date
+          								, s.item_no
+          								, s.qa
+          								, before_qty = 0 
+          								, make_qty = 0
+          								, ship_qty = 0
+          						  	     , JAJE_QTY = sum(s.use_qty)
+          								, ret_qty = 0
+          								, etc_qty = 0             
+          								, intemp_qty = 0        
+          								, plan_out_qty = 0
+          								, plan_make_qty = 0
+          							from sfcuse S WITH (NOLOCK)
+          							  LEFT OUTER JOIN wc  W WITH (NOLOCK) ON s.wc_no   = w.work_no
+          							where s.use_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+                			                 AND s.loc_no  = :as_locno
+                                       AND s.ITEM_NO = :as_item_no
+                                       AND s.qa = :as_qa
+          						group by s.loc_no
+							     , s.use_date
+								  , s.item_no
+								  , s.qa
+						/*2018.06.14 jowonsuk 추가 */
+									union all
+								 SELECT distinct
+											coilmst.loc_no      
+											, coilsfcday.sfc_date                     
+											  , coilmst.item_no                       
+											 , coilmst.qa         
+											, before_qty = 0 
+											, make_qty = 0
+											, ship_qty = 0
+											, JAJE_QTY = (isnull(coilmst.unit_qty,0)*isnull(coilorderdet.cnt,0))
+											, ret_qty = 0
+											, etc_qty = 0             
+											, intemp_qty = 0        
+											, plan_out_qty = 0
+											, plan_make_qty = 0		
+									 FROM coilsfcday with(nolock) inner join coilmst with(nolock)   on coilsfcday.w_coil_no      = coilmst.coil_no and coilsfcday.wloc_no        = coilmst.loc_no
+																										  inner join coilorderdet with(nolock) on coilsfcday.order_no       = coilorderdet.order_no
+									WHERE ( ( convert(char(10),coilsfcday.sfc_date, 112) = :as_date ) )   
+											  AND coilmst.loc_no  LIKE :as_locno
+											 AND coilmst.item_no = :as_item_no
+											 AND  coilmst.qa = :as_qa
+										  /*2018.06.14 jowonsuk 추가 */
+										  union all
+									  SELECT 
+										coilsfcday.loc_no   
+										, coilsfcday.sfc_date                        
+									 , coilsfcday.item_no                       
+										 , coilsfcday.qa         
+											, before_qty = 0 
+													, make_qty = sum(coilsfcday.unit_qty*coilsfcday.cnt)
+													, ship_qty = 0
+													  , JAJE_QTY = 0
+													, ret_qty = 0
+													, etc_qty = 0             
+													, intemp_qty = 0        
+													, plan_out_qty = 0
+													, plan_make_qty = 0					    
+								 FROM coilsfcday with(nolock) inner join coilmst with(nolock)   on coilsfcday.w_coil_no      = coilmst.coil_no and coilsfcday.wloc_no        = coilmst.loc_no
+								WHERE ( ( convert(char(10),coilsfcday.sfc_date, 112) = :as_date ) )   
+										  AND coilsfcday.loc_no  LIKE :as_locno
+										  AND coilsfcday.item_no = :as_item_no
+										  AND  coilsfcday.qa = :as_qa
+								  group by    coilsfcday.loc_no           
+												, coilsfcday.sfc_date                
+												 , coilsfcday.item_no                       
+												 , coilsfcday.qa  
+								 union all
+						select 
+								 loc_no
+							  , rcpt_date
+							  , item_no
+							  , qa
+							  , before_qty = 0 
+							  , make_qty   = sum(isnull(rcpt_qty,0)) 
+							  , ship_qty   = 0
+							  , JAJE_QTY = 0
+							  , ret_qty    = 0
+							  , etc_qty    = 0
+							  , intemp_qty = 0
+							  , plan_out_qty = 0
+							  , plan_make_qty = 0
+						from coilmst
+						WHERE CONVERT(CHAR(10), RCPT_DATE , 112) = :as_date
+		                    AND loc_no  = :as_locno
+                               AND ITEM_NO = :as_item_no
+                               AND QA = :as_qa
+						and ( rem like '%잔량%' AND rem like '%입고%' )
+						group by   item_no,
+									  qa,
+									  loc_no,
+                                                 rcpt_date
+								  union all
+						 SELECT loc_no  = d.loc_no
+									, batchdate  = h.insp_date
+									, d.item_no
+									, qa         = d.qa     
+									, before_qty = 0
+									, make_qty   = sum(isnull(d.rcpt_qty, 0))
+									, ship_qty   = 0
+								     , JAJE_QTY = 0
+									, ret_qty    = 0
+									, etc_qty    = 0
+									, intemp_qty = 0
+									, plan_out_qty = 0
+									, plan_make_qty = 0
+							FROM inspdet D WITH (NOLOCK)
+								  inner JOIN insp  H WITH (NOLOCK) ON d.insp_no = h.insp_no
+						  WHERE  h.insp_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )   			
+/*                WHERE  convert(char(10),h.insp_date, 112)  between substring(  :as_date,1,6)+'01' and :as_date									                                                            */
+			                        AND d.loc_no  = :as_locno
+                               AND d.ITEM_NO = :as_item_no
+                               AND d.QA = :as_qa
+						  group by d.loc_no,  h.insp_date, d.item_no, d.qa																															 
+								   union all	
+						 SELECT loc_no     = a.loc_no		
+/*							  , batchdate    = b.do_date*/ /*수정 jowonsuk */
+							  , batchdate    = b.issue_date
+							  , a.item_no
+							  , qa         = a.qa      
+							  , BEFORE_QTY = 0
+							  , MAKE_QTY = 0
+							  , ship_qty   = sum(isnull(a.ship_qty,0))
+						       , JAJE_QTY = 0
+							  , ret_qty    = 0
+							  , etc_qty    = 0
+							  , intemp_qty = 0           
+							  , plan_out_qty = 0
+							  , plan_make_qty = 0
+						  FROM dodet  A with(nolock)
+								 inner JOIN do  B WITH (NOLOCK) ON a.do_no   = b.do_no                                                                                                                                  
+						 WHERE  a.loc_no  = :as_locno
+            							   AND a.ship_qty > 0     /* 반품정리시 -수량 발생함 */
+                              AND a.ITEM_NO = :as_item_no
+                              AND a.QA = :as_qa
+							/*   AND b.ewol    <> 'Y' */  /* 송장이월 SKIP  JOWONSUK 2018.06.13 주석처리 */
+                             AND b.issue_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )                                    
+            group by a.loc_no, b.issue_date, a.item_no, a.qa
+							union all																	
+						 SELECT loc_no     = d.src_loc
+								, batchdate = d.alter_date
+								, d.src_item item_no
+								, qa         = d.src_qa   
+								, before_qty = 0
+								, make_qty = 0
+								, ship_qty = sum( isnull(d.src_qty, 0))
+							     , JAJE_QTY = 0
+								, ret_qty   = 0   
+								, etc_qty  = 0
+								, intemp_qty = 0              
+								, plan_out_qty = 0
+								, plan_make_qty = 0
+							FROM itemalter D WITH (NOLOCK)
+						  WHERE d.alter_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )           
+		 	                        AND d.src_loc  = :as_locno
+                               AND d.src_item = :as_item_no
+                               AND d.src_qa = :as_qa
+							                AND d.issue_flag  = 'Y'
+ 						  group by d.src_loc, d.alter_date, d.src_item, d.src_qa                                                                         
+							 union all
+						SELECT loc_no      = d.tar_loc
+										  , batchdate  = d.alter_date
+								  , item_no    = d.tar_item
+								  , qa          = d.tar_qa   
+								  , before_qty = 0
+								  , make_qty = sum(isnull(d.tar_qty, 0))
+								  , ship_qty    = 0
+							       , JAJE_QTY = 0
+								  , ret_qty   = 0
+								  , etc_qty   = 0
+								  , intemp_qty = 0                               
+								  , plan_out_qty = 0
+								  , plan_make_qty = 0
+						  FROM itemalter D WITH (NOLOCK)
+					    WHERE d.alter_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+                   	                AND d.tar_loc  = :as_locno
+                                     AND d.tar_item = :as_item_no
+                                     AND d.tar_qa = :as_qa
+               group by d.tar_loc, d.alter_date, d.tar_item, d.tar_qa
+							union all																														 
+						  SELECT loc_no     = a.loc_no   
+									 , batchdate  = a.rlse_date
+									 , a.item_no
+									 , qa         = a.qa   
+									 , before_qty = 0
+									 , make_qty = 0
+									 , ship_qty = sum(isnull(a.rlse_qty,0)) 
+  							            , JAJE_QTY = 0
+									 , ret_qty   = 0   
+									 , etc_qty  = 0
+									 , intemp_qty = 0                          
+									 , plan_out_qty = 0
+									 , plan_make_qty = 0
+								 FROM ask_det A WITH (NOLOCK)
+										LEFT OUTER JOIN ask_head B WITH (NOLOCK) ON a.ask_no = b.ask_no
+								WHERE a.rlse_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+			                                 AND a.loc_no  = :as_locno
+                                        AND a.ITEM_NO = :as_item_no
+                                        AND a.QA = :as_qa
+							group by a.loc_no,  a.rlse_date,  a.item_no, a.qa																														 
+							 union all														 
+						  SELECT  loc_no     = b.ask_loc   
+									 , a.rlse_date BATCHDATE
+									 , a.item_no
+									 , qa         = a.qa   
+									 , before_qty = 0
+									 , make_qty = sum(isnull(a.rlse_qty,0))
+									 , ship_qty = 0
+							     , JAJE_QTY = 0
+									 , ret_qty   =  0
+									 , etc_qty  = 0
+									 , intemp_qty = 0       
+									 , plan_out_qty = 0
+									 , plan_make_qty = 0
+							 FROM ask_det A WITH (NOLOCK)
+								LEFT OUTER JOIN ask_head B ON a.ask_no = b.ask_no
+							WHERE a.rlse_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+			                           AND b.ask_loc  = :as_locno
+								 AND a.ITEM_NO = :as_item_no
+								 AND a.QA = :as_qa
+							group by b.ask_loc, a.rlse_date, a.item_no,  a.qa                                  
+							union all
+							SELECT loc_no     = b.src_loc                                                            
+									 , batchdate  = b.move_date
+									 , a.item_no
+									 , qa         = a.qa             
+									 , before_qty = 0
+									 , make_qty = 0
+									 , ship_qty = sum( case when substring(a.item_no,4,1) = '1' then (isnull(a.move_qty*a.cnt,0)) else (isnull(a.cnt,0))  end )
+							            , JAJE_QTY = 0
+									 , ret_qty   = 0                                                 
+									 , etc_qty  = 0
+									 , intemp_qty = 0       
+									 , plan_out_qty = 0
+									 , plan_make_qty = 0
+								 FROM itemmovedet A WITH (NOLOCK)  
+				LEFT OUTER JOIN itemmove B WITH (NOLOCK) ON a.move_no = b.move_no
+							WHERE b.move_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+				 				 AND b.src_loc  = :as_locno
+                   					   and a.item_no = :as_item_no
+                   					  AND a.QA = :as_qa
+							  group by b.src_loc, b.move_date, a.item_no,a.qa                                         
+								union all
+				 		   SELECT  b.tar_loc   LOC_NO
+									 , batchdate  = b.move_date
+									 , a.item_no
+									 , qa         = a.qa      
+									 , before_qty = 0
+									 , make_qty = sum( case when substring(a.item_no,4,1) = '1' then (isnull(a.move_qty*a.cnt,0)) else (isnull(a.cnt,0))  end )
+									 , ship_qty = 0
+							    		 , JAJE_QTY = 0
+									 , ret_qty   = 0
+									 , etc_qty  = 0           
+									 , intemp_qty = 0
+									 , plan_out_qty = 0
+									 , plan_make_qty = 0
+								 FROM itemmovedet A WITH (NOLOCK)                 
+								 LEFT OUTER JOIN itemmove B ON a.move_no = b.move_no              
+								WHERE  b.move_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )
+							           AND b.tar_loc  = :as_locno
+									 and   a.ITEM_NO = :as_item_no
+									 and   a.QA = :as_qa
+								group by b.tar_loc,  b.move_date,  a.item_no, a.qa        
+								 union all
+							SELECT loc_no
+            			 , intemp_date
+									 , item_no
+									 , qa
+									 , before_qty = 0
+									 , make_qty = 0
+									 , ship_qty = 0
+							     		 , JAJE_QTY = 0
+									 , ret_qty   = 0
+									 , etc_qty  = 0                                                                                               
+									 , intemp_qty = sum(isnull(qty ,0))
+									 , plan_out_qty = 0
+									 , plan_make_qty = 0
+							  FROM INTEMP WITH(NOLOCK)
+							  WHERE intemp_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )		
+								  AND loc_no = :as_locno
+                  AND ITEM_NO = :as_item_no
+                  AND QA = :as_qa
+							  group by  loc_no, intemp_date,  item_no, qa
+							  union all
+							  select   a.loc_no
+									  , batchdate  =b.ret_date
+									  , a.item_no
+									  , a.qa
+									  , before_qty = 0
+									  , make_qty = 0
+									  , ship_qty = 0
+							      	  , JAJE_QTY = 0
+									  , ret_qty   = sum(isnull(a.ret_qty,0))
+									  , etc_qty  = 0                                                                                               
+									  , intemp_qty = 0
+									  , plan_out_qty = 0
+									  , plan_make_qty = 0
+							  FROM retdet a inner join ret b on a.ret_no = b.ret_no
+							  where b.ret_date BETWEEN convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )		
+				 			    AND a.loc_no = :as_locno
+                   AND a.ITEM_NO = :as_item_no
+                   AND a.QA = :as_qa
+							  group by a.loc_no,  b.ret_date, a.item_no, a.qa
+							  union all
+							  select   loc_no
+						          , batchdate  = ret_date
+									  , item_no
+									  , qa
+									  , before_qty = 0
+									  , make_qty = sum(isnull(ret_qty,0)) 
+									  , ship_qty = 0
+							     		  , JAJE_QTY = 0
+									  , ret_qty = 0
+									  , etc_qty = 0                           
+									  , intemp_qty = 0
+									  , plan_out_qty = 0
+									  , plan_make_qty = 0
+								from sfcret WITH(NOLOCK)
+                     where ret_date between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )  	
+							      AND LOC_NO = :as_locno
+                     AND ITEM_NO = :as_item_no
+                     AND QA = :as_qa
+							group by loc_no,   ret_date,  item_no, qa
+/*
+							union all
+							 SELECT loc_no         = isnull( l.loc_no, (  case when a.accept_area = 'B0001'    then 'WS00000006'
+																						  when a.accept_area = 'H0001'    then 'WS00000007'
+																						  when a.accept_area = 'S0001'    then 'WS00000000'
+																						  when a.accept_area = 'T0001'    then 'WS00000008'
+																						  when a.accept_area = 'Z0001'    then 'WS00000011'
+																						  else 'WS99999999'
+																				  end
+																				)
+																 )	
+								            , batchdate   = a.req_date
+										, c.item_no
+										, qa             = c.qa
+										, before_qty = 0 
+										, make_qty   = 0
+										, ship_qty   = 0
+							       		, JAJE_QTY = 0
+										, ret_qty    = 0
+										, etc_qty    = 0
+										, intemp_qty = 0
+										, PLAN_OUT_qty      = ISNULL(c.issue_qty,0)
+										, plan_make_qty = 0
+								 FROM issuereq   A WITH (NOLOCK)
+								  LEFT OUTER JOIN issuereqdet   B WITH (NOLOCK)
+									 ON a.req_date  = b.req_date AND a.salesman = b.salesman AND a.req_seq = b.req_seq
+								  LEFT OUTER JOIN saledet  C WITH (NOLOCK) ON b.sale_no = c.order_no
+								  LEFT OUTER JOIN location L WITH (NOLOCK) ON a.accept_user = l.loc_manager
+							  	WHERE ( a.req_date  between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )  			 )
+									 AND isnull( l.loc_no, (  case when a.accept_area = 'B0001'    then 'WS00000006'
+																															  when a.accept_area = 'H0001'    then 'WS00000007'
+																															  when a.accept_area = 'S0001'    then 'WS00000000'
+																															  when a.accept_area = 'T0001'    then 'WS00000008'
+																															  when a.accept_area = 'Z0001'    then 'WS00000011'
+																															  else 'WS99999999'
+																													  end
+																													)
+																									 )	= :as_locno
+									 AND ( c.ITEM_NO = :as_item_no )
+          							         AND ( c.qa = :as_qa ) 
+									 AND ( b.req_flag    = 'A'              ) /* 출고의뢰 */
+									 AND ( a.confirm_flag= 'Y'              ) /* 확정     */											 
+									 UNION ALL
+								 /* 수주출고예정 */
+								 SELECT  ISNULL( l.loc_no,     ( case when a.area_no = 'B0001'    then 'WS00000006'
+																				 when a.area_no = 'H0001'    then 'WS00000007'
+																				 when a.area_no = 'S0001'    then 'WS00000000'
+																				 when a.area_no = 'T0001'    then 'WS00000008'
+																				 when a.area_no = 'Z0001'    then 'WS00000011'
+																				 else 'WS99999999'
+																				end )
+												)  loc
+							         , batchdate   = a.order_date
+											, b.item_no
+											, qa             = b.qa
+											, before_qty = 0 
+											, make_qty   = 0
+											, ship_qty   = 0
+  							     		           , JAJE_QTY = 0
+											, ret_qty    = 0
+											, etc_qty    = 0
+											, intemp_qty = 0
+											, plan_out_qty      = isnull(b.order_qty,0) - isnull(b.rlse_qty,0)
+											, plan_make_qty = 0
+									FROM sale   A WITH (NOLOCK)
+										  LEFT OUTER JOIN saledet  B WITH (NOLOCK) ON a.order_no = b.order_no
+										  LEFT OUTER JOIN location L WITH (NOLOCK) ON a.org_user = l.loc_manager
+								  WHERE ( a.order_date between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )  	 )
+									  AND  ISNULL( l.loc_no,     ( case when a.area_no = 'B0001'    then 'WS00000006'
+																								 when a.area_no = 'H0001'    then 'WS00000007'
+																								 when a.area_no = 'S0001'    then 'WS00000000'
+																								 when a.area_no = 'T0001'    then 'WS00000008'
+																								 when a.area_no = 'Z0001'    then 'WS00000011'
+																								 else 'WS99999999'
+																								end )
+																) = :as_locno
+									 AND (  b.ITEM_NO = :as_item_no        )
+                 						  AND (  b.QA = :as_qa )
+									 AND ( a.do_reserved = 'Y'              ) /* 출고예정 */
+*/
+									UNION ALL
+									/* 물품요청예정 */
+									SELECT loc_no   = ask_det.loc_no         
+							           			, batchdate   = ask_head.ask_date
+												  , ask_det.item_no
+												, qa       = ask_det.qa             
+												, before_qty = 0 
+												, make_qty   = 0
+												, ship_qty   = 0
+							     		 			, JAJE_QTY = 0
+												, ret_qty    = 0
+												, etc_qty    = 0
+												, intemp_qty = 0                                                    
+												, plan_out_qty  = isnull(ask_det.ask_qty,0)  - isnull(ask_det.rlse_qty,0)
+												, plan_make_qty = 0
+										  FROM ask_det   WITH (NOLOCK)  
+												 LEFT OUTER JOIN ask_head  WITH (NOLOCK) ON ask_det.ask_no = ask_head.ask_no
+										 WHERE ( ask_head.ask_date between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )  			 )
+											 AND ( ask_det.loc_no = :as_locno )
+                       and  ( ask_det.item_no = :as_item_no )
+                       AND ( ask_det.qa = :as_qa )
+											AND ( ask_head.proc_flag <> 'Y' )  /* 완료(Y), 부분(P), 요청(N) */ 
+											AND ( ask_det.rlse_flag   = 'N'  ) /* 완료(Y), 진행(N) */
+											AND ( ask_det.loc_no = (case when ask_head.f_area = 'T0001' then 'WS00000008' 
+																																	 when ask_head.f_area = 'S0001' then 'WS00000000' 
+																				  else  'WS99999999' 
+																			end)
+													 ) 
+										union all								
+										 SELECT   a.LOC_NO
+											            , b.aban_date
+													  , a.ITEM_NO
+													  , a.QA
+													  , before_qty = 0 
+													  , make_qty   = 0
+													  , ship_qty   = 0
+							     		 				  , JAJE_QTY = 0
+													  , ret_qty    = 0
+													  , etc_qty    = sum(ISNULL(a.QTY,0))
+													  , intemp_qty = 0
+													  , plan_out_qty  = 0
+													  , plan_make_qty = 0
+										 FROM itemabandet a with(nolock) inner join itemaban b with(nolock) on a.aban_no = b.aban_no
+										 WHERE b.aban_date between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )  
+											  AND a.LOC_NO = :as_locno
+                         AND a.ITEM_NO = :as_item_no
+                         AND a.QA = :as_qa
+						                     group by a.loc_no, b.aban_date, a.item_no, a.qa
+										union all
+										select     loc_no
+                     								  , etcout_date
+												  , item_no
+												  , qa
+												  , before_qty = 0 
+												  , make_qty   = 0
+												  , ship_qty   = 0
+										     		 , JAJE_QTY = 0
+												  , ret_qty    = 0
+												  , etc_qty    = sum(ISNULL(QTY,0))
+												  , intemp_qty = 0
+												  , plan_out_qty  = 0
+												  , plan_make_qty = 0    
+										from etcout with(nolock)
+ 										     where etcout_date between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )  
+											  AND LOC_NO = :as_locno
+											 AND ITEM_NO = :as_item_no
+											 AND QA = :as_qa
+											 and etc_kind <= '50'
+						           group by loc_no, etcout_date, item_no, qa
+										union all
+										select     loc_no
+                     								  , etcout_date
+												  , item_no
+												  , qa
+												  , before_qty = 0 
+												  , make_qty   = sum(ISNULL(QTY,0))
+												  , ship_qty   = 0
+										     		 , JAJE_QTY = 0
+												  , ret_qty    = 0
+												  , etc_qty    = 0
+												  , intemp_qty = 0
+												  , plan_out_qty  = 0
+												  , plan_make_qty = 0    
+										from etcout with(nolock)
+ 										     where etcout_date between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )  
+											  AND LOC_NO = :as_locno
+											 AND ITEM_NO = :as_item_no
+											 AND QA = :as_qa
+											 and etc_kind >= '51'
+						           group by loc_no, etcout_date, item_no, qa
+								 /*                
+															  and     b.process_flag   = 'Y'
+															  and     ( ( case when ( b.approve_team is null ) or (b.approve_team = '') then 'N' else 'Y' end ) ) = 'Y'
+								 */
+/*								 
+										 UNION ALL
+
+ 		      			SELECT    C.DEF_LOC
+                                    		  , D.WORK_date
+								  ,  A.ITEM_NO 
+								  ,  A.QA
+								  ,  before_qty = 0 
+								  , make_qty   = 0
+								  , ship_qty   = 0
+								, JAJE_QTY = 0
+								  , ret_qty    = 0
+								  , etc_qty    = 0
+								  , intemp_qty = 0
+								  , plan_out_qty  = 0                                                                                   
+								  , PLAN_MAKE_QTY = SUM(ISNULL(D.plan_qty,0))
+								FROM MPSDET A with(nolock) INNER JOIN mps B with(nolock) ON A.order_no = B.ORDER_NO
+																					  INNER JOIN WC C with(nolock) ON A.WC_NO = C.WORK_NO							
+														  INNER JOIN routtempnew D with(nolock) ON D.division        = A.division AND
+																																	 D.sale_no         = A.sale_no AND
+																																	 D.seq_no          = A.seq_no AND
+																																	 D.wc_no           = A.wc_no AND
+																																	 D.assy_item       = A.item_no AND
+																																	 D.assy_qa         = A.qa
+					 where D.WORK_date between convert(datetime,  substring(:as_date,1,6) + '01 00:00:00' ) and convert(datetime,  :as_date + ' 23:59:59' )      
+						 AND A.DUE_date between convert(datetime,  convert(char(8), dateadd(day, -60, convert(datetime, :as_date) ), 112) + ' 23:59:59' ) and convert(datetime,  convert(char(8), dateadd(day, +60, convert(datetime, :as_date) ), 112) + ' 23:59:59' ) 
+						 AND C.DEF_LOC = :as_locno
+                                 AND A.ITEM_NO = :as_item_no
+                                 AND A.QA = :as_qa
+          										GROUP BY C.DEF_LOC, 
+                                        D.WORK_date,
+          														 A.ITEM_NO, 
+          														 A.QA                          
+*/     
+
+				) a inner  join groupitem  b on a.item_no = b.item_no
+					inner  join location e on a.loc_no = e.loc_no
+					inner join code1 f on b.p1 = f.code
+					where b.p1 like :as_gubun
+               AND a.item_no = :as_item_no
+               AND a.qa = :as_qa
+					group by  a.loc_no,
+				                   e.loc_name,
+                           convert(CHAR(10), a.stock_date, 121),
+            							 a.item_no,
+            							 a.qa,
+            							 b.item_name,
+            							 f.code_name
+/*        ORDER BY convert( CHAR(10), a.stock_date, 121 ) ASC                           */
+
+" arguments=(("as_gubun", string),("as_locno", string),("as_date", string),("as_item_no", string),("as_qa", string))  sort="loc_no A item_name A item_no A qa A stock_date A " )
+text(band=header alignment="2" text="발생일자" border="6" color="0" x="9" y="8" height="72" width="370" html.valueishtml="0"  name=stock_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전일재고량" border="6" color="33554432" x="389" y="8" height="72" width="407" html.valueishtml="0"  name=real_before_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="재고량" border="6" color="33554432" x="805" y="8" height="72" width="402" html.valueishtml="0"  name=real_stock_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산/입고량" border="6" color="33554432" x="1216" y="8" height="72" width="407" html.valueishtml="0"  name=real_in_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가입고" border="6" color="33554432" x="1632" y="8" height="72" width="407" html.valueishtml="0"  name=real_intemp_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="반품" border="6" color="33554432" x="2048" y="8" height="72" width="411" html.valueishtml="0"  name=real_ret_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고량" border="6" color="33554432" x="2469" y="8" height="72" width="402" html.valueishtml="0"  name=real_out_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="자재투입" border="6" color="0" x="2880" y="8" height="72" width="398" html.valueishtml="0"  name=real_jaje_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="기타출고" border="6" color="33554432" x="3287" y="8" height="72" width="402" html.valueishtml="0"  name=real_etc_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="80" width="370" format="[general]" html.valueishtml="0"  name=stock_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+compute(band=detail alignment="1" expression="/*sum_stock_qty - real_in_qty - real_intemp_qty - real_ret_qty + real_out_qty + real_jaje_qty*/ real_before_qty"border="0" color="33554432" x="389" y="4" height="80" width="407" format="#,##0" html.valueishtml="0"  name=pre_stock_qty  tag="" visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+compute(band=detail alignment="1" expression="/*cumulativeSum( real_stock_qty for all )*/ real_stock_qty"border="0" color="33554432" x="805" y="4" height="80" width="402" format="#,##0" html.valueishtml="0"  name=sum_stock_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="3287" y="4" height="80" width="402" format="#,##0" html.valueishtml="0"  name=real_etc_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="2880" y="4" height="80" width="398" format="#,##0" html.valueishtml="0"  name=real_jaje_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="2469" y="4" height="80" width="402" format="#,##0" html.valueishtml="0"  name=real_out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="2048" y="4" height="80" width="411" format="#,##0" html.valueishtml="0"  name=real_ret_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="1632" y="4" height="80" width="407" format="#,##0" html.valueishtml="0"  name=real_intemp_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="1216" y="4" height="80" width="407" format="#,##0" html.valueishtml="0"  name=real_in_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255,255,255) )" )
+compute(band=footer alignment="1" expression="last_stock_qty - sum( real_in_qty for all) - sum( real_intemp_qty for all) - sum( real_ret_qty for all) + sum( real_out_qty  for all) + sum( real_jaje_qty for all)"border="0" color="33554432" x="389" y="4" height="72" width="407" format="#,##0" html.valueishtml="0"  name=first_pre_stock_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(real_stock_qty for all)"border="0" color="33554432" x="805" y="4" height="72" width="402" format="#,##0" html.valueishtml="0"  name=last_stock_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(real_in_qty for all)"border="0" color="33554432" x="1216" y="4" height="72" width="407" format="#,##0" html.valueishtml="0"  name=compute_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(real_intemp_qty for all)"border="0" color="33554432" x="1632" y="4" height="72" width="407" format="#,##0" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(real_ret_qty for all)"border="0" color="33554432" x="2048" y="4" height="72" width="411" format="#,##0" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(real_out_qty for all)"border="0" color="33554432" x="2469" y="4" height="72" width="402" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(real_jaje_qty for all)"border="0" color="33554432" x="2880" y="4" height="72" width="398" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(real_etc_qty for all)"border="0" color="33554432" x="3287" y="4" height="72" width="402" format="#,##0" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

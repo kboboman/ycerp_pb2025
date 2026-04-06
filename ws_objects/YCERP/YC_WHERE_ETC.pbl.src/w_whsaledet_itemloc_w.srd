@@ -1,0 +1,63 @@
+﻿$PBExportHeader$w_whsaledet_itemloc_w.srd
+$PBExportComments$저장소현재고 DropDownDataWindow(1998/02/06 - 김구현)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=68 color="8421504" )
+detail(height=72 color="553648127" )
+table(column=(type=char(10) updatewhereclause=yes name=loc_no dbname="itemloc.loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ column=(type=char(20) updatewhereclause=yes name=itemloc_qa dbname="itemloc.qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=qoh dbname="itemloc.qoh" initial=" " )
+ column=(type=decimal(2) updatewhereclause=yes name=notsale dbname="notsale" )
+ retrieve="  SELECT itemloc.loc_no
+       , location.loc_name
+       , itemloc.qa
+       , itemloc.qoh
+       , notsale = isnull(sum(csaledet.order_qty), 0) + isnull(sum(crout.order_qty), 0)
+    FROM itemloc,   
+         location,  
+			(select order_qty = sum( saledet.order_qty  -  saledet.rlse_qty )
+			   from saledet, sale
+			  WHERE saledet.order_qty > saledet.rlse_qty
+				 and sale.order_no     = saledet.order_no
+				 and sale.open_close   = 'O'
+				 and saledet.item_no   = :as_item 
+				 and saledet.qa        = :as_qa
+				 and order_date       >= DATEADD(month, -2, convert(smalldatetime, getdate(), 111))
+			) csaledet,
+
+			(select order_qty = sum( saledet.order_qty  -  saledet.rlse_qty )
+			   from sale, saledet, rout
+			  WHERE saledet.item_no   = :as_item 
+				 and saledet.qa        = :as_qa
+				 and saledet.order_qty > saledet.rlse_qty
+				 and sale.order_no     = saledet.order_no
+				 and sale.open_close   = 'O'
+				 and order_date       >= DATEADD(month, -2, convert(smalldatetime, getdate(), 111))
+				 and rout.item_no      = saledet.item_no
+				 and rout.qa           = saledet.qa
+				 and rout.item_no     <> rout.assembly
+			) crout
+   WHERE ( itemloc.loc_no          = location.loc_no ) 
+     and ( ( itemloc.item_no       = :as_item ) and 
+           ( itemloc.qa            = :as_qa   ) and
+           ( itemloc.qoh          >= 0        ) 
+         )    
+   group by itemloc.loc_no, itemloc.qa, location.loc_name, itemloc.qoh
+   order by location.loc_name, itemloc.qa
+" arguments=(("as_item", string),("as_qa", string))  sort="location_loc_name A " )
+text(band=header alignment="2" text="저장소명" border="6" color="0" x="14" y="12" height="60" width="571" html.valueishtml="0"  name=location_loc_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79220952" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="599" y="12" height="60" width="690" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79220952" )
+text(band=header alignment="2" text="현재고량" border="6" color="0" x="1303" y="12" height="60" width="421" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79220952" )
+text(band=header alignment="2" text="수주잔량" border="6" color="0" x="1737" y="12" height="60" width="421" html.valueishtml="0"  name=itemloc_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79220952" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="4" color="0" x="14" y="4" height="60" width="571" format="[general]" html.valueishtml="0"  name=location_loc_name  tag="저장소명" visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="4" color="0" x="599" y="4" height="60" width="690" format="[general]" html.valueishtml="0"  name=itemloc_qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="4" color="0" x="1303" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="4" color="0" x="1737" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=notsale visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression="count(  location_loc_name for all )"border="0" color="0" x="14" y="4" height="60" width="571" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( qoh for all )"border="0" color="0" x="1303" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="notsale")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

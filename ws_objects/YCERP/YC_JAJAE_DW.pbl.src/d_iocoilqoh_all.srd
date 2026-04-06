@@ -1,0 +1,341 @@
+﻿$PBExportHeader$d_iocoilqoh_all.srd
+$PBExportComments$코일재고현황 DATA
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="12639424" )
+detail(height=72 color="536870912" )
+table(column=(type=char(6) updatewhereclause=yes name=gubun dbname="gubun" )
+ column=(type=char(1) updatewhereclause=yes name=gb dbname="gb" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=long updatewhereclause=yes name=total_qty dbname="total_qty" )
+ column=(type=long updatewhereclause=yes name=q_cnt_1 dbname="q_cnt_1" )
+ column=(type=long updatewhereclause=yes name=q_cnt_2 dbname="q_cnt_2" )
+ column=(type=long updatewhereclause=yes name=q_cnt_3 dbname="q_cnt_3" )
+ column=(type=long updatewhereclause=yes name=q_cnt_4 dbname="q_cnt_4" )
+ column=(type=char(10) updatewhereclause=yes name=rcpt_date dbname="rcpt_date" )
+ column=(type=char(20) updatewhereclause=yes name=coil_no dbname="coil_no" )
+ column=(type=char(10) updatewhereclause=yes name=loc_no dbname="loc_no" )
+ column=(type=char(30) updatewhereclause=yes name=loc_name dbname="loc_name" )
+ column=(type=char(10) updatewhereclause=yes name=supp_no dbname="supp_no" )
+ column=(type=char(30) updatewhereclause=yes name=supp_name dbname="supp_name" )
+ column=(type=long updatewhereclause=yes name=unit_qty dbname="unit_qty" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="cnt" )
+ column=(type=long updatewhereclause=yes name=qcnt dbname="qcnt" )
+ column=(type=long updatewhereclause=yes name=rcpt_qty dbname="rcpt_qty" )
+ column=(type=char(6) updatewhereclause=yes name=flag dbname="flag" )
+ retrieve="SELECT gubun     = a.gubun    
+     , gb        = dbo.uf_getcoilsort(a.item_no) 
+     , item_no   = a.item_no  
+     , item_name = b.item_name
+     , qa        = a.qa       
+     , total_qty = (a.unit_qty * a.qcnt)
+     , q_cnt_1   = a.q_cnt_1  
+     , q_cnt_2   = a.q_cnt_2  
+     , q_cnt_3   = a.q_cnt_3  
+     , q_cnt_4   = a.q_cnt_4  
+     , rcpt_date = a.rcpt_date
+     , coil_no   = a.coil_no  
+     , loc_no    = a.loc_no   
+     , loc_name  = a.loc_name
+     , supp_no   = a.supp_no  
+     , supp_name = c.supp_name
+     , unit_qty  = a.unit_qty 
+     , cnt       = a.cnt      
+     , qcnt      = a.qcnt     
+     , rcpt_qty  = a.rcpt_qty 
+     , flag      = (case when a.flag = 'W' then '원코일' else '스리팅' end)
+  FROM (
+       SELECT gubun     = '1.시화'                               
+            , q_cnt_1   = (coilmst.unit_qty * coilmst.qcnt)           
+            , q_cnt_2   = 0                                           
+            , q_cnt_3   = 0                                           
+            , q_cnt_4   = 0                                           
+            , rcpt_date = convert(char(10), coilmst.rcpt_date, 111)   
+            , coil_no   = coilmst.coil_no                             
+            , loc_no    = coilmst.loc_no                              
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                             
+            , unit_qty  = coilmst.unit_qty                            
+            , length    = coilmst.length                              
+            , cnt       = coilmst.cnt                                 
+            , qcnt      = coilmst.qcnt                                
+            , rcpt_qty  = coilmst.rcpt_qty                            
+            , item_no   = coilmst.item_no                             
+            , qa        = coilmst.qa                                  
+            , flag      = coilmst.flag                                
+         FROM coilmst                                                 
+            , location
+        WHERE ( coilmst.loc_no  = location.loc_no  )                  
+          and ( convert(char(10), coilmst.rcpt_date, 111) <= :as_date )                                                        
+          and ( ( coilmst.loc_no     IN ( 'WS00000000', 'WW01', 'WW02', 'WW03') or ( location.loc_type  = 'W' ) ) AND  /* 'WS00000003', */
+                ( coilmst.flag        = 'W' ) AND                                    
+                ( coilmst.open_close <> 'C' ) AND                                    
+                ( substring(coilmst.item_no, 3, 1) IN ('S', 'A') )                   
+              )                                                                      
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no )
+                                                                                     
+       union all                                                                     
+                                                                                     
+       SELECT gubun     = '1.외주'                                              
+            , q_cnt_1   = 0                                                          
+            , q_cnt_2   = (coilmst.unit_qty * coilmst.qcnt)                          
+            , q_cnt_3   = 0                                                          
+            , q_cnt_4   = 0                                                          
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)                    
+            , coil_no   = coilmst.coil_no                                            
+            , loc_no    = coilmst.loc_no                                             
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                                            
+            , unit_qty  = coilmst.unit_qty                                           
+            , length    = coilmst.length                                             
+            , cnt       = coilmst.cnt                                                
+            , qcnt      = coilmst.qcnt                                               
+            , rcpt_qty  = coilmst.rcpt_qty                                           
+            , item_no   = coilmst.item_no                                            
+            , qa        = coilmst.qa                                                 
+            , flag      = coilmst.flag                                               
+         FROM coilmst                                                                
+            , location
+        WHERE ( coilmst.loc_no  = location.loc_no  )                  
+          and ( convert(char(10),coilmst.rcpt_date,111) <= :as_date )            
+          and ( ( coilmst.loc_no      = location.loc_no and location.loc_type = 'Y' ) and 
+                ( coilmst.loc_no     <> 'G0086' ) AND  /* 안산지점 */    
+                ( coilmst.flag        = 'W' ) AND                                    
+                ( coilmst.open_close <> 'C' ) AND                                    
+                ( substring(coilmst.item_no,3, 1) IN ('S', 'A') )                    
+              )                                                                      
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no )
+                                                                                     
+       union all                                                                     
+                                                                                     
+       SELECT gubun     = '1.시화'                                              
+            , q_cnt_1   = 0                                                          
+            , q_cnt_2   = 0                                                          
+            , q_cnt_3   = (coilmst.unit_qty * coilmst.qcnt)                          
+            , q_cnt_4   = 0                                                          
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)                    
+            , coil_no   = coilmst.coil_no                                            
+            , loc_no    = coilmst.loc_no                                             
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                                            
+            , unit_qty  = coilmst.unit_qty                                           
+            , length    = coilmst.length                                             
+            , cnt       = coilmst.cnt                                                
+            , qcnt      = coilmst.qcnt                                               
+            , rcpt_qty  = coilmst.rcpt_qty                                           
+            , item_no   = coilmst.item_no                                            
+            , qa        = coilmst.qa                                                 
+            , flag      = coilmst.flag                                               
+         FROM coilmst                                                                
+            , location
+        WHERE ( coilmst.loc_no  = location.loc_no  )                  
+          and ( convert(char(10),coilmst.rcpt_date,111) <= :as_date )                                                        
+          and ( ( coilmst.loc_no     IN ( 'WS00000000', 'WW01', 'WW02', 'WW03') or ( location.loc_type = 'W' ) ) AND  /* 'WS00000003', */
+                ( coilmst.flag        = 'S' ) AND                                    
+                ( coilmst.open_close <> 'C' ) AND                                    
+                ( substring(coilmst.item_no, 3, 1) in ('S', 'A') )                   
+              )                                                                      
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no) 
+                                                                                     
+       union all                                                                     
+                                                                                     
+       SELECT gubun     = '1.외주'                                              
+            , q_cnt_1   = 0                                                                
+            , q_cnt_2   = 0                                                                
+            , q_cnt_3   = 0                                                                
+            , q_cnt_4   = (coilmst.unit_qty * coilmst.qcnt)                                
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)                          
+            , coil_no   = coilmst.coil_no                                                  
+            , loc_no    = coilmst.loc_no                                                   
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                                                  
+            , unit_qty  = coilmst.unit_qty                                                 
+            , length    = coilmst.length                                                   
+            , cnt       = coilmst.cnt                                                      
+            , qcnt      = coilmst.qcnt                                                     
+            , rcpt_qty  = coilmst.rcpt_qty                                                 
+            , item_no   = coilmst.item_no                                                  
+            , qa        = coilmst.qa                                                       
+            , flag      = coilmst.flag                                                     
+         FROM coilmst                                                                
+            , location
+        WHERE ( coilmst.loc_no  = location.loc_no  )                  
+          and ( convert(char(10),coilmst.rcpt_date,111) <= :as_date )                  
+          and ( ( coilmst.loc_no      = location.loc_no and location.loc_type = 'Y' ) and  
+                ( coilmst.loc_no     <> 'G0086' ) AND  /* 안산지점 */    
+                ( coilmst.flag        = 'S' ) AND                                    
+                ( coilmst.open_close <> 'C' ) AND                                    
+                ( substring(coilmst.item_no,3,1) in ('S','A') )                            
+              )                                                                      
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no )
+
+       union all
+
+       SELECT gubun     = '2.YSP'                                              
+            , q_cnt_1   = (coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_2   = 0
+            , q_cnt_3   = 0
+            , q_cnt_4   = 0
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)                          
+            , coil_no   = coilmst.coil_no                                                  
+            , loc_no    = coilmst.loc_no                                                   
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                                                  
+            , unit_qty  = coilmst.unit_qty                                                 
+            , length    = coilmst.length                                                   
+            , cnt       = coilmst.cnt                                                      
+            , qcnt      = coilmst.qcnt                                                     
+            , rcpt_qty  = coilmst.rcpt_qty                                                 
+            , item_no   = coilmst.item_no                                                  
+            , qa        = coilmst.qa                                                       
+            , flag      = coilmst.flag                                                     
+         FROM coilmst
+            , location
+        WHERE ( coilmst.loc_no   = location.loc_no) 
+          and ( convert(char(10), coilmst.rcpt_date, 111) <= :as_date )                                                        
+          and ( ( coilmst.loc_no = 'WS00000006' or  coilmst.loc_no = 'WW04' ) AND  
+                ( coilmst.flag        = 'W' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) 
+              ) 
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no)
+     
+       union all
+     
+       SELECT gubun     = '2.YSP'                                              
+            , q_cnt_1   = 0
+            , q_cnt_2   = 0
+            , q_cnt_3   = (coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_4   = 0
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)                          
+            , coil_no   = coilmst.coil_no                                                  
+            , loc_no    = coilmst.loc_no                                                   
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                                                  
+            , unit_qty  = coilmst.unit_qty                                                 
+            , length    = coilmst.length                                                   
+            , cnt       = coilmst.cnt                                                      
+            , qcnt      = coilmst.qcnt                                                     
+            , rcpt_qty  = coilmst.rcpt_qty                                                 
+            , item_no   = coilmst.item_no                                                  
+            , qa        = coilmst.qa                                                       
+            , flag      = coilmst.flag                                                     
+         FROM coilmst
+            , location
+        WHERE ( coilmst.loc_no   = location.loc_no  )
+          and ( convert(char(10), coilmst.rcpt_date, 111) <= :as_date )                                                        
+          and ( ( coilmst.loc_no = 'WS00000006' or  coilmst.loc_no = 'WW04') AND  
+                ( coilmst.flag        = 'S' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) 
+              ) 
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no)
+  
+       union all
+       
+       SELECT gubun     = '3.화성'                                              
+            , q_cnt_1   = (coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_2   = 0
+            , q_cnt_3   = 0
+            , q_cnt_4   = 0
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)                          
+            , coil_no   = coilmst.coil_no                                                  
+            , loc_no    = coilmst.loc_no                                                   
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                                                  
+            , unit_qty  = coilmst.unit_qty                                                 
+            , length    = coilmst.length                                                   
+            , cnt       = coilmst.cnt                                                      
+            , qcnt      = coilmst.qcnt                                                     
+            , rcpt_qty  = coilmst.rcpt_qty                                                 
+            , item_no   = coilmst.item_no                                                  
+            , qa        = coilmst.qa                                                       
+            , flag      = coilmst.flag                                                     
+         FROM coilmst
+            , location
+        WHERE ( coilmst.loc_no  = location.loc_no  )
+          and ( convert(char(10), coilmst.rcpt_date, 111) <= :as_date )                                                        
+          and ( ( coilmst.loc_no = 'WS00000008') AND
+                ( coilmst.flag        = 'W' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) 
+              ) 
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no)
+   
+       union all
+   
+       SELECT gubun     = '3.화성'                                              
+            , q_cnt_1   = 0
+            , q_cnt_2   = 0
+            , q_cnt_3   = (coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_4   = 0
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)                          
+            , coil_no   = coilmst.coil_no                                                  
+            , loc_no    = coilmst.loc_no                                                   
+            , loc_name  = location.loc_name
+            , supp_no   = coilmst.supp_no                                                  
+            , unit_qty  = coilmst.unit_qty                                                 
+            , length    = coilmst.length                                                   
+            , cnt       = coilmst.cnt                                                      
+            , qcnt      = coilmst.qcnt                                                     
+            , rcpt_qty  = coilmst.rcpt_qty                                                 
+            , item_no   = coilmst.item_no                                                  
+            , qa        = coilmst.qa                                                       
+            , flag      = coilmst.flag                                                     
+         FROM coilmst
+            , location
+        WHERE ( coilmst.loc_no   = location.loc_no  ) 
+          and ( convert(char(10), coilmst.rcpt_date, 111) <= :as_date )                                                        
+          and ( ( coilmst.loc_no = 'WS00000008') AND  
+                ( coilmst.flag        = 'S' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) 
+              )
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no)
+         ) A
+         , groupitem b
+         , supp      c
+     WHERE ( a.item_no    = b.item_no )                  
+       and ( a.supp_no    = c.supp_no )                  
+    
+/* 품목별 코일재고 현황 */                                                    
+" arguments=(("as_date", string)) )
+text(band=header alignment="2" text="입고일자" border="6" color="0" x="4155" y="12" height="60" width="366" html.valueishtml="0"  name=rcpt_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코일번호" border="6" color="0" x="4530" y="12" height="60" width="366" html.valueishtml="0"  name=coil_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품목명" border="6" color="0" x="1033" y="12" height="60" width="846" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품목" border="6" color="0" x="649" y="12" height="60" width="375" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="저장소" border="6" color="0" x="4905" y="12" height="60" width="352" html.valueishtml="0"  name=loc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="저장소명" border="6" color="0" x="5266" y="12" height="60" width="951" html.valueishtml="0"  name=loc_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구매처" border="6" color="0" x="6226" y="12" height="60" width="283" html.valueishtml="0"  name=supp_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구매처명" border="6" color="0" x="6519" y="12" height="60" width="951" html.valueishtml="0"  name=supp_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="분류" border="6" color="0" x="439" y="12" height="60" width="201" html.valueishtml="0"  name=flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순서" border="6" color="0" x="9" y="12" height="60" width="160" html.valueishtml="0"  name=gb_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="6" color="0" x="178" y="12" height="60" width="251" html.valueishtml="0"  name=gubun_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단중" border="6" color="0" x="2985" y="12" height="60" width="402" html.valueishtml="0"  name=unit_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1888" y="12" height="60" width="672" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고단중" border="6" color="0" x="2569" y="12" height="60" width="407" html.valueishtml="0"  name=rcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="재고수량" border="6" color="0" x="3397" y="12" height="60" width="279" html.valueishtml="0"  name=qcnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="재고" border="6" color="0" x="3685" y="12" height="60" width="462" html.valueishtml="0"  name=total_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="0" x="6519" y="4" height="60" width="951" format="[general]" html.valueishtml="0"  name=supp_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="0" x="6226" y="4" height="60" width="283" format="[general]" html.valueishtml="0"  name=supp_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="0" x="5266" y="4" height="60" width="951" format="[general]" html.valueishtml="0"  name=loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0" x="4905" y="4" height="60" width="352" format="[general]" html.valueishtml="0"  name=loc_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0" x="4530" y="4" height="60" width="366" format="[general]" html.valueishtml="0"  name=coil_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0" x="4155" y="4" height="60" width="366" format="[general]" html.valueishtml="0"  name=rcpt_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1033" y="4" height="60" width="846" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="649" y="4" height="60" width="375" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="0" x="439" y="4" height="60" width="201" format="[general]" html.valueishtml="0"  name=flag visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="160" format="[general]" html.valueishtml="0"  name=gb visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="178" y="4" height="60" width="251" format="[general]" html.valueishtml="0"  name=gubun visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="1888" y="4" height="60" width="672" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="0" x="3397" y="4" height="60" width="279" format="#,##0" html.valueishtml="0"  name=qcnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="0" x="2569" y="4" height="60" width="407" format="#,##0" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="0" x="2985" y="4" height="60" width="402" format="#,##0" html.valueishtml="0"  name=unit_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="3685" y="4" height="60" width="462" format="#,##0" html.valueishtml="0"  name=total_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(  total_qty  for all )"border="0" color="0" x="3685" y="8" height="60" width="462" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

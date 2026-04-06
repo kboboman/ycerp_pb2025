@@ -1,0 +1,76 @@
+﻿$PBExportHeader$d_oiissuereq_list.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="8421504" )
+detail(height=92 color="536870912" )
+table(column=(type=datetime update=yes updatewhereclause=yes name=req_date dbname="req_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=long update=yes updatewhereclause=yes name=req_seq dbname="req_seq" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept_user dbname="accept_user" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=confirm_flag dbname="confirm_flag" values="미확정	N/확정	Y/" )
+ column=(type=datetime update=yes updatewhereclause=yes name=sys_date dbname="sys_date" )
+ column=(type=long updatewhereclause=yes name=day dbname="day" )
+ column=(type=decimal(0) updatewhereclause=yes name=rank1 dbname="rank1" )
+ retrieve="  SELECT issuereq.req_date
+       , issuereq.salesman
+       , issuereq.req_seq
+       , issuereq.accept_user
+       , issuereq.confirm_flag
+       , issuereq.sys_date
+	     , DATEPART(dd, issuereq.req_date ) day
+       , a.rank1
+    FROM issuereq inner join (
+                                                           select  a.req_date
+                                                                        , a.salesman
+                                                                        , a.day            
+                                                                        ,  row_number() over( order by a.req_date
+                                                                                                                   , a.salesman
+                                                                                                            	     , a.day
+                                                                                                            ) rank1                                                                        
+                                                            from 
+                                                            (       
+                                                                  select distinct a.req_date
+                                                                        , a.salesman
+                                                                        , a.day                                                    
+                                                                          from                                              
+                                                                          (
+                                                                            SELECT DISTINCT issuereq.req_date
+                                                                                 , issuereq.salesman
+                                                                                 , issuereq.accept_user       
+                                                                          	     , DATEPART(dd, issuereq.req_date ) day
+                                                                              FROM issuereq
+                                                                             WHERE ( issuereq.req_date    >= :ad_reqdate  )
+                                                                               AND ( issuereq.salesman     = :as_salesman )
+                                                                               AND ((:as_accept   = '%' AND issuereq.accept_user LIKE :as_accept) OR
+                                                                                    (:as_accept  <> '%' AND issuereq.accept_user    = :as_accept)
+                                                                                   )
+                                                                          ) a         
+                                                            ) a
+        
+                                                  ) a on issuereq.req_date  = a.req_date
+                                                       and issuereq.salesman =   a.salesman
+                                                        and DATEPART(dd, issuereq.req_date ) =  a.day              
+   WHERE ( issuereq.req_date    >= :ad_reqdate  )
+     AND ( issuereq.salesman     = :as_salesman )
+     AND ((:as_accept   = '%' AND issuereq.accept_user LIKE :as_accept) OR
+          (:as_accept  <> '%' AND issuereq.accept_user    = :as_accept)
+         )
+
+" arguments=(("ad_reqdate", datetime),("as_salesman", string),("as_accept", string))  sort="req_date A req_seq A " )
+text(band=header alignment="2" text="의뢰일" border="6" color="33554432" x="155" y="8" height="60" width="375" html.valueishtml="0"  name=req_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="차수" border="6" color="33554432" x="539" y="8" height="60" width="155" html.valueishtml="0"  name=req_seq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수신자" border="6" color="33554432" x="704" y="8" height="60" width="306" html.valueishtml="0"  name=accept_user_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="1019" y="8" height="60" width="279" html.valueishtml="0"  name=confirm_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등록일자" border="6" color="33554432" x="1307" y="8" height="60" width="494" html.valueishtml="0"  name=sys_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="137" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="76" width="137" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( confirm_flag = ~"Y~", if ( mod(rank1,2) = 0, rgb(255, 0, 0), rgb(0, 0, 255) ), rgb(0, 0, 0) )" x="155" y="8" height="76" width="375" format="yyyy/mm/dd" html.valueishtml="0"  name=req_date  tag="의뢰일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( confirm_flag = ~"Y~", if ( mod(rank1,2) = 0, rgb(255, 0, 0), rgb(0, 0, 255) ), rgb(0, 0, 0) )" x="539" y="8" height="76" width="155" format="[general]" html.valueishtml="0"  name=req_seq  tag="차수" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( confirm_flag = ~"Y~", if ( mod(rank1,2) = 0, rgb(255, 0, 0), rgb(0, 0, 255) ), rgb(0, 0, 0) )" x="704" y="8" height="76" width="306" format="[general]" html.valueishtml="0"  name=accept_user  tag="접수자" visible="1" dddw.name=d_cduser_c5 dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( confirm_flag = ~"Y~", if ( mod(rank1,2) = 0, rgb(255, 0, 0), rgb(0, 0, 255) ), rgb(0, 0, 0) )" x="1019" y="8" height="76" width="279" format="[general]" html.valueishtml="0"  name=confirm_flag  tag="확정유무" visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( confirm_flag = ~"Y~", if ( mod(rank1,2) = 0, rgb(255, 0, 0), rgb(0, 0, 255) ), rgb(0, 0, 0) )" x="1307" y="8" height="76" width="494" format="yy/mm/dd hh:mm" html.valueishtml="0"  name=sys_date  tag="등록시간" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="68" width="137" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

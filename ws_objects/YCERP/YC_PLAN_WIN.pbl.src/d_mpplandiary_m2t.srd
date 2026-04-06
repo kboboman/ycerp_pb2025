@@ -1,0 +1,65 @@
+﻿$PBExportHeader$d_mpplandiary_m2t.srd
+$PBExportComments$일일업무(생산)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="8421504" )
+detail(height=92 color="536870912" )
+table(column=(type=long update=yes updatewhereclause=yes identity=yes name=id dbname="id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=diary_date dbname="diary_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=work_no dbname="work_no" )
+ column=(type=char(10) updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=char(50) updatewhereclause=yes name=interview dbname="interview" )
+ column=(type=char(255) update=yes updatewhereclause=yes name=contents dbname="contents" )
+ column=(type=char(10) updatewhereclause=yes name=employee dbname="employee" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=long update=yes updatewhereclause=yes name=cqty dbname="cqty" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(10) updatewhereclause=yes name=input_name dbname="input_name" )
+ column=(type=char(1) updatewhereclause=yes name=sw_modify dbname="sw_modify" )
+ retrieve="  SELECT id         = a.id
+       , diary_date = a.diary_date   
+       , work_no    = a.work_no   
+       , work_name  = isnull(c.work_name, '일반작업')
+       , interview  = a.interview
+       , contents   = replace(convert(varchar(4099),a.contents), char(13) + char(10), ' | ')
+       , employee   = a.employee
+       , user_name  = l.user_name    
+       , cqty       = a.cqty
+       , user_id    = a.user_id
+       , input_name = u.user_name
+       , sw_modify  = 'X'  
+    FROM plan_diary A
+         LEFT OUTER JOIN wc       C  ON a.work_no  = c.work_no
+         LEFT OUTER JOIN login    L  ON a.employee = l.user_id
+         LEFT OUTER JOIN login    U  ON a.user_id  = u.user_id
+   WHERE ( a.diary_date  BETWEEN :as_sdate AND :as_edate )
+     AND ( :as_workno   <> '%' AND a.work_no     = :as_workno
+           OR
+           :as_workno    = '%' AND a.work_no  LIKE :as_workno
+         )
+     AND ( :as_employee <> '%' AND a.employee    = :as_employee
+           OR
+           :as_employee  = '%' AND a.employee LIKE :as_employee
+         )
+" arguments=(("as_employee", string),("as_workno", string),("as_sdate", string),("as_edate", string))  sort="diary_date D work_name A user_name A cqty D " )
+text(band=header alignment="2" text="작업일자" border="6" color="33554432" x="178" y="8" height="60" width="379" html.valueishtml="0"  name=plan_diary_diary_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="33554432" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산량" border="6" color="33554432" x="4283" y="8" height="60" width="251" html.valueishtml="0"  name=plan_diary_cqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등록자" border="6" color="0" x="4544" y="8" height="60" width="261" html.valueishtml="0"  name=input_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="567" y="8" height="60" width="329" html.valueishtml="0"  name=login_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업장" border="6" color="128" x="3808" y="8" height="60" width="466" html.valueishtml="0"  name=customer_work_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="작업자" border="6" color="33554432" x="905" y="8" height="60" width="512" html.valueishtml="0"  name=interview_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="내용" border="6" color="33554432" x="1426" y="8" height="60" width="2373" html.valueishtml="0"  name=plan_diary_contents_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="76" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="178" y="8" height="76" width="379" format="yyyy/mm/dd" html.valueishtml="0"  name=diary_date  tag="방문일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=20 border="0" color="33554432" x="4283" y="8" height="76" width="251" format="#,##0" html.valueishtml="0" protect="0~tif ( sw_modify = 'X', 1, 0 )"  name=cqty  tag="주행거리" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="4544" y="8" height="76" width="261" format="[general]" html.valueishtml="0"  name=input_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="567" y="8" height="76" width="329" format="[general]" html.valueishtml="0"  name=user_name  tag="사용자명" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="128" x="3808" y="8" height="76" width="466" format="[general]" html.valueishtml="0"  name=work_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="905" y="8" height="76" width="512" format="[general]" html.valueishtml="0"  name=interview visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=10 border="0" color="33554432" x="1426" y="8" height="76" width="2373" format="[general]" html.valueishtml="0" protect="0~tif ( sw_modify = 'X', 1, 0 )"  name=contents  tag="내용" visible="1"  resizeable=1 height.autosize=yes edit.limit=4099 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autovscroll=yes edit.imemode=0 edit.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="68" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

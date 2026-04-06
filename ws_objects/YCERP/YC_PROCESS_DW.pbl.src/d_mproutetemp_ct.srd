@@ -1,0 +1,79 @@
+﻿$PBExportHeader$d_mproutetemp_ct.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=128 color="536870912" )
+header[2](height=128 color="536870912" )
+summary(height=108 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=작업장명 dbname="작업장명" )
+ column=(type=number updatewhereclause=yes name=환산수량 dbname="환산수량" )
+ retrieve="  SELECT '사업장'     = i.area_name                                                      
+       , '작업장'     = h.work_no
+       , '작업장명'   = h.work_name                                                      
+       , '작업위치'   = h.work_pos                                                       
+       , '작업장타입' = (case when h.work_type = 'D' then '사내' else '외주' end)
+       , '사용'       = h.use_yn                                                      
+       , '작업예정'   = a.work_date                                                      
+       , '분할'       = a.division                                                       
+       , '작업순위'   = a.operation                                                      
+       , '작업진행'   = ( case when a.process_flag = 'Y' then '가능'                     
+                               when a.process_flag = 'N' then '불가'                     
+                               when a.process_flag = 'E' then '완료'                     
+                               when a.process_flag = 'P' then '진행'                     
+                          end )                                                          
+       , '수주번호'   = a.sale_no                                                        
+       , '순번'       = a.seq_no                                                         
+       , '거래처'     = isnull(c.cust_name,'')                                           
+       , '현장명'     = isnull(f.scene_desc,'')                                          
+       , '납기일자'   = a.napgi_date                                                     
+       , '수주유형'   = a.suju_type                                                      
+       , '물품번호'   = ( case when a.item_no = 'no_item' then '' else a.item_no   end ) 
+       , '물품명'     = d.item_name                                                      
+       , '수주물품'   = ( case when a.item_no = 'no_item' then '' else e.item_name end ) 
+       , '수주규격'   = ( case when a.item_no = 'no_item' then '' else a.qa        end ) 
+       , '색상코드'   = isnull(a.item_color,'')                                          
+       , '색상'       = isnull(g.color_name,'')                                          
+       , '환산수량'   = (case when datalength(rtrim(a.qa)) <> 19 then 0                  
+                              else round(dbo.uf_getqty(a.assy_item, a.assy_qa, a.uom, a.order_qty),2,1) 
+                         end)                                                            
+       , '주문량'     = a.order_qty                                                      
+       , '출고량'     = isnull(dbo.uf_getdosumqty(a.sale_no, a.seq_no),0)                
+       , '계획량'     = a.plan_qty                                                       
+       , '제조량'     = a.make_qty                                                       
+       , '제조물품'   = a.assy_item                                                      
+       , '제조규격'   = a.assy_qa                                                        
+       , '제조단위'   = a.uom                                                            
+       , '계획유무'   = a.plan_flag                                                      
+       , '캐파'       = a.qpa                                                            
+       , '비고'       = isnull(a.rem,'')                                                 
+       , '수주마감'   = isnull(b.open_close,'')                                          
+    FROM routtempnew A
+         LEFT OUTER JOIN sale      B ON a.sale_no    = b.order_no
+         LEFT OUTER JOIN customer  C ON a.cust_no    = c.cust_no
+         LEFT OUTER JOIN groupitem D ON a.assy_item  = d.item_no   
+         LEFT OUTER JOIN groupitem E ON a.item_no    = e.item_no
+         LEFT OUTER JOIN scene     F ON a.scene_code = f.scene_code
+         LEFT OUTER JOIN color     G ON a.item_color = g.color_code                                                                
+         INNER JOIN wc             H ON a.wc_no      = h.work_no   
+         INNER JOIN area           I ON a.area_no    = i.area_no   
+   WHERE ( b.open_close     = 'O'                          )                      
+     AND ( a.process_flag  <> 'C'                          )                      
+     AND ( a.work_date     >= dateadd(month,-2, getdate()) )      
+     AND ( b.order_date    >= dateadd(month,-3, getdate()) )         
+     AND ( a.plan_flag        = 'N'            ) -- 계획유무                           
+   ORDER BY h.work_type, h.area_no, h.work_no, h.use_yn"  sort="작업장명 A " )
+text(band=header[1] alignment="0" text="Sum Of 환산수량" border="0" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="납기일자" border="0" color="33554432" x="434" y="4" height="60" width="384" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="작업장명" border="0" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=작업장명_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="@납기일자" border="0" color="33554432" x="434" y="4" height="60" width="384" html.valueishtml="0"  name=환산수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="Grand Total " border="0" color="33554432" x="827" y="4" height="60" width="686" html.valueishtml="0"  name=grand_sum_환산수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=작업장명 visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="434" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=환산수량 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="827" y="4" height="72" width="686" format="[general]" html.valueishtml="0"  name=grand_sum_환산수량 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(환산수량 for all )"border="0" color="33554432" x="434" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_환산수량 for all )"border="0" color="33554432" x="827" y="4" height="72" width="686" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "납기일자" rows = "작업장명" values = "sum(환산수량 for crosstab)" sourcenames = "사업장, 작업장, 작업장명, 작업위치, 작업장타입, 사용, 작업예정, 분할, 작업순위, 작업진행, 수주번호, 순번, 거래처, 현장명, 납기일자, 수주유형, 물품번호, 물품명, 수주물품, 수주규격, 색상코드, 색상, 환산수량, 주문량, 출고량, 계획량, 제조량, 제조물품, 제조규격, 제조단위, 계획유무, 캐파, 비고, 수주마감")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

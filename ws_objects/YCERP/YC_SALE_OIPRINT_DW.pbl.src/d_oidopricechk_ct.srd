@@ -1,0 +1,122 @@
+﻿$PBExportHeader$d_oidopricechk_ct.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=number updatewhereclause=yes name=do_cost dbname="do_cost" )
+ column=(type=number updatewhereclause=yes name=calc_qty dbname="calc_qty" )
+ retrieve="  SELECT user_name    = a.user_name
+       , cust_no      = a.cust_no
+       , cust_name    = a.cust_name
+       , scene_code   = a.spot_code
+       , scene_desc   = a.scene_desc
+       , item_no      = a.item_no
+       , item_name    = a.item_name
+       , qa           = a.qa
+       , uom          = a.uom
+       , do_cost      = a.price
+       , calc_qty     = b.calc_qty
+       , calc_amt     = b.calc_amt
+    FROM (
+         SELECT DISTINCT l.user_name
+              , do.cust_no
+              , c.cust_name
+              , do.spot_code
+              , s.scene_desc
+              , dodet.item_no
+              , g.item_name
+              , qa        = (case when dodet.uom = 'M' then substring(dodet.qa,1,13) else dodet.qa end)
+              , g.uom
+              , price     = isnull(dodet.price,0)
+           FROM do
+                LEFT OUTER JOIN dodet        ON do.do_no      = dodet.do_no
+                LEFT OUTER JOIN scene     S  ON do.spot_code  = s.scene_code
+                LEFT OUTER JOIN customer  C  ON do.cust_no    = c.cust_no
+                LEFT OUTER JOIN groupitem G  ON dodet.item_no = g.item_no
+                LEFT OUTER JOIN login     L  ON c.salesman    = l.user_id
+          WHERE ( do.do_date BETWEEN :ad_sdate AND :ad_edate )
+            AND ((:as_salesman  = '%' AND c.salesman  LIKE :as_salesman) OR
+                 (:as_salesman <> '%' AND c.salesman     = :as_salesman) 
+                )
+            AND ((:as_custno    = '%' AND do.cust_no  LIKE :as_custno  ) OR
+                 (:as_custno   <> '%' AND do.cust_no     = :as_custno  ) 
+                )
+            AND ((:as_itemname  = '%' AND g.item_name LIKE :as_itemname) OR
+                 (:as_itemname <> '%' AND g.item_name    = :as_itemname)
+                )
+            AND ((:as_inside    = '%' ) OR
+                 (:as_inside   <> '%' AND c.cust_no NOT IN (SELECT item_cd FROM codemst WHERE type = '내부업체' AND use_yn = 'Y') )
+                )
+         ) A
+
+         LEFT OUTER JOIN (
+              SELECT a.cust_no
+                   , a.spot_code
+                   , a.item_no
+                   , a.qa
+                   , a.uom
+                   , a.price
+                   , calc_qty  = sum(a.calc_qty)
+                   , calc_amt  = sum(a.calc_amt)
+                FROM (
+                     SELECT do.cust_no
+                          , do.spot_code
+                          , dodet.item_no
+                          , qa        = (case when dodet.uom = 'M' then substring(dodet.qa,1,13) else dodet.qa end)
+                          , g.uom
+                          , dodet.price
+                          , calc_qty  = dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty)
+                          , calc_amt  = dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty) * dodet.price
+                       FROM do
+                            LEFT OUTER JOIN dodet        ON do.do_no      = dodet.do_no
+                            LEFT OUTER JOIN customer  C  ON do.cust_no    = c.cust_no
+                            LEFT OUTER JOIN groupitem G  ON dodet.item_no = g.item_no
+                      WHERE ( do.do_date BETWEEN :ad_sdate AND :ad_edate )
+                        AND ((:as_salesman  = '%' AND c.salesman LIKE :as_salesman) OR
+                             (:as_salesman <> '%' AND c.salesman    = :as_salesman) 
+                            )
+                        AND ((:as_custno    = '%' AND do.cust_no LIKE :as_custno) OR
+                             (:as_custno   <> '%' AND do.cust_no    = :as_custno) 
+                            )
+                        AND ((:as_itemname  = '%' AND g.item_name LIKE :as_itemname) OR
+                             (:as_itemname <> '%' AND g.item_name    = :as_itemname)
+                            )
+                        AND ((:as_inside    = '%' ) OR
+                             (:as_inside   <> '%' AND c.cust_flag <> 'Y')
+                            )
+                     ) A
+               GROUP BY a.cust_no
+                      , a.spot_code
+                      , a.item_no
+                      , a.qa
+                      , a.uom
+                      , a.price
+         ) B ON a.cust_no = b.cust_no AND a.spot_code = b.spot_code 
+            AND a.item_no = b.item_no AND a.qa = b.qa
+            AND a.price   = b.price
+" arguments=(("as_salesman", string),("as_custno", string),("as_itemname", string),("ad_sdate", datetime),("ad_edate", datetime),("as_inside", string))  sort="item_name A do_cost A " )
+text(band=header[1] alignment="0" text="Sum Of Calc Qty" border="0" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="User Name" border="0" color="33554432" x="434" y="4" height="60" width="256" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="1" text="@user_name" border="6" color="33554432" x="699" y="4" height="64" width="421" html.valueishtml="0"  name=calc_qty_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="출고가" border="6" color="33554432" x="434" y="4" height="64" width="256" html.valueishtml="0"  name=do_cost_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="품명" border="6" color="33554432" x="9" y="4" height="64" width="416" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="1" text="합계" border="6" color="33554432" x="1129" y="4" height="64" width="430" html.valueishtml="0"  name=grand_sum_calc_qty_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="434" y="4" height="72" width="256" format="#,##0" html.valueishtml="0"  name=do_cost visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="699" y="4" height="72" width="421" format="#,##0.00" html.valueishtml="0"  name=calc_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1129" y="4" height="72" width="430" format="#,##0.00" html.valueishtml="0"  name=grand_sum_calc_qty visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(calc_qty for all )"border="0" color="33554432" x="699" y="4" height="72" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_calc_qty for all )"border="0" color="33554432" x="1129" y="4" height="72" width="430" format="#,##0.00" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_5 "border="0" color="33554432" x="699" y="4" height="72" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_6 "border="0" color="16777215" x="1129" y="4" height="72" width="430" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="32896" )
+compute(band=footer alignment="0" expression="~"최저: ~"+min( do_cost for all )"border="0" color="16777215" x="9" y="4" height="72" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711680" )
+text(band=footer alignment="1" text="" border="0" color="0" x="434" y="4" height="72" width="256" html.valueishtml="0"  name=docost visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "user_name" rows = "item_name, do_cost" values = "sum(calc_qty for crosstab)" sourcenames = "user_name, cust_no, cust_name, scene_code, scene_desc, item_no, item_name, qa, uom, do_cost, calc_qty, calc_amt")
+sparse(names="item_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

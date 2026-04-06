@@ -1,0 +1,116 @@
+﻿$PBExportHeader$d_mpworkmansalary_m_temp.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=area_no dbname="area_no" )
+ column=(type=char(20) updatewhereclause=yes name=area_name dbname="area_name" )
+ column=(type=char(10) updatewhereclause=yes name=work_no dbname="work_no" )
+ column=(type=char(20) updatewhereclause=yes name=work_nm dbname="work_nm" )
+ column=(type=char(10) updatewhereclause=yes name=work_no_insa dbname="work_no_insa" )
+ column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(20) updatewhereclause=yes name=name_kor dbname="name_kor" )
+ column=(type=decimal(0) updatewhereclause=yes name=timewage dbname="timewage" )
+ column=(type=decimal(0) updatewhereclause=yes name=day_timewage dbname="day_timewage" )
+ column=(type=decimal(6) updatewhereclause=yes name=day_worktime dbname="day_worktime" )
+ column=(type=decimal(0) updatewhereclause=yes name=night_timewage dbname="night_timewage" )
+ column=(type=decimal(6) updatewhereclause=yes name=night_worktime dbname="night_worktime" )
+ retrieve="select
+    aaa.area_no			area_no		     	
+	,aaa.area_name    	area_name
+	,aaa.work_no			work_no 	
+	,aaa.work_nm      	work_nm	
+	,aaa.work_no_insa		work_no_insa
+	,aaa.user_id       	user_id   	
+	,aaa.name_kor	   	name_kor  	
+	,max(aaa.timewage)			timewage
+	,max(aaa.day_timewage)		day_timewage
+	,max(aaa.day_worktime)		day_worktime
+	,max(aaa.night_timewage)	night_timewage
+	,max(aaa.night_worktime)	night_worktime
+from
+	(	
+	select 
+		 aa.area_no			area_no		     	
+		,aa.area_name    	area_name
+		,aa.work_no			work_no 	
+		,aa.work_nm       work_nm	
+		,aa.work_no_insa	work_no_insa
+		,aa.user_id       user_id   	
+		,aa.name_kor	   name_kor  	
+		,aa.bpay				timewage
+		,case when aa.day_pay 	= 1 then aa.bpay				else 0 end	day_timewage
+		,case when aa.day_pay	= 1 then max(aa.chk_time)	else 0 end	day_worktime
+		,case when aa.night_pay	= 1 then aa.bpay				else 0 end	night_timewage
+		,case when aa.night_pay	= 1 then max(aa.chk_time)	else 0 end	night_worktime
+	from 
+		(
+		select 
+			  sfcworkman.area_no				area_no	
+			, a.area_name						area_name
+			, isnull(b.work_no, 'Null')	work_no
+			, sfcworkman.work_nm				work_nm
+			, sfcworkman.work_no				work_no_insa	
+			, sfcworkman.user_id				user_id
+			, sfcworkman.name_kor			name_kor	
+			, case when convert(char(8),sfcworkman.work_stime,108) >= '08:00:00' and convert(char(8),sfcworkman.work_stime,108) < '18:00:00' then 1 else 0 end 	day_pay
+			, case when convert(char(8),sfcworkman.work_stime,108) >= '18:00:00' and convert(char(8),sfcworkman.work_stime,108) <= '24:00:00' then 1 else 0 end	night_pay
+			, isnull(c.bpay, 0) 				bpay
+			, (case	when convert(char(8),sfcworkman.work_stime,108) <= '12:00:00' AND convert(char(8),sfcworkman.work_etime,108) >= '13:00:00' then
+							(datediff(mi, sfcworkman.work_stime, sfcworkman.work_etime) - 60.0) / 60.0    /* 1시간공제 */
+						else datediff(mi, sfcworkman.work_stime, sfcworkman.work_etime) / 60.0                  /* 순수시간 */
+				end) chk_time
+		from 
+			sfcworkman	left outer join area a on sfcworkman.area_no = a.area_no  
+						left outer join wc b on sfcworkman.work_no = b.insa_team and right(rtrim(b.work_no),2) = '00'
+						left outer join ycerp.dbo.insa_base c on sfcworkman.user_id	= c.sabun and c.retire_yn = 'N' 
+		where 
+			convert(varchar(8), sfcworkman.work_day, 112) = :as_date) aa
+	group by
+		 aa.area_no	     
+		,aa.area_name    
+		,aa.work_no        
+		,aa.work_nm       
+		,aa.work_no_insa
+		,aa.user_id          
+		,aa.name_kor
+		,aa.bpay
+		,aa.day_pay
+		,aa.night_pay) aaa
+group by
+	 aaa.area_no	     
+	,aaa.area_name    
+	,aaa.work_no        
+	,aaa.work_nm       
+	,aaa.work_no_insa
+	,aaa.user_id          
+	,aaa.name_kor
+" arguments=(("as_date", string)) )
+text(band=header alignment="2" text="Area No" border="0" color="33554432" x="9" y="8" height="60" width="352" html.valueishtml="0"  name=area_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Area Name" border="0" color="33554432" x="370" y="8" height="60" width="672" html.valueishtml="0"  name=area_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Work No" border="0" color="33554432" x="1051" y="8" height="60" width="352" html.valueishtml="0"  name=work_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Work Nm" border="0" color="33554432" x="1413" y="8" height="60" width="672" html.valueishtml="0"  name=work_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Work No Insa" border="0" color="33554432" x="2094" y="8" height="60" width="384" html.valueishtml="0"  name=work_no_insa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="User Id" border="0" color="33554432" x="2487" y="8" height="60" width="352" html.valueishtml="0"  name=user_id_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Name Kor" border="0" color="33554432" x="2848" y="8" height="60" width="672" html.valueishtml="0"  name=name_kor_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Timewage" border="0" color="0" x="3529" y="8" height="60" width="521" html.valueishtml="0"  name=timewage_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Day Timewage" border="0" color="0" x="4059" y="8" height="60" width="480" html.valueishtml="0"  name=day_timewage_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Night Timewage" border="0" color="0" x="4549" y="8" height="60" width="494" html.valueishtml="0"  name=night_timewage_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Day Worktime" border="0" color="0" x="5051" y="8" height="60" width="411" html.valueishtml="0"  name=day_worktime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Night Worktime" border="0" color="0" x="5472" y="8" height="60" width="475" html.valueishtml="0"  name=night_worktime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=area_no visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="370" y="8" height="72" width="672" format="[general]" html.valueishtml="0"  name=area_name visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1051" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=work_no visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1413" y="8" height="72" width="672" format="[general]" html.valueishtml="0"  name=work_nm visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="2094" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=work_no_insa visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2487" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=user_id visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="2848" y="8" height="72" width="672" format="[general]" html.valueishtml="0"  name=name_kor visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="3529" y="8" height="72" width="521" format="[general]" html.valueishtml="0"  name=timewage visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="4059" y="8" height="72" width="480" format="[general]" html.valueishtml="0"  name=day_timewage visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="4549" y="8" height="72" width="494" format="[general]" html.valueishtml="0"  name=night_timewage visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="5051" y="8" height="72" width="411" format="[general]" html.valueishtml="0"  name=day_worktime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="5472" y="8" height="72" width="475" format="[general]" html.valueishtml="0"  name=night_worktime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

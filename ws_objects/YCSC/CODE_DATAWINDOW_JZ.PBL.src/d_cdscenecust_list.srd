@@ -1,0 +1,32 @@
+﻿$PBExportHeader$d_cdscenecust_list.srd
+$PBExportComments$현장별 표준단가관리 거래처선택(1998/05/08, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="cnt" )
+ retrieve="SELECT a.cust_no, b.cust_name, a.scene_code, a.scene_desc, cnt = isnull(c.cnt, 0)
+  FROM scene a
+       LEFT OUTER JOIN customer b   ON a.cust_no    = b.cust_no
+       LEFT OUTER JOIN (
+            SELECT cust_no, scene_code, cnt = count(scene_code) FROM custscene  GROUP BY cust_no, scene_code
+       ) c  ON a.cust_no    = c.cust_no AND a.scene_code = c.scene_code
+ WHERE a.cust_no = :as_custno
+
+" arguments=(("as_custno", string))  sort="scene_code D " )
+text(band=header alignment="2" text="품목" border="6" color="33554432" x="1280" y="8" height="60" width="160" html.valueishtml="0"  name=cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="현장명" border="6" color="33554432" x="398" y="8" height="60" width="873" html.valueishtml="0"  name=scene_scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="현장코드" border="6" color="33554432" x="9" y="8" height="60" width="379" html.valueishtml="0"  name=scene_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1280" y="8" height="64" width="160" format="#,##0" html.valueishtml="0"  name=cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="398" y="8" height="64" width="873" format="[general]" html.valueishtml="0"  name=scene_desc  tag="현장명" visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="64" width="379" format="[general]" html.valueishtml="0"  name=scene_code visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="398" y="8" height="64" width="873" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum ( cnt )"border="0" color="33554432" x="1280" y="8" height="64" width="160" format="#,##0" html.valueishtml="0"  name=tcheck visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

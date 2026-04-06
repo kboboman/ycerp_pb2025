@@ -1,0 +1,75 @@
+﻿$PBExportHeader$d_cdglbill_q1.srq
+SELECT AA.CUST_NO
+     , AA.BILL_CLASS
+     , AA.BILL_NO
+     , AA.DRAFT
+     , AA.CLOSE_DATE
+     , AA.BANK_NAME
+     , AA.BILL_AREA
+     , AA.BILL_AMOUNT
+     , AA.SET_FLAG
+     , AA.BILLDET_VCNO
+     , AA.REM
+     , AA.DET_CLASS
+     , AA.AMOUNT    
+  FROM (
+       SELECT seq = '1'
+            , a.cust_no
+            , bill_class=(case when a.bill_class = 'R' then '받을'
+                               when a.bill_class = 'P' then '지급'
+                               when a.bill_class = 'C' then '교환'
+                               when a.bill_class = 'E' then '만기'
+                               when a.bill_class = 'D' then '부도'
+                               else a.bill_class
+                          end)
+            , a.bill_no
+            , a.draft
+            , close_date  = convert(char(10),a.close_date,111)
+            , c.bank_name
+            , a.bill_area
+            , a.bill_amount
+            , a.set_flag
+            , billdet_vcno = ''
+            , rem          = ''
+            , det_class    = ''
+            , amount       = 0
+         FROM GLBILL A
+              LEFT OUTER JOIN BANK C  ON A.BANK_CODE = C.BANK_CODE
+        WHERE A.CUST_NO      = :aa
+          AND A.BILL_CLASS  <> 'E'
+
+       UNION 
+       SELECT '2'
+            , a.cust_no
+            , bill_class=(case when a.bill_class = 'A' then '전체'
+                               when a.bill_class = 'R' then '받을'
+                               when a.bill_class = 'P' then '지급'
+                               when a.bill_class = 'C' then '교환'
+                               when a.bill_class = 'E' then '만기'
+                               when a.bill_class = 'D' then '부도'
+                               else a.bill_class
+                          end)
+            , b.bill_no
+            , a.draft
+            , ''
+            , ''
+            , ''
+            , 0
+            , ''
+            , billdet_vcno = substring(b.billdet_vcno,2,4) + '/' + substring(b.billdet_vcno,6,2) + '/' + substring(b.billdet_vcno,8,2)
+            , b.rem
+            , det_class = (case when b.det_class = 'B' then '어음'
+                                when b.det_class = 'C' then '부도대'
+                                when b.det_class = 'D' then '교환대'
+                                when b.det_class = 'E' then '수입이자'
+                                when b.det_class = 'F' then '물품대'
+                                when b.det_class = 'G' then '상계'
+                                when b.det_class = 'R' then '환불'
+                           end)
+            , amount = isnull(b.amount,0)
+         FROM GLBILL A
+              RIGHT OUTER JOIN GLBILLDET B  ON A.VC_NO = B.VC_NO AND A.BILL_NO = B.BILL_NO
+        WHERE A.CUST_NO    = :aa
+       ) AA
+   ORDER BY BILL_CLASS, BILL_NO, SEQ, CLOSE_DATE DESC
+

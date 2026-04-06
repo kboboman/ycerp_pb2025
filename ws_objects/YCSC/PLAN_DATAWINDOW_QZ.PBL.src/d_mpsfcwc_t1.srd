@@ -1,0 +1,123 @@
+﻿$PBExportHeader$d_mpsfcwc_t1.srd
+$PBExportComments$작업장별 생산현황(2002/05/23,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=68 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=area_no dbname="area_no" )
+ column=(type=char(10) updatewhereclause=yes name=sfcday_wc_no dbname="wc_no" )
+ column=(type=datetime updatewhereclause=yes name=sfc_date dbname="sfc_date" )
+ column=(type=char(10) updatewhereclause=yes name=wc_work_name dbname="work_name" initial=" " )
+ column=(type=char(2) updatewhereclause=yes name=week dbname="week" )
+ column=(type=real updatewhereclause=yes name=all_time dbname="all_time" )
+ column=(type=number updatewhereclause=yes name=worktime dbname="worktime" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="item_name" )
+ column=(type=char(2) updatewhereclause=yes name=sfcday_uom dbname="uom" )
+ column=(type=char(2) updatewhereclause=yes name=cuom dbname="cuom" )
+ column=(type=decimal(4) updatewhereclause=yes name=sum_qty dbname="sum_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=csum_qty dbname="csum_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=calc dbname="calc" )
+ retrieve="  SELECT area_no   = a.area_no
+       , wc_no     = a.wc_no     
+       , sfc_date  = a.sfc_date  
+       , work_name = a.work_name 
+       , week      = a.week      
+       , all_time  = isnull(b.all_time,0)
+       , worktime  = isnull(c.worktime,0)
+       , item_name = a.item_name 
+       , uom       = a.uom       
+       , cuom      = a.cuom      
+       , sum_qty   = a.sum_qty   
+       , csum_qty  = a.csum_qty  
+       , calc      = a.calc
+    FROM (
+         SELECT area_no   = a.area_no
+              , sfc_date  = dbo.uf_getdate(a.sfc_date)
+              , wc_no     = a.wc_no                   
+              , work_name = b.work_name               
+              , week      = dbo.uf_getweek(a.sfc_date)
+              , item_name = c.item_name               
+              , uom       = a.uom                     
+              , cuom      = dbo.uf_getuom(a.uom)      
+              , sum_qty   = sum(make_qty)             
+              , csum_qty  = sum(dbo.uf_getqty(a.assembly, a.assembly_qa, a.uom, a.make_qty))
+              , calc      = sum(dbo.UF_GetItemCalc_PUB(a.wc_no, a.assembly_qa, a.assembly_qa, a.make_qty))
+           FROM sfcday a  
+              , wc     b  
+              , groupitem c 
+          WHERE ( a.wc_no            = b.work_no   )  
+            AND ( a.assembly         = c.item_no   )  
+            AND ( ( a.wc_no       LIKE :as_wc   ) and  
+                  ( convert(char(10),a.sfc_date,111) between :as_start and :as_end ) and 
+                  ( a.area_no        = :as_area ) 
+                )      
+          GROUP BY a.area_no
+                 , a.wc_no     
+                 , b.work_name    
+                 , dbo.uf_getdate(a.sfc_date)
+                 , dbo.uf_getweek(a.sfc_date)
+                 , c.item_name            
+                 , a.uom
+         ) A
+         LEFT OUTER JOIN sfcdaywork B
+           ON a.area_no  = b.area_no  and a.sfc_date  = b.sfc_date  and a.wc_no  = b.wc_no
+           
+         LEFT OUTER JOIN 
+         (
+              SELECT area_no     = a.area_no                                      
+                   , sfc_date    = convert(char(10), a.sfc_date,111)
+                   , wc_no       = a.wc_no                                        
+                   , worktime    = sum(a.time1) + sum(a.time2) + sum(a.time3)
+                FROM sfcdayman a                                             
+               WHERE a.area_no       = :as_area
+                 AND convert(char(10), a.sfc_date,111)  between :as_start and :as_end
+                 AND a.wc_no      LIKE :as_wc                       
+               GROUP by area_no, sfc_date, wc_no
+         ) C 
+           ON b.area_no  = c.area_no  and b.sfc_date  = c.sfc_date  and b.wc_no  = c.wc_no
+         " arguments=(("as_wc", string),("as_start", string),("as_end", string),("as_area", string))  sort="sfcday_wc_no A sfc_date A sfcday_uom A groupitem_item_name A " )
+group(level=1 header.height=0 trailer.height=144 by=("sfcday_wc_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="작업장명" border="6" color="0" x="9" y="8" height="60" width="489" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="일자" border="6" color="0" x="507" y="8" height="60" width="357" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="1586" y="8" height="60" width="1001" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2597" y="8" height="60" width="142" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="생산량" border="6" color="0" x="2747" y="8" height="60" width="453" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="평균대비" border="6" color="0" x="3858" y="8" height="60" width="425" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="요일" border="6" color="0" x="873" y="8" height="60" width="142" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가동시간" border="6" color="0" x="1024" y="8" height="60" width="283" html.valueishtml="0"  name=all_time_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="투입시간" border="6" color="0" x="1317" y="8" height="60" width="261" html.valueishtml="0"  name=worktime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="3712" y="8" height="60" width="137" html.valueishtml="0"  name=sfcday_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="489" format="[general]" html.valueishtml="0"  name=wc_work_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="1586" y="4" height="60" width="1001" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="2597" y="4" height="60" width="142" format="[general]" html.valueishtml="0"  name=cuom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="2747" y="4" height="60" width="453" format="#,##0.00" html.valueishtml="0"  name=sum_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="( csum_qty / avg(csum_qty for group 1) ) "border="0" color="0" x="3858" y="4" height="60" width="425" format="#,##0.00 %" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="507" y="4" height="60" width="357" format="yyyy/mm/dd" html.valueishtml="0"  name=sfc_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="873" y="4" height="60" width="142" format="[general]" html.valueishtml="0"  name=week visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="1024" y="4" height="60" width="283" format="##0.0" html.valueishtml="0"  name=all_time visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="1317" y="4" height="60" width="261" format="##0.0" html.valueishtml="0"  name=worktime visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0" x="3712" y="4" height="60" width="137" format="[general]" html.valueishtml="0"  name=sfcday_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="avg(csum_qty for group 1)"border="0" color="0" x="3209" y="4" height="60" width="494" format="#,##0.00" html.valueishtml="0"  name=tavg visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(csum_qty for group 1)"border="0" color="0" x="3209" y="76" height="60" width="494" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="2597" y="4" height="60" width="142" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="2597" y="76" height="60" width="142" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="avg(sum_qty for group 1)"border="0" color="0" x="2747" y="4" height="60" width="453" format="#,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(sum_qty for group 1)"border="0" color="0" x="2747" y="76" height="60" width="453" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="1" text="평균생산량" border="0" color="0" x="1586" y="4" height="60" width="1001" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=trailer.1 alignment="1" text="총생산량" border="0" color="0" x="1586" y="76" height="60" width="1001" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="1024" y="76" height="60" width="283" html.valueishtml="0"  name=t_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="1" text="" border="0" color="0" x="1317" y="76" height="60" width="261" html.valueishtml="0"  name=t_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum ( all_time for group 1 distinct  wc_work_name ,  sfc_date ,  week )"border="0" color="0" x="1024" y="4" height="60" width="283" format="##0.0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum (  worktime for group 1 distinct  wc_work_name ,  sfc_date ,  week )"border="0" color="0" x="1317" y="4" height="60" width="261" format="##0.0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=footer alignment="2" expression="count(  area_no  for all )"border="0" color="0" x="9" y="8" height="68" width="489" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( sum_qty for all )"border="0" color="0" x="2747" y="8" height="68" width="453" format="#,##0.00" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum (  csum_qty for all )"border="0" color="0" x="3209" y="8" height="68" width="494" format="#,##0.00" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum (  worktime for all distinct  wc_work_name ,  sfc_date ,  week )"border="0" color="0" x="1317" y="8" height="68" width="261" format="##0.0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( all_time for all distinct  wc_work_name ,  sfc_date ,  week )"border="0" color="0" x="1024" y="8" height="68" width="283" format="##0.0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="3209" y="4" height="60" width="494" format="#,##0.00" html.valueishtml="0"  name=csum_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="3209" y="8" height="60" width="494" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+
+sparse(names="wc_work_name	sfc_date	week	all_time	worktime")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

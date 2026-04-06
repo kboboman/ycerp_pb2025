@@ -1,0 +1,45 @@
+﻿$PBExportHeader$d_carriage_sale_r2.srd
+$PBExportComments$운송차량관리(2001/03/15,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=160 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=108 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=seq_no dbname="issuereqdet_sale.seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=issuereqdet_sale_item_no dbname="issuereqdet_sale.item_no" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=issuereqdet_sale_qa dbname="issuereqdet_sale.qa" )
+ column=(type=decimal(0) updatewhereclause=yes name=issuereqdet_sale_issue_qty dbname="issuereqdet_sale.issue_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=acc_qty dbname="acc_qty" )
+ column=(type=decimal(3) updatewhereclause=yes name=saledet_danjung dbname="saledet.danjung" )
+ column=(type=char(2) updatewhereclause=yes name=saledet_uom dbname="saledet.uom" )
+ retrieve="select a.seq_no,
+              a.item_no,
+              b.item_name,
+              a.qa,
+              a.issue_qty,
+              dbo.uf_getqty(a.item_no, a.qa, c.uom, c.issue_qty) acc_qty,
+		   c.danjung,
+		   c.uom
+from issuereqdet_sale a inner join groupitem b on a.item_no = b.item_no
+                                        inner join saledet c on a.order_no = c.order_no and a.seq_no = c.seq_no
+where a.req_date = :as_date
+     and a.salesman = :as_salesman
+     and a.req_seq = :as_req_seq
+     and a.order_no = :as_order_no" arguments=(("as_date", datetime),("as_salesman", string),("as_req_seq", number),("as_order_no", string))  sort="seq_no A " )
+text(band=background alignment="2" text="수주내역" border="6" color="0" x="9" y="4" height="68" width="512" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="품목명" border="6" color="0" x="9" y="84" height="68" width="837" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="855" y="84" height="68" width="649" html.valueishtml="0"  name=issuereqdet_sale_qa_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="1513" y="84" height="68" width="187" html.valueishtml="0"  name=saledet_uom_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="의뢰량" border="6" color="0" x="1710" y="84" height="68" width="288" html.valueishtml="0"  name=issuereqdet_sale_issue_qty_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="2007" y="84" height="68" width="315" html.valueishtml="0"  name=acc_qty_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=footer alignment="1" expression="sum(  issuereqdet_sale_issue_qty  for all)"border="0" color="0" x="1710" y="0" height="80" width="288" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( acc_qty for all)"border="0" color="0" x="2007" y="0" height="80" width="315" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="0" height="108" width="837" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="855" y="0" height="108" width="649" format="[general]" html.valueishtml="0"  name=issuereqdet_sale_qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0" x="1513" y="0" height="108" width="187" format="[general]" html.valueishtml="0"  name=saledet_uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="1710" y="0" height="108" width="288" format="#,##0" html.valueishtml="0"  name=issuereqdet_sale_issue_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2007" y="0" height="108" width="315" format="#,##0" html.valueishtml="0"  name=acc_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="134217750" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

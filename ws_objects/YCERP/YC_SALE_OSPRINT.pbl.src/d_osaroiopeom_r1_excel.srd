@@ -1,0 +1,80 @@
+﻿$PBExportHeader$d_osaroiopeom_r1_excel.srd
+$PBExportComments$매출거래처 이력
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(20) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(20) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=number updatewhereclause=yes name=balance_amt dbname="balance_amt" )
+ column=(type=number updatewhereclause=yes name=vatamt dbname="vatamt" )
+ retrieve=" SELECT   user_name   = l.user_name                                          
+			  , custno      = a.cust_no                                            
+			  , cust_name   = c.cust_name                                          
+			  , scene_desc  = scene.scene_desc                                               
+			  , balance_amt = c.balance_amt                                        
+			  , imonth      = convert(char(7),a.do_date,111)
+			  , vatamt      = SUM(DO_TOTAL)
+FROM do a  LEFT OUTER JOIN scene   ON a.spot_code = scene.scene_code      
+							LEFT OUTER JOIN customer C ON a.cust_no  = c.cust_no        
+							LEFT OUTER JOIN login    L ON c.salesman = l.user_id  
+where  do_date between :ad_sdate AND :ad_edate
+		AND ((:as_userid  = '%' ) OR
+						 (:as_userid <> '%' AND c.salesman    = :as_userid)
+						)
+GROUP BY a.cust_no
+						, l.user_name                                                                             
+						, c.cust_name                                          
+						, scene.scene_desc     
+						, c.balance_amt         
+						, convert(char(7),a.do_date,111)
+/*
+SELECT DISTINCT user_name   = l.user_name                                          
+       , custno      = a.cust_no                                            
+       , cust_name   = c.cust_name                                          
+       , scene_desc  = scene.scene_desc                                               
+       , balance_amt = c.balance_amt                                        
+       , imonth      = convert(char(8),a.oi_date,111) + '01'                
+       , vatamt      = do.do_total/*a.aroiinv_cash + a.aroiinv_rate + (a.ship_cost * 1.1)*/
+    FROM aroiinv    A
+         /*LEFT OUTER JOIN do         ON a.aroiinv_no = do.inv_no                                                       */
+         left outer JOIN (SELECT INV_NO,  SPOT_CODE, SUM(DO_TOTAL) do_total FROM do GROUP BY INV_NO, SPOT_CODE)  DO ON a.aroiinv_no = do.inv_no      /*2019.02.14 현장별 매출을 보여주기 위해서 do에서 가져옴 */
+         LEFT OUTER JOIN scene      ON do.spot_code = scene.scene_code                                                       
+         LEFT OUTER JOIN customer C ON a.cust_no  = c.cust_no               
+         LEFT OUTER JOIN login    L ON c.salesman = l.user_id               
+   WHERE a.oi_date  between :ad_sdate AND :ad_edate
+     AND (a.delete_flag  =  'N') /* 계산서 삭제유무 */                             
+     AND ((:as_userid  = '%' ) OR
+          (:as_userid <> '%' AND c.salesman    = :as_userid)
+         )
+*/
+" arguments=(("as_userid", string),("ad_sdate", date),("ad_edate", date))  sort="user_name A cust_name A scene_desc A balance_amt A " )
+text(band=header[1] alignment="0" text="Sum Of Vatamt" border="6" color="33554432" x="9" y="8" height="64" width="334" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[1] alignment="0" text="Imonth" border="6" color="33554432" x="352" y="8" height="64" width="859" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="미수잔액" border="6" color="33554432" x="2089" y="4" height="64" width="411" html.valueishtml="0"  name=balance_amt_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="1" text="@imonth" border="6" color="33554432" x="2510" y="4" height="64" width="517" html.valueishtml="0"  name=vatamt_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="1" text="합계" border="6" color="33554432" x="3035" y="4" height="64" width="507" html.valueishtml="0"  name=grand_sum_vatamt_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="담당자" border="6" color="33554432" x="9" y="4" height="64" width="334" html.valueishtml="0"  name=user_name_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="거래처명" border="6" color="33554432" x="352" y="4" height="64" width="859" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="현장명" border="6" color="33554432" x="1221" y="4" height="64" width="859" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="334" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="352" y="4" height="72" width="859" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1221" y="4" height="72" width="859" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2089" y="4" height="72" width="411" format="#,##0" html.valueishtml="0"  name=balance_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2510" y="4" height="72" width="517" format="#,##0" html.valueishtml="0"  name=vatamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="3035" y="4" height="72" width="507" format="#,##0" html.valueishtml="0"  name=grand_sum_vatamt visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="0" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="72" width="334" format="[general]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(vatamt for all )"border="0" color="33554432" x="2510" y="4" height="72" width="517" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_vatamt for all )"border="0" color="33554432" x="3035" y="4" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_11 "border="0" color="33554432" x="2510" y="4" height="72" width="517" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_12 "border="0" color="33554432" x="3035" y="4" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( user_name for all DISTINCT user_name )"border="0" color="33554432" x="9" y="4" height="72" width="334" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( cust_name for all DISTINCT cust_name )"border="0" color="33554432" x="352" y="4" height="72" width="859" format="[GENERAL]" html.valueishtml="0"  name=compute_13 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( scene_desc for all DISTINCT cust_name, scene_desc )"border="0" color="33554432" x="1221" y="4" height="72" width="859" format="#,##0" html.valueishtml="0"  name=compute_14 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "imonth" rows = "user_name, cust_name, scene_desc, balance_amt" values = "sum(vatamt for crosstab)" sourcenames = "user_name, custno, cust_name, scene_desc, balance_amt, imonth, vatamt")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

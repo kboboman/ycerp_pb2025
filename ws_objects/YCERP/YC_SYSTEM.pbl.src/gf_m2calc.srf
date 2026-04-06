@@ -1,0 +1,33 @@
+﻿$PBExportHeader$gf_m2calc.srf
+$PBExportComments$argument(qa, uom, dec order_qty), return(dec qty)환산수량계산
+global type gf_m2calc from function_object
+end type
+
+forward prototypes
+global function decimal gf_m2calc (string arg_qa, string arg_uom, decimal arg_order_qty)
+end prototypes
+
+global function decimal gf_m2calc (string arg_qa, string arg_uom, decimal arg_order_qty);long    ll_x, ll_y, ll_lenth
+decimal lr_acc_qty
+
+if arg_uom = 'M2' or arg_uom = 'SS' then 	// 평방미터인 제품의 환산수량
+	ll_x       = long(MidA(arg_qa,  5, 4))
+	ll_y       = long(MidA(arg_qa, 10, 4))
+	lr_acc_qty = ll_x * ll_y * arg_order_qty / 1000000	
+	return truncate(lr_acc_qty, 2)
+elseif arg_uom = 'M' then 		// 길이가 있는 제품의 환산수량
+	ll_lenth = long(MidA(arg_qa, 15, 5))
+	if ll_lenth > 0 then
+		lr_acc_qty = ll_lenth * arg_order_qty / 1000
+		return truncate(lr_acc_qty, 2)
+	else
+		lr_acc_qty = arg_order_qty
+		return truncate(lr_acc_qty, 2)
+	end if
+else
+	lr_acc_qty = arg_order_qty
+	return lr_acc_qty 			// 길이가 없는 제품의 환산수량
+end if
+
+end function
+

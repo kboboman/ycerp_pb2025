@@ -1,0 +1,86 @@
+﻿$PBExportHeader$d_mpjaego_s33.srd
+$PBExportComments$재고관련사항 메모
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=128 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(14) update=yes updatewhereclause=yes key=yes name=order_no dbname="sale_jaego.order_no" )
+ column=(type=char(10) update=yes updatewhereclause=yes key=yes name=item_no dbname="sale_jaego.item_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=qa dbname="sale_jaego.qa" )
+ column=(type=datetime update=yes updatewhereclause=yes name=order_date dbname="sale_jaego.order_date" )
+ column=(type=decimal(2) update=yes updatewhereclause=yes key=yes name=order_qty dbname="sale_jaego.order_qty" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=qoh dbname="sale_jaego.qoh" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=loc_no dbname="sale_jaego.loc_no" )
+ column=(type=datetime update=yes updatewhereclause=yes name=en_date dbname="sale_jaego.en_date" )
+ column=(type=char(255) updatewhereclause=yes name=bigo dbname="sale_jaego.bigo" )
+ retrieve="  SELECT order_no
+       , item_no
+       , qa
+       , order_date
+       , order_qty
+       , qoh
+       , loc_no
+       , en_date
+       , bigo
+    FROM sale_jaego
+   WHERE (loc_no     = :as_locno)  /* 저장소   */
+     AND (item_no    = '')         /* 수주일자 */
+  
+  UNION ALL
+  
+  SELECT order_no    = sale.order_no
+       , item_no     = saledet.item_no        
+       , qa          = saledet.qa
+       , order_date  = sale.order_date
+       , order_qty   = saledet.order_qty      
+       , qoh         = isnull(itemloc.qoh, 0)
+       , loc_no      = itemloc.loc_no
+       , en_date     = sale_jaego.en_date
+       , bigo        = sale_jaego.bigo
+    FROM saledet       (nolock)
+         LEFT OUTER JOIN sale        (nolock) ON saledet.order_no= sale.order_no 
+         LEFT OUTER JOIN itemloc     (nolock) ON saledet.item_no = itemloc.item_no AND saledet.qa = itemloc.qa       
+
+         LEFT OUTER JOIN sale_jaego  (nolock) ON sale.order_no   = sale_jaego.order_no 
+                                             AND saledet.item_no = sale_jaego.item_no AND saledet.order_qty = sale_jaego.order_qty
+/*   WHERE sale.open_close        <> 'C'      한도초과*/
+   WHERE sale.open_close        = 'O'         	         
+     AND (itemloc.loc_no         = :as_locno      )         /* 저장소   */
+     AND (sale.order_date  BETWEEN :as_sdate AND :as_edate) /* 수주일자 */
+     AND ((:as_custno   = '%')  OR
+          (:as_custno  <> '%'  AND sale.cust_no      = :as_custno   )         /* 거래처   */
+         )
+     AND ((:as_scene    = '%')  OR
+          (:as_scene   <> '%'  AND sale.scene_code   = :as_scene    )         /* 현장     */
+         )
+     AND ((:as_confirm  = '%')  OR
+          (:as_confirm <> '%'  AND sale.confirm_flag = :as_confirm  )         /* 수주확정 */
+         )
+     AND ((:as_outtype  = '%')  OR
+          (:as_outtype  = '1'  AND saledet.order_qty - saledet.rlse_qty <= 0) OR   /* 출고   */
+          (:as_outtype  = '2'  AND saledet.order_qty - saledet.rlse_qty  > 0)      /* 미출고 */
+         )
+" update="sale_jaego" updatewhere=1 updatekeyinplace=no arguments=(("as_locno", string),("as_sdate", string),("as_edate", string),("as_custno", string),("as_scene", string),("as_confirm", string),("as_outtype", string))  sort="item_no A qa A order_no A order_qty A " )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="112" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Order No" border="6" color="33554432" x="270" y="8" height="112" width="480" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Item No" border="6" color="33554432" x="759" y="8" height="112" width="352" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Qa" border="6" color="33554432" x="1120" y="8" height="112" width="672" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Order Qty" border="6" color="33554432" x="1801" y="8" height="112" width="384" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Qoh" border="6" color="33554432" x="2194" y="8" height="112" width="384" html.valueishtml="0"  name=qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Loc No" border="6" color="33554432" x="2587" y="8" height="112" width="352" html.valueishtml="0"  name=loc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="En Date" border="6" color="33554432" x="2949" y="8" height="112" width="416" html.valueishtml="0"  name=en_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="Bigo" border="6" color="0" x="3374" y="8" height="112" width="1458" html.valueishtml="0"  name=bigo_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=20 border="0" color="33554432" x="759" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=30 border="0" color="33554432" x="1120" y="8" height="72" width="672" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=40 border="0" color="33554432" x="1801" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=50 border="0" color="33554432" x="2194" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=qoh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=60 border="0" color="33554432" x="2587" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=loc_no visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="0" color="33554432" x="270" y="8" height="72" width="480" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=8 alignment="2" tabsequence=70 border="0" color="33554432" x="2949" y="8" height="72" width="416" format="yyyy/mm/dd" html.valueishtml="0"  name=en_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3374" y="8" height="72" width="1458" format="[general]" html.valueishtml="0"  name=bigo visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="64" width="251" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

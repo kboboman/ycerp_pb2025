@@ -1,0 +1,110 @@
+﻿$PBExportHeader$d_irusersilsa_s2.srd
+$PBExportComments$담당자별item실사재고추가(2001/10/08,이인호))
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=156 color="536870912" )
+summary(height=0 color="553648127" )
+footer(height=72 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=inaudit_time dbname="inaudit_time" )
+ column=(type=datetime updatewhereclause=yes name=inaudit_date dbname="inaudit_date" )
+ column=(type=char(10) updatewhereclause=yes name=inaudit_item dbname="inaudit_item" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(10) updatewhereclause=yes name=loc_no dbname="loc_no" )
+ column=(type=char(2) updatewhereclause=yes name=inaudit_type dbname="inaudit_type" )
+ column=(type=char(17) updatewhereclause=yes name=order_no dbname="order_no" )
+ column=(type=decimal(2) updatewhereclause=yes name=rcpt_qty dbname="rcpt_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=issue_qty dbname="issue_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=cost dbname="cost" )
+ column=(type=char(10) updatewhereclause=yes name=destination dbname="destination" )
+ column=(type=char(50) updatewhereclause=yes name=loc_name dbname="loc_name" )
+ column=(type=char(20) updatewhereclause=yes name=serial_id dbname="serial_id" )
+ column=(type=char(30) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=decimal(2) updatewhereclause=yes name=unit_qty dbname="unit_qty" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="cnt" )
+ column=(type=decimal(4) updatewhereclause=yes name=com_qty dbname="com_qty" )
+ column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="item_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=preqoh dbname="preqoh" )
+ retrieve="  SELECT inaudit.inaudit_time   
+               , inaudit.inaudit_date   
+               , inaudit.inaudit_item   
+               , inaudit.qa             
+               , inaudit.loc_no         
+               , inaudit.inaudit_type   
+               , inaudit.order_no       
+               , inaudit.rcpt_qty       
+               , inaudit.issue_qty      
+               , inaudit.cost           
+               , inaudit.destination    
+               , loc_name = loc.tar_name
+               , inaudit.serial_id      
+               , inaudit.rem            
+               , inaudit.unit_qty       
+               , inaudit.cnt            
+               , inaudit.com_qty        
+               , inaudit.user_id     
+               , groupitem.item_name 
+               , preqoh = itemloc.qoh - (SELECT nqty = isnull(sum(ineoday.rcpt_qty), 0) - isnull(sum(ineoday.issue_qty), 0) 
+                                                           FROM ineoday
+                                                          WHERE cdate     >= CONVERT(char(8), inaudit.inaudit_date, 112)
+                                                            AND ( item_no  = :as_item )
+                                                            AND ( qa       = :as_qa   )
+                                                            AND ( loc_no   = :as_loc  )
+                                                        )
+    FROM inaudit  inner join groupitem on  inaudit.inaudit_item       = groupitem.item_no 
+                             left outer join  itemloc on  inaudit.inaudit_item = itemloc.item_no 
+                                             and inaudit.qa = itemloc.qa 
+                                             and inaudit.loc_no = itemloc.loc_no
+                             left outer join (SELECT tar_no = location.loc_no, tar_name = RTRIM(location.loc_name) FROM location
+                                                      UNION ALL
+                                                      SELECT tar_no = customer.cust_no, tar_name = RTRIM(customer.cust_name) FROM customer
+                                                      UNION ALL
+                                                      SELECT tar_no = wc.work_no, tar_name = RTRIM(wc.work_name) FROM wc
+                                                     ) loc on inaudit.destination = loc.tar_no
+   WHERE ( inaudit.inaudit_date between :ad_start and :ad_end ) 
+         AND ( inaudit.inaudit_item = :as_item  ) 
+         AND ( inaudit.qa = :as_qa  ) 
+        AND ( inaudit.loc_no = :as_loc ) " arguments=(("ad_start", date),("ad_end", date),("as_item", string),("as_qa", string),("as_loc", string))  sort="inaudit_date A inaudit_time A " )
+group(level=1 header.height=0 trailer.height=0 by=("inaudit_date" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="일자" border="6" color="0" x="576" y="84" height="60" width="366" html.valueishtml="0"  name=inaudit_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="전일재고" border="6" color="0" x="951" y="84" height="60" width="256" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입고수량" border="6" color="0" x="1216" y="84" height="60" width="279" html.valueishtml="0"  name=rcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고수량" border="6" color="0" x="1504" y="84" height="60" width="270" html.valueishtml="0"  name=issue_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="당일재고" border="6" color="0" x="1783" y="84" height="60" width="283" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="비고" border="6" color="0" x="2075" y="84" height="60" width="818" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입력자" border="6" color="0" x="2903" y="84" height="60" width="242" html.valueishtml="0"  name=user_id_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="운송처" border="6" color="0" x="4059" y="84" height="60" width="251" html.valueishtml="0"  name=destination_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입출고시간" border="6" color="0" x="4320" y="84" height="60" width="631" html.valueishtml="0"  name=inaudit_time_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="1" text="품명:" border="0" color="0" x="1783" y="8" height="60" width="283" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=header alignment="0" expression=" groupitem_item_name "border="0" color="0" x="2075" y="8" height="60" width="818" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="today()"border="0" color="0" x="3154" y="8" height="60" width="466" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="규격:" border="0" color="0" x="4059" y="8" height="60" width="251" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=header alignment="0" expression=" qa "border="0" color="0" x="4320" y="8" height="60" width="631" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="주문번호" border="6" color="0" x="3154" y="84" height="60" width="466" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="운송처명" border="6" color="0" x="3630" y="84" height="60" width="421" html.valueishtml="0"  name=loc_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입출고유형" border="6" color="0" x="178" y="84" height="60" width="389" html.valueishtml="0"  name=inaudit_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="#" border="6" color="0" x="9" y="84" height="60" width="160" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="0" x="2075" y="8" height="60" width="818" format="[general]" html.valueishtml="0"  name=rem  tag="비고" visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="0" x="2903" y="8" height="60" width="242" format="[general]" html.valueishtml="0"  name=user_id  tag="입력자" visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="0" x="4059" y="8" height="60" width="251" format="[general]" html.valueishtml="0"  name=destination  tag="운송처" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="4320" y="8" height="60" width="631" format="yyyy/mm/dd hh:mm:ss:fff" html.valueishtml="0"  name=inaudit_time  tag="입출고시간" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="576" y="8" height="60" width="366" format="yyyy/mm/dd" html.valueishtml="0"  name=inaudit_date  tag="입출고일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="0" x="951" y="8" height="60" width="256" format="#,##0" html.valueishtml="0"  name=preqoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="1216" y="8" height="60" width="279" format="#,##0" html.valueishtml="0"  name=rcpt_qty  tag="입고수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="1504" y="8" height="60" width="270" format="#,##0" html.valueishtml="0"  name=issue_qty  tag="출고수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression=" preqoh  +cumulativeSum( rcpt_qty  -  issue_qty  for group 1 )"border="0" color="16711680" x="1783" y="8" height="60" width="283" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="3154" y="8" height="60" width="466" format="[general]" html.valueishtml="0"  name=order_no  tag="주문번호" visible="1" edit.limit=17 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0" x="3630" y="8" height="60" width="421" format="[general]" html.valueishtml="0"  name=loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="178" y="8" height="60" width="389" format="[general]" html.valueishtml="0"  name=inaudit_type  tag="입출고유형" visible="1" dddw.name=d_iotype_c dddw.displaycolumn=remarks dddw.datacolumn=inaudit_type dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="8" height="60" width="160" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="1" expression="first(  preqoh  for all )"border="0" color="0" x="951" y="8" height="60" width="256" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(rcpt_qty for all)"border="0" color="0" x="1216" y="8" height="60" width="279" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(  issue_qty for all)"border="0" color="0" x="1504" y="8" height="60" width="270" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" first(  preqoh  for all ) + sum(rcpt_qty for all)  -  sum(issue_qty  for all)"border="0" color="0" x="1783" y="8" height="60" width="283" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=footer alignment="2" text="총계 =" border="0" color="0" x="576" y="8" height="60" width="366" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count(  inaudit_item  for all )"border="0" color="0" x="178" y="8" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="60" width="160" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="preqoh")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

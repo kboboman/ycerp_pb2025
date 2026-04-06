@@ -1,0 +1,70 @@
+﻿$PBExportHeader$d_whcustupdate_s.srd
+$PBExportComments$거래처변경(출고번호)(2005/01/14, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N/	0" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="do.cust_no" )
+ column=(type=char(14) updatewhereclause=yes key=yes name=do_no dbname="do.do_no" )
+ column=(type=datetime updatewhereclause=yes name=do_date dbname="do.do_date" )
+ column=(type=char(4) updatewhereclause=yes name=tcust_no dbname="do.tcust_no" )
+ column=(type=char(11) updatewhereclause=yes name=tspot_code dbname="do.tspot_code" )
+ column=(type=char(1) updatewhereclause=yes name=invoice_print dbname="do.invoice_print" )
+ column=(type=char(1) updatewhereclause=yes name=apply_end dbname="do.apply_end" )
+ retrieve="SELECT chk = 'N'
+     , do.cust_no
+     , do.do_no 
+     , do.do_date
+     , a.tcust_no
+     , a.tspot_code
+     , do.invoice_print
+     , a.apply_end
+  FROM do
+       LEFT OUTER JOIN (
+            SELECT a.fcust_no, b.scene_code, a.tcust_no, a.tspot_code, b.do_no, a.apply_end
+              FROM dotrans a
+                   LEFT OUTER JOIN dotransdet b ON a.trans_no = b.trans_no
+             WHERE a.apply_end  = 'Y'
+               AND a.fcust_no   = :as_cust
+               AND (( :as_flag = 'C' and a.fcust_no = :as_cust ) OR
+                    ( :as_flag = 'S' and a.fcust_no = :as_cust and b.scene_code = :as_scene ) 
+                   )
+       ) A on do.do_no = a.do_no
+ WHERE do.invoice_print = 'N' 
+   AND (( :as_flag = 'C' and cust_no = :as_cust ) OR
+        ( :as_flag = 'S' and cust_no = :as_cust and spot_code = :as_scene ) 
+       )
+   AND ( a.apply_end = 'Y' )
+
+/*
+SELECT do_no 
+  FROM do
+ WHERE invoice_print = 'N' 
+   AND (( :as_flag = 'C' and cust_no = :as_cust ) OR
+        ( :as_flag = 'S' and cust_no = :as_cust and spot_code = :as_scene ) 
+       ) 
+*/
+" update="do" updatewhere=0 updatekeyinplace=no arguments=(("as_flag", string),("as_cust", string),("as_scene", string))  sort="do_no A " )
+text(band=header alignment="2" text="CHK" border="6" color="0" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고번호" border="6" color="0" x="178" y="8" height="60" width="462" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="649" y="8" height="60" width="210" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고일자" border="6" color="0" x="869" y="8" height="60" width="334" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출" border="6" color="0" x="1211" y="8" height="60" width="165" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="종결" border="6" color="0" x="1385" y="8" height="60" width="178" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="변경전" border="6" color="0" x="1573" y="8" height="60" width="183" html.valueishtml="0"  name=tcust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="변경전현장" border="6" color="0" x="1765" y="8" height="60" width="379" html.valueishtml="0"  name=tspot_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="869" y="4" height="64" width="334" format="yyyy/mm/dd" html.valueishtml="0"  name=do_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="649" y="4" height="64" width="210" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="1211" y="4" height="64" width="165" format="[general]" html.valueishtml="0"  name=invoice_print visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="1385" y="4" height="64" width="178" format="[general]" html.valueishtml="0"  name=apply_end visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="1573" y="4" height="64" width="183" format="[general]" html.valueishtml="0"  name=tcust_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="1765" y="4" height="64" width="379" format="[general]" html.valueishtml="0"  name=tspot_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="178" y="4" height="64" width="462" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="0" x="9" y="4" height="64" width="160" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.other="0" checkbox.scale=yes checkbox.threed=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="178" y="4" height="60" width="462" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum ( if ( chk = 'Y', 1, 0 ) for all )"border="0" color="0" x="9" y="4" height="60" width="160" format="[GENERAL]" html.valueishtml="0"  name=tcnt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

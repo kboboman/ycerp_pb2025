@@ -1,0 +1,150 @@
+﻿$PBExportHeader$d_oisaledo_r.srd
+$PBExportComments$영업사원별 출고현황 DISPLAY(1999/03/03, 조현춘)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=72 color="79741120" )
+summary(height=0 color="536870912" )
+footer(height=80 color="67108864" )
+detail(height=68 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=do_cust_no dbname="do.cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(11) updatewhereclause=yes name=do_spot_code dbname="do.spot_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name dbname="login.user_name" )
+ column=(type=char(14) updatewhereclause=yes name=do_do_no dbname="do.do_no" )
+ column=(type=long updatewhereclause=yes name=dodet_oi_no dbname="dodet.oi_no" )
+ column=(type=char(10) updatewhereclause=yes name=dodet_item_no dbname="dodet.item_no" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=dodet_qa dbname="dodet.qa" )
+ column=(type=char(2) updatewhereclause=yes name=dodet_uom dbname="dodet.uom" )
+ column=(type=decimal(2) updatewhereclause=yes name=dodet_ship_qty dbname="dodet.ship_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=com_qty dbname="com_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=dodet_price dbname="price" )
+ column=(type=decimal(8) updatewhereclause=yes name=amount dbname="amount" )
+ column=(type=decimal(4) updatewhereclause=yes name=dodet_rate_cash dbname="dodet.rate_cash" )
+ column=(type=datetime updatewhereclause=yes name=do_do_date dbname="do.do_date" )
+ column=(type=char(1) updatewhereclause=yes name=do_shipamt_case dbname="do.shipamt_case" )
+ column=(type=char(1) updatewhereclause=yes name=do_ship_flag dbname="ship_flag" )
+ column=(type=char(30) updatewhereclause=yes name=ship_flag2 dbname="ship_flag2" )
+ column=(type=decimal(0) updatewhereclause=yes name=do_ship_amount dbname="do.ship_amount" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_rate dbname="do.do_rate" )
+ column=(type=char(3) updatewhereclause=yes name=do_curr_code dbname="do.curr_code" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_cash dbname="do.do_cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_total dbname="do.do_total" )
+ column=(type=char(10) updatewhereclause=yes name=c_start dbname="c_start" )
+ column=(type=char(10) updatewhereclause=yes name=c_end dbname="c_end" )
+ retrieve="  SELECT do.cust_no            
+       , customer.cust_name
+       , do.spot_code     
+       , scene.scene_desc  
+       , login.user_name       
+       , do.do_no         
+       , dodet.oi_no      
+       , dodet.item_no    
+       , groupitem.item_name   
+       , dodet.qa         
+       , dodet.uom        
+       , dodet.ship_qty
+       , com_qty = round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1)
+       , price   = (case when :as_team <> 'P' then dodet.price else 0 end)  
+       , amount  = (case when customer.round = 'Y' then 
+                              round(dodet.price * round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1), 0, 0)
+                         else round(dodet.price * round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1), 0, 1) 
+                    end)    
+       , dodet.rate_cash       
+       , do.do_date            
+       , do.shipamt_case   
+       , ship_flag  = do.ship_flag
+       , ship_flag2 = dbo.uf_getshipflag(do.ship_flag)
+       , do.ship_amount        
+       , do.do_rate            
+       , do.curr_code          
+       , do.do_cash            
+       , do.do_total           
+       , c_start = (case when :as_start = '' then '          ' else :as_start end)   
+       , c_end   = (case when :as_end   = '' then '          ' else :as_end   end)   
+
+FROM  do with(nolock) inner join dodet with(nolock) on do.do_no = dodet.do_no 
+					          	   inner join groupitem with(nolock)  on dodet.item_no = groupitem.item_no
+						        inner join customer with(nolock)  on do.cust_no = customer.cust_no
+                                       inner join login with(nolock) on  customer.salesman = login.user_id
+                                       left outer join scene  with(nolock) on do.cust_no = scene.cust_no and do.spot_code = scene.scene_code
+WHERE (( convert(char(10),do.do_date,111) BETWEEN :as_start AND :as_end ) AND  
+          ( do.sale_flag          IN ( :as_saleflag )                      ) AND  
+          ( do.area_no          LIKE :as_area                              ) AND
+          ( customer.salesman   LIKE :as_salesman OR 
+            (:as_team = 'T' AND customer.salesman IN (SELECT login.user_id  FROM login, team 
+                                                       WHERE login.team_code   = team.team_code  AND team_manager = :as_salesman) ) )
+         )
+
+/*
+ FROM do          
+       , dodet       
+       , groupitem   
+       , customer    
+       , login       
+       , scene  
+   WHERE ( do.spot_code        *= scene.scene_code  )   
+     AND ( do.do_no             = dodet.do_no       )   
+     AND ( dodet.item_no        = groupitem.item_no )   
+     AND ( do.cust_no           = customer.cust_no  )   
+     AND ( customer.salesman    = login.user_id     )   
+     AND (( convert(char(10),do.do_date,111) BETWEEN :as_start AND :as_end ) AND  
+          ( do.sale_flag          IN ( :as_saleflag )                      ) AND  
+          ( do.area_no          LIKE :as_area                              ) AND
+          ( customer.salesman   LIKE :as_salesman OR 
+            (:as_team = 'T' AND customer.salesman IN (SELECT login.user_id  FROM login, team 
+                                                       WHERE login.team_code   = team.team_code  AND team_manager = :as_salesman) ) )
+         )
+
+
+*/
+" arguments=(("as_saleflag", stringlist),("as_start", string),("as_end", string),("as_salesman", string),("as_area", string),("as_team", string))  sort="do_do_no A dodet_oi_no A login_user_name A customer_cust_name A scene_scene_desc A do_do_date A groupitem_item_name A dodet_qa A " )
+group(level=1 header.height=0 trailer.height=80 by=("do_do_no" ) header.color="553648127" trailer.color="536870912" )
+text(band=header alignment="2" text="담당자명" border="6" color="0" x="9" y="8" height="60" width="311" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="판매거래처" border="6" color="0" x="329" y="8" height="60" width="814" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현 장" border="6" color="0" x="1152" y="8" height="60" width="745" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="물품명" border="6" color="0" x="1906" y="8" height="60" width="654" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="2569" y="8" height="60" width="613" html.valueishtml="0"  name=dodet_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="3191" y="8" height="60" width="128" html.valueishtml="0"  name=dodet_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고수량" border="6" color="0" x="3328" y="8" height="60" width="306" html.valueishtml="0"  name=dodet_ship_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="3643" y="8" height="60" width="453" html.valueishtml="0"  name=com_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고단가" border="6" color="0" x="4105" y="8" height="60" width="302" html.valueishtml="0"  name=dodet_price_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고금액" border="6" color="0" x="4416" y="8" height="60" width="558" html.valueishtml="0"  name=amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부가세" border="6" color="0" x="4983" y="8" height="60" width="507" html.valueishtml="0"  name=dodet_rate_cash_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="합계금액" border="6" color="0" x="5499" y="8" height="60" width="603" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고번호" border="6" color="0" x="6112" y="8" height="60" width="485" html.valueishtml="0"  name=do_do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순번" border="6" color="0" x="6606" y="8" height="60" width="165" html.valueishtml="0"  name=dodet_oi_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운반비" border="6" color="0" x="6779" y="8" height="60" width="453" html.valueishtml="0"  name=ship_total_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Ship Flag2" border="6" color="0" x="7241" y="4" height="60" width="183" html.valueishtml="0"  name=ship_flag2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Do Shipamt Case" border="6" color="0" x="7433" y="4" height="60" width="155" html.valueishtml="0"  name=do_shipamt_case_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="329" y="4" height="60" width="814" format="[general]" html.valueishtml="0"  name=customer_cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1152" y="4" height="60" width="745" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="1906" y="4" height="60" width="654" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="2569" y="4" height="60" width="613" format="[general]" html.valueishtml="0"  name=dodet_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0" x="3191" y="4" height="60" width="128" format="[general]" html.valueishtml="0"  name=dodet_uom  tag="단위" visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="0" x="4983" y="4" height="60" width="507" format="#,##0" html.valueishtml="0"  name=dodet_rate_cash  tag="부가세" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="3328" y="4" height="60" width="306" format="#,##0" html.valueishtml="0"  name=dodet_ship_qty  tag="출고수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0" x="4105" y="4" height="60" width="302" format="#,##0" html.valueishtml="0"  name=dodet_price  tag="출고단가" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="3643" y="4" height="60" width="453" format="#,##0.00" html.valueishtml="0"  name=com_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0" x="4416" y="4" height="60" width="558" format="#,##0" html.valueishtml="0"  name=amount visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="311" format="[general]" html.valueishtml="0"  name=login_user_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" dodet_rate_cash   +   amount"border="0" color="0" x="5499" y="4" height="60" width="603" format="#,##0" html.valueishtml="0"  name=c_total visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="6112" y="4" height="60" width="485" format="[general]" html.valueishtml="0"  name=do_do_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="6606" y="4" height="60" width="165" format="[general]" html.valueishtml="0"  name=dodet_oi_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if( do_ship_flag = 'D' and do_shipamt_case = 'R' , if( do_do_rate <> 0, do_ship_amount  * 1.1, do_ship_amount) ,0) "border="0" color="0" x="6779" y="4" height="60" width="453" format="#,##0" html.valueishtml="0"  name=ship_total visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="0" x="7241" y="4" height="60" width="183" format="[general]" html.valueishtml="0"  name=ship_flag2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="0" x="7433" y="4" height="60" width="155" format="[general]" html.valueishtml="0"  name=do_shipamt_case visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(amount for group 1)"border="0" color="8388608" x="4416" y="8" height="60" width="558" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(dodet_rate_cash for group 1)"border="0" color="8388608" x="4983" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=t_rate visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="2" text="출고번호소계(운-)" border="0" color="8388608" x="329" y="8" height="60" width="814" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(  dodet_rate_cash   +   amount for group 1)"border="0" color="8388608" x="5499" y="8" height="60" width="603" format="#,##0" html.valueishtml="0"  name=t_total visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum( ship_total for group 1 DISTINCT  do_do_no ) "border="0" color="8388608" x="6779" y="8" height="60" width="453" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=footer alignment="2" text="총 합 계(운-)" border="0" color="16711680" x="329" y="8" height="60" width="814" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=footer alignment="1" expression="sum(amount for all )"border="0" color="16711680" x="4416" y="8" height="60" width="558" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=footer alignment="1" expression="sum(  dodet_rate_cash  for all )"border="0" color="16711680" x="4983" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=footer alignment="1" expression="sum(  dodet_rate_cash   +   amount for all )"border="0" color="16711680" x="5499" y="8" height="60" width="603" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=footer alignment="1" expression="sum( ship_total for all DISTINCT  do_do_no ) "border="0" color="16711680" x="6779" y="8" height="60" width="453" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+
+sparse(names="login_user_name	customer_cust_name	scene_scene_desc	do_do_no	ship_total")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

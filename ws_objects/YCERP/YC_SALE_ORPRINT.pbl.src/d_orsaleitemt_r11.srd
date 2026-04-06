@@ -1,0 +1,69 @@
+﻿$PBExportHeader$d_orsaleitemt_r11.srd
+$PBExportComments$그룹물품집계표
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=담당자 dbname="담당자" )
+ column=(type=char(20) updatewhereclause=yes name=전략품명 dbname="전략품명" )
+ column=(type=long updatewhereclause=yes name=월 dbname="월" )
+ column=(type=decimal(2) updatewhereclause=yes name=전년수량 dbname="전년수량" )
+ column=(type=decimal(0) updatewhereclause=yes name=전년금액 dbname="전년금액" )
+ column=(type=decimal(2) updatewhereclause=yes name=금년수량 dbname="금년수량" )
+ column=(type=decimal(0) updatewhereclause=yes name=금년금액 dbname="금년금액" )
+ retrieve="SELECT '담당자'   = b.user_name
+     , '전략품명' = a.item_name
+     , '월'       = a.mm
+     , '전년수량' = a.year21
+     , '전년금액' = a.year22
+     , '금년수량' = a.year11
+     , '금년금액' = a.year12
+  FROM (
+       SELECT distinct salesman
+            , item_name
+            , mm     = month(do_date)
+            , year21 = sum( (case year(do_date) when (year(:ad_date) - 1) then calc_qty else 0 end) )
+            , year22 = sum( (case year(do_date) when (year(:ad_date) - 1) then amount   else 0 end) )
+            , year11 = sum( (case year(do_date) when (year(:ad_date) - 0) then calc_qty else 0 end) )
+            , year12 = sum( (case year(do_date) when (year(:ad_date) - 0) then amount   else 0 end) )
+         FROM doitem_sum
+        GROUP BY salesman, item_name, month(do_date)
+      /*ORDER BY salesman, item_name, month(do_date)*/
+       ) A
+       LEFT OUTER JOIN login B   ON a.salesman  = b.user_id
+ WHERE ( a.salesman   LIKE :as_salesman OR 
+         (:as_team = 'T' AND a.salesman IN (SELECT login.user_id  FROM login, team 
+                                             WHERE login.team_code   = team.team_code  AND team_manager = :as_salesman
+                                           ) 
+         )
+       )
+ ORDER BY b.user_name, a.item_name, a.mm
+ " arguments=(("ad_date", date),("as_salesman", string),("as_team", string)) )
+group(level=1 header.height=0 trailer.height=80 by=("담당자" , "전략품명" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="금년수량" border="6" color="16711680" x="2240" y="8" height="60" width="503" html.valueishtml="0"  name=금년수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="월" border="6" color="33554432" x="352" y="8" height="60" width="155" html.valueishtml="0"  name=월_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자명" border="6" color="33554432" x="9" y="8" height="60" width="334" html.valueishtml="0"  name=담당자_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="금년금액" border="6" color="16711680" x="2752" y="8" height="60" width="512" html.valueishtml="0"  name=금년금액_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전략품명" border="6" color="33554432" x="517" y="8" height="60" width="686" html.valueishtml="0"  name=전략품명_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전년수량" border="6" color="33554432" x="1211" y="8" height="60" width="507" html.valueishtml="0"  name=전년수량_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전년금액" border="6" color="33554432" x="1728" y="8" height="60" width="503" html.valueishtml="0"  name=전년금액_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="352" y="8" height="72" width="155" format="[general]" html.valueishtml="0"  name=월 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="334" format="[general]" html.valueishtml="0"  name=담당자 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="517" y="8" height="72" width="686" format="[general]" html.valueishtml="0"  name=전략품명 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1211" y="8" height="72" width="507" format="#,##0.00" html.valueishtml="0"  name=전년수량 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1728" y="8" height="72" width="503" format="#,##0" html.valueishtml="0"  name=전년금액 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2240" y="8" height="72" width="503" format="#,##0.00" html.valueishtml="0"  name=금년수량 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2752" y="8" height="72" width="512" format="#,##0" html.valueishtml="0"  name=금년금액 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum (  전년수량 for group 1 )"border="0" color="33554432" x="1211" y="8" height="64" width="507" format="#,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum (  전년금액 for group 1 )"border="0" color="33554432" x="1728" y="8" height="64" width="503" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum (  금년수량 for group 1 )"border="0" color="33554432" x="2240" y="8" height="64" width="503" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum (   금년금액  for group 1 )"border="0" color="33554432" x="2752" y="8" height="64" width="512" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="68" width="334" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum ( 전년수량 for all )"border="0" color="33554432" x="1211" y="8" height="68" width="507" format="#,##0.00" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  전년금액 for all )"border="0" color="33554432" x="1728" y="8" height="68" width="503" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  금년수량 for all )"border="0" color="33554432" x="2240" y="8" height="68" width="503" format="#,##0.00" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  금년금액 for all )"border="0" color="33554432" x="2752" y="8" height="68" width="512" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

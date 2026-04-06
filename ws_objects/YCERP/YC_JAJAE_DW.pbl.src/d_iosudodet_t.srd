@@ -1,0 +1,128 @@
+﻿$PBExportHeader$d_iosudodet_t.srd
+$PBExportComments$사급내역(1998/06/26,곽용덕)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=160 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=164 color="536870912" )
+table(column=(type=char(2) updatewhereclause=yes name=groupitem_uom dbname="GroupItem.uom" )
+ column=(type=char(17) update=yes updatewhereclause=yes key=yes name=order_no dbname="sudodet.order_no" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=wc_no dbname="sudodet.wc_no" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=item_no dbname="sudodet.item_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=qa dbname="sudodet.qa" )
+ column=(type=datetime update=yes updatewhereclause=yes name=due_date dbname="sudodet.due_date" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=rcpt_qty dbname="sudodet.rcpt_qty" initial="0" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=component dbname="sudodet.component" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=component_qa dbname="sudodet.component_qa" )
+ column=(type=char(2) update=yes updatewhereclause=yes name=comp_uom dbname="sudodet.comp_uom" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=plan_qty dbname="sudodet.plan_qty" initial="0" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=issue_qty dbname="sudodet.issue_qty" initial="0" )
+ column=(type=datetime update=yes updatewhereclause=yes name=issue_date dbname="sudodet.issue_date" initial="0" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=sudo_type dbname="sudodet.sudo_type" initial="A" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=out_qty dbname="sudodet.out_qty" )
+ column=(type=long update=yes updatewhereclause=yes name=operation dbname="sudodet.operation" )
+ column=(type=char(14) update=yes updatewhereclause=yes name=sudodet_sale_no dbname="sudodet.sale_no" )
+ column=(type=long update=yes updatewhereclause=yes name=sudodet_seq_no dbname="sudodet.seq_no" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=rem dbname="sudodet.rem" )
+ column=(type=char(4) update=yes updatewhereclause=yes name=sudodet_color dbname="sudodet.color" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=sudodet_out_type dbname="sudodet.out_type" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=issue_loc dbname="sudodet.issue_loc" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=issue_lot dbname="sudodet.issue_lot" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=area_no dbname="sudodet.area_no" )
+ column=(type=char(60) updatewhereclause=yes name=itemname1 dbname="GroupItem.item_name" )
+ column=(type=char(60) updatewhereclause=yes name=itemname2 dbname="GroupItem.item_name" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="cust_name" )
+ retrieve="  SELECT DISTINCT groupitem_a.uom,   
+         sudodet.order_no,   
+         sudodet.wc_no,   
+         sudodet.item_no,   
+         sudodet.qa,   
+         sudodet.due_date,   
+         sudodet.rcpt_qty,   
+         sudodet.component,   
+         sudodet.component_qa,   
+         sudodet.comp_uom,   
+         sudodet.plan_qty,   
+         sudodet.issue_qty,   
+         sudodet.issue_date,   
+         sudodet.sudo_type,   
+         sudodet.out_qty,   
+         sudodet.operation,   
+         sudodet.sale_no,   
+         sudodet.seq_no,   
+         sudodet.rem,   
+         sudodet.color,   
+         sudodet.out_type,   
+         sudodet.issue_loc,   
+         sudodet.issue_lot,   
+         sudodet.area_no,   
+         groupitem_a.item_name,   
+         groupitem_b.item_name,   
+         cust_name = dbo.uf_getcustname(sudodet.sale_no) 
+    FROM sudodet left outer join  groupitem groupitem_a on sudodet.item_no = groupitem_a.item_no
+					    left outer join 	 groupitem groupitem_b on sudodet.component = groupitem_b.item_no
+         				    left outer join sale  on sudodet.sale_no = sale.order_no
+   WHERE ( 
+				( sudodet.sudo_type in ('A') ) AND  
+/*         			( sale.open_close <> 'C' )		 한도초과 */
+         			( sale.open_close = 'O' )
+			    ) and   
+		         ( sudodet.area_no = :as_area ) 
+/*
+    FROM sudodet,   
+         groupitem groupitem_a,   
+         groupitem groupitem_b,   
+         sale  
+   WHERE ( sudodet.item_no *= groupitem_a.item_no) and  
+         ( sudodet.component *= groupitem_b.item_no) and  
+         ( sudodet.sale_no *= sale.order_no ) and  
+         ( ( sudodet.sudo_type in ('A') ) AND  
+         ( sale.open_close <> 'C' ) ) and   
+         ( sudodet.area_no = :as_area ) 
+*/
+" update="sudodet" updatewhere=0 updatekeyinplace=yes arguments=(("as_area", string)) )
+text(band=header alignment="2" text="판매거래처" border="6" color="0" x="114" y="12" height="60" width="663" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가공물품명" border="6" color="0" x="795" y="12" height="60" width="823" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가공물품규격" border="6" color="0" x="1637" y="12" height="60" width="617" html.valueishtml="0"  name=wc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2272" y="12" height="60" width="123" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가공수량" border="6" color="0" x="2414" y="12" height="60" width="393" html.valueishtml="0"  name=plan_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="2825" y="12" height="60" width="544" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="가공물품" border="6" color="0" x="3387" y="12" height="60" width="334" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="순번" border="6" color="0" x="3739" y="12" height="60" width="142" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="납기일자" border="6" color="0" x="4544" y="12" height="60" width="338" html.valueishtml="0"  name=due_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="색상" border="6" color="0" x="4901" y="12" height="60" width="475" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고물품명" border="6" color="0" x="795" y="88" height="60" width="823" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고물품규격" border="6" color="0" x="1637" y="88" height="60" width="617" html.valueishtml="0"  name=component_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2272" y="88" height="60" width="123" html.valueishtml="0"  name=comp_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산지시번호" border="6" color="0" x="3899" y="12" height="60" width="626" html.valueishtml="0"  name=issue_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고물품" border="6" color="0" x="2825" y="88" height="60" width="334" html.valueishtml="0"  name=component_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="0" x="3177" y="88" height="60" width="1637" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고수량" border="6" color="0" x="2414" y="88" height="60" width="393" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="출고예정일" border="6" color="0" x="14" y="88" height="60" width="320" html.valueishtml="0"  name=issue_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="출고저장소" border="6" color="0" x="352" y="88" height="60" width="425" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="No" border="6" color="0" x="14" y="12" height="60" width="82" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=detail x1="9" y1="156" x2="5477" y2="156"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="16711680"  background.mode="2" background.color="79741120" )
+column(band=detail id=13 alignment="2" tabsequence=10 border="4" color="0" x="14" y="84" height="60" width="320" format="[shortdate] [time]" html.valueishtml="0"  name=issue_date  tag="출고예정일" visible="1" editmask.mask="yyyy/mm/dd" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=22 alignment="0" tabsequence=20 border="4" color="0" x="352" y="84" height="60" width="425" format="[general]" html.valueishtml="0"  name=issue_loc visible="1" dddw.name=d_cdlocation_dddw dddw.displaycolumn=loc_name dddw.datacolumn=loc_no dddw.percentwidth=240 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.nilisnull=yes dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="4" color="0" x="2272" y="84" height="60" width="123" format="[general]" html.valueishtml="0"  name=comp_uom  tag="단위" visible="1" edit.limit=2 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79741120~tif(getrow()=currentrow(), if(isrownew(), rgb(254, 252, 175), 78682240), if(isrownew(),  1087434968,78682240))" )
+column(band=detail id=12 alignment="1" tabsequence=30 border="4" color="0" x="2414" y="84" height="60" width="393" format="[general]" html.valueishtml="0" protect="0~tif(isrownew(),0,1)"  name=issue_qty  tag="출고수량" visible="1" editmask.mask="###,###.00" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), if(isrownew(), rgb(254, 252, 175), 78682240), if(isrownew(),  1087434968,78682240))" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="4" color="0" x="795" y="84" height="60" width="823" format="[general]" html.valueishtml="0" protect="0~tif(isrownew(),0,1)"  name=itemname2 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="4" color="0" x="1637" y="84" height="60" width="617" format="[general]" html.valueishtml="0" protect="0~tif(isrownew(),0,1)"  name=component_qa  tag="출고물품규격" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.nilisnull=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="4" color="0" x="2825" y="84" height="60" width="334" format="[general]" html.valueishtml="0" protect="0~tif(isrownew(),0,1)"  name=component  tag="출고물품번호" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.nilisnull=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="4" color="0" x="3177" y="84" height="60" width="1637" format="[general]" html.valueishtml="0"  name=rem visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79741120~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=27 alignment="0" tabsequence=32766 border="4" color="16711680" x="114" y="8" height="60" width="663" format="[general]" html.valueishtml="0"  name=customer_cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=25 alignment="0" tabsequence=32766 border="4" color="16711680" x="795" y="8" height="60" width="823" format="[general]" html.valueishtml="0"  name=itemname1 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="4" color="0" x="2272" y="8" height="60" width="123" format="[general]" html.valueishtml="0"  name=groupitem_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="4" color="0" x="2414" y="8" height="60" width="393" format="[general]" html.valueishtml="0"  name=plan_qty  tag="출고계획수량" visible="1" editmask.mask="###,###,###,###.00" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="4" color="0" x="2825" y="8" height="60" width="544" format="[general]" html.valueishtml="0"  name=sudodet_sale_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="4" color="0" x="3387" y="8" height="60" width="334" format="[general]" html.valueishtml="0"  name=item_no  tag="물품번호" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="4" color="0" x="3739" y="8" height="60" width="142" format="[General]" html.valueishtml="0"  name=sudodet_seq_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="4" color="0" x="4544" y="8" height="60" width="338" format="[shortdate] [time]" html.valueishtml="0" protect="0~tif(isrownew(),0,1)"  name=due_date  tag="납기일자" visible="1" editmask.mask="yyyy/mm/dd" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="4" color="0" x="4901" y="8" height="60" width="475" format="[general]" html.valueishtml="0"  name=sudodet_color visible="1" dddw.name=d_cditemcolor_c dddw.displaycolumn=color_name dddw.datacolumn=color_code dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="4" color="0" x="3899" y="8" height="60" width="626" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="4" color="0" x="1637" y="8" height="60" width="617" format="[general]" html.valueishtml="0"  name=qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=detail alignment="2" expression="getrow()"border="4" color="255" x="14" y="8" height="60" width="82" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="14" y="8" height="60" width="82" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

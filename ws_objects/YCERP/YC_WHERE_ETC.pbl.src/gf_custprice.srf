@@ -1,0 +1,43 @@
+﻿$PBExportHeader$gf_custprice.srf
+$PBExportComments$판매거래처별 표준단가(2001/04/06,이인호)
+global type gf_custprice from function_object
+end type
+
+forward prototypes
+global function real gf_custprice (string as_scene_no, string as_cust_no, string as_com_qa, string as_item_no, string as_com_qa1)
+end prototypes
+
+global function real gf_custprice (string as_scene_no, string as_cust_no, string as_com_qa, string as_item_no, string as_com_qa1);// 거래처별_단가체크(현장->거래처->ABC단가)
+string    ls_sdate
+real      lr_price
+DataStore GS_DS_Price
+
+SELECT rtrim(item_nm) INTO :ls_sdate FROM codemst WHERE type = '거래처별_단가체크(판매단가)' AND use_yn = 'Y';
+
+	
+GS_DS_Price = CREATE datastore
+
+if isnull(ls_sdate) OR ls_sdate = "" then
+	GS_DS_Price.DataObject = "d_wfprice"			
+else
+	if Date(ls_sdate) >= Date(GF_Today()) then
+		GS_DS_Price.DataObject = "d_wfprice_itemcosts"
+	else
+		GS_DS_Price.DataObject = "d_wfprice"		
+	end if
+end if
+GS_DS_Price.SetTransObject(SQLCA)
+
+GS_DS_Price.Retrieve( as_scene_no, as_cust_no, as_com_qa, as_item_no, as_com_qa1 )
+
+if GS_DS_Price.RowCount() > 0 then
+	lr_price = GS_DS_Price.object.price[1]
+else
+	lr_price = 0
+end if
+
+Destroy GS_DS_Price
+RETURN( lr_price )
+
+end function
+

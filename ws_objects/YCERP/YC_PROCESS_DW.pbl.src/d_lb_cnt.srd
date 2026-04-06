@@ -1,0 +1,63 @@
+﻿$PBExportHeader$d_lb_cnt.srd
+$PBExportComments$바코드재출력용데이타윈도우(2004년어느날, 정갑용)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=92 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=92 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=coilsliting_order_no dbname="coilsliting.order_no" )
+ column=(type=long updatewhereclause=yes name=coilsliting_seq dbname="coilsliting.seq" )
+ column=(type=decimal(1) updatewhereclause=yes name=swid dbname="swid" )
+ column=(type=long updatewhereclause=yes name=coilsliting_cnt dbname="coilsliting.cnt" )
+ column=(type=decimal(4) updatewhereclause=yes name=coilsliting_unit_qty dbname="coilsliting.unit_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=thin dbname="thin" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=coilsfcday_coil_no dbname="coilsfcday.coil_no" )
+ column=(type=long updatewhereclause=yes name=lb_cnt dbname="lb_cnt" initial="0" )
+ retrieve="SELECT coilsliting.order_no,
+		 coilsliting.seq,   
+		 swid = convert (decimal (5,1), substring(coilsliting.qa,5,4) + '.' + substring(coilsliting.qa, 10,1)),   
+           coilsliting.cnt,
+		 coilsliting.unit_qty,
+            thin = convert (decimal (3,2), substring(coilsliting.qa,1,1) + '.' + substring(coilsliting.qa, 2,2)),   
+		 groupitem.item_name,
+		 coilsfcday.coil_no,
+		 lb_cnt = 0
+  FROM coilsliting INNER JOIN groupitem ON coilsliting.item_no = groupitem.item_no
+		                    INNER JOIN coilorderdet ON coilsliting.order_no = coilorderdet.order_no
+		                    LEFT OUTER JOIN coilsfcday ON coilsliting.order_no = coilsfcday.order_no AND  coilsliting.seq = coilsfcday.seq 
+                                                                         AND coilsfcday.item_no not in ( select lossitem.loss_item from lossitem )
+ WHERE ( coilorderdet.coilorder_order = :as_order_no ) 
+       AND  ( coilorderdet.order_seq = :as_order_seq )
+/*     
+  FROM coilsliting,
+		 coilorderdet,
+		 coilsfcday,
+		 groupitem
+ WHERE ( coilsliting.item_no = groupitem.item_no ) and
+		 ( coilorderdet.order_no = coilsliting.order_no ) and  
+		 ( coilsliting.order_no *= coilsfcday.order_no ) and
+		 ( coilsliting.seq *= coilsfcday.seq ) and
+		 ( coilorderdet.coilorder_order = :as_order_no ) and
+		 ( coilorderdet.order_seq = :as_order_seq ) and
+       ( coilsfcday.item_no not in ( select lossitem.loss_item from lossitem ))
+*/       " arguments=(("as_order_no", string),("as_order_seq", number)) )
+text(band=header alignment="2" text="장수" border="6" color="0" x="2784" y="8" height="72" width="229" html.valueishtml="0"  name=lb_cnt_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="72" width="114" html.valueishtml="0"  name=coilsliting_seq_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="폭" border="6" color="33554432" x="1449" y="8" height="72" width="247" html.valueishtml="0"  name=swid_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="갯수" border="6" color="33554432" x="2002" y="8" height="72" width="187" html.valueishtml="0"  name=coilsliting_cnt_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단중" border="6" color="33554432" x="1705" y="8" height="72" width="288" html.valueishtml="0"  name=coilsliting_unit_qty_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실두께" border="6" color="33554432" x="1198" y="8" height="72" width="242" html.valueishtml="0"  name=thin_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="133" y="8" height="72" width="1056" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코일번호" border="6" color="33554432" x="2199" y="8" height="72" width="576" html.valueishtml="0"  name=coilsfcday_coil_no_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="9" y="8" height="72" width="114" format="[general]" html.valueishtml="0"  name=coilsliting_seq  tag="코일작업순번" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="133" y="8" height="72" width="1056" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1198" y="8" height="72" width="242" format="[general]" html.valueishtml="0"  name=thin visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2002" y="8" height="76" width="187" format="[General]" html.valueishtml="0"  name=coilsliting_cnt  tag="갯수" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1449" y="8" height="72" width="247" format="#,##0.0" html.valueishtml="0"  name=swid visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1705" y="8" height="76" width="288" format="#,##0" html.valueishtml="0"  name=coilsliting_unit_qty  tag="단중" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2199" y="8" height="76" width="576" format="[general]" html.valueishtml="0"  name=coilsfcday_coil_no  tag="코일번호" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=9 alignment="1" tabsequence=10 border="5" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2784" y="8" height="72" width="229" format="#,##0" html.valueishtml="0"  name=lb_cnt visible="1" edit.limit=2 edit.case=any edit.format="#0" edit.autoselect=yes edit.nilisnull=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,60 @@
+﻿$PBExportHeader$d_osaroiopeom_r.srd
+$PBExportComments$매출거래처 이력
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(20) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(20) updatewhereclause=yes name=addr dbname="addr" )
+ column=(type=number updatewhereclause=yes name=balance_amt dbname="balance_amt" )
+ column=(type=number updatewhereclause=yes name=vatamt dbname="vatamt" )
+ retrieve="  SELECT custno      = a.cust_no                                            
+       , user_name   = l.user_name                                          
+       , cust_name   = c.cust_name                                          
+       , captain_name= c.captain_name                                       
+       , addr        = c.addr                                               
+       , balance_amt = c.balance_amt                                        
+       , imonth      = convert(char(8),a.oi_date,111) + '01'                
+       , vatamt      = a.aroiinv_cash + a.aroiinv_rate + (a.ship_cost * 1.1)
+    FROM aroiinv    A                                                       
+         LEFT OUTER JOIN customer C ON a.cust_no  = c.cust_no               
+         LEFT OUTER JOIN login    L ON c.salesman = l.user_id               
+   WHERE ( a.oi_date  between :ad_sdate AND :ad_edate )
+     AND (a.delete_flag  =  'N') /* 계산서 삭제유무 */                             
+     AND ((:as_userid  = '%' AND c.salesman LIKE :as_userid) OR
+          (:as_userid <> '%' AND c.salesman    = :as_userid)
+         )
+" arguments=(("as_userid", string),("ad_sdate", date),("ad_edate", date))  sort="user_name A cust_name A addr A balance_amt A " )
+group(level=1 header.height=0 trailer.height=80 by=("user_name" ) header.color="536870912" trailer.color="12639424" )
+text(band=header[1] alignment="0" text="Sum Of Vatamt" border="0" color="33554432" x="9" y="4" height="60" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Imonth" border="0" color="33554432" x="270" y="4" height="60" width="677" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="담당자" border="6" color="33554432" x="9" y="4" height="64" width="251" html.valueishtml="0"  name=user_name_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="거래처" border="6" color="33554432" x="270" y="4" height="64" width="677" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="주소" border="6" color="33554432" x="955" y="4" height="64" width="599" html.valueishtml="0"  name=addr_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="미수잔액" border="6" color="33554432" x="1563" y="4" height="64" width="425" html.valueishtml="0"  name=balance_amt_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@imonth" border="6" color="33554432" x="1998" y="4" height="64" width="590" html.valueishtml="0"  name=vatamt_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="합계" border="6" color="33554432" x="2597" y="4" height="64" width="603" html.valueishtml="0"  name=grand_sum_vatamt_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="251" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="270" y="4" height="72" width="677" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="955" y="4" height="72" width="599" format="[general]" html.valueishtml="0"  name=addr visible="1" edit.limit=80 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1563" y="4" height="72" width="425" format="#,##0" html.valueishtml="0"  name=balance_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1998" y="4" height="72" width="590" format="#,##0" html.valueishtml="0"  name=vatamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2597" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=grand_sum_vatamt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="user_name "border="0" color="33554432" x="9" y="4" height="72" width="251" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(vatamt for group 1)"border="0" color="33554432" x="1998" y="4" height="72" width="590" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_vatamt for group 1)"border="0" color="33554432" x="2597" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"총합계~""border="0" color="33554432" x="9" y="4" height="72" width="251" format="[general]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(vatamt for all )"border="0" color="33554432" x="1998" y="4" height="72" width="590" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_vatamt for all )"border="0" color="33554432" x="2597" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_12 "border="0" color="33554432" x="2597" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( user_name for all distinct user_name )"border="0" color="33554432" x="9" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_11 "border="0" color="33554432" x="1998" y="4" height="72" width="590" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="33554432" x="270" y="4" height="72" width="677" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "imonth" rows = "user_name, cust_name, addr, balance_amt" values = "sum(vatamt for crosstab)" sourcenames = "custno, user_name, cust_name, captain_name, addr, balance_amt, imonth, vatamt")
+sparse(names="user_name	cust_name	addr")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

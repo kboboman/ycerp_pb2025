@@ -1,0 +1,121 @@
+﻿$PBExportHeader$d_oiscenerep_ra1.srd
+$PBExportComments$현장별 자재투입현황(수주번호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="79741120" )
+summary(height=0 color="16777215" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(11) updatewhereclause=yes name=do_spot_code dbname="spot_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="scene_desc" )
+ column=(type=char(14) updatewhereclause=yes name=sale_no dbname="sale_no" )
+ retrieve="  SELECT DISTINCT spot_code     = a.spot_code    
+       , scene_desc    = a.scene_desc    
+       , sale_no       = a.sale_no      
+    FROM (
+         SELECT do.cust_no
+              , do.spot_code   
+              , scene.scene_desc   
+              , do.do_no   
+              , dodet.oi_no   
+              , dodet.item_no   
+              , dodet.qa   
+              , dodet.qa_cust   
+              , qa_cost     = (case when groupitem.uom = 'M' then substring(dodet.qa,1,13) else dodet.qa end)
+              , dodet.uom   
+              , dodet.ship_qty   
+              , price       = (case when :as_price = 'Y' then 0 else dodet.price     end)   
+              , rate_cash   = (case when :as_price = 'Y' then 0 else dodet.rate_cash end)   
+              , dodet.sale_no   
+              , do.do_date   
+              , do.fob   
+              , do.ship_flag   
+              , ship_amount = (case when :as_price = 'Y' then 0 else do.ship_amount  end)   
+              , do_rate     = (case when :as_price = 'Y' then 0 else do.do_rate      end)   
+              , do.curr_code   
+              , do_cash     = (case when :as_price = 'Y' then 0 else do.do_cash      end)   
+              , do_total    = (case when :as_price = 'Y' then 0 else do.do_total     end)   
+              , groupitem.item_name   
+              , do.shipamt_case       
+              , customer.round  
+           FROM do      
+              , dodet   
+              , scene   
+              , groupitem   
+              , customer  
+          WHERE ( do.do_no      = dodet.do_no       )   
+            AND ( do.cust_no    = scene.cust_no     )   
+            AND ( do.spot_code  = scene.scene_code  )   
+            AND ( dodet.item_no = groupitem.item_no )   
+            AND ( do.cust_no    = customer.cust_no  )   
+            AND ( do.spot_code IN (:as_scene)       )    
+            AND ( :as_custno    = '%' AND do.cust_no LIKE :as_custno OR
+                  :as_custno   <> '%' AND do.cust_no    = :as_custno
+                )
+            AND ( do.do_date     BETWEEN :as_sdate AND :as_edate )
+            AND ( do.do_no          LIKE :as_area                )
+            AND ( customer.salesman LIKE :as_ret                 )
+        ) A
+
+        LEFT OUTER JOIN (
+            SELECT d.cust_no
+                 , d.spot_code
+                 , d.item_no
+                 , d.qa_cost
+                 , d.uom
+                 , dodate = substring(convert(char(10),max(d.dodate),111),3,8)
+              FROM (
+                   SELECT DISTINCT a1.cust_no
+                        , a1.spot_code
+                        , b1.item_no
+                        , qa_cost = (case when g1.uom = 'M' then substring(b1.qa,1,13) else b1.qa end)
+                        , b1.uom
+                        , dodate  = a1.do_date
+                     FROM do A1
+                          LEFT OUTER JOIN dodet B1     ON a1.do_no   = b1.do_no
+                          LEFT OUTER JOIN customer  C1 ON a1.cust_no = c1.cust_no
+                          LEFT OUTER JOIN groupitem G1 ON b1.item_no = g1.item_no
+                    WHERE a1.do_date BETWEEN DATEAdd(year, -1, :as_sdate) AND DATEAdd(Day, -1, :as_sdate)
+                      AND ( :as_custno    = '%' AND a1.cust_no LIKE :as_custno OR
+                            :as_custno   <> '%' AND a1.cust_no    = :as_custno
+                          )
+                      AND ( a1.spot_code IN (:as_scene) )    
+                   ) d
+             GROUP BY d.cust_no, d.spot_code, d.item_no, d.qa_cost, d.uom
+        ) B ON a.cust_no = b.cust_no AND a.spot_code = b.spot_code AND a.item_no = b.item_no AND a.qa_cost = b.qa_cost AND a.uom = b.uom
+
+        LEFT OUTER JOIN (
+            SELECT d.cust_no
+                 , d.item_no
+                 , d.qa_cost
+                 , d.uom
+                 , dodate = substring(convert(char(10),max(d.dodate),111),3,8)
+              FROM (
+                   SELECT DISTINCT a1.cust_no
+                        , b1.item_no
+                        , qa_cost = (case when g1.uom = 'M' then substring(b1.qa,1,13) else b1.qa end)
+                        , b1.uom
+                        , dodate  = a1.do_date
+                     FROM do A1
+                          LEFT OUTER JOIN dodet B1     ON a1.do_no   = b1.do_no
+                          LEFT OUTER JOIN customer  C1 ON a1.cust_no = c1.cust_no
+                          LEFT OUTER JOIN groupitem G1 ON b1.item_no = g1.item_no
+                    WHERE a1.do_date BETWEEN DATEAdd(year, -1, :as_sdate) AND DATEAdd(Day, -1, :as_sdate)
+                      AND ( :as_custno    = '%' AND a1.cust_no LIKE :as_custno OR
+                            :as_custno   <> '%' AND a1.cust_no    = :as_custno
+                          )
+                      AND ( a1.spot_code IN (:as_scene) )    
+                   ) d
+             GROUP BY d.cust_no, d.item_no, d.qa_cost, d.uom
+        ) C ON a.cust_no = c.cust_no AND a.item_no = c.item_no AND a.qa_cost = c.qa_cost AND a.uom = c.uom
+" arguments=(("as_price", string),("as_sdate", string),("as_edate", string),("as_custno", string),("as_scene", stringlist),("as_area", string),("as_ret", string))  sort="sale_no A " )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="183" y="12" height="60" width="631" html.valueishtml="0"  name=scene_scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="0" x="9" y="12" height="60" width="165" html.valueishtml="0"  name=t_52 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="827" y="12" height="60" width="439" html.valueishtml="0"  name=dodet_sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="183" y="4" height="60" width="631" format="[general]" html.valueishtml="0"  name=scene_scene_desc  tag="현장명" visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="60" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="827" y="4" height="60" width="439" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="60" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="scene_scene_desc")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

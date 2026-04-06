@@ -1,0 +1,178 @@
+﻿$PBExportHeader$d_bdview02_r.srd
+$PBExportComments$건설사별
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=528 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=bdinfodet_project dbname="bdinfodet.project" )
+ column=(type=long updatewhereclause=yes name=bdinfodet_square dbname="bdinfodet.square" )
+ column=(type=char(7) updatewhereclause=yes name=bdinfodet_floors dbname="bdinfodet.floors" )
+ column=(type=datetime updatewhereclause=yes name=bdinfodet_constructiondate dbname="bdinfodet.constructiondate" )
+ column=(type=datetime updatewhereclause=yes name=bdinfodet_completiondate dbname="bdinfodet.completiondate" )
+ column=(type=char(3) updatewhereclause=yes name=spec_code dbname="spec_code" )
+ column=(type=decimal(0) updatewhereclause=yes name=quantity dbname="quantity" )
+ column=(type=decimal(0) updatewhereclause=yes name=prc dbname="prc" )
+ column=(type=char(25) updatewhereclause=yes name=bd_positon dbname="bd_positon" )
+ column=(type=char(4) updatewhereclause=yes name=bdinfodet_buildingcom dbname="bdinfodet.buildingcom" )
+ column=(type=char(50) updatewhereclause=yes name=bdinfodet_buildingcomphone dbname="bdinfodet.buildingcomphone" )
+ column=(type=char(15) updatewhereclause=yes name=bdinfodet_bulidingphone dbname="bdinfodet.bulidingphone" )
+ column=(type=char(4) updatewhereclause=yes name=bdinfodet_builder dbname="bdinfodet.builder" )
+ column=(type=char(15) updatewhereclause=yes name=bdinfodet_builderphone dbname="bdinfodet.builderphone" )
+ column=(type=char(4) updatewhereclause=yes name=bdinfodet_master dbname="bdinfodet.master" )
+ column=(type=char(3) updatewhereclause=yes name=bdinfodet_design_prog dbname="bdinfodet.design_prog" )
+ column=(type=char(3) updatewhereclause=yes name=bdinfodet_com_prog dbname="bdinfodet.com_prog" )
+ column=(type=char(3) updatewhereclause=yes name=bdinfodet_build_prog dbname="bdinfodet.build_prog" )
+ retrieve="  SELECT bdinfodet.project,   
+			bdinfodet.square,
+			bdinfodet.floors,
+			bdinfodet.constructiondate,
+			bdinfodet.completiondate,
+         bdinfodet2.spec_code,   
+         bdinfodet2.quantity,
+         bdinfodet2.prc,      
+         bd_positon = (  SELECT city_name FROM bdcity where city_code = bdinfodet.city ) + bdinfodet.dong,   
+         bdinfodet.buildingcom,
+         bdinfodet.buildingcomphone,   
+         bdinfodet.bulidingphone,   
+			bdinfodet.builder,
+			bdinfodet.builderphone,
+			bdinfodet.master,
+			bdinfodet.design_prog,
+			bdinfodet.com_prog,
+			bdinfodet.build_prog
+    FROM bdinfo,   
+         bdinfodet,   
+         bdinfodet2  
+   WHERE ( bdinfodet.build_no = bdinfo.build_no ) and  
+         ( bdinfodet.build_no *= bdinfodet2.build_no ) and
+         ( bdinfodet.seq *= bdinfodet2.seq ) and
+	      ( ( bdinfo.build_no = :arg_build_no ) AND  
+         ( bdinfodet.std_chk = '1' ) AND  
+         ( bdinfodet.project like :as_project ) AND  
+         ( bdinfodet.sale_prog like :as_flag ) AND  
+/*         ( bdinfodet.fixeddate between :ad_date1 and :ad_date2 ) AND  */
+         ( bdinfodet.design_prog like :as_dprog ) AND  
+         ( bdinfodet.com_prog like :as_cprog ) AND  
+         ( bdinfodet.city like :as_city ) AND  
+         ( ( bdinfodet.person like :as_person ) OR  
+         ( bdinfodet.dperson like :as_dperson ) OR  
+         ( bdinfodet.cperson like :as_cperson ) OR  
+         ( bdinfodet.bperson like :as_bperson ) OR  
+         ( bdinfodet.sperson like :as_sperson ) ) AND  
+         ( ( bdinfodet.div like :as_div ) OR  
+         ( bdinfodet.ddiv like :as_ddiv ) OR  
+         ( bdinfodet.cdiv like :as_cdiv ) OR  
+         ( bdinfodet.bdiv like :as_bdiv ) OR  
+         ( bdinfodet.sdiv like :as_sdiv ) ) ) AND    
+         ( bdinfodet.organcd like :as_organcd ) AND
+         ( bdinfodet.designoffice like :as_dcode ) AND
+         ( bdinfodet.buildingcom like :as_buildingcd ) and
+			( bdinfodet.builder like :as_scust)     
+  order by  bdinfodet.project, bd_positon
+" arguments=(("arg_build_no", string),("as_div", string),("as_spec", string),("as_project", string),("as_flag", string),("ad_date1", string),("ad_date2", string),("as_dprog", string),("as_cprog", string),("as_city", string),("as_person", string),("as_dperson", string),("as_ddiv", string),("as_cperson", string),("as_cdiv", string),("as_bperson", string),("as_bdiv", string),("as_sperson", string),("as_sdiv", string),("as_organcd", string),("as_dcode", string),("as_buildingcd", string),("as_scust", string)) )
+group(level=1 header.height=0 trailer.height=72 by=("bdinfodet_buildingcom" , "bdinfodet_project" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="하도업체진행상황" border="0" color="33554432" x="7593" y="396" height="60" width="553" html.valueishtml="0"  name=bdinfodet_build_prog_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="건설진행상황" border="0" color="33554432" x="7122" y="396" height="60" width="462" html.valueishtml="0"  name=bdinfodet_com_prog_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="설계진행상황" border="0" color="33554432" x="6501" y="396" height="60" width="613" html.valueishtml="0"  name=bdinfodet_design_prog_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="발주처" border="0" color="33554432" x="6167" y="396" height="60" width="325" html.valueishtml="0"  name=bdinfodet_master_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="연락처" border="0" color="33554432" x="5687" y="464" height="60" width="471" html.valueishtml="0"  name=bdinfodet_builderphone_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="업체명" border="0" color="33554432" x="5262" y="464" height="60" width="416" html.valueishtml="0"  name=bdinfodet_builder_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="하도업체" border="0" color="33554432" x="5262" y="396" height="60" width="905" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="현장연락처" border="0" color="33554432" x="4768" y="468" height="60" width="485" html.valueishtml="0"  name=bdinfodet_bulidingphone_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="본사연락처" border="0" color="33554432" x="4334" y="468" height="60" width="425" html.valueishtml="0"  name=bdinfodet_buildingcomphone_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="업체명" border="0" color="33554432" x="3941" y="468" height="60" width="384" html.valueishtml="0"  name=bdinfodet_buildingcom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="건     설      사" border="0" color="33554432" x="3941" y="400" height="60" width="1321" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="위치" border="0" color="33554432" x="3305" y="396" height="60" width="626" html.valueishtml="0"  name=bd_positon_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="금액" border="0" color="33554432" x="2921" y="468" height="60" width="375" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="단가" border="0" color="33554432" x="2578" y="468" height="60" width="334" html.valueishtml="0"  name=prc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="물량" border="0" color="33554432" x="2272" y="468" height="60" width="297" html.valueishtml="0"  name=quantity_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="자재명" border="0" color="33554432" x="1801" y="468" height="60" width="462" html.valueishtml="0"  name=spec_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="자   재   내   용" border="0" color="33554432" x="1801" y="396" height="60" width="1495" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="준공일" border="0" color="33554432" x="1554" y="396" height="60" width="238" html.valueishtml="0"  name=bdinfodet_completiondate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="착공일" border="0" color="33554432" x="1234" y="396" height="60" width="311" html.valueishtml="0"  name=bdinfodet_constructiondate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="층수
+下/上" border="0" color="33554432" x="997" y="396" height="120" width="229" html.valueishtml="0"  name=bdinfodet_floors_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="건축면적
+(M2)" border="0" color="33554432" x="731" y="396" height="120" width="256" html.valueishtml="0"  name=bdinfodet_square_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="현장명" border="0" color="33554432" x="9" y="396" height="60" width="713" html.valueishtml="0"  name=bdinfodet_project_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="5" y1="388" x2="8146" y2="388"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5" y1="524" x2="8146" y2="524"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5" y1="392" x2="5" y2="664"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="722" y1="392" x2="722" y2="664"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="992" y1="392" x2="992" y2="664"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1234" y1="392" x2="1234" y2="664"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1545" y1="392" x2="1545" y2="664"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1797" y1="392" x2="1797" y2="664"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3296" y1="392" x2="3296" y2="664"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3931" y1="392" x2="3931" y2="664"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5257" y1="392" x2="5257" y2="664"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="6162" y1="392" x2="6162" y2="664"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="6491" y1="392" x2="6491" y2="664"  name=l_19 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="7109" y1="392" x2="7109" y2="664"  name=l_20 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="7589" y1="392" x2="7589" y2="664"  name=l_21 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="8146" y1="392" x2="8146" y2="664"  name=l_22 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2263" y1="456" x2="2263" y2="728"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2578" y1="456" x2="2578" y2="728"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2912" y1="456" x2="2912" y2="728"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="4329" y1="456" x2="4329" y2="728"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="4763" y1="456" x2="4763" y2="728"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5682" y1="456" x2="5682" y2="728"  name=l_17 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1797" y1="460" x2="3291" y2="460"  name=l_23 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3931" y1="460" x2="6162" y2="460"  name=l_24 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="판매 영업 현황(건설사별)" border="0" color="33554432" x="3310" y="124" height="112" width="1920" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-18" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="3621" y1="228" x2="4910" y2="228"  name=l_25 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="713" format="[general]" html.valueishtml="0"  name=bdinfodet_project  tag="프로젝트명" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3305" y="8" height="72" width="626" format="[general]" html.valueishtml="0"  name=bd_positon visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="3941" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=bdinfodet_buildingcom  tag="건설사" visible="1" dddw.name=dddw_con dddw.displaycolumn=comname dddw.datacolumn=comcode dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="4768" y="8" height="72" width="485" format="[general]" html.valueishtml="0"  name=bdinfodet_bulidingphone  tag="건설사현장전화" visible="1" edit.limit=15 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1554" y="8" height="72" width="238" format="yyyy/mm" html.valueishtml="0"  name=bdinfodet_completiondate  tag="준공월" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="731" y="8" height="72" width="256" format="#,##0" html.valueishtml="0"  name=bdinfodet_square  tag="연면적" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1801" y="8" height="72" width="462" format="[general]" html.valueishtml="0"  name=spec_code visible="1" dddw.name=dddw_spec dddw.displaycolumn=spec_name dddw.datacolumn=spec_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="997" y="8" height="72" width="229" format="[general]" html.valueishtml="0"  name=bdinfodet_floors visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="4334" y="8" height="72" width="425" format="[general]" html.valueishtml="0"  name=bdinfodet_buildingcomphone visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1234" y="8" height="72" width="311" format="yyyy/mm" html.valueishtml="0"  name=bdinfodet_constructiondate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432" x="7122" y="8" height="72" width="462" format="[general]" html.valueishtml="0"  name=bdinfodet_com_prog visible="1" dddw.name=dddw_comprog dddw.displaycolumn=prog_name dddw.datacolumn=prog_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="6167" y="8" height="72" width="325" format="[general]" html.valueishtml="0"  name=bdinfodet_master visible="1" dddw.name=dddw_master dddw.displaycolumn=comname dddw.datacolumn=comcode dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="6501" y="8" height="72" width="613" format="[general]" html.valueishtml="0"  name=bdinfodet_design_prog visible="1" dddw.name=dddw_designprog dddw.displaycolumn=prog_name dddw.datacolumn=prog_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="5262" y="8" height="72" width="416" format="[general]" html.valueishtml="0"  name=bdinfodet_builder visible="1" dddw.name=dddw_builder dddw.displaycolumn=comname dddw.datacolumn=comcode dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="5687" y="8" height="72" width="471" format="[general]" html.valueishtml="0"  name=bdinfodet_builderphone visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="7593" y="8" height="72" width="553" format="[general]" html.valueishtml="0"  name=bdinfodet_build_prog visible="1" dddw.name=dddw_buildprog dddw.displaycolumn=prog_name dddw.datacolumn=prog_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" quantity *  prc "border="0" color="33554432" x="2921" y="8" height="72" width="375" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2578" y="8" height="72" width="334" format="#,##0" html.valueishtml="0"  name=prc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2272" y="8" height="72" width="297" format="#,##0" html.valueishtml="0"  name=quantity visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="992" y1="0" x2="992" y2="272"  name=l_28 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1234" y1="0" x2="1234" y2="272"  name=l_29 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1545" y1="0" x2="1545" y2="272"  name=l_30 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1797" y1="0" x2="1797" y2="272"  name=l_31 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3931" y1="0" x2="3931" y2="272"  name=l_33 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5257" y1="0" x2="5257" y2="272"  name=l_34 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="6491" y1="0" x2="6491" y2="272"  name=l_36 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="7109" y1="0" x2="7109" y2="272"  name=l_37 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="7589" y1="0" x2="7589" y2="272"  name=l_38 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="722" y1="0" x2="722" y2="272"  name=l_27 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="6162" y1="0" x2="6162" y2="272"  name=l_35 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5682" y1="0" x2="5682" y2="272"  name=l_45 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="4763" y1="0" x2="4763" y2="272"  name=l_44 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="4329" y1="0" x2="4329" y2="272"  name=l_43 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5" y1="0" x2="5" y2="272"  name=l_26 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2263" y1="0" x2="2263" y2="272"  name=l_40 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2578" y1="0" x2="2578" y2="272"  name=l_41 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2912" y1="0" x2="2912" y2="272"  name=l_42 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3296" y1="0" x2="3296" y2="272"  name=l_32 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="8146" y1="0" x2="8146" y2="272"  name=l_39 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5" y1="84" x2="8146" y2="84"  name=l_46 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum( quantity *  prc  for group 1)"border="0" color="33554432" x="2921" y="4" height="60" width="375" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(prc for group 1)"border="0" color="33554432" x="2578" y="4" height="60" width="334" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(quantity for group 1)"border="0" color="33554432" x="2272" y="4" height="60" width="297" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="5" y1="0" x2="5" y2="272"  name=l_47 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="2263" y1="0" x2="2263" y2="272"  name=l_48 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="2578" y1="0" x2="2578" y2="272"  name=l_49 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="2912" y1="0" x2="2912" y2="272"  name=l_50 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="8146" y1="0" x2="8146" y2="272"  name=l_52 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="3296" y1="0" x2="3296" y2="272"  name=l_51 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="5" y1="68" x2="8146" y2="68"  name=l_53 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+
+sparse(names="bdinfodet_project	bd_positon	bdinfodet_buildingcom	bdinfodet_buildingcomphone	bdinfodet_bulidingphone	bdinfodet_square	bdinfodet_constructiondate	bdinfodet_completiondate	bdinfodet_floors")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

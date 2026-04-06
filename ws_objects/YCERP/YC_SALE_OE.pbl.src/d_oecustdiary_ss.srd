@@ -1,0 +1,94 @@
+﻿$PBExportHeader$d_oecustdiary_ss.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=136 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=92 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=team_team_name dbname="team.team_name" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name dbname="login.user_name" )
+ column=(type=char(1) updatewhereclause=yes name=prt_chk dbname="prt_chk" )
+ column=(type=datetime updatewhereclause=yes name=custdiary_diary_date dbname="custdiary.diary_date" )
+ column=(type=char(1) updatewhereclause=yes name=custdiary_urgent dbname="custdiary.urgent" )
+ column=(type=char(1) updatewhereclause=yes name=chk_team dbname="chk_team" )
+ column=(type=char(10) updatewhereclause=yes name=custdiary_approve_team dbname="custdiary.approve_team" )
+ column=(type=char(1) updatewhereclause=yes name=custdiary_process_flag dbname="custdiary.process_flag" )
+ column=(type=char(10) updatewhereclause=yes name=custdiary_approve_top dbname="custdiary.approve_top" )
+ column=(type=char(10) updatewhereclause=yes name=custdiary_cust_no dbname="custdiary.cust_no" )
+ column=(type=char(60) updatewhereclause=yes name=custdiary_cust_name dbname="custdiary.cust_name" )
+ column=(type=char(60) updatewhereclause=yes name=custdiary_bdcust_name dbname="custdiary.bdcust_name" )
+ column=(type=char(100) updatewhereclause=yes name=desc1 dbname="custdiary.desc1" )
+ column=(type=char(10) updatewhereclause=yes name=custdiary_emp_no dbname="custdiary.emp_no" )
+ column=(type=long updatewhereclause=yes name=custdiary_seq_no dbname="custdiary.seq_no" )
+ retrieve="  SELECT team.team_name           
+       , login.user_name          
+       , prt_chk  = ' '
+       , custdiary.diary_date     
+       , custdiary.urgent         
+       , chk_team = ( case when ( custdiary.approve_team is null ) or ( custdiary.approve_team = '') then 'N' else 'Y' end )
+       , custdiary.approve_team   
+       , custdiary.process_flag   
+       , custdiary.approve_top 
+       , custdiary.cust_no        
+       , custdiary.cust_name      
+       , custdiary.bdcust_name    
+       , custdiary.desc1          
+       , custdiary.emp_no         
+       , custdiary.seq_no         
+ from custdiary left outer join team on custdiary.team_code = team.team_code
+		 		   left outer join login on custdiary.emp_no = login.user_id 
+WHERE  ( ( custdiary.emp_no          LIKE :as_user  ) AND (('%' = :as_chk) OR ( custdiary.process_flag = :as_chk )) AND
+           ( ( ( custdiary.cust_name   LIKE :as_cust  )  OR ( :as_cust  = '%' AND custdiary.cust_name   IS NULL ) ) AND 
+             ( ( custdiary.bdcust_name LIKE :as_com   )  OR ( :as_com   = '%' AND custdiary.bdcust_name IS NULL ) ) AND 
+             ( ( custdiary.desc1       LIKE :as_title )  OR ( :as_title = '%' AND custdiary.desc1       IS NULL ) ) 
+           ) AND
+           ( (:as_all = 'Y') OR ( :as_all = 'N' AND custdiary.diary_date BETWEEN :ad_start AND :ad_end ) ) 
+         )
+/*
+    FROM custdiary   
+       , login    
+       , team
+   WHERE ( custdiary.emp_no           *= login.user_id  )   
+     AND ( custdiary.team_code        *= team.team_code )   
+     AND ( ( custdiary.emp_no          LIKE :as_user  ) AND (('%' = :as_chk) OR ( custdiary.process_flag = :as_chk )) AND
+           ( ( ( custdiary.cust_name   LIKE :as_cust  )  OR ( :as_cust  = '%' AND custdiary.cust_name   IS NULL ) ) AND 
+             ( ( custdiary.bdcust_name LIKE :as_com   )  OR ( :as_com   = '%' AND custdiary.bdcust_name IS NULL ) ) AND 
+             ( ( custdiary.desc1       LIKE :as_title )  OR ( :as_title = '%' AND custdiary.desc1       IS NULL ) ) 
+           ) AND
+           ( (:as_all = 'Y') OR ( :as_all = 'N' AND custdiary.diary_date BETWEEN :ad_start AND :ad_end ) ) 
+         )
+
+*/" arguments=(("as_user", string),("as_chk", string),("as_cust", string),("as_com", string),("ad_start", date),("ad_end", date),("as_all", string),("as_title", string)) )
+text(band=header alignment="2" text="방문일자" border="0" color="33554432" x="9" y="8" height="60" width="549" html.valueishtml="0"  name=custdiary_diary_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="사원번호" border="0" color="33554432" x="567" y="8" height="60" width="384" html.valueishtml="0"  name=custdiary_emp_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Custdiary
+Seq No" border="0" color="33554432" x="960" y="8" height="120" width="384" html.valueishtml="0"  name=custdiary_seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="긴급여부(Y/N)" border="0" color="33554432" x="1353" y="8" height="60" width="576" html.valueishtml="0"  name=custdiary_urgent_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="결재여부(Y/N)" border="0" color="33554432" x="1938" y="8" height="60" width="512" html.valueishtml="0"  name=custdiary_process_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Desc1" border="0" color="33554432" x="2459" y="8" height="60" width="3232" html.valueishtml="0"  name=desc1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="판매거래처코드" border="0" color="33554432" x="5701" y="8" height="60" width="640" html.valueishtml="0"  name=custdiary_cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="거래처명" border="0" color="33554432" x="6350" y="8" height="60" width="1317" html.valueishtml="0"  name=custdiary_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="거래처명" border="0" color="33554432" x="7675" y="8" height="60" width="1317" html.valueishtml="0"  name=custdiary_bdcust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="팀명" border="0" color="33554432" x="9001" y="8" height="60" width="992" html.valueishtml="0"  name=team_team_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="사용자명" border="0" color="33554432" x="10002" y="8" height="60" width="352" html.valueishtml="0"  name=login_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Chk Team" border="0" color="33554432" x="10363" y="8" height="60" width="256" html.valueishtml="0"  name=chk_team_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="결재자(팀장)" border="0" color="33554432" x="10629" y="8" height="60" width="448" html.valueishtml="0"  name=custdiary_approve_team_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="결재자(임원)" border="0" color="33554432" x="11086" y="8" height="60" width="480" html.valueishtml="0"  name=custdiary_approve_top_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Prt Chk" border="0" color="33554432" x="11575" y="8" height="60" width="224" html.valueishtml="0"  name=prt_chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="76" width="549" format="[shortdate] [time]" html.valueishtml="0"  name=custdiary_diary_date  tag="방문일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="567" y="8" height="76" width="384" format="[general]" html.valueishtml="0"  name=custdiary_emp_no  tag="사원번호" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="33554432" x="960" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=custdiary_seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1353" y="8" height="76" width="576" format="[general]" html.valueishtml="0"  name=custdiary_urgent  tag="긴급여부(Y/N)" visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="1938" y="8" height="76" width="512" format="[general]" html.valueishtml="0"  name=custdiary_process_flag  tag="결재여부(Y/N)" visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="2459" y="8" height="72" width="3232" format="[general]" html.valueishtml="0"  name=desc1 visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="5701" y="8" height="76" width="640" format="[general]" html.valueishtml="0"  name=custdiary_cust_no  tag="판매거래처코드" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="6350" y="8" height="64" width="1317" format="[general]" html.valueishtml="0"  name=custdiary_cust_name  tag="거래처명" visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="7675" y="8" height="64" width="1317" format="[general]" html.valueishtml="0"  name=custdiary_bdcust_name  tag="거래처명" visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9001" y="8" height="72" width="992" format="[general]" html.valueishtml="0"  name=team_team_name  tag="팀명" visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="10002" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=login_user_name  tag="사용자명" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="10363" y="8" height="72" width="256" format="[general]" html.valueishtml="0"  name=chk_team visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="10629" y="8" height="76" width="448" format="[general]" html.valueishtml="0"  name=custdiary_approve_team  tag="결재자(팀장)" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="11086" y="8" height="64" width="480" format="[general]" html.valueishtml="0"  name=custdiary_approve_top  tag="결재자(임원)" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="11575" y="8" height="72" width="224" format="[general]" html.valueishtml="0"  name=prt_chk visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

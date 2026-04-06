@@ -1,0 +1,138 @@
+﻿$PBExportHeader$d_oigiask_s2.srd
+$PBExportComments$물품요청 리스트(2004/01/26,정갑용)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(12) updatewhereclause=yes name=ask_det_ask_no dbname="ask_det.ask_no" )
+ column=(type=long updatewhereclause=yes name=ask_det_seq_no dbname="ask_det.seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=ask_det_item_no dbname="ask_det.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=ask_det_qa dbname="ask_det.qa" )
+ column=(type=decimal(2) updatewhereclause=yes name=ask_det_ask_qty dbname="ask_det.ask_qty" )
+ column=(type=char(10) updatewhereclause=yes name=ask_det_loc_no dbname="ask_det.loc_no" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location_loc_name" )
+ column=(type=decimal(2) updatewhereclause=yes name=ask_det_issue_qty dbname="ask_det.issue_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=ask_det_rlse_qty dbname="ask_det.rlse_qty" )
+ column=(type=char(14) updatewhereclause=yes name=ask_det_sale_no dbname="ask_det.sale_no" )
+ column=(type=char(50) updatewhereclause=yes name=ask_det_rem dbname="ask_det.rem" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(1) updatewhereclause=yes name=ask_head_proc_flag dbname="ask_det.rlse_flag" values="완료	Y/진행	N/" )
+ column=(type=datetime updatewhereclause=yes name=ask_det_rlse_date dbname="ask_det.rlse_date" )
+ column=(type=datetime updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=datetime updatewhereclause=yes name=edate dbname="edate" )
+ column=(type=char(20) updatewhereclause=yes name=t_area_name dbname="t_area_name" )
+ column=(type=char(30) updatewhereclause=yes name=r_area_name dbname="r_area_name" )
+ column=(type=char(1) updatewhereclause=yes name=as_chk dbname="as_chk" )
+ column=(type=char(10) updatewhereclause=yes name=ask_name dbname="ask_name" )
+ column=(type=char(10) updatewhereclause=yes name=act_name dbname="act_name" )
+ retrieve="  SELECT ask_det.ask_no
+		 , ask_det.seq_no   
+       , ask_det.item_no   
+       , ask_det.qa   
+       , ask_det.ask_qty   
+       , ask_det.loc_no   
+       , groupitem.item_name   
+       , location_loc_name = loc_1.loc_name   
+       , ask_det.issue_qty   
+       , ask_det.rlse_qty   
+       , ask_det.sale_no   
+       , ask_det.rem   
+       , cust_name   = dbo.uf_getcustname(ask_det.sale_no)   
+       , ask_det.rlse_flag
+		 , ask_det.rlse_date
+       , sdate       = convert(smalldatetime, :as_start, 111)   
+       , edate       = convert(smalldatetime, :as_end, 111)
+		 , t_area_name = area.area_name
+		 , r_area_name = loc_2.loc_name
+		 , as_chk      = :as_chk
+		 , ask_name    = login_1.user_name
+		 , act_name    = login_2.user_name
+FROM ask_det with(nolock) inner join ask_head with(nolock) on ask_det.ask_no = ask_head.ask_no
+							  inner join groupitem with(nolock)  on ask_det.item_no = groupitem.item_no
+                inner join  location loc_1  with(nolock) on  ask_det.loc_no = loc_1.loc_no
+                left outer join  location loc_2  with(nolock) on  ask_head.ask_loc = loc_2.loc_no 
+                left outer join  login login_1  with(nolock) on  ask_head.ask_user = login_1.user_id 
+                left outer join  login login_2  with(nolock) on  ask_head.act_user  = login_2.user_id
+                inner join area on  ( case when :as_chk =  'A' THEN  ask_head.t_area
+                                                                        when :as_chk =  'B' THEN  ask_head.F_area 
+                                                              END ) = area.area_no
+     WHERE ( ask_det.rlse_qty   > 0                 ) 
+     AND ( ask_det.item_no LIKE :as_item_no       ) 
+     AND (( ( :as_chk = 'A' ) and ( ask_head.t_area = :as_area ) and
+			   ( ask_head.ask_date between :as_start + ' 00:00:00.000' and :as_end + ' 23:59:59.999' )
+          ) OR
+          ( ( :as_chk = 'B' ) and ( ask_head.f_area = :as_area ) and 
+			   ( ask_head.act_date between :as_start + ' 00:00:00.000' and :as_end + ' 23:59:59.999' )
+          ) 
+         ) 
+/*
+    FROM ask_det
+       , ask_head   
+       , groupitem   
+       , location loc_1
+       , location loc_2
+		 , area
+		 , login login_1
+		 , login login_2
+   WHERE ( ask_det.ask_no     = ask_head.ask_no   ) 
+     AND ( ask_det.item_no    = groupitem.item_no ) 
+     AND ( ask_det.loc_no     = loc_1.loc_no      )  
+     AND ( ask_head.ask_loc  *= loc_2.loc_no      )
+     AND ( ask_head.ask_user *= login_1.user_id   ) 
+     AND ( ask_head.act_user *= login_2.user_id   ) 
+     AND ( ask_det.rlse_qty   > 0                 ) 
+     AND ( ask_det.item_no LIKE :as_item_no       ) 
+     AND (( ( :as_chk = 'A' ) and ( ask_head.t_area = :as_area ) and
+			   ( ask_head.ask_date between :as_start + ' 00:00:00.000' and :as_end + ' 23:59:59.999' ) and
+            ( ask_head.t_area = area.area_no ) 
+          ) OR
+          ( ( :as_chk = 'B' ) and ( ask_head.f_area = :as_area ) and 
+			   ( ask_head.act_date between :as_start + ' 00:00:00.000' and :as_end + ' 23:59:59.999' ) and
+            ( ask_head.f_area = area.area_no ) 
+          ) 
+         ) 
+
+*/
+
+" arguments=(("as_start", string),("as_end", string),("as_area", string),("as_item_no", string),("as_chk", string))  sort="ask_det_ask_no A ask_det_seq_no A ask_det_item_no A ask_det_rlse_date A " )
+text(band=header alignment="2" text="순번" border="6" color="33554432" x="608" y="8" height="60" width="165" html.valueishtml="0"  name=ask_det_seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="782" y="8" height="60" width="859" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="1650" y="8" height="60" width="681" html.valueishtml="0"  name=ask_det_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="요청수량" border="6" color="33554432" x="2853" y="8" height="60" width="425" html.valueishtml="0"  name=ask_det_ask_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="저장소" border="6" color="33554432" x="2341" y="8" height="60" width="503" html.valueishtml="0"  name=location_loc_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="상태" border="6" color="33554432" x="4475" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="요청번호" border="6" color="33554432" x="183" y="8" height="60" width="416" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="6053" y="8" height="60" width="823" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="6" color="33554432" x="5541" y="8" height="60" width="503" html.valueishtml="0"  name=ask_det_sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="접수자" border="6" color="33554432" x="5193" y="8" height="60" width="338" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="33554432" x="6885" y="8" height="60" width="1184" html.valueishtml="0"  name=ask_det_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="기출고수량" border="6" color="33554432" x="3287" y="8" height="60" width="398" html.valueishtml="0"  name=ask_det_rlse_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고저장소" border="6" color="33554432" x="3694" y="8" height="60" width="425" html.valueishtml="0"  name=t_3 visible="1~tif ( as_chk = 'A', 1,0)"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입고일자" border="6" color="33554432" x="4645" y="8" height="60" width="539" html.valueishtml="0"  name=t_7 visible="1~tif ( as_chk = 'A', 1,0)"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="요청자" border="6" color="33554432" x="4128" y="8" height="60" width="338" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고저장소" border="6" color="33554432" x="3694" y="8" height="60" width="425" html.valueishtml="0"  name=t_6 visible="1~tif ( as_chk = 'B', 1,0)"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="출고일자" border="6" color="33554432" x="4645" y="8" height="60" width="539" html.valueishtml="0"  name=t_8 visible="1~tif ( as_chk = 'B', 1,0)"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="608" y="4" height="64" width="165" format="[General]" html.valueishtml="0"  name=ask_det_seq_no  tag="요청순번" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="782" y="4" height="64" width="859" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=60 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2853" y="4" height="64" width="425" format="#,##0" html.valueishtml="0"  name=ask_det_ask_qty  tag="요청수량" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1650" y="4" height="64" width="681" format="[general]" html.valueishtml="0"  name=ask_det_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="2341" y="4" height="64" width="503" format="[general]" html.valueishtml="0"  name=location_loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="33554432" x="4128" y="4" height="64" width="338" format="[general]" html.valueishtml="0"  name=ask_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="4475" y="4" height="64" width="160" format="[general]" html.valueishtml="0"  name=ask_head_proc_flag visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="183" y="4" height="64" width="416" format="[general]" html.valueishtml="0"  name=ask_det_ask_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="64" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="33554432" x="3694" y="4" height="64" width="425" format="[general]" html.valueishtml="0"  name=r_area_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="4645" y="4" height="64" width="539" format="yyyy/mm/dd hh:mm" html.valueishtml="0"  name=ask_det_rlse_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="6053" y="4" height="64" width="823" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="5541" y="4" height="64" width="503" format="[general]" html.valueishtml="0"  name=ask_det_sale_no  tag="수주번호" visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="33554432" x="5193" y="4" height="64" width="338" format="[general]" html.valueishtml="0"  name=act_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="6885" y="4" height="64" width="1184" format="[general]" html.valueishtml="0"  name=ask_det_rem  tag="비고" visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="3287" y="4" height="64" width="398" format="#,##0" html.valueishtml="0"  name=ask_det_rlse_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="ask_det_ask_no")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

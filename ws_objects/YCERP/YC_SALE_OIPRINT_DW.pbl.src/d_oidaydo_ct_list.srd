@@ -1,0 +1,83 @@
+﻿$PBExportHeader$d_oidaydo_ct_list.srd
+$PBExportComments$출고집계(전략제품)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=cat dbname="cat" )
+ column=(type=char(50) updatewhereclause=yes name=category dbname="category" )
+ column=(type=char(10) updatewhereclause=yes name=gtype dbname="gtype" )
+ column=(type=char(10) updatewhereclause=yes name=sales_type dbname="sales_type" )
+ column=(type=char(255) updatewhereclause=yes name=due_date dbname="due_date" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=cqty dbname="cqty" )
+ column=(type=decimal(12) updatewhereclause=yes name=cprice dbname="cprice" )
+ retrieve="  SELECT cat          = a.category
+       , category     = cm.item_nm   
+       , gtype        = a.gtype
+       , sales_type   = (case when v.cust_no IS NULL then '1.일반영업' else '2.계열사' end)
+       , due_date     = a.due_date + (case when :as_yymm = 'Y' then a.due_days else '(' + a.due_days + ')' end)
+       , item_name    = a.item_name  
+       , cqty         = a.cqty       
+       , cprice       = a.cprice / 1000
+    FROM (
+         SELECT category     = isnull(i.category, 'TOP1999')
+              , cust_no      = b.cust_no
+              , gtype        = i.type
+              , due_date     = (case when :as_yymm = 'Y' then convert(char(04),b.do_date,111)
+                                     else convert(char(08),b.do_date,11)
+                                end)
+              , due_days     = replace((case when :as_yymm = 'Y' then '.' + right('00'+cast(datepart(m,b.do_date) as char(2)),2)+'월'
+                                             else (case when datepart(dw,b.do_date) = 1 then '일'
+                                                        when datepart(dw,b.do_date) = 2 then '월'
+                                                        when datepart(dw,b.do_date) = 3 then '화'
+                                                        when datepart(dw,b.do_date) = 4 then '수'
+                                                        when datepart(dw,b.do_date) = 5 then '목'
+                                                        when datepart(dw,b.do_date) = 6 then '금'
+                                                        when datepart(dw,b.do_date) = 7 then '토'
+                                                   end)
+                                        end),' ','')
+              , item_name    = g.item_name
+              , cqty         = dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty)
+              , cprice       = a.price * dbo.uf_getqty(a.item_no, a.qa, a.uom, a.ship_qty)
+           FROM dodet   A with (nolock)  
+                LEFT OUTER JOIN do   B       with (nolock) ON a.do_no   = b.do_no
+                LEFT OUTER JOIN groupitem  G with (nolock) ON a.item_no = g.item_no
+                LEFT OUTER JOIN itemtop10  I with (nolock) ON a.item_no = i.item_no  
+          WHERE ( b.do_date   BETWEEN :ad_sdate AND :ad_edate )
+            AND ((:as_area     = '%' ) OR
+                 (:as_area    <> '%' AND b.area_no = :as_area)
+                )
+            AND ((:as_inside   = '%' ) OR
+                 (:as_inside  <> '%' and b.cust_no NOT IN (SELECT cust_no FROM V_CUST_INSIDE))
+                )
+         ) A
+
+         LEFT OUTER JOIN (
+              SELECT item_cd, item_nm FROM codemst with (nolock) WHERE type = 'ITEMTOP10' AND use_yn = 'Y'
+         ) CM ON a.category = cm.item_cd
+
+         LEFT OUTER JOIN v_cust_inside V ON a.cust_no = v.cust_no
+     WHERE ((:as_itemtop10  = '%' ) OR
+            (:as_itemtop10 <> '%' AND a.category = :as_itemtop10 )
+           )" arguments=(("as_area", string),("as_itemtop10", string),("ad_sdate", date),("ad_edate", date),("as_yymm", string),("as_inside", string))  sort="category A sales_type A " )
+text(band=header alignment="2" text="Cat" border="6" color="33554432" x="9" y="8" height="60" width="370" html.valueishtml="0"  name=cat_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Category" border="6" color="33554432" x="389" y="8" height="60" width="512" html.valueishtml="0"  name=category_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Gtype" border="6" color="33554432" x="910" y="8" height="60" width="352" html.valueishtml="0"  name=gtype_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Sales Type" border="6" color="33554432" x="1271" y="8" height="60" width="352" html.valueishtml="0"  name=sales_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Due Date" border="6" color="33554432" x="1632" y="8" height="60" width="389" html.valueishtml="0"  name=due_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Item Name" border="6" color="33554432" x="2030" y="8" height="60" width="768" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Cqty" border="6" color="33554432" x="2807" y="8" height="60" width="384" html.valueishtml="0"  name=cqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Cprice" border="6" color="33554432" x="3200" y="8" height="60" width="384" html.valueishtml="0"  name=cprice_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="370" format="[general]" html.valueishtml="0"  name=cat visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="389" y="8" height="72" width="512" format="[general]" html.valueishtml="0"  name=category visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="910" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=gtype visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1271" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=sales_type visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1632" y="8" height="72" width="389" format="[general]" html.valueishtml="0"  name=due_date visible="1" edit.limit=255 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2030" y="8" height="72" width="768" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2807" y="8" height="72" width="384" format="#,##0.00" html.valueishtml="0"  name=cqty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="3200" y="8" height="72" width="384" format="#,##0" html.valueishtml="0"  name=cprice visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

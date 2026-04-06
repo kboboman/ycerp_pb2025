@@ -1,0 +1,71 @@
+﻿$PBExportHeader$d_mplossitem_r.srd
+$PBExportComments$로스보고서(2001/07/24,이대준)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=452 color="536870912" )
+summary(height=180 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cwc dbname="cwc" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="groupitem.item_name" )
+ column=(type=char(10) updatewhereclause=yes name=coilsliting_item_no dbname="coilsliting.item_no" )
+ column=(type=char(2) updatewhereclause=yes name=as_flag dbname="as_flag" )
+ column=(type=decimal(4) updatewhereclause=yes name=sum_qty dbname="sum_qty" )
+ column=(type=datetime updatewhereclause=yes name=start_date dbname="start_date" )
+ column=(type=datetime updatewhereclause=yes name=end_date dbname="end_date" )
+ retrieve=" SELECT  cwc = ( case when coilorder.wc_no = 'NO' then '외주' else '사내' end ),
+			groupitem.item_name,   
+			coilsliting.item_no,
+         as_flag = substring(coilsliting.item_no,3,1),   
+         sum_qty = sum(coilsliting.unit_qty),
+         start_date = convert(smalldatetime, :ad_start, 111),   
+         end_date = convert(smalldatetime, :ad_end, 111)
+    FROM coilorder,   
+         coilorderdet,   
+         coilsliting,   
+         groupitem 
+   WHERE ( coilorder.order_no = coilorderdet.coilorder_order ) and
+         ( coilorderdet.order_no = coilsliting.order_no ) and  
+         ( coilsliting.item_no  = groupitem.item_no ) and  
+         ( coilsliting.sheet  = 'L' ) and  
+         ( coilorder.order_date between :ad_start and :ad_end)
+	group by  ( case when coilorder.wc_no = 'NO' then '외주' else '사내' end ),
+				groupitem.item_name,   
+            coilsliting.item_no,
+            substring(coilsliting.item_no,3,1)" arguments=(("ad_start", date),("ad_end", date))  sort="cwc A groupitem_item_name A " )
+group(level=1 header.height=4 trailer.height=84 by=("cwc" ) header.color="536870912" trailer.color="536870912"  sort="count(as_flag for group 1) A " )
+group(level=2 header.height=0 trailer.height=0 by=("as_flag" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="LOSS 현황" border="0" color="0" x="462" y="44" height="148" width="2290" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="2" background.color="16777215" )
+compute(band=header alignment="0" expression="string(  start_date , 'yyyy/mm/dd') + ' ~~ ' + string(  end_date , 'yyyy/mm/dd' )"border="0" color="0" x="471" y="288" height="60" width="983" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=header x1="457" y1="368" x2="2734" y2="368"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="457" y1="448" x2="2734" y2="448"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="Date:" border="0" color="0" x="2213" y="224" height="60" width="160" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="today()"border="0" color="0" x="2386" y="224" height="60" width="352" format="yyyy/mm/dd" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Page:" border="0" color="0" x="2213" y="296" height="56" width="160" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="page() + ' / ' + pageCount()"border="0" color="0" x="2386" y="296" height="56" width="352" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="LOSS 중량" border="0" color="0" x="2395" y="380" height="60" width="320" html.valueishtml="0"  name=coilsliting_unit_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="품       명" border="0" color="0" x="718" y="380" height="60" width="1216" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="물품코드" border="0" color="0" x="1952" y="380" height="60" width="407" html.valueishtml="0"  name=coilsliting_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="구분" border="0" color="0" x="475" y="380" height="60" width="215" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="457" y1="68" x2="2734" y2="68"  name=l_3 visible="1" pen.style="2" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="718" y="4" height="60" width="1216" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=60 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="2377" y="4" height="60" width="357" format="#,##0" html.valueishtml="0"  name=sum_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="1952" y="4" height="60" width="407" format="[general]" html.valueishtml="0"  name=coilsliting_item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="475" y="4" height="60" width="215" format="[general]" html.valueishtml="0"  name=cwc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="457" y1="88" x2="2734" y2="88"  name=l_5 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="457" y1="0" x2="2734" y2="0"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=summary alignment="0" text="GI :" border="0" color="0" x="635" y="16" height="60" width="137" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=summary alignment="0" expression=" sum(if ( as_flag = ~"S~", sum_qty ,0) for all) "border="0" color="0" x="795" y="16" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=summary alignment="0" text="AL :" border="0" color="0" x="1175" y="16" height="60" width="137" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=summary alignment="0" expression="sum(if ( as_flag = ~"A~", sum_qty ,0) for all) "border="0" color="0" x="1335" y="16" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=summary alignment="2" text="LOSS 총합계:" border="0" color="0" x="1952" y="16" height="60" width="407" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(  sum_qty  for all ) "border="0" color="0" x="2377" y="16" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(  sum_qty  for group 1 )"border="0" color="0" x="2377" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="2" text="LOSS 총합계:" border="0" color="0" x="1952" y="8" height="60" width="407" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="0" expression="sum(if ( as_flag = ~"A~", sum_qty ,0) for group 1 )"border="0" color="0" x="1335" y="8" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=trailer.1 alignment="0" text="AL :" border="0" color="0" x="1175" y="8" height="60" width="137" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="0" expression=" sum(if ( as_flag = ~"S~", sum_qty ,0) for group 1 )"border="0" color="0" x="795" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=trailer.1 alignment="0" text="GI :" border="0" color="0" x="635" y="8" height="60" width="137" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="626" y1="76" x2="2743" y2="76"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

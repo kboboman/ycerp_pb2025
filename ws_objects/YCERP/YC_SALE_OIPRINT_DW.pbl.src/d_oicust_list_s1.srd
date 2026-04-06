@@ -1,0 +1,69 @@
+﻿$PBExportHeader$d_oicust_list_s1.srd
+$PBExportComments$판매거래처 출고관리 현황(2004/03/15,정갑용)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 selected.mouse=no )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="553648127" )
+table(column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ retrieve="select  distinct a.cust_name,
+				   a.cust_no
+from 
+(
+	 SELECT  distinct do.area_no,
+							customer.cust_name,
+							 customer.cust_no
+		 from do with(nolock) inner join dodet with(nolock) on do.do_no = dodet.do_no
+								  inner join groupitem with(nolock) on dodet.item_no = groupitem.item_no 
+								  inner join customer with(nolock) on do.cust_no = customer.cust_no                                                                       
+								  left outer join scene with(nolock) on do.cust_no = scene.cust_no 
+																							 and  do.spot_code = scene.scene_code
+								  left outer join aroivc with(nolock) on do.cust_no = aroivc.cust_no 
+																							  and do.do_date = aroivc.oi_date			  
+        where   ( do.do_date between :ad_start and :ad_end ) and
+					 ( do.do_date between :ad_start and :ad_end ) and
+					  ( customer.credit_level = 'E' ) and
+					  ( customer.balance_amt <> 0 )
+) a
+where      ( case when a.area_no = 'B0001' THEN 'B0001' 
+                           when  a.area_no = 'T0001' THEN 'T0001' 
+                            else '00000'
+					END 
+			 ) = (
+					case when  :as_area = 'B0001' THEN 'B0001' 
+								  when   :as_area = 'T0001' THEN 'T0001' 
+									  else '00000'
+					END
+				 )
+/*
+ SELECT  distinct customer.cust_name,
+			customer.cust_no
+    FROM do,   
+         dodet,   
+         scene,   
+         groupitem,   
+         customer,
+			aroivc
+   WHERE ( do.do_no = dodet.do_no ) and  
+         ( do.cust_no *= scene.cust_no ) and  
+         ( do.spot_code *= scene.scene_code ) and  
+         ( dodet.item_no = groupitem.item_no ) and  
+         ( do.cust_no = customer.cust_no ) and  
+         ( do.do_date between :ad_start and :ad_end ) and
+			( customer.credit_level = 'E' ) and
+			( customer.balance_amt <> 0 ) and
+			( ( :as_area = 'B0001' and do.area_no = :as_area ) or
+			  ( :as_area = 'T0001' and do.area_no = :as_area ) or
+			  ( :as_area <> 'B0001' and :as_area <> 'T0001' and do.area_no <> 'B0001' ) ) and
+			( ( do.cust_no *= aroivc.cust_no ) )
+
+*/
+" arguments=(("as_area", string),("ad_start", date),("ad_end", date)) )
+text(band=header alignment="2" text="상호" border="6" color="33554432" x="9" y="8" height="60" width="782" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="판매거래처코드" border="6" color="33554432" x="800" y="8" height="60" width="320" html.valueishtml="0"  name=customer_cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="782" format="[general]" html.valueishtml="0" protect="0~t1"  name=cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="800" y="8" height="72" width="320" format="[general]" html.valueishtml="0" protect="0~t1"  name=cust_no  tag="판매거래처코드" visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

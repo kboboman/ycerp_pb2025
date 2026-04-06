@@ -1,0 +1,142 @@
+﻿$PBExportHeader$d_routestatus_all.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=76 color="536870912" )
+header[2](height=68 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=68 color="8421504" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=wc1 dbname="wc1" )
+ column=(type=char(20) updatewhereclause=yes name=wc2 dbname="wc2" )
+ column=(type=char(20) updatewhereclause=yes name=wc3 dbname="wc3" )
+ column=(type=number updatewhereclause=yes name=jan_qty dbname="jan_qty" )
+ retrieve="  SELECT wc_no       = a.wc_no
+       , item_no     = a.item_no
+       , item_name   = a.item_name
+       , pur_type    = a.pur_type
+       , due_date    = convert(char(5),a.due_date,101)
+       , wc1         = w1.work_name
+       , wc2         = w2.work_name
+       , wc3         = w3.work_name
+       , order_qty   = sum(a.order_qty)
+       , rlse_qty    = sum(a.rlse_qty )
+       , jan_qty     = sum(a.jan_qty  )
+    FROM (
+         SELECT wc_no       = :as_wcno
+              , item_no     = a.item_no
+              , item_name   = a.item_name
+              , pur_type    = a.pur_type
+              , qa          = a.qa
+              , due_date    = a.due_date
+              , cust_no     = a.cust_no
+              , cust_name   = c.cust_name
+              , scene_code  = a.scene_code
+              , scene_desc  = s.scene_desc
+              , order_no    = a.order_no
+              , seq_no      = a.seq_no
+              , wc1         = max(a.wc1)
+              , wc2         = max(a.wc2)
+              , wc3         = max(a.wc3)
+              , order_qty   = sum(a.order_qty)
+              , rlse_qty    = sum(a.rlse_qty )
+              , jan_qty     = sum(a.jan_qty  )
+           FROM (
+                /* 수주 한달전 부터 잔량이 존재하는 것(routestatus format) */
+                SELECT item_no     = sd.item_no
+                     , item_name   = r.item_name
+                     , pur_type    = r.pur_type
+                     , qa          = sd.qa
+                     , wc1         = (case when r.operation = 1 then r.wc_no else '' end)
+                     , wc2         = (case when r.operation = 2 then r.wc_no else '' end)
+                     , wc3         = (case when r.operation = 3 then r.wc_no else '' end)
+                     , due_date    = sd.due_date
+                     , order_qty   = (case when r.operation = 1 then sd.order_qty else 0 end)
+                     , rlse_qty    = (case when r.operation = 1 then sd.rlse_qty  else 0 end)
+                     , jan_qty     = (case when r.operation = 1 then sd.order_qty - sd.rlse_qty else 0 end)
+                     , cust_no     = sd.cust_no
+                     , scene_code  = sd.scene_code
+                     , order_no    = sd.order_no
+                     , seq_no      = sd.seq_no
+                  FROM (
+                       SELECT s.cust_no, s.scene_code, s.due_date, sd.order_no, sd.seq_no
+                            , sd.item_no, qa = left(sd.qa,14) + '00000', sd.order_qty, sd.rlse_qty
+                         FROM saledet SD with (nolock)
+                              LEFT OUTER JOIN sale S with (nolock) ON sd.order_no  = s.order_no
+                        WHERE (s.open_close     = 'O' )
+                          AND (s.tracking       = 'Y' )
+                          AND (s.order_date    >= dateadd(month, -1, getdate() ) )
+                       ) SD
+                       LEFT OUTER JOIN (
+                            SELECT a.item_no
+                                 , g.item_name
+                                 , pur_type   = g.pur_type
+                                 , a.qa
+                                 , operation  = a.operation
+                                 , wc_no      = a.wc_no
+                              FROM (
+                                   /* 공정품목 */
+                                   SELECT r.item_no, r.qa, r.operation, r.wc_no
+                                     FROM rout R with (nolock) 
+                                    WHERE r.item_no IN (SELECT DISTINCT item_no FROM rout with (nolock) WHERE wc_no LIKE :as_wcno)
+                                   ) a
+                                   LEFT OUTER JOIN groupitem G with (nolock) ON a.item_no = g.item_no AND g.use_flag = 'Y'
+                             WHERE g.item_name is not null
+                       ) R ON sd.item_no = r.item_no AND sd.qa = r.qa
+                 WHERE (sd.order_qty     - sd.rlse_qty > 0 )
+                   AND (sd.due_date     >= '2013/04/01'    )
+                   AND ((:as_purtype     = '%') OR (r.pur_type = :as_purtype)) /* 전체(%), 주문발주(O), 재고발주(S), 주문+재고(M) */                        
+                   AND (r.operation     is not null        )
+                ) A
+                LEFT OUTER JOIN customer C with (nolock) ON a.cust_no    = c.cust_no
+                LEFT OUTER JOIN scene    S with (nolock) ON a.scene_code = s.scene_code
+          GROUP BY a.item_no     
+                 , a.item_name
+                 , a.pur_type
+                 , a.qa          
+                 , a.due_date    
+                 , a.cust_no
+                 , c.cust_name
+                 , a.scene_code
+                 , s.scene_desc
+                 , a.order_no
+                 , a.seq_no
+         ) A
+         LEFT OUTER JOIN wc w1 with (nolock) ON a.wc1 = w1.work_no
+         LEFT OUTER JOIN wc w2 with (nolock) ON a.wc2 = w2.work_no
+         LEFT OUTER JOIN wc w3 with (nolock) ON a.wc3 = w3.work_no
+     GROUP BY a.wc_no      
+            , a.item_no    
+            , a.item_name  
+            , a.pur_type
+            , a.due_date   
+            , w1.work_name        
+            , w2.work_name
+            , w3.work_name
+     ORDER BY a.item_name     
+            , a.due_date    
+" arguments=(("as_wcno", string),("as_purtype", string))  sort="item_name A wc1 A wc2 A wc3 A " )
+text(band=header[1] alignment="0" text="수주잔량" border="0" color="33554432" x="9" y="12" height="56" width="1024" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[1] alignment="0" text="납기일자" border="0" color="33554432" x="1042" y="12" height="56" width="256" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="255" )
+text(band=header[2] alignment="1" text="@due_date" border="0" color="33554432" x="1819" y="8" height="56" width="206" html.valueishtml="0"  name=jan_qty_t visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="1" text="합 계" border="0" color="33554432" x="2034" y="8" height="56" width="256" html.valueishtml="0"  name=grand_sum_jan_qty_t visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="품명" border="0" color="33554432" x="9" y="8" height="56" width="1024" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="작업장1" border="0" color="33554432" x="1042" y="8" height="56" width="256" html.valueishtml="0"  name=wc1_t visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="작업장2" border="0" color="33554432" x="1307" y="8" height="56" width="247" html.valueishtml="0"  name=wc2_t visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="작업장3" border="0" color="33554432" x="1563" y="8" height="56" width="247" html.valueishtml="0"  name=wc3_t visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="56" width="1024" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1042" y="4" height="56" width="256" format="[general]" html.valueishtml="0"  name=wc1 visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1307" y="4" height="56" width="247" format="[general]" html.valueishtml="0"  name=wc2 visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1563" y="4" height="56" width="247" format="[general]" html.valueishtml="0"  name=wc3 visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1819" y="4" height="56" width="206" format="#,##0" html.valueishtml="0"  name=jan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2034" y="4" height="56" width="256" format="#,##0" html.valueishtml="0"  name=grand_sum_jan_qty visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="1073741824" )
+compute(band=summary alignment="1" expression="sum(jan_qty for all )"border="0" color="33554432" x="1819" y="8" height="72" width="206" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_jan_qty for all )"border="0" color="33554432" x="2034" y="8" height="72" width="256" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="0" expression="~"총 합 계~""border="0" color="33554432" x="9" y="8" height="72" width="1024" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression=" compute_1 + '(' + rowcount() + ')'"border="0" color="33554432" x="9" y="4" height="60" width="1024" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_2 "border="0" color="33554432" x="1819" y="4" height="60" width="206" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_3 "border="0" color="33554432" x="2034" y="4" height="60" width="256" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-9" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "due_date" rows = "item_name, wc1, wc2, wc3" values = "sum(jan_qty for crosstab)" sourcenames = "wc_no, item_no, item_name, pur_type, due_date, wc1, wc2, wc3, order_qty, rlse_qty, jan_qty")
+sparse(names="item_name	wc1	wc2")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

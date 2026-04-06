@@ -1,0 +1,67 @@
+﻿$PBExportHeader$d_ippurday_t.srd
+$PBExportComments$원자재구매일보_출력(1998/04/29,이인호)
+release 6;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=supp_supp_name dbname="supp.supp_name" )
+ column=(type=char(60) updatewhereclause=yes name=item_item_name dbname="item.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=inaudit_qa dbname="inaudit.qa" )
+ column=(type=char(2) updatewhereclause=yes name=purdet_uom dbname="purdet.uom" initial=" " )
+ column=(type=decimal(2) updatewhereclause=yes name=inaudit_rcpt_qty dbname="inaudit.rcpt_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=inaudit_cost dbname="inaudit.cost" )
+ column=(type=char(30) updatewhereclause=yes name=inaudit_rem dbname="inaudit.rem" )
+ column=(type=char(10) updatewhereclause=yes name=inaudit_inaudit_item dbname="inaudit.inaudit_item" )
+ column=(type=char(2) updatewhereclause=yes name=citem_type dbname="item_type" )
+ column=(type=decimal(6) updatewhereclause=yes name=camt dbname="amt" )
+ retrieve="  SELECT supp.supp_name,   
+         item.item_name,   
+         inaudit.qa,   
+         purdet.uom,   
+         inaudit.rcpt_qty,   
+         inaudit.cost,   
+         inaudit.rem,   
+         inaudit.inaudit_item,   
+         substring(inaudit_item,2,1) item_type,   
+         (inaudit.cost * inaudit.rcpt_qty) amt    
+    FROM inaudit,   
+         pur,   
+         purdet,   
+         supp,   
+         item  
+   WHERE ( pur.order_no = purdet.order_no ) and  
+         ( purdet.item_no = inaudit.inaudit_item ) and  
+         ( inaudit.order_no = purdet.order_no ) and  
+         ( pur.supp_no = supp.supp_no ) and  
+         ( purdet.item_no = item.item_no ) and  
+         ( ( inaudit.inaudit_date = :ad_date ) ) AND  
+         ( inaudit.inaudit_type = 'RI'   )  AND  
+         ( ( pur.order_no like :as_area + ~"%~" ) or
+			  ( :as_area = 'S' and pur.order_no like 'PUR%')) 
+
+" arguments=(("ad_date", date),("as_area", string)) )
+group(level=1 header.height=0 trailer.height=76 by=("citem_type" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="거 래 선"border="6" color="0" x="9" y="8" height="60" width="402"  name=supp_supp_name_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="규  격"border="6" color="0" x="983" y="8" height="60" width="613"  name=inaudit_qa_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="단위"border="6" color="0" x="1605" y="8" height="60" width="128"  name=purdet_uom_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="수  량"border="6" color="0" x="1742" y="8" height="60" width="357"  name=inaudit_rcpt_qty_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="품  명"border="6" color="0" x="421" y="8" height="60" width="553"  name=item_item_name_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="단  가"border="6" color="0" x="2107" y="8" height="60" width="352"  name=inaudit_cost_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="금    액"border="6" color="0" x="2469" y="8" height="60" width="453"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="비           고"border="6" color="0" x="2930" y="8" height="60" width="992"  name=inaudit_rem_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="402" format="[general]"  name=supp_supp_name  tag="상호" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="421" y="4" height="60" width="553" format="[general]"  name=item_item_name  tag="품명" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="983" y="4" height="60" width="613" format="[general]"  name=inaudit_qa  tag="규격" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="1605" y="4" height="60" width="128" format="[general]"  name=purdet_uom  tag="단위" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="2469" y="4" height="60" width="453" format="#,##0.00"  name=camt edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2107" y="4" height="60" width="352" format="[general]"  name=inaudit_cost  tag="단가" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="1742" y="4" height="60" width="357" format="[general]"  name=inaudit_rcpt_qty  tag="입고수량" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="2930" y="4" height="60" width="992" format="[general]"  name=inaudit_rem edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=trailer.1 id=9 alignment="0" tabsequence=32766 border="0" color="0" x="421" y="8" height="60" width="553" format="[general]"  name=citem_type edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum(camt for group 1)"border="0" color="0" x="2469" y="8" height="60" width="453" format="#,##0.00"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=trailer.1 alignment="2" text="소  계"border="6" color="0" x="983" y="8" height="60" width="613"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+compute(band=summary alignment="1" expression="sum(camt for all)"border="0" color="0" x="2469" y="8" height="60" width="453" format="#,##0.00"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=summary alignment="2" text="합  계"border="6" color="0" x="9" y="8" height="60" width="402"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+htmltable(border="1" cellpadding="0" cellspacing="0" generatecss="no" nowrap="yes")

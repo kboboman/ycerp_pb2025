@@ -1,0 +1,93 @@
+﻿$PBExportHeader$d_ocshipreq_s2.srd
+$PBExportComments$운반비변경요청서 (2002/08/28,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="553648127" )
+footer(height=72 color="8421504" )
+detail(height=152 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=area_name dbname="area_name" )
+ column=(type=datetime updatewhereclause=yes name=doship_doship_date dbname="doship.doship_date" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="scene.scene_desc" )
+ column=(type=char(180) updatewhereclause=yes name=sale_no dbname="sale_no" )
+ column=(type=char(14) updatewhereclause=yes name=doshipdet_do_no dbname="doshipdet.do_no" )
+ column=(type=char(60) updatewhereclause=yes name=doshipdet_ship_reason1 dbname="doshipdet.ship_reason1" )
+ column=(type=char(60) updatewhereclause=yes name=doshipdet_ship_reason2 dbname="doshipdet.ship_reason2" )
+ column=(type=char(60) updatewhereclause=yes name=doshipdet_ship_reason3 dbname="doshipdet.ship_reason3" )
+ column=(type=decimal(0) updatewhereclause=yes name=do_ship_amount dbname="do.ship_amount" )
+ retrieve="  SELECT area_name = (case :as_area when '%' then '전체사업장' else area.area_name end)   
+       , doship.doship_date   
+       , customer.cust_name   
+       , scene.scene_desc     
+       , sale_no = DBO.uf_getdosaleno(doshipdet.do_no)   
+       , doshipdet.do_no   
+       , ship_reason1
+       , ship_reason2
+       , ship_reason3
+       , do.ship_amount
+    FROM doshipdet   
+       , do       
+       , customer    
+       , scene    
+       , doship   
+       , area           
+   WHERE ( doshipdet.do_no              = do.do_no         )   
+     AND ( do.cust_no                   = customer.cust_no )   
+     AND ( do.spot_code                 = scene.scene_code )   
+     AND ( doshipdet.doship_no          = doship.doship_no )   
+     AND ( doship.area_no               = area.area_no     )   
+     AND ( doship.area_chk              = 'Y'              )   
+     AND ( doshipdet.new_shipflag       = 'B'              )   
+     AND ( convert(char(10),doship.doship_date,111)     between :as_sdate and :as_edate ) 
+     AND ( doship.process_flag       like :as_flag   )  
+     AND ( doship.area_no            like :as_area   )  
+         
+  UNION ALL
+  
+  SELECT area_name = (case :as_area when '%' then '전체사업장' else area.area_name end) 
+       , doshipetc.etc_date   
+       , customer.cust_name   
+       , scene.scene_desc     
+       , doshipetc.sale_no    
+       , doshipetc.do_no      
+       , doshipetc.rem      
+       , rem2              
+       , rem3              
+       , doshipetc.ship_amount
+    FROM doshipetc   
+       , customer    
+       , scene    
+       , area     
+   WHERE ( doshipetc.cust_no        = customer.cust_no      )   
+     AND ( doshipetc.scene_code     = scene.scene_code      )   
+     AND ( doshipetc.ship_flag      = 'B'                   )   
+     AND ( doshipetc.area_chk       = 'Y'                   )   
+     AND ( doshipetc.etc_area       = area.area_no          )   
+     AND ( convert(char(10),doshipetc.etc_date,111)   between :as_sdate and :as_edate )   
+     AND ( doshipetc.etc_flag    like :as_flag              )  
+     AND ( doshipetc.etc_area    like :as_area              )      
+" arguments=(("as_sdate", string),("as_edate", string),("as_flag", string),("as_area", string))  sort="area_name A doship_doship_date A customer_cust_name A scene_scene_desc A sale_no A " )
+text(band=header alignment="2" text="사업장" border="6" color="0" x="9" y="12" height="60" width="334" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="일자" border="6" color="0" x="352" y="12" height="60" width="343" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="704" y="12" height="60" width="549" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="1262" y="12" height="60" width="901" html.valueishtml="0"  name=scene_scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="2171" y="12" height="60" width="453" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="송장번호" border="6" color="0" x="2633" y="12" height="60" width="448" html.valueishtml="0"  name=doshipdet_do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="부담금액" border="6" color="0" x="3090" y="12" height="60" width="357" html.valueishtml="0"  name=do_ship_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="발생사유" border="6" color="0" x="3456" y="12" height="60" width="1381" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1262" y="8" height="60" width="901" format="[general]" html.valueishtml="0"  name=scene_scene_desc  tag="현장명" visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="704" y="8" height="60" width="549" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="334" format="[general]" html.valueishtml="0"  name=area_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="352" y="8" height="60" width="343" format="yyyy/mm/dd" html.valueishtml="0"  name=doship_doship_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="2171" y="8" height="60" width="453" format="[general]" html.valueishtml="0"  name=sale_no visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="2633" y="8" height="60" width="448" format="[general]" html.valueishtml="0"  name=doshipdet_do_no  tag="출고송장번호" visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="3090" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=do_ship_amount  tag="운송금액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+compute(band=detail alignment="0" expression="if (isnull( doshipdet_ship_reason1) , '', trim( doshipdet_ship_reason1 )) + ~"~~r~~n~" +
+if (isnull( doshipdet_ship_reason2) , '', trim( doshipdet_ship_reason2 ) + ~"~~r~~n~" ) +
+if (isnull( doshipdet_ship_reason2) , '', trim( doshipdet_ship_reason3 ))"border="0" color="0" x="3456" y="8" height="60" width="1381" format="[general]" html.valueishtml="0"  name=obj_19614799 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)"  height.autosize=yes)
+compute(band=footer alignment="1" expression="sum(do_ship_amount for all)"border="0" color="0" x="3090" y="4" height="64" width="357" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="64" width="334" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="area_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,71 @@
+﻿$PBExportHeader$d_icitemstock_r.srd
+$PBExportComments$장기재고 현황
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=488 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912"  height.autosize=yes)
+table(column=(type=char(10) updatewhereclause=yes name=itemstock_loc_no dbname="itemstock.loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=itemstock_item_no dbname="itemstock.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=itemstock_qa dbname="itemstock.qa" )
+ column=(type=decimal(0) updatewhereclause=yes name=itemstock_qty dbname="itemstock.qty" )
+ column=(type=char(60) updatewhereclause=yes name=reason1 dbname="itemstock.reason1" )
+ column=(type=char(60) updatewhereclause=yes name=reason2 dbname="itemstock.reason2" )
+ column=(type=char(60) updatewhereclause=yes name=reason3 dbname="itemstock.reason3" )
+ column=(type=char(10) updatewhereclause=yes name=chk1_user dbname="itemstock.chk1_user" )
+ column=(type=char(10) updatewhereclause=yes name=chk2_user dbname="itemstock.chk2_user" )
+ column=(type=datetime updatewhereclause=yes name=itemstock_user_date dbname="itemstock.user_date" )
+ column=(type=char(1) updatewhereclause=yes name=itemstock_reason_code dbname="itemstock.reason_code" )
+ column=(type=decimal(4) updatewhereclause=yes name=loc_qoh dbname="loc_qoh" )
+ column=(type=char(184) updatewhereclause=yes name=reason dbname="reason" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ retrieve="  SELECT itemstock.loc_no,   
+         itemstock.item_no,   
+         itemstock.qa,   
+         itemstock.qty,   
+         itemstock.reason1,   
+         itemstock.reason2,   
+         itemstock.reason3,   
+         itemstock.chk1_user,   
+         itemstock.chk2_user,   
+         itemstock.user_date,   
+         itemstock.reason_code,   
+         loc_qoh = isnull(itemloc.qoh, 0),   
+         reason =  rtrim(itemstock.reason1) 
+						+ case when itemstock.reason1 is null or rtrim(itemstock.reason1) = '' then '' else char(13) + char(10) end
+         			+ rtrim(itemstock.reason2) 
+						+ case when itemstock.reason2 is null or rtrim(itemstock.reason2) = '' then '' else char(13) + char(10) end
+         			+ rtrim(itemstock.reason3),
+         groupitem.item_name,   
+         location.loc_name 
+   FROM itemstock inner join groupitem on  itemstock.item_no = groupitem.item_no
+                                 inner join location on itemstock.loc_no = location.loc_no
+                                 left outer join itemloc on itemstock.loc_no = itemloc.loc_no 
+                                                                  and itemstock.item_no = itemloc.item_no 
+                                                                  and itemstock.qa = itemloc.qa			
+   WHERE itemstock.loc_no = :as_loc
+" arguments=(("as_loc", string))  sort="groupitem_item_name A itemstock_qa A " )
+group(level=1 header.height=0 trailer.height=4 by=("itemstock_loc_no" , "itemstock_item_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="장기재고 현황" border="0" color="0" x="9" y="84" height="148" width="3611" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="품명" border="0" color="33554432" x="9" y="416" height="60" width="773" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="규격" border="0" color="33554432" x="795" y="416" height="60" width="617" html.valueishtml="0"  name=itemstock_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="저장소 : " border="0" color="33554432" x="9" y="336" height="60" width="334" html.valueishtml="0"  name=location_loc_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="9" y1="484" x2="3621" y2="484"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=header x1="9" y1="404" x2="3621" y2="404"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'작성일:' + string(today(), 'YYYY/MM/DD')"border="0" color="0" x="3077" y="264" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'페이지:' + page() + ' of ' + pageCount()"border="0" color="0" x="3077" y="336" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="357" y="336" height="60" width="960" format="[general]" html.valueishtml="0"  name=location_loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="장기재고" border="0" color="33554432" x="1426" y="416" height="60" width="357" html.valueishtml="0"  name=itemstock_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="현재고" border="0" color="33554432" x="1797" y="416" height="60" width="357" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="사유" border="0" color="33554432" x="2167" y="416" height="60" width="1454" html.valueishtml="0"  name=reason_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="276" width="773" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="795" y="4" height="60" width="617" format="[general]" html.valueishtml="0"  name=itemstock_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1426" y="4" height="60" width="357" format="#,##0" html.valueishtml="0"  name=itemstock_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="1801" y="4" height="60" width="325" format="#,##0" html.valueishtml="0"  name=loc_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="2167" y="4" height="276" width="1454" format="[general]" html.valueishtml="0"  name=reason visible="1" height.autosize=yes edit.limit=184 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="9" y1="0" x2="3621" y2="0"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+
+sparse(names="groupitem_item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

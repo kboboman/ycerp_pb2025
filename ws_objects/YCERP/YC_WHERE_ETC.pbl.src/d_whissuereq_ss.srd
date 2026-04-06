@@ -1,0 +1,135 @@
+﻿$PBExportHeader$d_whissuereq_ss.srd
+$PBExportComments$출고의뢰 내용
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=req_date dbname="req_date" )
+ column=(type=char(10) updatewhereclause=yes name=req_salesman dbname="salesman" )
+ column=(type=long updatewhereclause=yes name=req_seq dbname="req_seq" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="cnt" )
+ column=(type=long updatewhereclause=yes name=nocnt dbname="nocnt" )
+ column=(type=char(1) updatewhereclause=yes name=confirm_flag dbname="confirm_flag" values="확정	A/" )
+ column=(type=char(10) updatewhereclause=yes name=accept_user dbname="accept_user" )
+ column=(type=char(10) updatewhereclause=yes name=accept1 dbname="accept1" )
+ column=(type=char(10) updatewhereclause=yes name=accept2 dbname="accept2" )
+ column=(type=char(10) updatewhereclause=yes name=accept3 dbname="accept3" )
+ column=(type=char(10) updatewhereclause=yes name=accept4 dbname="accept4" )
+ column=(type=char(10) updatewhereclause=yes name=accept5 dbname="accept5" )
+ column=(type=char(1) updatewhereclause=yes name=chk0 dbname="chk0" )
+ column=(type=char(1) updatewhereclause=yes name=chk1 dbname="chk1" )
+ column=(type=char(1) updatewhereclause=yes name=chk2 dbname="chk2" )
+ column=(type=char(1) updatewhereclause=yes name=chk3 dbname="chk3" )
+ column=(type=char(1) updatewhereclause=yes name=chk4 dbname="chk4" )
+ column=(type=char(1) updatewhereclause=yes name=chk5 dbname="chk5" )
+ column=(type=char(1) updatewhereclause=yes name=chkfont dbname="chkfont" )
+ column=(type=char(10) updatewhereclause=yes name=accept_name dbname="accept_name" )
+ column=(type=char(12) updatewhereclause=yes name=cuser_name dbname="cuser_name" )
+ column=(type=datetime updatewhereclause=yes name=sys_date dbname="sys_date" )
+ column=(type=long updatewhereclause=yes name=issue_schedule dbname="issue_schedule" )
+ column=(type=char(1) updatewhereclause=yes name=print_yn dbname="print_yn" )
+ retrieve="  SELECT req_date     = i.req_date  
+       , salesman     = i.salesman  
+       , req_seq      = i.req_seq   
+       , cnt          = isnull(d.cnt,0)
+       , nocnt        = isnull(e.cnt,0)
+       , confirm_flag = i.confirm_flag
+       , accept_user  = i.accept_user
+       , accept1      = i.accept1
+       , accept2      = i.accept2
+       , accept3      = i.accept3
+       , accept4      = i.accept4
+       , accept5      = i.accept5
+       , chk0         = ISNULL(i.chk0,'N')
+       , chk1         = i.chk1
+       , chk2         = i.chk2
+       , chk3         = i.chk3
+       , chk4         = i.chk4
+       , chk5         = i.chk5
+       , chkfont      = 'N'
+       , accept_name  = b.user_name
+       , cuser_name   = rtrim(a.user_name) + convert(char(2), i.req_seq) 
+       , sys_date     = i.sys_date
+	  , isnull(f.issue_schedule,0) issue_schedule
+	  , isnull(print_yn, 'N') print_yn
+    FROM    
+	   issuereq i 
+         LEFT OUTER JOIN login a ON i.salesman    = a.user_id
+         LEFT OUTER JOIN login b ON i.accept_user = b.user_id
+         LEFT OUTER JOIN (
+									  SELECT a.req_date, a.salesman, a.req_seq, cnt = count(*)
+										 FROM issuereqdet a
+										WHERE a.req_date     = :ad_date
+										  AND a.req_flag     = 'A'
+										GROUP BY a.req_date, a.salesman, a.req_seq
+       								  ) d ON i.req_date = d.req_date AND i.salesman = d.salesman AND i.req_seq = d.req_seq
+         LEFT OUTER JOIN (
+									  SELECT a.req_date, a.salesman, a.req_seq, cnt = count(*)
+										 FROM issuereqdet a
+										WHERE a.req_date     = :ad_date
+										  AND a.req_flag     = 'A'
+										  AND a.do_date     is not null
+										GROUP BY a.req_date, a.salesman, a.req_seq
+							      ) e ON i.req_date = e.req_date AND i.salesman = e.salesman AND i.req_seq = e.req_seq	
+	 LEFT OUTER JOIN (
+
+									select req_date, salesman, req_seq, COUNT(*) issue_schedule			/*직출체크를 위한 */
+									from issuereqdet
+									where issue_schedule IN ( 'A', 'B' )
+											  and req_date     = :ad_date
+									GROUP BY req_date, salesman, req_seq
+							  ) F ON i.req_date = F.req_date AND i.salesman = F.salesman AND i.req_seq = F.req_seq
+   WHERE ( i.req_date         = :ad_date       ) 
+     AND ( i.accept_area   LIKE :as_area       ) 
+     AND ( i.confirm_flag  LIKE :as_flag       ) 
+     AND ( dbo.uf_accept_user(i.accept_user)  LIKE :as_acceptuser )
+     AND ((:as_salesman  = '%' AND i.salesman LIKE :as_salesman) OR
+          (:as_salesman <> '%' AND i.salesman    = :as_salesman)
+         )
+" arguments=(("as_area", string),("ad_date", date),("as_flag", string),("as_salesman", string),("as_acceptuser", string))  sort="sys_date D " )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="60" width="114" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등록일자" border="6" color="33554432" x="133" y="8" height="60" width="402" html.valueishtml="0"  name=sys_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="의뢰자" border="6" color="33554432" x="544" y="8" height="60" width="293" html.valueishtml="0"  name=cuser_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="건수" border="6" color="33554432" x="846" y="8" height="60" width="128" html.valueishtml="0"  name=cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고" border="6" color="33554432" x="983" y="8" height="60" width="128" html.valueishtml="0"  name=nocnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="미출" border="6" color="0" x="1120" y="8" height="60" width="160" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수신자" border="6" color="33554432" x="1289" y="8" height="60" width="197" html.valueishtml="0"  name=accept_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출력" border="6" color="33554432" x="1495" y="8" height="60" width="146" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="보조1" border="6" color="0" x="1650" y="8" height="60" width="311" html.valueishtml="0"  name=accept1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="보조2" border="6" color="0" x="1970" y="8" height="60" width="311" html.valueishtml="0"  name=accept2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="보조3" border="6" color="0" x="2290" y="8" height="60" width="311" html.valueishtml="0"  name=accept3_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="보조4" border="6" color="0" x="2610" y="8" height="60" width="311" html.valueishtml="0"  name=accept4_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="보조5" border="6" color="0" x="2930" y="8" height="60" width="311" html.valueishtml="0"  name=accept5_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="확정" border="6" color="0" x="3250" y="8" height="60" width="160" html.valueishtml="0"  name=confirm_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432~tif ( tcalc > 0, rgb(255, 0, 0), rgb(0, 0, 0) )" x="9" y="4" height="72" width="114" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="67108864~tif (chkfont = ~"Y~", rgb(254, 252, 175),  67108864 )" )
+column(band=detail id=24 alignment="2" tabsequence=32766 border="0" color="33554432~tif( print_yn = 'Y', if( getrow()=currentrow(), rgb(255,255,0), rgb(0,0,255)), if( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) )" x="1495" y="4" height="72" width="146" format="[general]" html.valueishtml="0"  name=print_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400~tif( print_yn = 'Y' , 700, 400 )"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="72" width="114" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="( tnocnt / tcnt )"border="0" color="16711680" x="133" y="4" height="72" width="402" format="0.0%" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="/* count(  issuereq_salesman for all distinct   issuereq_salesman ) */"border="0" color="33554432" x="544" y="4" height="72" width="293" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( cnt for all )"border="0" color="33554432" x="846" y="4" height="72" width="128" format="[GENERAL]" html.valueishtml="0"  name=tcnt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( tcalc for all )"border="0" color="255" x="1120" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( nocnt for all )"border="0" color="33554432" x="983" y="4" height="72" width="128" format="[GENERAL]" html.valueishtml="0"  name=tnocnt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( accept_name for all distinct accept_name )"border="0" color="33554432" x="1289" y="4" height="72" width="197" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( if( print_yn = 'Y', 1,0) for all distinct accept_name )"border="0" color="33554432" x="1495" y="4" height="72" width="146" format="[GENERAL]" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( accept1 for all distinct accept1 )"border="0" color="33554432" x="1650" y="4" height="72" width="311" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( accept2 for all distinct accept2 )"border="0" color="33554432" x="1970" y="4" height="72" width="311" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( accept3 for all distinct accept3 )"border="0" color="33554432" x="2290" y="4" height="72" width="311" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( accept4 for all distinct accept4 )"border="0" color="33554432" x="2610" y="4" height="72" width="311" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( accept5 for all distinct accept5 )"border="0" color="33554432" x="2930" y="4" height="72" width="311" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( if ( confirm_flag = 'Y', 1, 0) for all )"border="0" color="33554432" x="3250" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=22 alignment="0" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="133" y="4" height="72" width="402" format="mm/dd hh:mm" html.valueishtml="0"  name=sys_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="544" y="4" height="72" width="293" format="[general]" html.valueishtml="0"  name=cuser_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="846" y="4" height="72" width="128" format="[general]" html.valueishtml="0"  name=cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="983" y="4" height="72" width="128" format="[general]" html.valueishtml="0"  name=nocnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+compute(band=detail alignment="2" expression="cnt - nocnt"border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="1120" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=tcalc visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="1289" y="4" height="72" width="197" format="[general]" html.valueishtml="0"  name=accept_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="1650" y="4" height="72" width="311" format="[general]" html.valueishtml="0"  name=accept1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="1970" y="4" height="72" width="311" format="[general]" html.valueishtml="0"  name=accept2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="2290" y="4" height="72" width="311" format="[general]" html.valueishtml="0"  name=accept3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432~tif( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) " x="2610" y="4" height="72" width="311" format="[general]" html.valueishtml="0"  name=accept4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432~tif( print_yn = 'Y', if( getrow()=currentrow(), rgb(255,255,0), rgb(0,0,255)), if( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) )" x="2930" y="4" height="72" width="311" format="[general]" html.valueishtml="0"  name=accept5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0~tif( print_yn = 'Y', if( getrow()=currentrow(), rgb(255,255,0), rgb(0,0,255)), if( getrow()=currentrow(), rgb(255,255,0), if( confirm_flag <> 'Y', rgb(255,0,0),  rgb(0,0,0) ) ) )" x="3250" y="4" height="72" width="160" format="[general]" html.valueishtml="0"  name=confirm_flag visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif(getrow()=currentrow(), rgb(0,0,255), if(issue_schedule = 0, 1087434968, rgb(255,255,36) )  )" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

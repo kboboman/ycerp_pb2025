@@ -1,0 +1,165 @@
+﻿$PBExportHeader$d_111.srd
+$PBExportComments$거래처별 현장 현황(2007/06/20,정갑용)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=136 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=bdinfodet_person dbname="bdinfodet.person" )
+ column=(type=char(4) updatewhereclause=yes name=bdinfodet_lastcom dbname="bdinfodet.lastcom" )
+ column=(type=char(10) updatewhereclause=yes name=bdinfodet_sperson dbname="bdinfodet.sperson" )
+ column=(type=char(4) updatewhereclause=yes name=bdinfodet_buildingcom dbname="bdinfodet.buildingcom" )
+ column=(type=char(20) updatewhereclause=yes name=bdinfodet_project dbname="bdinfodet.project" )
+ column=(type=char(3) updatewhereclause=yes name=spec_code dbname="bdinfodet2.spec_code" )
+ column=(type=char(3) updatewhereclause=yes name=uom dbname="bdinfodet2.uom" )
+ column=(type=decimal(0) updatewhereclause=yes name=quantity dbname="bdinfodet2.quantity" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_1m dbname="bd_1m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_2m dbname="bd_2m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_3m dbname="bd_3m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_4m dbname="bd_4m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_5m dbname="bd_5m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_6m dbname="bd_6m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_7m dbname="bd_7m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_8m dbname="bd_8m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_9m dbname="bd_9m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_10m dbname="bd_10m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_11m dbname="bd_11m" )
+ column=(type=decimal(0) updatewhereclause=yes name=bd_12m dbname="bd_12m" )
+ retrieve="  SELECT bdinfodet.person,
+			bdinfodet.lastcom,
+			bdinfodet.sperson,
+			bdinfodet.buildingcom,
+			bdinfodet.project,   
+			bdinfodet2.spec_code,   
+			bdinfodet2.uom,
+			bdinfodet2.quantity,   
+			bd_1m = max(case when right(bdinfodet2_item.input_ym, 2) = '01' then	bdinfodet2_item.quantity end),
+			bd_2m = max(case when right(bdinfodet2_item.input_ym, 2) = '02' then	bdinfodet2_item.quantity end),
+			bd_3m = max(case when right(bdinfodet2_item.input_ym, 2) = '03' then	bdinfodet2_item.quantity end),
+			bd_4m = max(case when right(bdinfodet2_item.input_ym, 2) = '04' then	bdinfodet2_item.quantity end),
+			bd_5m = max(case when right(bdinfodet2_item.input_ym, 2) = '05' then	bdinfodet2_item.quantity end),
+			bd_6m = max(case when right(bdinfodet2_item.input_ym, 2) = '06' then	bdinfodet2_item.quantity end),
+			bd_7m = max(case when right(bdinfodet2_item.input_ym, 2) = '07' then	bdinfodet2_item.quantity end),
+			bd_8m = max(case when right(bdinfodet2_item.input_ym, 2) = '08' then	bdinfodet2_item.quantity end),
+			bd_9m = max(case when right(bdinfodet2_item.input_ym, 2) = '09' then	bdinfodet2_item.quantity end),
+			bd_10m = max(case when right(bdinfodet2_item.input_ym, 2) = '10' then	bdinfodet2_item.quantity end),
+			bd_11m = max(case when right(bdinfodet2_item.input_ym, 2) = '11' then	bdinfodet2_item.quantity end),
+			bd_12m = max(case when right(bdinfodet2_item.input_ym, 2) = '12' then	bdinfodet2_item.quantity end)
+FROM   bdinfodet inner join bdinfo on bdinfodet.build_no = bdinfo.build_no
+    			               inner join bdinfodet2 on   bdinfodet.build_no = bdinfodet2.build_no and bdinfodet.seq = bdinfodet2.seq 
+                               left outer join bdinfodet2_item on  bdinfodet2.build_no = bdinfodet2_item.build_no and
+                                                                                      bdinfodet2.seq = bdinfodet2_item.seq  and
+                                                                                      bdinfodet2.spec_code = bdinfodet2_item.spec_code
+   WHERE (	( bdinfo.build_no = :arg_build_no ) AND  
+              				( bdinfodet.std_chk = '1' ) AND  
+              				( bdinfodet.spec like :as_spec ) AND  
+              				( bdinfodet.project like :as_project ) AND  
+              				( bdinfodet.sale_prog like :as_flag ) AND  
+              				( bdinfodet.fixeddate between :ad_date1 and :ad_date2 ) AND  
+              				( bdinfodet.design_prog like :as_dprog ) AND  
+              				( bdinfodet.com_prog like :as_cprog ) AND  
+              				( bdinfodet.city like :as_city ) AND  
+              				(	( bdinfodet.person like :as_person ) OR  
+              					( bdinfodet.dperson like :as_dperson ) OR  
+              					( bdinfodet.cperson like :as_cperson ) OR  
+              					( bdinfodet.bperson like :as_bperson ) OR  
+              					( bdinfodet.sperson like :as_sperson )	) AND  
+              				(	( bdinfodet.div like :as_div ) OR  
+              					( bdinfodet.ddiv like :as_ddiv ) OR  
+              					( bdinfodet.cdiv like :as_cdiv ) OR  
+              					( bdinfodet.bdiv like :as_bdiv ) OR  
+              					( bdinfodet.sdiv like :as_sdiv )	)	) AND    
+                       ( bdinfodet.organcd like :as_organcd ) AND
+                       ( bdinfodet.designoffice like :as_dcode )     
+group by  bdinfodet.person,
+			bdinfodet.lastcom,
+			bdinfodet.sperson,
+			bdinfodet.buildingcom,
+			bdinfodet.project,   
+			bdinfodet2.spec_code,   
+			bdinfodet2.uom,
+			bdinfodet2.quantity
+/*
+			 FROM bdinfo,   
+			bdinfodet,   
+			bdinfodet2,
+			bdinfodet2_item  
+   WHERE ( bdinfodet.build_no = bdinfo.build_no ) and  
+         ( bdinfodet.build_no = bdinfodet2.build_no ) and
+         ( bdinfodet.seq = bdinfodet2.seq ) and
+         ( bdinfodet2.build_no *= bdinfodet2_item.build_no ) and
+         ( bdinfodet2.seq *= bdinfodet2_item.seq ) and
+         ( bdinfodet2.spec_code *= bdinfodet2_item.spec_code ) and
+	      (	( bdinfo.build_no = :arg_build_no ) AND  
+				( bdinfodet.std_chk = '1' ) AND  
+				( bdinfodet.spec like :as_spec ) AND  
+				( bdinfodet.project like :as_project ) AND  
+				( bdinfodet.sale_prog like :as_flag ) AND  
+				( bdinfodet.fixeddate between :ad_date1 and :ad_date2 ) AND  
+				( bdinfodet.design_prog like :as_dprog ) AND  
+				( bdinfodet.com_prog like :as_cprog ) AND  
+				( bdinfodet.city like :as_city ) AND  
+				(	( bdinfodet.person like :as_person ) OR  
+					( bdinfodet.dperson like :as_dperson ) OR  
+					( bdinfodet.cperson like :as_cperson ) OR  
+					( bdinfodet.bperson like :as_bperson ) OR  
+					( bdinfodet.sperson like :as_sperson )	) AND  
+				(	( bdinfodet.div like :as_div ) OR  
+					( bdinfodet.ddiv like :as_ddiv ) OR  
+					( bdinfodet.cdiv like :as_cdiv ) OR  
+					( bdinfodet.bdiv like :as_bdiv ) OR  
+					( bdinfodet.sdiv like :as_sdiv )	)	) AND    
+         ( bdinfodet.organcd like :as_organcd ) AND
+         ( bdinfodet.designoffice like :as_dcode )     
+group by  bdinfodet.person,
+			bdinfodet.lastcom,
+			bdinfodet.sperson,
+			bdinfodet.buildingcom,
+			bdinfodet.project,   
+			bdinfodet2.spec_code,   
+			bdinfodet2.uom,
+			bdinfodet2.quantity
+*/" arguments=(("arg_build_no", string),("as_div", string),("as_spec", string),("as_project", string),("as_flag", string),("ad_date1", string),("ad_date2", string),("as_dprog", string),("as_cprog", string),("as_city", string),("as_person", string),("as_dperson", string),("as_ddiv", string),("as_cperson", string),("as_cdiv", string),("as_bperson", string),("as_bdiv", string),("as_sperson", string),("as_sdiv", string),("as_organcd", string),("as_dcode", string)) )
+text(band=header alignment="2" text="현장명" border="0" color="33554432" x="1454" y="8" height="60" width="713" html.valueishtml="0"  name=bdinfodet_project_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="건설사" border="0" color="33554432" x="1061" y="8" height="60" width="384" html.valueishtml="0"  name=bdinfodet_buildingcom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="구분" border="0" color="33554432" x="2176" y="8" height="60" width="462" html.valueishtml="0"  name=spec_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="물량" border="0" color="33554432" x="2647" y="8" height="60" width="297" html.valueishtml="0"  name=quantity_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Uom" border="0" color="33554432" x="2953" y="8" height="60" width="160" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 1m" border="0" color="33554432" x="3122" y="8" height="60" width="283" html.valueishtml="0"  name=bd_1m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 2m" border="0" color="33554432" x="3415" y="8" height="60" width="293" html.valueishtml="0"  name=bd_2m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 3m" border="0" color="33554432" x="3717" y="8" height="60" width="183" html.valueishtml="0"  name=bd_3m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 4m" border="0" color="33554432" x="3909" y="8" height="60" width="224" html.valueishtml="0"  name=bd_4m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 5m" border="0" color="33554432" x="4142" y="8" height="60" width="219" html.valueishtml="0"  name=bd_5m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 6m" border="0" color="33554432" x="4370" y="8" height="60" width="219" html.valueishtml="0"  name=bd_6m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 7m" border="0" color="33554432" x="4599" y="8" height="60" width="215" html.valueishtml="0"  name=bd_7m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 8m" border="0" color="33554432" x="4823" y="8" height="60" width="215" html.valueishtml="0"  name=bd_8m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 9m" border="0" color="33554432" x="5047" y="8" height="60" width="233" html.valueishtml="0"  name=bd_9m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 10m" border="0" color="33554432" x="5289" y="8" height="60" width="261" html.valueishtml="0"  name=bd_10m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 11m" border="0" color="33554432" x="5559" y="8" height="60" width="261" html.valueishtml="0"  name=bd_11m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Bd 12m" border="0" color="33554432" x="5829" y="8" height="60" width="293" html.valueishtml="0"  name=bd_12m_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="담당자" border="0" color="0" x="9" y="4" height="76" width="311" html.valueishtml="0"  name=bdinfodet_person_t visible="1"  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="하도업체" border="0" color="33554432" x="329" y="8" height="60" width="402" html.valueishtml="0"  name=bdinfodet_lastcom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="담당자" border="0" color="33554432" x="741" y="8" height="60" width="311" html.valueishtml="0"  name=bdinfodet_sperson_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1454" y="8" height="72" width="713" format="[general]" html.valueishtml="0"  name=bdinfodet_project  tag="프로젝트명" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1061" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=bdinfodet_buildingcom  tag="건설사" visible="1" dddw.name=dddw_con dddw.displaycolumn=comname dddw.datacolumn=comcode dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2176" y="8" height="72" width="462" format="[general]" html.valueishtml="0"  name=spec_code visible="1" dddw.name=dddw_spec dddw.displaycolumn=spec_name dddw.datacolumn=spec_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="329" y="8" height="72" width="402" format="[general]" html.valueishtml="0"  name=bdinfodet_lastcom visible="1" dddw.name=dddw_lastcom dddw.displaycolumn=comname dddw.datacolumn=comcode dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="741" y="8" height="72" width="311" format="[general]" html.valueishtml="0"  name=bdinfodet_sperson visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2647" y="8" height="72" width="297" format="#,##0" html.valueishtml="0"  name=quantity visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="2953" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="3122" y="8" height="72" width="283" format="#,##0" html.valueishtml="0"  name=bd_1m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="3415" y="8" height="72" width="293" format="#,##0" html.valueishtml="0"  name=bd_2m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="3717" y="8" height="72" width="183" format="#,##0" html.valueishtml="0"  name=bd_3m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="3909" y="8" height="72" width="224" format="#,##0" html.valueishtml="0"  name=bd_4m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="4142" y="8" height="72" width="219" format="#,##0" html.valueishtml="0"  name=bd_5m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="4370" y="8" height="72" width="219" format="#,##0" html.valueishtml="0"  name=bd_6m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="33554432" x="4599" y="8" height="72" width="215" format="#,##0" html.valueishtml="0"  name=bd_7m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="4823" y="8" height="72" width="215" format="#,##0" html.valueishtml="0"  name=bd_8m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="33554432" x="5047" y="8" height="72" width="233" format="#,##0" html.valueishtml="0"  name=bd_9m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="33554432" x="5289" y="8" height="72" width="261" format="#,##0" html.valueishtml="0"  name=bd_10m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="33554432" x="5559" y="8" height="72" width="261" format="#,##0" html.valueishtml="0"  name=bd_11m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="33554432" x="5829" y="8" height="72" width="293" format="#,##0" html.valueishtml="0"  name=bd_12m visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="0" height="60" width="311" format="[general]" html.valueishtml="0"  name=bdinfodet_person visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

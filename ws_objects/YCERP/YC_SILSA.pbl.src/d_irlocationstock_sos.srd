@@ -1,0 +1,89 @@
+﻿$PBExportHeader$d_irlocationstock_sos.srd
+$PBExportComments$품목별 재고수불부
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=loc_no dbname="loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_nm dbname="item_nm" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(255) updatewhereclause=yes name=cdate dbname="cdate" )
+ column=(type=decimal(2) updatewhereclause=yes name=in_qty dbname="in_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=out_qty dbname="out_qty" )
+ column=(type=long updatewhereclause=yes name=qoh dbname="qoh" )
+ column=(type=long updatewhereclause=yes name=base_qty dbname="base_qty" )
+ column=(type=char(2) updatewhereclause=yes name=iotype dbname="iotype" )
+ column=(type=char(17) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(30) updatewhereclause=yes name=bigo dbname="bigo" )
+ column=(type=datetime updatewhereclause=yes name=ctime dbname="ctime" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ retrieve="
+SELECT loc_no    = a.loc_no  
+     , item_no   = a.item_no 
+     , item_nm   = b.item_name
+     , qa        = a.qa      
+     , cdate     = a.cdate
+     , in_qty    = a.in_qty
+     , out_qty   = a.out_qty
+     , qoh       = a.qoh
+     , base_qty  = 0
+     , iotype    = a.iotype
+     , cust_no   = a.order_no
+     , bigo      = a.bigo
+     , ctime     = a.ctime
+     , user_name = c.user_name
+  FROM (
+       /*=============================================================================================================*/
+       /* 지점재고                                                                                                    */
+       /*=============================================================================================================*/
+       SELECT loc_no    = a.loc_no
+            , item_no   = a.inaudit_item
+            , qa        = a.qa
+            , cdate     = replace( convert(char(10),a.inaudit_date,111), '/', '') 
+            , ctime     = a.inaudit_time
+            , in_qty    = a.rcpt_qty
+            , out_qty   = a.issue_qty
+            , qoh       = 0
+            , iotype    = a.inaudit_type
+            , bigo      = a.rem
+            , order_no  = a.order_no
+            , user_id   = a.user_id
+            , tbl_name  = 'INEODAY_LOC'
+         FROM INAUDIT_LOC a WITH (NOLOCK)
+        WHERE a.loc_no   = :as_locno
+          AND a.inaudit_date = replace(convert(char(10), :as_sdate, 111),'/','')
+       ) A
+       LEFT OUTER JOIN groupitem B  ON a.item_no = b.item_no
+       LEFT OUTER JOIN login     C  ON a.user_id = c.user_id
+" arguments=(("as_locno", string),("as_sdate", string))  sort="loc_no A item_nm A qa A " )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="1111" y="8" height="60" width="690" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="일자" border="6" color="33554432" x="1810" y="8" height="60" width="379" html.valueishtml="0"  name=cdate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고" border="6" color="16711680" x="2629" y="8" height="60" width="425" html.valueishtml="0"  name=out_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고" border="6" color="255" x="2199" y="8" height="60" width="421" html.valueishtml="0"  name=in_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="조정형태" border="6" color="255" x="3063" y="8" height="60" width="512" html.valueishtml="0"  name=iotype_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="출처" border="6" color="255" x="3584" y="8" height="60" width="731" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="품목(INAUDIT_LOC)" border="6" color="16711680" x="270" y="8" height="60" width="832" html.valueishtml="0"  name=item_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="128" x="9" y="8" height="60" width="251" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="255" x="4325" y="8" height="60" width="1477" html.valueishtml="0"  name=bigo_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="등록일자" border="6" color="255" x="5810" y="8" height="60" width="658" html.valueishtml="0"  name=ctime_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="등록자" border="6" color="33554432" x="6478" y="8" height="60" width="311" html.valueishtml="0"  name=user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="251" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1810" y="8" height="72" width="379" format="[general]" html.valueishtml="0"  name=cdate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="1111" y="8" height="72" width="690" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="2629" y="8" height="72" width="425" format="#,##0" html.valueishtml="0"  name=out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="2199" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=in_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="3063" y="8" height="72" width="512" format="[general]" html.valueishtml="0"  name=iotype visible="1" dddw.name=d_irtype_c dddw.displaycolumn=remarks dddw.datacolumn=inaudit_type dddw.percentwidth=150 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="3584" y="8" height="72" width="731" format="[general]" html.valueishtml="0"  name=cust_no visible="1" dddw.name=d_cdcustarea_dddw dddw.displaycolumn=cust_name dddw.datacolumn=cust_no dddw.percentwidth=150 dddw.lines=0 dddw.limit=0 dddw.allowedit=yes dddw.useasborder=no dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes dddw.showlist=yes  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="270" y="8" height="72" width="832" format="[general]" html.valueishtml="0"  name=item_nm visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="4325" y="8" height="72" width="1477" format="[general]" html.valueishtml="0"  name=bigo visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="5810" y="8" height="72" width="658" format="yyyy/mm/dd hh:mm:dd" html.valueishtml="0"  name=ctime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="6478" y="8" height="72" width="311" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="1" expression="sum( in_qty for all )"border="0" color="33554432" x="2199" y="4" height="68" width="421" format="#,##0" html.valueishtml="0"  name=tin_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="68" width="251" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( out_qty for all )"border="0" color="33554432" x="2629" y="4" height="68" width="425" format="#,##0" html.valueishtml="0"  name=tout_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="item_nm	qa")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

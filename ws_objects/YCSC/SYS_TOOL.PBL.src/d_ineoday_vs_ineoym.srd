@@ -1,0 +1,104 @@
+﻿$PBExportHeader$d_ineoday_vs_ineoym.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=72 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=ineoym_cyear dbname="cyear" )
+ column=(type=char(2) updatewhereclause=yes name=ineoym_cmon dbname="cmon" )
+ column=(type=char(10) updatewhereclause=yes name=ineoym_item_no dbname="item_no" )
+ column=(type=char(20) updatewhereclause=yes name=ineoym_qa dbname="qa" )
+ column=(type=char(10) updatewhereclause=yes name=ineoym_loc_no dbname="loc_no" )
+ column=(type=decimal(4) updatewhereclause=yes name=ineoym_rcpt_qty dbname="rcpt_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=ineoym_issue_qty dbname="issue_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=itemloc_qoh dbname="qoh" )
+ column=(type=decimal(4) updatewhereclause=yes name=ineoym_qoh dbname="qoh" initial="0" )
+ column=(type=decimal(4) updatewhereclause=yes name=nqty dbname="nqty" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=drcpt dbname="drcpt" )
+ column=(type=decimal(4) updatewhereclause=yes name=dissue dbname="dissue" )
+ retrieve="  SELECT ineoym.cyear,   
+         ineoym.cmon,   
+         ineoym.item_no,   
+         ineoym.qa,   
+         ineoym.loc_no,   
+         ineoym.rcpt_qty,   
+         ineoym.issue_qty,   
+         itemloc.qoh,   
+         ineoym.qoh, 
+	    nday.nqty,   
+         ineoday.item_no,   
+         ineoday.qa,   
+         drcpt = sum(ineoday.rcpt_qty),   
+         dissue = sum(ineoday.issue_qty)
+    FROM ineoday left outer join ineoym on ineoday.item_no = ineoym.item_no 
+                                             and ineoday.qa = ineoym.qa 
+                                             and ineoday.loc_no = ineoym.loc_no
+                                             and ( ( substring(ineoday.cdate,1,4) = ineoym.cyear ) AND  
+                                                      ( substring(ineoday.cdate,5,2) = ineoym.cmon ) AND  
+                                                      ( ineoym.cyear = :ai_yy ) AND  
+                                                      ( ineoym.cmon = :ai_mm ) )   
+                              left outer join itemloc on ineoday.item_no = itemloc.item_no
+                                             and ineoday.qa = itemloc.qa
+                                             and ineoday.loc_no = itemloc.loc_no
+                        	    left outer join (select item_no, qa, loc_no, nqty = sum(ineoday.rcpt_qty) - sum(ineoday.issue_qty) 
+                                            			   from ineoday
+                                                       where cdate > rtrim(:ai_yy) + rtrim(:ai_mm) +'99' 
+                                            			 group by item_no, qa, loc_no 
+                                                   ) nday on ineoday.item_no = nday.item_no
+                                              and ineoday.qa = nday.qa
+                                              and ineoday.loc_no = nday.loc_no
+   WHERE ( ( CONVERT(INTEGER, substring(ineoday.cdate,1,4)) = :ai_yy ) AND  
+                    ( CONVERT(INTEGER, substring(ineoday.cdate,5,2)) = :ai_mm  ) )
+GROUP BY ineoym.cyear,   
+         ineoym.cmon,   
+         ineoym.item_no,   
+         ineoym.qa,   
+         ineoym.loc_no,   
+         ineoym.rcpt_qty,   
+         ineoym.issue_qty,   
+         itemloc.qoh,   
+         ineoym.qoh, 
+	    nday.nqty,
+         ineoday.item_no,   
+         ineoday.qa  " arguments=(("ai_yy", string),("ai_mm", string))  sort="ineoym_loc_no A ineoym_item_no A ineoym_qa A " )
+text(band=header alignment="2" text="년" border="6" color="0" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=ineoym_cyear_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="월" border="6" color="0" x="178" y="8" height="60" width="96" html.valueishtml="0"  name=ineoym_cmon_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="물품코드" border="6" color="0" x="283" y="8" height="60" width="329" html.valueishtml="0"  name=ineoym_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="622" y="8" height="60" width="626" html.valueishtml="0"  name=ineoym_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="저장소번호" border="6" color="0" x="2821" y="8" height="60" width="329" html.valueishtml="0"  name=ineoym_loc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입고수량" border="6" color="0" x="1257" y="8" height="60" width="384" html.valueishtml="0"  name=ineoym_rcpt_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고수량" border="6" color="0" x="1650" y="8" height="60" width="384" html.valueishtml="0"  name=ineoym_issue_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="Drcpt" border="6" color="0" x="2043" y="8" height="60" width="379" html.valueishtml="0"  name=drcpt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="Dissue" border="6" color="0" x="2432" y="8" height="60" width="379" html.valueishtml="0"  name=dissue_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="0" text="Itemloc Qoh" border="6" color="0" x="3159" y="8" height="60" width="466" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="0" text="Ineoym Qoh" border="6" color="0" x="3634" y="8" height="60" width="443" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="0" text="Nqty" border="6" color="0" x="4087" y="8" height="60" width="517" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="0" text="Item No" border="0" color="0" x="5019" y="4" height="60" width="311" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Qa" border="0" color="0" x="5339" y="4" height="60" width="631" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="160" format="[general]" html.valueishtml="0"  name=ineoym_cyear  tag="년" visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="178" y="8" height="60" width="96" format="[general]" html.valueishtml="0"  name=ineoym_cmon  tag="월" visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="283" y="8" height="60" width="329" format="[general]" html.valueishtml="0"  name=ineoym_item_no  tag="물품코드" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="622" y="8" height="60" width="626" format="[general]" html.valueishtml="0"  name=ineoym_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="2821" y="8" height="60" width="329" format="[general]" html.valueishtml="0"  name=ineoym_loc_no  tag="저장소번호" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0~tif (   itemloc_qoh <>    nqty  +  ineoym_qoh , rgb(255,0,0), rgb ( 0,0,0))" x="3159" y="8" height="60" width="466" format="[general]" html.valueishtml="0"  name=itemloc_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="3634" y="8" height="60" width="443" format="[General]" html.valueishtml="0"  name=ineoym_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="0" x="5019" y="0" height="60" width="311" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0" x="5339" y="0" height="60" width="631" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="4087" y="8" height="60" width="517" format="[general]" html.valueishtml="0"  name=nqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression=" nqty  +  ineoym_qoh "border="0" color="0" x="4613" y="4" height="60" width="398" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="1257" y="8" height="60" width="384" format="[general]" html.valueishtml="0"  name=ineoym_rcpt_qty  tag="입고수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="1650" y="8" height="60" width="384" format="[general]" html.valueishtml="0"  name=ineoym_issue_qty  tag="출고수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0~tif ( ineoym_rcpt_qty <>  drcpt , rgb(255,0,0), rgb ( 0,0,0))" x="2043" y="8" height="60" width="379" format="[general]" html.valueishtml="0"  name=drcpt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0~tif (  ineoym_issue_qty <>   dissue , rgb(255,0,0), rgb ( 0,0,0))" x="2432" y="8" height="60" width="379" format="[general]" html.valueishtml="0"  name=dissue visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="0" expression="sum(nqty for all)"border="0" color="0" x="4087" y="4" height="60" width="517" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=summary alignment="0" expression="sum( nqty  +  ineoym_qoh  for all)"border="0" color="0" x="4613" y="4" height="60" width="398" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=summary alignment="1" expression="sum(ineoym_rcpt_qty for all)"border="0" color="0" x="1257" y="4" height="60" width="384" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=summary alignment="1" expression="sum(ineoym_issue_qty for all)"border="0" color="0" x="1650" y="4" height="60" width="384" format="[general]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=summary alignment="1" expression="sum(drcpt for all)"border="0" color="0" x="2043" y="4" height="60" width="379" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=summary alignment="1" expression="sum(dissue for all)"border="0" color="0" x="2432" y="4" height="60" width="379" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=summary alignment="0" expression="sum(itemloc_qoh for all)"border="0" color="0" x="3159" y="4" height="60" width="466" format="[general]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

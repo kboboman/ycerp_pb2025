@@ -1,0 +1,565 @@
+﻿$PBExportHeader$d_osteamopeom_r.srd
+$PBExportComments$매출실적집계표
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=yes )
+header(height=520 color="536870912" )
+summary(height=124 color="553648127" )
+footer(height=0 color="536870912" )
+detail(height=92 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(20) updatewhereclause=yes name=area dbname="area" )
+ column=(type=char(20) updatewhereclause=yes name=sector dbname="sector" )
+ column=(type=char(20) updatewhereclause=yes name=team dbname="team" )
+ column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(20) updatewhereclause=yes name=login_user_name dbname="user_name" )
+ column=(type=char(10) updatewhereclause=yes name=login_rank dbname="rank" )
+ column=(type=decimal(6) updatewhereclause=yes name=pre_yinv dbname="pre_yinv" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_ayinv dbname="cur_ayinv" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_amninv dbname="cur_amninv" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_inv dbname="cur_inv" )
+ column=(type=decimal(6) updatewhereclause=yes name=curinv_rate dbname="curinv_rate" )
+ column=(type=decimal(6) updatewhereclause=yes name=bsale_amt dbname="bsale_amt" )
+ column=(type=decimal(6) updatewhereclause=yes name=increm_rate dbname="increm_rate" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_aminv dbname="cur_aminv" )
+ column=(type=decimal(7) updatewhereclause=yes name=cur_minv dbname="cur_minv" )
+ column=(type=decimal(6) updatewhereclause=yes name=inv_rate dbname="inv_rate" )
+ column=(type=decimal(7) updatewhereclause=yes name=last_day dbname="last_day" )
+ column=(type=decimal(7) updatewhereclause=yes name=bm_jan dbname="bm_jan" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_amcoll dbname="cur_amcoll" )
+ column=(type=decimal(6) updatewhereclause=yes name=cur_mcoll dbname="cur_mcoll" )
+ column=(type=decimal(6) updatewhereclause=yes name=coll_rate dbname="coll_rate" )
+ column=(type=decimal(7) updatewhereclause=yes name=m_jan dbname="m_jan" )
+ column=(type=long updatewhereclause=yes name=cyear dbname="cyear" )
+ column=(type=long updatewhereclause=yes name=cmon dbname="cmon" )
+ retrieve="
+  SELECT seq         = o.seq                     /* 순서       */
+       , area        = o.area                    /* 권역       */
+       , sector      = o.sector                  /* 본부       */
+       , team        = o.team                    /* 팀         */
+       , user_id     = o.user_id                 /* 담당자     */
+       , user_name   = o.user_name               /* 담당자명   */
+       , rank        = o.rank                    /* 직책       */
+       , pre_yinv    = z.pre_yinv                /* 전년 실적                                             */
+       , cur_ayinv   = z.cur_ayinv               /* 매출목표   - 당년 목표                                */
+       , cur_amninv  = z.cur_amninv              /* 매출목표   - 당년누계목표                             */
+       , cur_inv     = z.cur_inv                 /* 매출실적   - 매출누계                                 */
+       , curinv_rate= (case when z.cur_ayinv = 0 then 0 else (z.cur_inv / z.cur_ayinv)     end) /* 매출실적   - 진행율  = (매출누계 / 당년목표    )      */
+       , bsale_amt   = z.bsale_amt               /* 전년       - 동월실적                                 */
+       , increm_rate= (case when z.bsale_amt = 0 then 0 else (z.cur_minv / z.bsale_amt) -1 end) /* 실적       - 신장율  = (당월매출 / 전년동월실적) -1   */
+       , cur_aminv   = z.cur_aminv               /* 매출       - 당월매출목표                             */
+       , cur_minv    = z.cur_minv                /* 목표및진행 - 당월매출                                 */
+
+       , inv_rate   = (case when z.cur_aminv = 0 then 0 else (z.cur_minv / z.cur_aminv)    end) /* 목표및진행 - 진행율  = (당월매출 / 당월매출목표)      */
+       , last_day    = z.last_day                /* 당일매출                                              */
+       , bm_jan      = z.bm_jan                  /* 전월미수금                                            */
+       , cur_amcoll  = z.cur_amcoll              /* 수금       - 당월수금목표                             */
+       , cur_mcoll   = z.cur_mcoll               /* 목표및진행 - 당월수금                                 */
+       , coll_rate  = (case when z.cur_amcoll= 0 then 0 else (z.cur_mcoll / z.cur_amcoll)  end) /* 목표및진행 - 진행율                                   */
+       , m_jan       = z.m_jan                   /* 당월미수금                                            */
+       , cyear       = :ai_year
+       , cmon        = :ai_month
+    FROM (
+          SELECT salesman    = (case when substring(a.insite,1,1) = 'O' then 'insite'   else a.salesman  end)
+               , user_name   = (case when substring(a.insite,1,1) = 'O' then '내부업체' else a.user_name end)
+               , pre_yinv    = sum(a.pre_yinv    )           /* 전년 실적                                             */
+               , cur_ayinv   = sum(a.cur_ayinv   )           /* 매출목표   - 당년 목표                                */
+               , cur_amninv  = sum(a.cur_amninv  )           /* 매출목표   - 당년누계목표                             */
+               , cur_inv     = sum(a.cur_inv     )           /* 매출실적   - 매출누계                                 */
+               , bsale_amt   = sum(a.bsale_amt   )           /* 전년       - 동월실적                                 */
+               , cur_aminv   = sum(a.cur_aminv   )           /* 매출       - 당월매출목표                             */
+               , cur_minv    = sum(a.cur_minv    )           /* 목표및진행 - 당월매출                                 */
+               , last_day    = sum(a.last_day    )           /* 당일매출                                              */
+               , bm_jan      = sum(a.bm_jan      )           /* 전월미수금                                            */
+               , cur_amcoll  = sum(a.cur_amcoll  )           /* 수금       - 당월수금목표                             */
+               , cur_mcoll   = sum(a.cur_mcoll   )           /* 목표및진행 - 당월수금                                 */
+               , m_jan       = sum(a.m_jan       )           /* 당월미수금                                            */
+            FROM (
+                  SELECT salesman    = c.salesman
+                       , user_name   = l.user_name
+                       , insite      = (case when m.item_cd IS NOT NULL then 'O' else '' end)
+                       , pre_yinv    = y.pre_yinv               /* 전년 실적                                             */
+                       , cur_ayinv   = y.cur_ayinv              /* 매출목표   - 당년 목표                                */
+                       , cur_amninv  = y.cur_amninv             /* 매출목표   - 당년누계목표                             */
+                       , cur_inv     = y.cur_inv                /* 매출실적   - 매출누계                                 */
+                       , bsale_amt   = y.bsale_amt              /* 전년       - 동월실적                                 */
+                       , cur_aminv   = y.cur_aminv              /* 매출       - 당월매출목표                             */
+                       , cur_minv    = y.cur_minv               /* 목표및진행 - 당월매출                                 */
+                       , last_day    = y.last_day               /* 당일매출                                              */
+                       , bm_jan      = y.bm_jan                 /* 전월미수금                                            */
+                       , cur_amcoll  = y.cur_amcoll             /* 수금       - 당월수금목표                             */
+                       , cur_mcoll   = y.cur_mcoll              /* 목표및진행 - 당월수금                                 */
+                       , m_jan       = y.m_jan                  /* 당월미수금                                            */
+                    FROM (
+                          SELECT cust_no    = a.cust_no
+                               , pre_yinv   = a.pre_yinv                                            /* 전년 실적                                             */
+                               , cur_ayinv  = a.cur_ayinv                                           /* 매출목표   - 당년 목표                                */
+                               , cur_amninv = a.cur_amninv                                          /* 매출목표   - 당년누계목표                             */
+                               , cur_inv    = a.cur_inv                                             /* 매출실적   - 매출누계                                 */
+                               , bsale_amt  = a.bsale_amt                                           /* 전년       - 동월실적                                 */
+                               , cur_aminv  = a.cur_aminv                                           /* 매출       - 당월매출목표                             */
+                               , cur_minv   = b.cur_minv                                            /* 목표및진행 - 당월매출                                 */
+                               , last_day   = b.last_day                                            /* 당일매출                                              */
+                               , bm_jan     = a.bm_jan                                              /* 전월미수금                                            */
+                               , cur_amcoll = a.cur_amcoll                                          /* 수금       - 당월수금목표                             */
+                               , cur_mcoll  = c.amount          /* a.cur_mcoll */                   /* 목표및진행 - 당월수금             */
+                               , m_jan      = a.m_jan                                               /* 당월미수금                                            */                                                        /* 당월미수금                                            */
+                            FROM (
+                                  SELECT cust_no    = (case when aa.cust_no is not null then aa.cust_no else bb.cust_no end)
+                                       , bm_jan     = bb.bm_jan        /* 전월미수금 */
+                                       , m_jan      = bb.m_jan         /* 당월미수금 */
+                                       , bsale_amt  = aa.bsale_amt     /* 전년 - 동월실적 */
+                                       , pre_yinv   = aa.pre_yinv
+                                       , cur_ayinv  = aa.cur_ayinv
+                                       , cur_amninv = aa.cur_amninv
+                                       , cur_inv    = aa.cur_inv
+                                       , cur_aminv  = aa.cur_aminv
+                                       , cur_minv   = aa.cur_minv
+                                       , cur_amcoll = aa.cur_amcoll
+                                       , cur_mcoll  = aa.cur_mcoll
+                                    FROM (
+                                          SELECT cust_no    = c.cust_no
+                                               , bsale_amt  = sum((case :ai_month     /* 전년 - 동월실적 */
+                                                                      when 01 then o_bf.inv_01
+                                                                      when 02 then o_bf.inv_02
+                                                                      when 03 then o_bf.inv_03
+                                                                      when 04 then o_bf.inv_04
+                                                                      when 05 then o_bf.inv_05
+                                                                      when 06 then o_bf.inv_06
+                                                                      when 07 then o_bf.inv_07
+                                                                      when 08 then o_bf.inv_08
+                                                                      when 09 then o_bf.inv_09
+                                                                      when 10 then o_bf.inv_10
+                                                                      when 11 then o_bf.inv_11
+                                                                      when 12 then o_bf.inv_12 
+                                                                   end) / 1.1) / 1000
+                                                                                                                        
+                                               , pre_yinv   = sum((o_bf.inv_01  + o_bf.inv_02  + o_bf.inv_03  + o_bf.inv_04  + o_bf.inv_05  + o_bf.inv_06   + 
+                                                                   o_bf.inv_07  + o_bf.inv_08  + o_bf.inv_09  + o_bf.inv_10  + o_bf.inv_11  + o_bf.inv_12)  / 1.1) / 1000
+                                               , cur_ayinv  = sum((t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06  + 
+                                                                   t.inv_07 + t.inv_08 + t.inv_09 + t.inv_10 + t.inv_11 + t.inv_12) / 1.1) / 1000
+                                               , cur_amninv = sum((case :ai_month 
+                                                                      when 01 then t.inv_01
+                                                                      when 02 then t.inv_01 + t.inv_02
+                                                                      when 03 then t.inv_01 + t.inv_02 + t.inv_03
+                                                                      when 04 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04
+                                                                      when 05 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05
+                                                                      when 06 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06
+                                                                      when 07 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06 + t.inv_07
+                                                                      when 08 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06 + t.inv_07 + t.inv_08
+                                                                      when 09 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06 + t.inv_07 + t.inv_08 + t.inv_09
+                                                                      when 10 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06 + t.inv_07 + t.inv_08 + t.inv_09 + t.inv_10
+                                                                      when 11 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06 + t.inv_07 + t.inv_08 + t.inv_09 + t.inv_10 + t.inv_11
+                                                                      when 12 then t.inv_01 + t.inv_02 + t.inv_03 + t.inv_04 + t.inv_05 + t.inv_06 + t.inv_07 + t.inv_08 + t.inv_09 + t.inv_10 + t.inv_11 + t.inv_12 
+                                                                   end) / 1.1) / 1000
+                                               , cur_inv    = sum((case :ai_month  
+                                                                      when 01 then o_af.inv_01
+                                                                      when 02 then o_af.inv_01 + o_af.inv_02
+                                                                      when 03 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03
+                                                                      when 04 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04
+                                                                      when 05 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05
+                                                                      when 06 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05 + o_af.inv_06
+                                                                      when 07 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05 + o_af.inv_06 + o_af.inv_07
+                                                                      when 08 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05 + o_af.inv_06 + o_af.inv_07 + o_af.inv_08
+                                                                      when 09 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05 + o_af.inv_06 + o_af.inv_07 + o_af.inv_08 + o_af.inv_09
+                                                                      when 10 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05 + o_af.inv_06 + o_af.inv_07 + o_af.inv_08 + o_af.inv_09 + o_af.inv_10
+                                                                      when 11 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05 + o_af.inv_06 + o_af.inv_07 + o_af.inv_08 + o_af.inv_09 + o_af.inv_10 + o_af.inv_11
+                                                                      when 12 then o_af.inv_01 + o_af.inv_02 + o_af.inv_03 + o_af.inv_04 + o_af.inv_05 + o_af.inv_06 + o_af.inv_07 + o_af.inv_08 + o_af.inv_09 + o_af.inv_10 + o_af.inv_11 + o_af.inv_12 
+                                                                   end) / 1.1) / 1000
+                                               , cur_aminv  = sum((case :ai_month  
+                                                                      when 01 then t.mod_01
+                                                                      when 02 then t.mod_02
+                                                                      when 03 then t.mod_03
+                                                                      when 04 then t.mod_04
+                                                                      when 05 then t.mod_05
+                                                                      when 06 then t.mod_06
+                                                                      when 07 then t.mod_07
+                                                                      when 08 then t.mod_08
+                                                                      when 09 then t.mod_09
+                                                                      when 10 then t.mod_10
+                                                                      when 11 then t.mod_11
+                                                                      when 12 then t.mod_12 
+                                                                   end) / 1.1) / 1000
+                                               , cur_minv   = sum((case :ai_month  
+                                                                      when 01 then o_af.inv_01
+                                                                      when 02 then o_af.inv_02
+                                                                      when 03 then o_af.inv_03
+                                                                      when 04 then o_af.inv_04
+                                                                      when 05 then o_af.inv_05
+                                                                      when 06 then o_af.inv_06
+                                                                      when 07 then o_af.inv_07
+                                                                      when 08 then o_af.inv_08
+                                                                      when 09 then o_af.inv_09
+                                                                      when 10 then o_af.inv_10
+                                                                      when 11 then o_af.inv_11
+                                                                      when 12 then o_af.inv_12 
+                                                                   end) / 1.1) / 1000
+                                               , cur_amcoll = sum((case :ai_month  
+                                                                      when 01 then t.del_01
+                                                                      when 02 then t.del_02
+                                                                      when 03 then t.del_03
+                                                                      when 04 then t.del_04
+                                                                      when 05 then t.del_05
+                                                                      when 06 then t.del_06
+                                                                      when 07 then t.del_07
+                                                                      when 08 then t.del_08
+                                                                      when 09 then t.del_09
+                                                                      when 10 then t.del_10
+                                                                      when 11 then t.del_11
+                                                                      when 12 then t.del_12 
+                                                                   end)) / 1000
+                                               , cur_mcoll  = sum((case :ai_month  
+                                                                      when 01 then o_af.coll_01
+                                                                      when 02 then o_af.coll_02
+                                                                      when 03 then o_af.coll_03
+                                                                      when 04 then o_af.coll_04
+                                                                      when 05 then o_af.coll_05
+                                                                      when 06 then o_af.coll_06
+                                                                      when 07 then o_af.coll_07
+                                                                      when 08 then o_af.coll_08
+                                                                      when 09 then o_af.coll_09
+                                                                      when 10 then o_af.coll_10
+                                                                      when 11 then o_af.coll_11
+                                                                      when 12 then o_af.coll_12 
+                                                                   end)) / 1000
+                                            FROM customer c
+                                                 LEFT OUTER JOIN cust_aim    t ON c.cust_no = t.cust_code   AND datepart(year, t.tar_year)    = :ai_year
+                                                 LEFT OUTER JOIN opeom    o_bf ON c.cust_no = o_bf.cust_no  AND datepart(year, o_bf.eom_year) = :ai_year - 1
+                                                 LEFT OUTER JOIN opeom    o_af ON c.cust_no = o_af.cust_no  AND datepart(year, o_af.eom_year) = :ai_year
+                                           WHERE ( c.cust_flag               = 'N' )
+                                             AND ( c.cust_type              <> 'E' )
+                                           /*AND ( c.credit_level           <> 'Z' )*/
+                                           GROUP BY c.cust_no
+                                         ) AA
+                                              
+                                         FULL OUTER JOIN (
+                                              SELECT cust_no   = a.cust_no
+                                                   , bm_jan    = (case :ai_month
+                                                                     when 01 then a.bf_amount                        /* 전월잔액 */
+                                                                     when 02 then a.bf_amount + a.sinv01 - a.scoll01
+                                                                     when 03 then a.bf_amount + a.sinv02 - a.scoll02
+                                                                     when 04 then a.bf_amount + a.sinv03 - a.scoll03
+                                                                     when 05 then a.bf_amount + a.sinv04 - a.scoll04
+                                                                     when 06 then a.bf_amount + a.sinv05 - a.scoll05
+                                                                     when 07 then a.bf_amount + a.sinv06 - a.scoll06
+                                                                     when 08 then a.bf_amount + a.sinv07 - a.scoll07
+                                                                     when 09 then a.bf_amount + a.sinv08 - a.scoll08
+                                                                     when 10 then a.bf_amount + a.sinv09 - a.scoll09
+                                                                     when 11 then a.bf_amount + a.sinv10 - a.scoll10
+                                                                     when 12 then a.bf_amount + a.sinv11 - a.scoll11
+                                                                  end) / 1000
+                                                   , m_jan     = (case :ai_month
+                                                                     when 01 then a.bf_amount + a.sinv01 - a.scoll01 /* 당월잔액 */
+                                                                     when 02 then a.bf_amount + a.sinv02 - a.scoll02 
+                                                                     when 03 then a.bf_amount + a.sinv03 - a.scoll03 
+                                                                     when 04 then a.bf_amount + a.sinv04 - a.scoll04 
+                                                                     when 05 then a.bf_amount + a.sinv05 - a.scoll05 
+                                                                     when 06 then a.bf_amount + a.sinv06 - a.scoll06 
+                                                                     when 07 then a.bf_amount + a.sinv07 - a.scoll07 
+                                                                     when 08 then a.bf_amount + a.sinv08 - a.scoll08 
+                                                                     when 09 then a.bf_amount + a.sinv09 - a.scoll09 
+                                                                     when 10 then a.bf_amount + a.sinv10 - a.scoll10 
+                                                                     when 11 then a.bf_amount + a.sinv11 - a.scoll11 
+                                                                     when 12 then a.bf_amount + a.sinv12 - a.scoll12 
+                                                                  end) / 1000
+                                                FROM (
+                                                      SELECT v_opeom.cust_no, bf_amount = balbf_amount
+                                                           , sinv01,  sinv02,  sinv03,  sinv04,  sinv05,  sinv06,  sinv07,  sinv08,  sinv09,  sinv10,  sinv11,  sinv12
+                                                           , scoll01, scoll02, scoll03, scoll04, scoll05, scoll06, scoll07, scoll08, scoll09, scoll10, scoll11, scoll12
+                                                        FROM v_opeom   
+                                                             LEFT OUTER JOIN customer C on v_opeom.cust_no = c.cust_no
+                                                       WHERE ( c.cust_flag               = 'N' )
+                                                         AND ( c.cust_type              <> 'E' )
+                                                       /*AND ( c.credit_level           <> 'Z' )*/
+                                                         AND cyear = :ai_year
+                                                     ) A      
+                                         ) BB  ON AA.CUST_NO = BB.CUST_NO
+                                 ) A
+                                 
+                                 FULL OUTER JOIN ( /* 출고내역 (당월, 당일) */
+                                    SELECT cust_no   = a.cust_no
+                                         , cur_minv  = sum(a.cur_minv / 1.1) / 1000   /* 당월매출 */
+                                         , last_day  = sum(a.last_day / 1.1) / 1000   /* 당일매출 */
+                                      FROM (
+                                            SELECT cust_no   = do.cust_no
+                                                 , cur_minv  = (do.do_total)
+                                                 , last_day  = (case when convert(char(10),do.do_date,111) = :as_edate then do.do_total else 0 end)
+                                              FROM do  
+                                                   LEFT OUTER JOIN customer  C  ON c.cust_no  = do.cust_no
+                                             WHERE ( c.cust_flag               = 'N' )
+                                               AND ( c.cust_type              <> 'E' )
+                                             /*AND ( c.credit_level           <> 'Z' )*/
+                                               AND ( convert(char(10),do.do_date,111)   between :as_sdate and :as_edate ) 
+                                           ) A
+                                     GROUP BY cust_no
+                                 ) B ON a.cust_no  = b.cust_no
+
+                                 FULL OUTER JOIN ( /* 수금내역 (당월) */
+                                    SELECT aroivc.cust_no  
+                                         , amount = sum(aroivc.amount) / 1000
+                                      FROM aroivc 
+                                         , customer  
+                                     WHERE ( aroivc.cust_no = customer.cust_no )    
+                                       and (convert(char(10),oi_date,111)   between :as_sdate and :as_edate)
+                                       and aroivc.delete_key = 'N'
+                                     GROUP BY aroivc.cust_no
+                                 ) C ON a.cust_no  = c.cust_no
+                         ) Y
+                         LEFT OUTER JOIN customer  C  ON y.cust_no  = c.cust_no
+                         LEFT OUTER JOIN codemst   M  ON y.cust_no  = m.item_cd  AND m.type = '내부업체' AND m.use_yn ='Y'
+                         LEFT OUTER JOIN login     L  ON c.salesman = l.user_id
+                 ) A
+           GROUP BY salesman, user_name, a.insite
+         ) Z
+         FULL JOIN opeom_org O  ON o.user_id = z.salesman
+   WHERE o.seq  IS NOT NULL
+   ORDER BY o.seq
+" arguments=(("ai_year", number),("ai_month", number),("as_sdate", string),("as_edate", string))  sort="seq A " )
+group(level=1 header.height=0 trailer.height=100 by=("area" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=88 by=("sector" ) header.color="536870912" trailer.color="536870912" )
+group(level=3 header.height=0 trailer.height=92 by=("team" ) header.color="536870912" trailer.color="553648127" )
+compute(band=header alignment="2" expression="string(cyear) + ~"년 ~" + string(cmon) + ~"월 매출실적 집계현황(월간)~""border="0" color="33554432" x="37" y="80" height="148" width="2999" format="[GENERAL]" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="매  출  목  표" border="0" color="0" x="1065" y="316" height="60" width="750" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="매출실적" border="0" color="0" x="1829" y="316" height="60" width="558" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="매출목표 및 진행" border="0" color="0" x="2999" y="316" height="60" width="933" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="1061" y1="396" x2="3931" y2="396"  name=l_17 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="전년동월신장률" border="0" color="0" x="2391" y="316" height="60" width="608" html.valueishtml="0"  name=t_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="진행율" border="0" color="0" x="3749" y="428" height="60" width="183" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당월매출" border="0" color="0" x="3392" y="428" height="60" width="343" html.valueishtml="0"  name=cur_minv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="전년 실적" border="0" color="0" x="695" y="368" height="60" width="357" html.valueishtml="0"  name=pre_yinv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당년 목표" border="0" color="0" x="1065" y="428" height="60" width="357" html.valueishtml="0"  name=cur_ayinv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당년누계목표" border="0" color="0" x="1431" y="428" height="60" width="384" html.valueishtml="0"  name=cur_amninv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="매출누계" border="0" color="0" x="1829" y="428" height="60" width="352" html.valueishtml="0"  name=cur_inv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="진행율" border="0" color="0" x="2194" y="428" height="60" width="192" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="전년동월실적" border="0" color="0" x="2400" y="428" height="60" width="379" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="신장율" border="0" color="0" x="2793" y="428" height="60" width="192" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당월매출목표" border="0" color="0" x="3008" y="428" height="60" width="379" html.valueishtml="0"  name=cur_aminv_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="9" y1="516" x2="6011" y2="516"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="담  당" border="0" color="0" x="338" y="368" height="60" width="338" html.valueishtml="0"  name=t_29 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="9" y1="288" x2="6011" y2="288"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="진행율" border="0" color="0" x="5463" y="428" height="60" width="192" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당월미수금" border="0" color="0" x="5669" y="372" height="60" width="338" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="329" y1="288" x2="329" y2="520"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5" y1="288" x2="5" y2="520"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="686" y1="288" x2="686" y2="520"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1056" y1="288" x2="1056" y2="520"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1819" y1="288" x2="1819" y2="520"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2391" y1="288" x2="2391" y2="520"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2990" y1="288" x2="2990" y2="520"  name=l_77 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3936" y1="288" x2="3936" y2="520"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5664" y1="288" x2="5664" y2="520"  name=l_73 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="6011" y1="288" x2="6011" y2="520"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5458" y1="396" x2="5458" y2="524"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=header x1="3739" y1="396" x2="3739" y2="524"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=header x1="3383" y1="396" x2="3383" y2="524"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=header x1="2784" y1="396" x2="2784" y2="524"  name=l_78 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=header x1="2185" y1="396" x2="2185" y2="524"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=header x1="1426" y1="396" x2="1426" y2="524"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+text(band=header alignment="1" text="(매출: V.A.T별도, 수금: V.A.T포함, 단위: 천원)" border="0" color="33554432" x="3653" y="164" height="60" width="1554" html.valueishtml="0"  name=t_32 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="구분" border="0" color="33554432" x="14" y="368" height="60" width="311" html.valueishtml="0"  name=team_team_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Page:" border="0" color="0" x="4704" y="68" height="60" width="160" html.valueishtml="0"  name=t_33 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="출력일:" border="0" color="0" x="5234" y="164" height="60" width="256" html.valueishtml="0"  name=t_34 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="page() + ' / ' + pageCount()"border="0" color="33554432" x="4882" y="68" height="60" width="325" format="[GENERAL]" html.valueishtml="0"  name=compute_12 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="기준일:" border="0" color="0" x="5248" y="68" height="60" width="242" html.valueishtml="0"  name=t_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="today()"border="0" color="33554432" x="5509" y="164" height="60" width="498" format="yyyy/mm/dd HH:MM" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="text" border="0" color="0" x="5509" y="68" height="60" width="498" html.valueishtml="0"  name=st_edate visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="당일매출" border="0" color="0" x="3950" y="372" height="60" width="302" html.valueishtml="0"  name=t_last_day visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="4261" y1="288" x2="4261" y2="520"  name=l_104 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="전월미수금" border="0" color="0" x="4274" y="372" height="60" width="357" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="4640" y1="288" x2="4640" y2="520"  name=l_33 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="당월수금목표" border="0" color="0" x="4658" y="428" height="60" width="379" html.valueishtml="0"  name=cur_amcoll_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="5047" y1="396" x2="5047" y2="524"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="당월수금" border="0" color="0" x="5061" y="428" height="60" width="389" html.valueishtml="0"  name=cur_mcoll_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="수금목표 및 진행" border="0" color="0" x="4654" y="316" height="60" width="1001" html.valueishtml="0"  name=t_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="4649" y1="396" x2="5659" y2="396"  name=l_72 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="334" y1="88" x2="6011" y2="88"  name=l_46 visible="1" pen.style="0" pen.width="5" pen.color="134217728"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5" y1="0" x2="5" y2="96"  name=l_19 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3936" y1="0" x2="3936" y2="96"  name=l_29 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3739" y1="0" x2="3739" y2="96"  name=l_28 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3383" y1="0" x2="3383" y2="96"  name=l_27 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1056" y1="0" x2="1056" y2="96"  name=l_22 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1426" y1="0" x2="1426" y2="96"  name=l_23 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1819" y1="0" x2="1819" y2="96"  name=l_24 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2185" y1="0" x2="2185" y2="96"  name=l_25 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2391" y1="0" x2="2391" y2="96"  name=l_26 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2990" y1="0" x2="2990" y2="96"  name=l_80 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2784" y1="0" x2="2784" y2="96"  name=l_79 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=detail x1="686" y1="0" x2="686" y2="96"  name=l_21 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="329" y1="0" x2="329" y2="96"  name=l_20 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5664" y1="0" x2="5664" y2="96"  name=l_74 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5458" y1="0" x2="5458" y2="96"  name=l_31 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+column(band=detail id=23 alignment="1" tabsequence=32766 border="0" color="33554432" x="5669" y="12" height="60" width="338" format="#,##0" html.valueishtml="0"  name=m_jan visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="6011" y1="0" x2="6011" y2="96"  name=l_32 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="695" y="12" height="60" width="352" format="#,##0" html.valueishtml="0"  name=pre_yinv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="2400" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" cur_inv  /  cur_ayinv "border="0" color="33554432" x="2194" y="12" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="1829" y="12" height="60" width="347" format="#,##0" html.valueishtml="0"  name=cur_inv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="1431" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amninv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="1065" y="12" height="60" width="352" format="#,##0" html.valueishtml="0"  name=cur_ayinv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(cur_minv / bsale_amt) - 1"border="0" color="33554432" x="2793" y="12" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="33554432" x="2999" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="3392" y="12" height="60" width="343" format="#,##0" html.valueishtml="0"  name=cur_minv visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" cur_minv  /  cur_aminv "border="0" color="33554432" x="3749" y="12" height="60" width="183" format="0.0%" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" cur_mcoll  /  cur_amcoll "border="0" color="33554432" x="5463" y="12" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression=" login_user_name  + ~" ~" +   login_rank "border="0" color="33554432" x="338" y="12" height="60" width="338" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="14" y="12" height="60" width="311" format="[general]" html.valueishtml="0"  name=team visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="0" x="3950" y="12" height="60" width="302" format="#,##0" html.valueishtml="0"  name=last_day visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=detail x1="4261" y1="0" x2="4261" y2="104"  name=l_105 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="33554432" x="4274" y="12" height="60" width="357" format="#,##0" html.valueishtml="0"  name=bm_jan visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="4640" y1="0" x2="4640" y2="96"  name=l_69 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="33554432" x="4658" y="12" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amcoll visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="5047" y1="0" x2="5047" y2="96"  name=l_30 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="0" color="33554432" x="5061" y="12" height="60" width="389" format="#,##0" html.valueishtml="0"  name=cur_mcoll visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.3 x1="5" y1="84" x2="6011" y2="84"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="5" y1="0" x2="5" y2="96"  name=l_34 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="686" y1="0" x2="686" y2="96"  name=l_36 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="6011" y1="0" x2="6011" y2="96"  name=l_86 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="5" y1="0" x2="6011" y2="0"  name=l_108 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="1056" y1="0" x2="1056" y2="96"  name=l_109 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="1426" y1="0" x2="1426" y2="96"  name=l_110 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="1819" y1="0" x2="1819" y2="96"  name=l_111 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="2185" y1="0" x2="2185" y2="96"  name=l_112 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="2391" y1="0" x2="2391" y2="96"  name=l_113 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="2784" y1="0" x2="2784" y2="96"  name=l_114 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="2990" y1="0" x2="2990" y2="96"  name=l_115 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="3383" y1="0" x2="3383" y2="96"  name=l_116 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="3739" y1="0" x2="3739" y2="96"  name=l_117 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="3936" y1="0" x2="3936" y2="96"  name=l_118 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="5458" y1="0" x2="5458" y2="96"  name=l_122 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.3 x1="5664" y1="0" x2="5664" y2="96"  name=l_123 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression=" cur_invh  /  cur_ayinvh "border="0" color="33554432" x="2194" y="8" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_39 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="(cur_minvh / bsale_amth) - 1"border="0" color="33554432" x="2793" y="8" height="56" width="192" format="0.0%" html.valueishtml="0"  name=compute_41 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression=" cur_minvh  /  cur_aminvh "border="0" color="33554432" x="3749" y="8" height="60" width="183" format="0.0%" html.valueishtml="0"  name=compute_44 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression=" cur_mcollh  /  cur_amcollh "border="0" color="33554432" x="5463" y="8" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_49 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( m_jan for group 3 )"border="0" color="33554432" x="5669" y="8" height="60" width="338" format="#,##0" html.valueishtml="0"  name=compute_50 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_minv for group 3 )"border="0" color="33554432" x="3392" y="8" height="60" width="343" format="#,##0" html.valueishtml="0"  name=cur_minvh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_aminv for group 3 )"border="0" color="33554432" x="2999" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminvh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( bsale_amt for group 3 )"border="0" color="33554432" x="2400" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amth visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_inv for group 3 )"border="0" color="33554432" x="1829" y="8" height="60" width="347" format="#,##0" html.valueishtml="0"  name=cur_invh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_amninv for group 3 )"border="0" color="33554432" x="1431" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=compute_37 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_ayinv for group 3 )"border="0" color="33554432" x="1065" y="8" height="60" width="352" format="#,##0" html.valueishtml="0"  name=cur_ayinvh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum( pre_yinv for group 3 )"border="0" color="33554432" x="695" y="8" height="60" width="352" format="#,##0" html.valueishtml="0"  name=compute_35 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.3 alignment="2" text="소  계" border="0" color="0" x="18" y="8" height="60" width="658" html.valueishtml="0"  name=t_15 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.3 alignment="1" expression="sum( last_day for group 3 )"border="0" color="0" x="3950" y="8" height="60" width="302" format="#,##0" html.valueishtml="0"  name=compute_45 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=trailer.3 x1="4261" y1="0" x2="4261" y2="96"  name=l_119 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum( bm_jan for group 3 )"border="0" color="33554432" x="4274" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_46 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.3 x1="4640" y1="0" x2="4640" y2="96"  name=l_120 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_amcoll for group 3 )"border="0" color="33554432" x="4658" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amcollh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.3 x1="5047" y1="0" x2="5047" y2="96"  name=l_121 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum( cur_mcoll for group 3 )"border="0" color="33554432" x="5061" y="8" height="60" width="389" format="#,##0" html.valueishtml="0"  name=cur_mcollh visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="2" text="" border="0" color="15793151" x="0" y="8" height="80" width="6016" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="27590655" )
+line(band=trailer.2 x1="9" y1="0" x2="6011" y2="0"  name=l_103 visible="1" pen.style="0" pen.width="5" pen.color="134217728"  background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_minv for group 2)"border="0" color="33554432" x="3392" y="8" height="60" width="343" format="#,##0" html.valueishtml="0"  name=cur_minv2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_aminv for group 2)"border="0" color="33554432" x="2999" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="(cur_minv2 / bsale_amt2) - 1"border="0" color="33554432" x="2793" y="8" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(bsale_amt for group 2)"border="0" color="33554432" x="2400" y="8" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amt2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cur_inv2  /  cur_ayinv2 "border="0" color="33554432" x="2194" y="8" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_inv for group 2)"border="0" color="33554432" x="1829" y="8" height="60" width="347" format="#,##0" html.valueishtml="0"  name=cur_inv2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_amninv for group 2)"border="0" color="33554432" x="1431" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amninv2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_ayinv  for group 2)"border="0" color="33554432" x="1065" y="8" height="60" width="352" format="#,##0" html.valueishtml="0"  name=cur_ayinv2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="5" y1="0" x2="5" y2="96"  name=l_35 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="3936" y1="0" x2="3936" y2="96"  name=l_43 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="3739" y1="0" x2="3739" y2="96"  name=l_44 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="3383" y1="0" x2="3383" y2="96"  name=l_45 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="2185" y1="0" x2="2185" y2="96"  name=l_63 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="2990" y1="0" x2="2990" y2="96"  name=l_70 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="2784" y1="0" x2="2784" y2="96"  name=l_75 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="686" y1="0" x2="686" y2="96"  name=l_81 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression=" cur_mcoll2  /  cur_amcoll2 "border="0" color="33554432" x="5463" y="8" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_25 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cur_minv2  /  cur_aminv2 "border="0" color="33554432" x="3749" y="8" height="60" width="183" format="0.0%" html.valueishtml="0"  name=compute_23 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="6011" y1="0" x2="6011" y2="96"  name=l_38 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="5458" y1="0" x2="5458" y2="96"  name=l_40 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="5664" y1="0" x2="5664" y2="96"  name=l_39 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="1056" y1="0" x2="1056" y2="96"  name=l_47 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="1426" y1="0" x2="1426" y2="96"  name=l_48 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="1819" y1="0" x2="1819" y2="96"  name=l_49 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="2391" y1="0" x2="2391" y2="96"  name=l_65 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="sum(m_jan for group 2)"border="0" color="33554432" x="5669" y="8" height="60" width="338" format="#,##0" html.valueishtml="0"  name=compute_32 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(pre_yinv  for group 2)"border="0" color="33554432" x="695" y="8" height="60" width="352" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="0" expression=" sector + ~" 계~""border="0" color="33554432" x="18" y="8" height="64" width="658" format="[GENERAL]" html.valueishtml="0"  name=compute_28 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(last_day for group 2)"border="0" color="33554432" x="3950" y="8" height="60" width="302" format="#,##0" html.valueishtml="0"  name=compute_30 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="4261" y1="0" x2="4261" y2="92"  name=l_106 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="sum(bm_jan for group 2)"border="0" color="33554432" x="4274" y="8" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_26 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="4640" y1="0" x2="4640" y2="96"  name=l_42 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_amcoll for group 2)"border="0" color="33554432" x="4658" y="8" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amcoll2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="5" y1="84" x2="6011" y2="84"  name=l_83 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="5047" y1="0" x2="5047" y2="96"  name=l_41 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="sum(cur_mcoll for group 2)"border="0" color="33554432" x="5061" y="8" height="60" width="389" format="#,##0" html.valueishtml="0"  name=cur_mcoll2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="2" text="" border="0" color="15793151" x="14" y="4" height="80" width="6002" html.valueishtml="0"  name=t_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+line(band=trailer.1 x1="5" y1="0" x2="5" y2="96"  name=l_85 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="3739" y1="0" x2="3739" y2="96"  name=l_93 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="3383" y1="0" x2="3383" y2="96"  name=l_94 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="1056" y1="0" x2="1056" y2="96"  name=l_95 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="1426" y1="0" x2="1426" y2="96"  name=l_96 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="1819" y1="0" x2="1819" y2="96"  name=l_97 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="2185" y1="0" x2="2185" y2="96"  name=l_98 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="2391" y1="0" x2="2391" y2="96"  name=l_99 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="2990" y1="0" x2="2990" y2="96"  name=l_100 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="2784" y1="0" x2="2784" y2="96"  name=l_101 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="686" y1="0" x2="686" y2="96"  name=l_102 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="5" y1="96" x2="6007" y2="96"  name=l_37 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="3936" y1="0" x2="3936" y2="96"  name=l_92 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="6011" y1="0" x2="6011" y2="96"  name=l_87 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="5458" y1="0" x2="5458" y2="96"  name=l_89 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="5664" y1="0" x2="5664" y2="96"  name=l_88 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_ayinv for group 1)"border="0" color="33554432" x="1065" y="24" height="60" width="352" format="#,##0" html.valueishtml="0"  name=cur_ayinv1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_amninv for group 1)"border="0" color="33554432" x="1431" y="24" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amninv1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_inv for group 1)"border="0" color="33554432" x="1829" y="24" height="60" width="347" format="#,##0" html.valueishtml="0"  name=cur_inv1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cur_inv1  /  cur_ayinv1 "border="0" color="33554432" x="2194" y="24" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(bsale_amt for group 1)"border="0" color="33554432" x="2400" y="24" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amt1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="(cur_minv1 / bsale_amt1) - 1"border="0" color="33554432" x="2793" y="24" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_aminv for group 1)"border="0" color="33554432" x="2999" y="24" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_minv for group 1)"border="0" color="33554432" x="3392" y="24" height="60" width="343" format="#,##0" html.valueishtml="0"  name=cur_minv1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cur_minv1  /  cur_aminv1 "border="0" color="33554432" x="3749" y="24" height="60" width="183" format="0.0%" html.valueishtml="0"  name=compute_21 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cur_mcoll1  /  cur_amcoll1 "border="0" color="33554432" x="5463" y="24" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_24 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(m_jan for group 1)"border="0" color="33554432" x="5669" y="24" height="60" width="338" format="#,##0" html.valueishtml="0"  name=compute_33 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(pre_yinv  for group 1)"border="0" color="33554432" x="695" y="24" height="60" width="352" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression=" area + ~" 합계~""border="0" color="33554432" x="18" y="24" height="60" width="658" format="[GENERAL]" html.valueishtml="0"  name=compute_29 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(last_day for group 1)"border="0" color="33554432" x="3950" y="24" height="60" width="302" format="#,##0" html.valueishtml="0"  name=compute_31 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="4261" y1="4" x2="4261" y2="100"  name=l_107 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum(bm_jan for group 1)"border="0" color="33554432" x="4274" y="24" height="60" width="357" format="#,##0" html.valueishtml="0"  name=compute_27 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="4640" y1="0" x2="4640" y2="96"  name=l_91 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_amcoll for group 1)"border="0" color="33554432" x="4658" y="24" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amcoll1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="5047" y1="0" x2="5047" y2="96"  name=l_90 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum(cur_mcoll for group 1)"border="0" color="33554432" x="5061" y="24" height="60" width="389" format="#,##0" html.valueishtml="0"  name=cur_mcoll1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="9" y1="120" x2="6011" y2="120"  name=l_67 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=summary alignment="2" text="" border="0" color="15793151" x="0" y="4" height="116" width="6016" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=summary alignment="1" expression="sum(cur_minv for all)"border="0" color="33554432" x="3392" y="28" height="60" width="343" format="#,##0" html.valueishtml="0"  name=cur_minv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_aminv for all)"border="0" color="33554432" x="2999" y="28" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_aminv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(pre_yinv for all)"border="0" color="33554432" x="695" y="28" height="60" width="352" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cur_inv0 /  cur_ayinv0"border="0" color="33554432" x="2199" y="28" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_ayinv for all)"border="0" color="33554432" x="1065" y="28" height="60" width="352" format="#,##0" html.valueishtml="0"  name=cur_ayinv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_amninv for all)"border="0" color="33554432" x="1431" y="28" height="60" width="379" format="#,##0" html.valueishtml="0"  name=cur_amninv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cur_inv for all)"border="0" color="33554432" x="1829" y="28" height="60" width="347" format="#,##0" html.valueishtml="0"  name=cur_inv0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  bsale_amt  for all )"border="0" color="33554432" x="2400" y="28" height="60" width="375" format="#,##0" html.valueishtml="0"  name=bsale_amt0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="5" y1="0" x2="6011" y2="0"  name=l_66 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=summary alignment="2" text="총  합  계" border="0" color="0" x="14" y="24" height="72" width="667" html.valueishtml="0"  name=t_31 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=summary x1="5" y1="0" x2="5" y2="128"  name=l_64 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="5" y1="116" x2="6011" y2="116"  name=l_68 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="3936" y1="0" x2="3936" y2="128"  name=l_54 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="3739" y1="0" x2="3739" y2="128"  name=l_55 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=summary x1="3383" y1="0" x2="3383" y2="128"  name=l_56 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=summary x1="1056" y1="0" x2="1056" y2="128"  name=l_61 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="1426" y1="0" x2="1426" y2="128"  name=l_60 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=summary x1="1819" y1="0" x2="1819" y2="128"  name=l_59 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="2185" y1="0" x2="2185" y2="128"  name=l_58 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=summary x1="2391" y1="0" x2="2391" y2="128"  name=l_57 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="2990" y1="0" x2="2990" y2="128"  name=l_82 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=summary x1="2784" y1="0" x2="2784" y2="128"  name=l_84 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=summary x1="686" y1="0" x2="686" y2="128"  name=l_62 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="(cur_minv0 / bsale_amt0) - 1"border="0" color="33554432" x="2793" y="28" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_22 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cur_mcoll0  /  cur_amcoll0 "border="0" color="33554432" x="5463" y="28" height="60" width="192" format="0.0%" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(m_jan for all)"border="0" color="33554432" x="5669" y="28" height="60" width="334" format="#,##0" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="6011" y1="0" x2="6011" y2="128"  name=l_51 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression=" cur_minv0  /  cur_aminv0 "border="0" color="33554432" x="3749" y="28" height="60" width="183" format="0.0%" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="5458" y1="0" x2="5458" y2="128"  name=l_52 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+line(band=summary x1="5664" y1="0" x2="5664" y2="128"  name=l_76 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(last_day for all)"border="0" color="33554432" x="3950" y="28" height="60" width="302" format="#,##0" html.valueishtml="0"  name=compute_34 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="4261" y1="0" x2="4261" y2="128"  name=l_50 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(bm_jan for all)"border="0" color="33554432" x="4274" y="28" height="60" width="352" format="#,##0" html.valueishtml="0"  name=compute_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="4640" y1="0" x2="4640" y2="128"  name=l_71 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(cur_amcoll for all)"border="0" color="33554432" x="4658" y="28" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cur_amcoll0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="5047" y1="0" x2="5047" y2="128"  name=l_53 visible="1" pen.style="0" pen.width="5" pen.color="12632256"  background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum(cur_mcoll for all)"border="0" color="33554432" x="5061" y="28" height="60" width="384" format="#,##0" html.valueishtml="0"  name=cur_mcoll0 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="team")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

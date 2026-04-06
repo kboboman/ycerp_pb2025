@@ -1,0 +1,196 @@
+﻿$PBExportHeader$d_whitemret_s.srd
+$PBExportComments$품목별 재고현황(2001/10/16,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="item.qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=itemloc_qoh dbname="qoh" )
+ column=(type=datetime updatewhereclause=yes name=cdate dbname="cdate" )
+ column=(type=decimal(4) updatewhereclause=yes name=rcptqty dbname="rcptqty" )
+ column=(type=decimal(4) updatewhereclause=yes name=issueqty dbname="issueqty" )
+ column=(type=decimal(2) updatewhereclause=yes name=notissueqty dbname="notissueqty" )
+ retrieve="  SELECT groupitem.item_name,
+                 	item.item_no,
+        		    	item.qa,   
+                	uom = (case groupitem.uom when 'M'  then 'EA' when 'M2' then 'EA' else groupitem.uom  end),
+                	qoh = isnull(itemloc.qoh, 0) - isnull(couteoday.rcptqty, 0) + isnull(couteoday.issueqty, 0),   
+                 cdate = convert(smalldatetime, :ad_date, 111),   
+                 rcptqty = isnull(cineoday.rcptqty, 0),   
+                 issueqty = isnull(cineoday.issueqty, 0),
+                 notissueqty = isnull(csaledet.order_qty, 0) + isnull(crout.order_qty, 0)
+FROM item left outer join itemloc on item.item_no = itemloc.item_no and item.qa = itemloc.qa
+                                                 	and itemloc.loc_no = :as_loc  
+                    inner join groupitem on item.item_no = groupitem.item_no
+                    left outer join (select item.item_no, item.qa, rcptqty = sum(ineoday.rcpt_qty),
+                                  			   issueqty = sum(ineoday.issue_qty)
+                                  			   from item, ineoday
+                                  			  WHERE cdate = :as_date
+                                  				 and item.item_no in ( :as_item ) 
+                                  				 and item.qa in ( :as_qa )
+                                  	  			 and ineoday.item_no = item.item_no
+                                  	  			 and ineoday.qa = item.qa
+                                  	  			 and ineoday.loc_no = :as_loc
+                                  				group by item.item_no, item.qa
+                                  			union all
+                                  			 select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+                                  				) cineoday on item.item_no = cineoday.item_no and item.qa = cineoday.qa 
+                     left outer join  (select item.item_no, item.qa, rcptqty = sum(ineoday.rcpt_qty),
+                        															 issueqty = sum(ineoday.issue_qty)
+                                    			   from item, ineoday
+                                    			  WHERE cdate > :as_date
+                                    				 and item.item_no in ( :as_item ) 
+                                    				 and item.qa in ( :as_qa )
+                                    	  			 and ineoday.item_no = item.item_no
+                                    	  			 and ineoday.qa = item.qa
+                                    	  			 and ineoday.loc_no = :as_loc
+                                    				group by item.item_no, item.qa
+                                    			union all
+                                    			 select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+                                    				) couteoday on item.item_no = couteoday.item_no and item.qa = couteoday.qa 
+                    left outer join	(select saledet.item_no, saledet.qa,
+                                    					  order_qty = sum( saledet.order_qty  -  saledet.rlse_qty )
+                                    			   from saledet, sale
+                                    			  WHERE saledet.order_qty > saledet.rlse_qty
+                                    				 and sale.order_no = saledet.order_no
+                                    				 and sale.open_close = 'O'
+                                    				 and saledet.item_no in ( :as_item ) 
+                                    				 and saledet.qa in ( :as_qa )
+                                    				 and order_date >=  DATEADD(month, -2, convert(smalldatetime, :ad_date, 111))
+                                    				and sale.order_date <=:ad_date
+                                    				group by saledet.item_no, saledet.qa
+                                    			union all
+                                    			 select item_no = '', qa = '', order_qty = 0 
+                                    				) csaledet on item.item_no = csaledet.item_no and item.qa = csaledet.qa 
+                    left outer join (select item_no = rout.assembly, qa =  rout.assy_qa,
+                                    					  order_qty = sum( saledet.order_qty  -  saledet.rlse_qty )
+                                    			   from sale, saledet, rout
+                                    			  WHERE saledet.item_no in ( :as_item ) 
+                                    				and saledet.qa in ( :as_qa )
+                                    				and saledet.order_qty > saledet.rlse_qty
+                                    				and sale.order_no = saledet.order_no
+                                    				and sale.open_close = 'O'
+                                    				and order_date >=  DATEADD(month, -2, convert(smalldatetime, :ad_date, 111))
+                                    				and sale.order_date <=:ad_date
+                                    				and rout.item_no =  saledet.item_no
+                                    				and rout.qa =  saledet.qa
+                                    				and rout.item_no <>  rout.assembly
+                                    				group by rout.assembly, rout.assy_qa
+                                    			union all
+                                    			 select item_no = '', qa = '', order_qty = 0 
+                                    				) crout on item.item_no = crout.item_no and item.qa = crout.qa 
+   WHERE item.item_no in ( :as_item ) 
+    		and item.qa in ( :as_qa )
+/*
+SELECT groupitem.item_name,
+        	item.item_no,
+			item.qa,   
+        	uom = (case groupitem.uom when 'M'  then 'EA' when 'M2' then 'EA' else groupitem.uom  end),
+        	qoh = isnull(itemloc.qoh, 0) - isnull(couteoday.rcptqty, 0) + isnull(couteoday.issueqty, 0),   
+         cdate = convert(smalldatetime, :ad_date, 111),   
+         rcptqty = isnull(cineoday.rcptqty, 0),   
+         issueqty = isnull(cineoday.issueqty, 0),
+         notissueqty = isnull(csaledet.order_qty, 0) + isnull(crout.order_qty, 0)
+    FROM item,    
+         itemloc,    
+         groupitem,
+			(select item.item_no, item.qa, rcptqty = sum(ineoday.rcpt_qty),
+															 issueqty = sum(ineoday.issue_qty)
+			   from item, ineoday
+			  WHERE cdate = :as_date
+				 and item.item_no in ( :as_item ) 
+				 and item.qa in ( :as_qa )
+	  			 and ineoday.item_no = item.item_no
+	  			 and ineoday.qa = item.qa
+	  			 and ineoday.loc_no = :as_loc
+				group by item.item_no, item.qa
+			union all
+			 select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+				) cineoday,
+
+			(select item.item_no, item.qa, rcptqty = sum(ineoday.rcpt_qty),
+															 issueqty = sum(ineoday.issue_qty)
+			   from item, ineoday
+			  WHERE cdate > :as_date
+				 and item.item_no in ( :as_item ) 
+				 and item.qa in ( :as_qa )
+	  			 and ineoday.item_no = item.item_no
+	  			 and ineoday.qa = item.qa
+	  			 and ineoday.loc_no = :as_loc
+				group by item.item_no, item.qa
+			union all
+			 select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+				) couteoday,
+
+			(select saledet.item_no, saledet.qa,
+					  order_qty = sum( saledet.order_qty  -  saledet.rlse_qty )
+			   from saledet, sale
+			  WHERE saledet.order_qty > saledet.rlse_qty
+				 and sale.order_no = saledet.order_no
+				 and sale.open_close = 'O'
+				 and saledet.item_no in ( :as_item ) 
+				 and saledet.qa in ( :as_qa )
+				 and order_date >=  DATEADD(month, -2, convert(smalldatetime, :ad_date, 111))
+				and sale.order_date <=:ad_date
+				group by saledet.item_no, saledet.qa
+			union all
+			 select item_no = '', qa = '', order_qty = 0 
+				) csaledet,
+
+			(select item_no = rout.assembly, qa =  rout.assy_qa,
+					  order_qty = sum( saledet.order_qty  -  saledet.rlse_qty )
+			   from sale, saledet, rout
+			  WHERE saledet.item_no in ( :as_item ) 
+				and saledet.qa in ( :as_qa )
+				and saledet.order_qty > saledet.rlse_qty
+				and sale.order_no = saledet.order_no
+				and sale.open_close = 'O'
+				and order_date >=  DATEADD(month, -2, convert(smalldatetime, :ad_date, 111))
+				and sale.order_date <=:ad_date
+				and rout.item_no =  saledet.item_no
+				and rout.qa =  saledet.qa
+				and rout.item_no <>  rout.assembly
+				group by rout.assembly, rout.assy_qa
+			union all
+			 select item_no = '', qa = '', order_qty = 0 
+				) crout
+   WHERE item.item_no in ( :as_item ) 
+		and item.qa in ( :as_qa )
+		and itemloc.loc_no = :as_loc
+		and item.item_no *= itemloc.item_no
+		and item.qa *= itemloc.qa
+		and item.item_no *= cineoday.item_no 
+		and item.qa *= cineoday.qa 
+		and item.item_no *= couteoday.item_no 
+		and item.qa *= couteoday.qa 
+		and item.item_no *= csaledet.item_no 
+		and item.qa *= csaledet.qa 
+		and item.item_no *= crout.item_no 
+		and item.qa *= crout.qa 
+		and ( item.item_no = groupitem.item_no )
+*/" arguments=(("ad_date", date),("as_date", string),("as_loc", string),("as_item", stringlist),("as_qa", stringlist))  sort="groupitem_item_name A " )
+text(band=header alignment="2" text="품명" border="6" color="0" x="9" y="8" height="60" width="1088" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="1106" y="8" height="60" width="101" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1216" y="8" height="60" width="631" html.valueishtml="0"  name=item_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="전일" border="6" color="0" x="1856" y="8" height="60" width="347" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입고" border="6" color="0" x="2213" y="8" height="60" width="329" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고" border="6" color="0" x="2551" y="8" height="60" width="325" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현재고" border="6" color="0" x="2885" y="8" height="60" width="306" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수주잔량" border="6" color="0" x="3200" y="8" height="60" width="297" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="코드" border="6" color="0" x="3506" y="8" height="60" width="379" html.valueishtml="0"  name=item_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="2213" y="8" height="64" width="329" format="#,##0" html.valueishtml="0"  name=rcptqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="2551" y="8" height="64" width="325" format="#,##0" html.valueishtml="0"  name=issueqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="3200" y="8" height="64" width="297" format="#,##0" html.valueishtml="0"  name=notissueqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="3506" y="8" height="64" width="379" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=detail alignment="1" expression=" itemloc_qoh  -  rcptqty  +  issueqty "border="0" color="0" x="1856" y="8" height="64" width="347" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="2885" y="8" height="64" width="306" format="#,##0" html.valueishtml="0"  name=itemloc_qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="1216" y="8" height="64" width="631" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="9" y="8" height="64" width="1088" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0~tif( itemloc_qoh < 0 , rgb(255,0,0), rgb(0,0,0))" x="1106" y="8" height="64" width="101" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,362 @@
+﻿$PBExportHeader$d_whitemret_r_alldtl.srd
+$PBExportComments$품목별 재고수불부내역
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=seq dbname="SEQ" )
+ column=(type=char(10) updatewhereclause=yes name=loc_no dbname="LOC_NO" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="ITEM_NO" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="ITEM_NAME" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="QA" )
+ column=(type=datetime updatewhereclause=yes name=sdate dbname="SDATE" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_qty dbname="IN_QTY" )
+ column=(type=decimal(4) updatewhereclause=yes name=out_qty dbname="OUT_QTY" )
+ column=(type=char(14) updatewhereclause=yes name=bigo dbname="BIGO" )
+ column=(type=char(17) updatewhereclause=yes name=key_no dbname="KEY_NO" )
+ column=(type=char(11) updatewhereclause=yes name=tbl_name dbname="TBL_NAME" )
+ retrieve="SELECT SEQ          = AA.SEQ
+     , LOC_NO       = AA.LOC_NO 
+     , ITEM_NO      = AA.ITEM_NO             
+     , ITEM_NAME    = BB.ITEM_NAME
+     , QA           = AA.QA                  
+     , SDATE        = AA.SDATE   
+     , IN_QTY       = AA.IN_QTY
+     , OUT_QTY      = AA.OUT_QTY
+     , BIGO         = AA.BIGO     
+     , KEY_NO       = AA.KEY_NO  
+     , TBL_NAME     = AA.TBL_NAME
+  FROM (
+       SELECT SEQ          = '1'
+            , LOC_NO       = Y.LOC_NO 
+            , ITEM_NO      = Y.ITEM_NO             
+            , QA           = Y.QA                  
+            , SDATE        = ''   
+            , IN_QTY       = 0
+            , OUT_QTY      = ISNULL(Y.QOH, 0)      /*전월이월수량[재고조사량]*/
+            , BIGO         = '이월수량'     
+            , KEY_NO       = ''   
+            , TBL_NAME     = 'INEOYM'
+         FROM INEOYM Y
+        WHERE Y.CYEAR      = CONVERT(CHAR(4), DATEPART(YEAR, :as_from))
+          AND Y.CMON       = RIGHT('00' + CONVERT(CHAR(2),DATEADD(MONTH, -1, :as_from)),2)
+          AND Y.LOC_NO     = :as_loc_no
+          AND Y.ITEM_NO    = :as_item
+          AND Y.QA         = :as_qa
+       
+       UNION
+       
+       SELECT SEQ          = '2'
+            , LOC_NO       = A.LOC_NO   
+            , ITEM_NO      = A.ITEM_NO  
+            , QA           = A.QA    
+            , SDATE        = A.SDATE   
+            , IN_QTY       = (CASE WHEN CAT = 'IN'  THEN A.QTY  ELSE 0 END)
+            , OUT_QTY      = (CASE WHEN CAT = 'OUT' THEN A.QTY  ELSE 0 END)      
+            , BIGO         = A.BIGO     
+            , KEY_NO       = A.KEY_NO   
+            , TBL_NAME     = A.TBL_NAME 
+         FROM (
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ASSEMBLY    
+                    , QA          = D.ASSEMBLY_QA 
+                    , QTY         = D.MAKE_QTY
+                    , SDATE       = D.SFC_DATE
+                    , BIGO        = '생산입고'
+                    , KEY_NO      = D.ORDER_NO
+                    , TBL_NAME    = 'SFCDAY'
+                    , CAT         = 'IN'
+                 FROM SFCDAY D
+                WHERE CONVERT(CHAR(10),D.SFC_DATE,111)  BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+                  
+               UNION ALL
+               SELECT LOC_NO      = D.TAR_LOC
+                    , ITEM_NO     = D.TAR_ITEM 
+                    , QA          = D.TAR_QA   
+                    , QTY         = ISNULL(D.TAR_QTY, 0)
+                    , SDATE       = D.ALTER_DATE
+                    , BIGO        = '대체입고'
+                    , KEY_NO      = D.ORDER_NO
+                    , TBL_NAME    = 'ITEMALTER'
+                    , CAT         = 'IN'
+                 FROM ITEMALTER D
+                WHERE CONVERT(CHAR(10),D.ALTER_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.TAR_LOC         = :as_loc_no
+                  AND D.TAR_ITEM        = :as_item
+                  AND D.TAR_QA          = :as_qa
+               
+               UNION ALL
+               SELECT LOC_NO      = H.ASK_LOC
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , QTY         = ISNULL(D.RLSE_QTY, 0)
+                    , SDATE       = D.RLSE_DATE
+                    , BIGO        = '저장소이동입고'
+                    , KEY_NO      = D.ASK_NO
+                    , TBL_NAME    = 'ASK_DET'
+                    , CAT         = 'IN'
+                 FROM ASK_HEAD H
+                    , ASK_DET  D
+                WHERE H.ASK_NO          = D.ASK_NO
+                  AND CONVERT(CHAR(10),D.RLSE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.ASK_LOC         = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+               
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , QTY         = ISNULL(D.SHIP_QTY, 0) * -1
+                    , SDATE       = H.ISSUE_DATE
+                    , BIGO        = '반품입고'
+                    , KEY_NO      = D.DO_NO
+                    , TBL_NAME    = 'DODET'
+                    , CAT         = 'IN'
+                 FROM DO    H
+                    , DODET D
+                WHERE H.DO_NO           = D.DO_NO
+                  AND H.DO_CASE         = 'D'
+                  AND CONVERT(CHAR(10),H.ISSUE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+                 
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO 
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , QTY         = ISNULL(D.FREE_QTY, 0)
+                    , SDATE       = H.RET_DATE
+                    , BIGO        = '무상입고'
+                    , KEY_NO      = D.RET_NO
+                    , TBL_NAME    = 'RETDET'
+                    , CAT         = 'IN'
+                 FROM RET    H
+                    , RETDET D
+                WHERE CONVERT(CHAR(10),H.RET_DATE,111)    BETWEEN :as_from AND :as_to
+                  AND H.RET_NO          = D.RET_NO
+                  AND H.PROCESS_FLAG NOT IN ('O', 'Y')
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+              
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO
+                    , QA          = D.QA     
+                    , QTY         = ISNULL(D.RCPT_QTY, 0)
+                    , SDATE       = H.INSP_DATE
+                    , BIGO        = '가공입고'
+                    , KEY_NO      = D.INSP_NO
+                    , TBL_NAME    = 'INSPDET'
+                    , CAT         = 'IN'
+                 FROM INSP    H
+                    , INSPDET D
+                WHERE CONVERT(CHAR(10),H.INSP_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.INSP_NO         = D.INSP_NO
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+              
+               UNION ALL
+               SELECT LOC_NO      = H.LOC_NO
+                    , ITEM_NO     = H.ITEM_NO 
+                    , QA          = H.QA      
+                    , QTY         = ISNULL(H.QTY, 0)
+                    , SDATE       = H.INTEMP_DATE
+                    , BIGO        = '가입고'
+                    , KEY_NO      = H.INTEMP_NO
+                    , TBL_NAME    = 'INTEMP'
+                    , CAT         = 'IN'
+                 FROM INTEMP H
+                WHERE CONVERT(CHAR(10),H.INTEMP_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.LOC_NO          = :as_loc_no
+                  AND H.ITEM_NO         = :as_item
+                  AND H.QA              = :as_qa
+                
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO
+                    , QA          = D.QA     
+                    , QTY         = ISNULL(D.SHIP_QTY, 0)
+                    , SDATE       = H.ISSUE_DATE
+                    , BIGO        = '정상출고'
+                    , KEY_NO      = D.DO_NO
+                    , TBL_NAME    = 'DODET'
+                    , CAT         = 'OUT'
+                 FROM DO    H
+                    , DODET D
+                WHERE CONVERT(CHAR(10),H.ISSUE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.DO_NO           = D.DO_NO
+                  AND H.DO_CASE        IN ('A', 'B', 'C')
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+              
+               UNION ALL
+               SELECT LOC_NO      = D.SRC_LOC
+                    , ITEM_NO     = D.SRC_ITEM 
+                    , QA          = D.SRC_QA   
+                    , QTY         = ISNULL(D.SRC_QTY, 0)
+                    , SDATE       = D.ALTER_DATE
+                    , BIGO        = '대체출고'
+                    , KEY_NO      = D.ORDER_NO
+                    , TBL_NAME    = 'ITEMALTER'
+                    , CAT         = 'OUT'
+                 FROM ITEMALTER D
+                WHERE CONVERT(CHAR(10),D.ALTER_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.SRC_LOC         = :as_loc_no
+                  AND D.ISSUE_FLAG      = 'Y'
+                  AND D.SRC_ITEM        = :as_item
+                  AND D.SRC_QA          = :as_qa
+              
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , QTY         = ISNULL(D.RLSE_QTY, 0)
+                    , SDATE       = D.RLSE_DATE
+                    , BIGO        = '저장소이동출고'
+                    , KEY_NO      = D.ASK_NO
+                    , TBL_NAME    = 'ASK_DET'
+                    , CAT         = 'OUT'
+                 FROM ASK_HEAD H
+                    , ASK_DET  D
+                WHERE H.ASK_NO          = D.ASK_NO
+                  AND CONVERT(CHAR(10),D.RLSE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+                 
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , QTY         = ISNULL(D.ISSUE_QTY, 0)
+                    , SDATE       = H.ORDER_DATE
+                    , BIGO        = '샘플출고'
+                    , KEY_NO      = D.SAMP_NO
+                    , TBL_NAME    = 'SAMPDET'
+                    , CAT         = 'OUT'
+                 FROM SAMP    H
+                    , SAMPDET D
+                WHERE H.SAMP_NO         = D.SAMP_NO
+                  AND CONVERT(CHAR(10),H.ORDER_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+                
+               UNION ALL
+               SELECT LOC_NO      = H.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO  
+                    , QA          = D.QA       
+                    , QTY         = ISNULL(D.QTY, 0)
+                    , SDATE       = H.ABAN_DATE
+                    , BIGO        = '폐기'
+                    , KEY_NO      = D.ABAN_NO
+                    , TBL_NAME    = 'ITEMABANDET'
+                    , CAT         = 'OUT'
+                 FROM ITEMABAN    H
+                    , ITEMABANDET D
+                WHERE CONVERT(CHAR(10),H.ABAN_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+                  AND H.ABAN_NO         = D.ABAN_NO
+                
+               UNION ALL
+               SELECT LOC_NO      = D.ISSUE_LOC
+                    , ITEM_NO     = D.COMPONENT    
+                    , QA          = D.COMPONENT_QA 
+                    , QTY         = ISNULL(D.ISSUE_QTY, 0)
+                    , SDATE       = D.ISSUE_DATE
+                    , BIGO        = '가공출고'
+                    , KEY_NO      = D.ORDER_NO
+                    , TBL_NAME    = 'SUDODET'
+                    , CAT         = 'OUT'
+                 FROM SUDODET D
+                WHERE CONVERT(CHAR(10),D.ISSUE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.ISSUE_LOC       = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+                
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , QTY         = ISNULL(D.USE_QTY, 0)
+                    , SDATE       = D.USE_DATE
+                    , BIGO        = '작업일보사용'
+                    , KEY_NO      = D.ORDER_NO
+                    , TBL_NAME    = 'SFCUSE'
+                    , CAT         = 'OUT'
+                 FROM SFCUSE D
+                WHERE CONVERT(CHAR(10),D.USE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+                
+               UNION ALL
+               SELECT LOC_NO      = D.ISSUE_LOC
+                    , ITEM_NO     = D.ASSY_ITEM 
+                    , QA          = D.ASSY_QA   
+                    , QTY         = ISNULL(D.OUT_QTY, 0)
+                    , SDATE       = D.ORDER_DT
+                    , BIGO        = '재고생산출고'
+                    , KEY_NO      = D.ORDER_NO
+                    , TBL_NAME    = 'JAJAESUDO'
+                    , CAT         = 'OUT'
+                 FROM JAJAESUDO D
+                WHERE CONVERT(CHAR(10),D.ORDER_DT,111)  BETWEEN :as_from AND :as_to
+                  AND D.ISSUE_LOC       = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+              
+              /*
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , QOH         = ISNULL(D.QOH, 0) 
+                    , SDATE       = D.ORDER_DT
+                    , BIGO        = '현재고'
+                    , KEY_NO      = D.ORDER_NO
+                    , TBL_NAME    = 'ITEMLOC'
+                 FROM ITEMLOC D
+                WHERE D.LOC_NO          = :as_loc_no
+                  AND D.ITEM_NO         = :as_item
+                  AND D.QA              = :as_qa
+              */
+              ) A
+       ) AA
+       LEFT OUTER JOIN GROUPITEM BB   ON AA.ITEM_NO  = BB.ITEM_NO
+ ORDER BY SEQ, SDATE, BIGO
+" arguments=(("as_loc_no", string),("as_item", string),("as_qa", string),("as_from", string),("as_to", string)) )
+text(band=header alignment="2" text="입고" border="6" color="33554432" x="1541" y="12" height="60" width="407" html.valueishtml="0"  name=in_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고" border="6" color="33554432" x="1957" y="12" height="60" width="430" html.valueishtml="0"  name=out_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="계" border="6" color="33554432" x="2395" y="12" height="60" width="425" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Key값" border="6" color="33554432" x="663" y="12" height="60" width="507" html.valueishtml="0"  name=key_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="일자" border="6" color="33554432" x="1179" y="12" height="60" width="352" html.valueishtml="0"  name=sdate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="TABLE" border="6" color="33554432" x="2830" y="12" height="60" width="343" html.valueishtml="0"  name=tbl_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출처" border="6" color="33554432" x="183" y="12" height="60" width="471" html.valueishtml="0"  name=bigo_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Seq" border="6" color="0" x="9" y="12" height="60" width="165" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="663" y="8" height="72" width="507" format="[general]" html.valueishtml="0"  name=key_no visible="1" edit.limit=17 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="1541" y="8" height="72" width="407" format="#,##0" html.valueishtml="0"  name=in_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="1957" y="8" height="72" width="430" format="#,##0" html.valueishtml="0"  name=out_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="cumulativeSum(  in_qty for all ) - cumulativeSum( out_qty for all )"border="0" color="33554432" x="2395" y="8" height="72" width="425" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="1179" y="8" height="72" width="352" format="yyyy/mm/dd" html.valueishtml="0"  name=sdate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="2830" y="8" height="72" width="343" format="[general]" html.valueishtml="0"  name=tbl_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="72" width="471" format="[general]" html.valueishtml="0"  name=bigo visible="1" edit.limit=16 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="SUM(  out_qty  for all )"border="0" color="0" x="1957" y="8" height="64" width="430" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="cumulativeSum(  in_qty  for all ) - cumulativeSum(  out_qty  for all ) "border="0" color="33554432" x="2395" y="8" height="64" width="425" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="SUM(  in_qty  for all )"border="0" color="0" x="1541" y="8" height="64" width="407" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count(  item_no  for all )"border="0" color="33554432" x="9" y="8" height="64" width="165" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

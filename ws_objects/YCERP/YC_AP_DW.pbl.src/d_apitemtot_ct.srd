@@ -1,0 +1,82 @@
+﻿$PBExportHeader$d_apitemtot_ct.srd
+$PBExportComments$조업자재 집계표(횟수)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=80 color="536870912" )
+header[3](height=80 color="536870912" )
+summary(height=88 color="8421504" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=number updatewhereclause=yes name=c_qty dbname="c_qty" )
+ column=(type=number updatewhereclause=yes name=c_tot dbname="c_tot" )
+ retrieve="  SELECT item_name = groupitem.item_name   
+       , item_no   = inspdet.item_no      
+       , qa        = inspdet.qa           
+       , uom       = inspdet.uom             
+       , com_uom   = inspdet.com_uom             
+       , supp_name = (case when :as_supp     = '%'  then '전  체'  else supp.supp_name end)
+       , cat_name  = (case when insp.insp_flag = '%' then '전체'
+                           when insp.insp_flag = 'S' then '상품'
+                           when insp.insp_flag = 'W' then '원자재'
+                           when insp.insp_flag = 'B' then '부자재'
+                           when insp.insp_flag = 'Y' then '외주가공'
+                           when insp.insp_flag = 'A' then '공사원가'
+                      end)
+       , cstart    = (case when :as_start = ''  then '          ' else :as_start      end)
+       , cend      = (case when :as_end   = ''  then '          ' else :as_end        end)
+       , ship_qty  = inspdet.rcpt_qty
+       , c_qty     = inspdet.comqty
+       , c_price   = inspdet.price
+       , c_amt     = (case when supp.round = 'Y' then round( (inspdet.price * inspdet.comqty), 0,0)
+                           else round( (inspdet.price * inspdet.comqty), 0,1) 
+                      end)
+                     
+       , c_tot     = (case when supp.round = 'Y' then round( (inspdet.price * inspdet.comqty), 0,0)
+                           else round( (inspdet.price * inspdet.comqty), 0,1) 
+                      end) + inspdet.rate_cash
+       , insp_date = convert(char(7),insp.insp_date,111)
+    FROM insp           
+       , inspdet        
+       , groupitem    
+       , supp  
+   WHERE ( insp.insp_no          = inspdet.insp_no   ) 
+     AND ( inspdet.item_no       = groupitem.item_no ) 
+     AND ( insp.supp_no          = supp.supp_no      ) 
+     AND ( convert(char(10),insp.insp_date,111)  BETWEEN :as_start AND :as_end )
+     AND ( insp.supp_no           LIKE :as_supp      )
+     AND ((:as_category  = '%' AND insp.insp_flag  LIKE :as_category ) OR
+          (:as_category <> '%' AND insp.insp_flag  LIKE :as_category )
+         )
+" arguments=(("as_start", string),("as_end", string),("as_supp", string),("as_category", string))  sort="item_name A qa A " )
+group(level=1 header.height=0 trailer.height=108 by=("item_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Insp Date" border="0" color="0" x="864" y="4" height="52" width="690" html.valueishtml="0"  name=t_1 visible="1"  font.face="MS Sans Serif" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="@insp_date" border="6" color="0" x="1563" y="8" height="64" width="864" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="환산계" border="6" color="0" x="2432" y="8" height="64" width="686" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="금액계" border="6" color="0" x="3127" y="8" height="64" width="686" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="품목" border="6" color="0" x="9" y="8" height="64" width="846" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="규격" border="6" color="0" x="864" y="8" height="64" width="690" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="환산수량" border="6" color="0" x="1563" y="8" height="64" width="421" html.valueishtml="0"  name=c_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[3] alignment="2" text="금액" border="6" color="0" x="1993" y="8" height="64" width="430" html.valueishtml="0"  name=c_tot_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="846" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="864" y="4" height="72" width="690" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="1563" y="4" height="72" width="421" format="#,##0.00" html.valueishtml="0"  name=c_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1993" y="4" height="72" width="430" format="#,##0" html.valueishtml="0"  name=c_tot visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2432" y="4" height="72" width="686" format="#,##0.00" html.valueishtml="0"  name=grand_sum_c_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(2)"border="0" color="33554432" x="3127" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=grand_sum_c_tot visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="item_name + ~" 계~""border="0" color="33554432" x="9" y="4" height="72" width="846" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(c_qty for group 1)"border="0" color="33554432" x="1563" y="4" height="72" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(c_tot for group 1)"border="0" color="33554432" x="1993" y="4" height="72" width="430" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_c_qty for group 1)"border="0" color="33554432" x="2432" y="4" height="72" width="686" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_c_tot for group 1)"border="0" color="33554432" x="3127" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="~" 총 합 계~""border="0" color="33554432" x="9" y="4" height="72" width="846" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(c_qty for all )"border="0" color="33554432" x="1563" y="4" height="72" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(c_tot for all )"border="0" color="33554432" x="1993" y="4" height="72" width="430" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_c_qty for all )"border="0" color="33554432" x="2432" y="4" height="72" width="686" format="#,##0.00" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_c_tot for all )"border="0" color="33554432" x="3127" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground 
+ columns = "insp_date" rows = "item_name, qa" values = "sum(c_qty for crosstab), sum(c_tot for crosstab)" sourcenames = "item_name, item_no, qa, uom, com_uom, supp_name, cat_name, cstart, cend, ship_qty, c_qty, c_price, c_amt, c_tot, insp_date")
+sparse(names="item_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

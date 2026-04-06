@@ -1,0 +1,29 @@
+﻿$PBExportHeader$d_oecustdiary_s0.srq
+  SELECT team.team_name           
+       , login.user_name          
+       , prt_chk  = ' '
+       , custdiary.diary_date     
+       , custdiary.urgent         
+       , chk_team = ( case when ( custdiary.approve_team is null ) or ( custdiary.approve_team = '') then "N" else "Y" end )
+       , custdiary.approve_team   
+       , custdiary.process_flag   
+       , custdiary.approve_top 
+       , custdiary.cust_no        
+       , custdiary.cust_name      
+       , custdiary.bdcust_name    
+       , custdiary.desc1          
+       , custdiary.emp_no         
+       , custdiary.seq_no         
+    FROM custdiary   
+       , login    
+       , team
+   WHERE ( custdiary.emp_no           *= login.user_id  )   
+     AND ( custdiary.team_code        *= team.team_code )   
+     AND ( ( custdiary.emp_no          LIKE :as_user  ) AND (('%' = :as_chk) OR ( custdiary.process_flag = :as_chk )) AND
+           ( ( ( custdiary.cust_name   LIKE :as_cust  )  OR ( :as_cust  = '%' AND custdiary.cust_name   IS NULL ) ) AND 
+             ( ( custdiary.bdcust_name LIKE :as_com   )  OR ( :as_com   = '%' AND custdiary.bdcust_name IS NULL ) ) AND 
+             ( ( custdiary.desc1       LIKE :as_title )  OR ( :as_title = '%' AND custdiary.desc1       IS NULL ) ) 
+           ) AND
+           ( (:as_all = 'Y') OR ( :as_all = 'N' AND custdiary.diary_date BETWEEN :ad_start AND :ad_end ) ) 
+         )
+ ARG(NAME = "as_user" TYPE = string)  ARG(NAME = "as_chk" TYPE = string)  ARG(NAME = "as_cust" TYPE = string)  ARG(NAME = "as_com" TYPE = string)  ARG(NAME = "ad_start" TYPE = date)  ARG(NAME = "ad_end" TYPE = date)  ARG(NAME = "as_all" TYPE = string)  ARG(NAME = "as_title" TYPE = string)

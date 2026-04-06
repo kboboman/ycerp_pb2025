@@ -1,0 +1,158 @@
+﻿$PBExportHeader$gf_mmssend_multi.srf
+$PBExportComments$KT-MMS Multi전송
+global type gf_mmssend_multi from function_object
+end type
+
+forward prototypes
+global function boolean gf_mmssend_multi (string as_userid, string as_sendhp, string as_recvhp, string as_recvname, string as_message)
+end prototypes
+
+global function boolean gf_mmssend_multi (string as_userid, string as_sendhp, string as_recvhp, string as_recvname, string as_message);////////////////////////////////////////////////////////////////////
+// 문자전송(단문, 장문)
+////////////////////////////////////////////////////////////////////
+// GF_MMSSEND_MULTI	Return Type : Boolean => 참고 : return 값을 가지고 함수 호출한 곳에서 commit/rollback을 진행한다.
+// GF_MMSSEND_MULTI( as_userid, as_sendhp, as_recvhp, as_recvname, as_message )
+////////////////////////////////////////////////////////////////////
+// as_userid   string
+// as_sendhp   string
+// as_recvhp   string
+// as_recvname string
+// as_message  string
+////////////////////////////////////////////////////////////////////
+
+string ls_reqtext, ls_rem, ls_sysdate, ls_exist
+string ls_subject, ls_nowdate, ls_senddate, ls_destinfo
+long   lr_lenmessage
+string SMSSERVER, SMSCOMPANY, ls_SQLErrText
+
+
+as_message  = trim(as_message)
+as_message  = GF_ReplaceAll(as_message,"'","`")
+
+debugbreak()
+
+lr_lenmessage = LenA(as_message)		// 메시지길이
+
+SELECT 
+	convert(char(8), getdate(), 112) + replace(convert(char(8),getdate(), 108), ':', '') 
+INTO 
+	:ls_nowdate
+FROM 
+	dual
+using sqlca;
+
+ls_senddate = ls_nowdate
+
+SELECT 
+	rtrim(item_nm), rtrim(bigo) INTO :SMSSERVER, :SMSCOMPANY 
+FROM 
+	codemst 
+WHERE 
+	item_cd = 'SMSSERVER' AND use_yn = 'Y'
+using sqlca;
+
+if SMSSERVER = "" then SMSSERVER = "192.168.1.5"
+if IsValid(w_orsms_m) = true then 
+	if w_orsms_m.cbx_mms.checked = true then SMSCOMPANY = "KT"
+end if
+      
+choose case SMSCOMPANY
+   case "LGU+"
+		as_message = GF_HANGLE_TR(as_message,80)
+		INSERT INTO sc_tran ( tr_senddate, tr_sendstat, tr_rsltstat, tr_phone, tr_callback, tr_msg )
+		VALUES ( getdate(), '0', '00', :as_recvhp, :as_sendhp, :as_message )
+		USING SQLCA;
+		if SQLCA.SQLCode <> 0 then
+			ls_SQLErrText	= SQLCA.SQLErrText
+			rollback using sqlca;
+			MessageBox('문자전송 오류발생', ls_SQLErrText,Exclamation!)
+			RETURN false
+		end if				            
+	// KT-MMS
+   case "KT"
+		debugbreak()
+		if ls_senddate > "20151015" then
+//			02-2640-4628 -> 0226404627	한미란 /* 2018.02.12 조원석 */
+//			02-2690-1999	서부영업소(화곡)
+//			031-499-9600	시화공장
+//			031-355-9631	화성공장
+//			042-635-7002	중부호남영업지점
+//			031-755-1600	동부영업소(성남)
+//			02-2648-9600	관리본부
+//			02-2640-4675	기술영업부
+//			02-2648-1998	고객센터
+//			02-2648-1998	수금문자
+//			02-2648-1998	통제문자
+//			02-2648-1998	업체등록
+//			02-2648-1998	수주초과
+//			02-2648-1998	출고의뢰
+//			02-2648-1998	스케쥴문자
+
+			int L_COUNT_PHONE
+			L_COUNT_PHONE = 0;
+			
+			SELECT 
+				COUNT(A.PHONE) COUNT
+			INTO 
+				:L_COUNT_PHONE
+			FROM 
+			(
+				select 
+					DISTINCT REPLACE(RTRIM(BIGO), '-','')  PHONE
+				from 
+					codemst
+				where 
+					type = 'SMSSEND' AND use_yn = 'Y'
+			) A
+			WHERE 
+				A.PHONE = :as_sendhp
+			using 
+				sqlca;
+			
+			if L_COUNT_PHONE = 0 then
+				MessageBox("[발신번호]"+as_sendhp, "2015년10월 16일부터 미인증 발신번호는 모두차단입니다.",Exclamation!)
+				RETURN false				
+			end if
+			
+		end if
+	
+		ls_destinfo = as_recvname + "^" + as_recvhp
+
+		if lr_lenmessage < 81 then
+			as_message = GF_HANGLE_TR(as_message,80)
+
+			INSERT INTO sdk_sms_send ( user_id, schedule_type, subject, sms_msg, now_date, send_date, callback, dest_info, reserved1, reserved2 )   
+			VALUES ( :gs_userid, 0, :ls_subject, :as_message, :ls_nowdate, :ls_senddate, :as_sendhp, :ls_destinfo, :as_recvhp, :as_recvname )
+			using sqlca; 
+			if SQLCA.SQLCode <> 0 then
+				ls_SQLErrText	= SQLCA.SQLErrText
+				rollback using sqlca;
+				MessageBox('단문전송 오류발생', ls_SQLErrText,Exclamation!)
+				RETURN false
+			end if				            
+		else
+			as_message = GF_HANGLE_TR(as_message,2000)
+
+			INSERT INTO sdk_mms_send ( user_id, schedule_type, subject, now_date, send_date, callback, dest_count, dest_info
+											 , msg_type, mms_msg,     content_count, content_data, reserved1,  reserved2 ) 
+			VALUES ( :gs_userid, 0, :ls_subject, :ls_nowdate, :ls_senddate, :as_sendhp, 1, :ls_destinfo
+											 , 0       , :as_message, 0,             '',           :as_recvhp, :as_recvname )
+			using sqlca;
+ 
+			if SQLCA.SQLCode <> 0 then
+				ls_SQLErrText = SQLCA.SQLErrText
+				rollback using sqlca;
+				MessageBox('장문전송 오류발생', ls_SQLErrText,Exclamation!)
+				RETURN false
+			end if				            
+		end if
+		
+	case else
+		MessageBox('오류', "통신사 선택이 잘못됐ㅅ브니다.")
+		RETURN false
+end choose
+
+RETURN true
+
+end function
+

@@ -1,0 +1,32 @@
+﻿$PBExportHeader$d_cust_aim2_custlist_r.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(4) update=yes updatewhereclause=yes key=yes name=cust_no dbname="customer.cust_no" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=cust_name dbname="customer.cust_name" )
+ column=(type=char(6) update=yes updatewhereclause=yes name=id dbname="id" )
+ column=(type=char(8) updatewhereclause=yes name=open_close dbname="open_close" )
+ retrieve="select a.cust_no,
+       a.cust_name, 
+       isnull(( SELECT  '등록  '
+                FROM cust_aim b
+                WHERE (a.cust_no = b.cust_code) and  
+                      (datepart(year,b.tar_year) = :al_year) 
+              ),'미등록') as id,
+		 open_close = case when  open_close = 'C' then '사용불가' else '' end
+from customer  a 
+where a.salesman = :as_salesman
+/* and (a.open_close <> 'C' or a.open_close is null) */
+order by id desc, a.cust_name" update="customer" updatewhere=1 updatekeyinplace=no arguments=(("as_salesman", string),("al_year", number)) )
+text(band=header alignment="2" text="구분" border="6" color="33554432" x="9" y="8" height="60" width="229" html.valueishtml="0"  name=id_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="247" y="8" height="60" width="745" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사용구분" border="6" color="33554432" x="1001" y="8" height="60" width="279" html.valueishtml="0"  name=open_close_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=10 border="0" color="33554432~tif (open_close = '사용불가', rgb(0,0,255), if( id = '미등록', rgb(255,0,0), rgb(0,0,0)))" x="9" y="8" height="72" width="229" format="[general]" html.valueishtml="0"  name=id visible="1" edit.limit=6 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="0" tabsequence=20 border="0" color="33554432" x="247" y="8" height="72" width="745" format="[general]" html.valueishtml="0"  name=cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1001" y="8" height="72" width="279" format="[general]" html.valueishtml="0"  name=open_close visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="5" y="4" height="64" width="233" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,120 @@
+﻿$PBExportHeader$d_ocaroivcrep_r2_imsi.srd
+$PBExportComments$수금현황 REPORT1(1998/05/12, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=508 color="536870912" )
+summary(height=80 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=aroivc_oi_date dbname="aroivc.oi_date" )
+ column=(type=char(12) updatewhereclause=yes name=aroivc_vc_no dbname="aroivc.vc_no" )
+ column=(type=char(1) updatewhereclause=yes name=aroivc_vc_type dbname="aroivc.vc_type" values="지불	P/수금	R/" )
+ column=(type=char(1) updatewhereclause=yes name=aroivc_rcpt_type dbname="aroivc.rcpt_type" values="현금	C/어음	B/예금	A/D//C	D/상계	S/잡이익	E/하자보수비	F/기타	Z/" )
+ column=(type=char(10) updatewhereclause=yes name=money_curr_name dbname="money.curr_name" )
+ column=(type=decimal(4) updatewhereclause=yes name=aroivc_amount dbname="aroivc.amount" )
+ column=(type=char(12) updatewhereclause=yes name=aroivc_cheque_no dbname="aroivc.cheque_no" )
+ column=(type=datetime updatewhereclause=yes name=aroivc_cheque_end dbname="aroivc.cheque_end" )
+ column=(type=char(20) updatewhereclause=yes name=bank_bank_name dbname="bank.bank_name" )
+ column=(type=char(20) updatewhereclause=yes name=aroivc_branch dbname="aroivc.branch" )
+ column=(type=char(20) updatewhereclause=yes name=aroivc_large dbname="aroivc.large" )
+ column=(type=char(50) updatewhereclause=yes name=aroivc_rem dbname="aroivc.rem" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=c_start dbname="c_start" )
+ column=(type=char(10) updatewhereclause=yes name=c_end dbname="c_end" )
+ column=(type=char(4) updatewhereclause=yes name=aroivc_cust_no dbname="aroivc.cust_no" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name_a dbname="login_user_name_a" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name_b dbname="login_user_name_b" )
+ retrieve="  SELECT aroivc.oi_date,   
+         aroivc.vc_no,   
+         aroivc.vc_type,   
+         aroivc.rcpt_type,   
+         money.curr_name,   
+         aroivc.amount,   
+         aroivc.cheque_no,   
+         aroivc.cheque_end,   
+         bank.bank_name,   
+         aroivc.branch,   
+         aroivc.large,   
+         aroivc.rem,   
+         customer.cust_name,   
+         '          ' c_start,   
+         '          ' c_end,   
+         aroivc.cust_no ,   
+         login_user_name_a = login_a.user_name,   
+         login_user_name_b = login_b.user_name    
+    FROM aroivc WITH(nolock) LEFT OUTER JOIN bank ON aroivc.bank_code = bank.bank_code
+         			      INNER JOIN money on aroivc.curr_code = money.curr_type
+					 INNER JOIN CUSTOMER ON aroivc.cust_no = customer.cust_no
+         				 LEFT OUTER JOIN login login_a ON customer.salesman = login_a.user_id   
+         				 LEFT OUTER JOIN login login_b ON customer.pre_salesman = login_b.user_id 
+   WHERE
+         ( ( aroivc.cust_no = :as_cust_no ) AND  
+         ( aroivc.oi_date between :ad_start and :ad_end  ) AND  
+         ( aroivc.delete_key = 'N' ) )    
+
+/*
+    FROM aroivc,   
+         bank,   
+         money,   
+         customer,   
+         login login_a,   
+         login login_b  
+   WHERE ( customer.salesman *= login_a.user_id) and  
+         ( customer.pre_salesman *= login_b.user_id) and  
+         ( aroivc.bank_code *= bank.bank_code) and  
+         ( aroivc.curr_code = money.curr_type ) and  
+         ( aroivc.cust_no = customer.cust_no ) and  
+         ( ( aroivc.cust_no = :as_cust_no ) AND  
+         ( aroivc.oi_date between :ad_start and :ad_end  ) AND  
+         ( aroivc.delete_key = ~"N~" ) )    
+*/
+" arguments=(("as_cust_no", string),("ad_start", date),("ad_end", date))  sort="aroivc_oi_date D aroivc_vc_no A customer_cust_name A " )
+group(level=1 header.height=0 trailer.height=0 by=("aroivc_oi_date" ) header.color="536870912" trailer.color="553648127" )
+column(band=header id=13 alignment="0" tabsequence=32766 border="0" color="0" x="855" y="356" height="60" width="640" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="수금일자" border="0" color="0" x="375" y="436" height="60" width="320" html.valueishtml="0"  name=aroivc_oi_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=16 alignment="0" tabsequence=32766 border="0" color="0" x="709" y="356" height="60" width="133" format="[general]" html.valueishtml="0"  name=aroivc_cust_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="입금형태" border="0" color="0" x="1106" y="436" height="60" width="256" html.valueishtml="0"  name=aroivc_vc_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="만기일" border="0" color="0" x="3269" y="436" height="60" width="320" html.valueishtml="0"  name=aroivc_cheque_end_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="통화" border="0" color="0" x="1646" y="436" height="60" width="256" html.valueishtml="0"  name=money_curr_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="현금" border="0" color="0" x="1915" y="436" height="60" width="544" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="어음" border="0" color="0" x="2473" y="436" height="60" width="448" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="지점명" border="0" color="0" x="4000" y="436" height="60" width="384" html.valueishtml="0"  name=aroivc_branch_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="어음번호" border="0" color="0" x="2935" y="436" height="60" width="320" html.valueishtml="0"  name=aroivc_cheque_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="은행" border="0" color="0" x="3602" y="436" height="60" width="384" html.valueishtml="0"  name=bank_bank_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="수금유형" border="0" color="0" x="1376" y="436" height="60" width="256" html.valueishtml="0"  name=aroivc_rcpt_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'페이지:' + page() + ' of ' + pageCount()"border="0" color="0" x="5147" y="356" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'작성일:' + STRING(today(), 'YYYY/MM/DD')"border="0" color="0" x="5147" y="284" height="60" width="544" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="370" y1="424" x2="5696" y2="424"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="수금현황" border="0" color="0" x="370" y="100" height="148" width="5326" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="수금번호" border="0" color="0" x="709" y="436" height="60" width="384" html.valueishtml="0"  name=aroivc_vc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="370" y1="504" x2="5696" y2="504"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="발행자" border="0" color="0" x="4398" y="436" height="60" width="640" html.valueishtml="0"  name=aroivc_large_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=14 alignment="0" tabsequence=32766 border="0" color="0" x="2821" y="356" height="60" width="320" format="[general]" html.valueishtml="0"  name=c_start visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=15 alignment="0" tabsequence=32766 border="0" color="0" x="3182" y="356" height="60" width="320" format="[general]" html.valueishtml="0"  name=c_end visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="수금기간:" border="0" color="0" x="2519" y="356" height="60" width="288" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="~~" border="0" color="0" x="3145" y="356" height="60" width="32" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="거래처" border="2" color="0" x="375" y="356" height="60" width="320" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="w_ocaroivc_r" border="0" color="0" x="375" y="284" height="60" width="384" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="현담당" border="0" color="0" x="5051" y="436" height="60" width="288" html.valueishtml="0"  name=t_c visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="전담당" border="0" color="0" x="5371" y="436" height="60" width="320" html.valueishtml="0"  name=t_p visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="709" y="4" height="60" width="384" format="[general]" html.valueishtml="0"  name=aroivc_vc_no  tag="수금번호" visible="1" edit.limit=12 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="375" y="4" height="60" width="320" format="[shortdate] [time]" html.valueishtml="0"  name=aroivc_oi_date  tag="수금일자" visible="1" editmask.mask="yyyy/mm/dd" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1106" y="4" height="60" width="256" format="[general]" html.valueishtml="0"  name=aroivc_vc_type  tag="입금형태" visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1376" y="4" height="60" width="256" format="[general]" html.valueishtml="0"  name=aroivc_rcpt_type  tag="수금유형" visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="1646" y="4" height="60" width="256" format="[general]" html.valueishtml="0"  name=money_curr_name  tag="통화명" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="2935" y="4" height="60" width="320" format="[general]" html.valueishtml="0"  name=aroivc_cheque_no  tag="어음/수표번호" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="3269" y="4" height="60" width="320" format="[shortdate] [time]" html.valueishtml="0"  name=aroivc_cheque_end  tag="어음/수표마감일" visible="1" editmask.mask="YYYY/MM/DD" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="3602" y="4" height="60" width="384" format="[general]" html.valueishtml="0"  name=bank_bank_name  tag="은행명" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="4000" y="4" height="60" width="384" format="[general]" html.valueishtml="0"  name=aroivc_branch  tag="지점명" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if( aroivc_rcpt_type <> 'B', if( aroivc_vc_type = 'P', 0 -  aroivc_amount ,  aroivc_amount ), 0)"border="0" color="0" x="1915" y="4" height="60" width="544" format="#,##0.00" html.valueishtml="0"  name=cash visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if( aroivc_rcpt_type = 'B', if( aroivc_vc_type = 'P', 0 -  aroivc_amount ,  aroivc_amount ), 0)"border="0" color="0" x="2473" y="4" height="60" width="448" format="#,##0" html.valueishtml="0"  name=bill visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="0" x="4398" y="4" height="60" width="640" format="[general]" html.valueishtml="0"  name=aroivc_large  tag="발행처" visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="0" x="5051" y="4" height="60" width="288" format="[general]" html.valueishtml="0"  name=login_user_name_a visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="0" x="5371" y="4" height="60" width="320" format="[general]" html.valueishtml="0"  name=login_user_name_b visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="2" text="합    계" border="2" color="0" x="375" y="16" height="60" width="320" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  cash  for all )"border="0" color="0" x="1915" y="16" height="60" width="544" format="#,##0.00" html.valueishtml="0"  name=a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="370" y1="4" x2="5696" y2="4"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  bill  for all )"border="0" color="0" x="2473" y="16" height="60" width="448" format="#,##0" html.valueishtml="0"  name=b visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="A + B"border="0" color="0" x="2935" y="16" height="60" width="448" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

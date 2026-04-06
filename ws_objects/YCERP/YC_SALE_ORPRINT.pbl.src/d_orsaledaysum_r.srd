@@ -1,0 +1,79 @@
+﻿$PBExportHeader$d_orsaledaysum_r.srd
+$PBExportComments$수주일보 DISPLAY
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=80 color="536870912" )
+header[3](height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=org_user dbname="org_user" )
+ column=(type=number updatewhereclause=yes name=val dbname="val" )
+ column=(type=number updatewhereclause=yes name=seq_no dbname="seq_no" )
+ column=(type=number updatewhereclause=yes name=amt dbname="amt" )
+ retrieve="       SELECT org_user   = login.user_name
+             , open_close = sale.open_close
+             , sale.order_no        
+             , seq_no     = convert(char(3),saledet.seq_no)
+             , amt        = saledet.acc_qty * saledet.price
+          	 , due_date   = convert(char(08),sale.order_date,11) +
+          	                        replace(( (case when datepart(dw,sale.order_date) = 1 then '(일)'
+          															  when datepart(dw,sale.order_date) = 2 then '(월)'
+          															  when datepart(dw,sale.order_date) = 3 then '(화)'
+          															  when datepart(dw,sale.order_date) = 4 then '(수)'
+          															  when datepart(dw,sale.order_date) = 5 then '(목)'
+          															  when datepart(dw,sale.order_date) = 6 then '(금)'
+          															  when datepart(dw,sale.order_date) = 7 then '(토)'
+          														end) ),' ','')
+          FROM saledet with(nolock)
+               INNER JOIN sale with(nolock)     ON saledet.order_no = sale.order_no
+               LEFT OUTER JOIN customer with(nolock)  ON sale.cust_no     = customer.cust_no
+               LEFT OUTER JOIN scene with(nolock)    ON sale.scene_code  = scene.scene_code
+               INNER JOIN groupitem with(nolock) ON saledet.item_no  = groupitem.item_no
+               LEFT OUTER JOIN login with(nolock)    ON sale.org_user    = login.user_id
+		     LEFT OUTER JOIN itemtop10 ON saledet.item_no   = itemtop10.item_no
+          		LEFT OUTER JOIN (
+                              											  SELECT item_cd, item_nm FROM codemst WHERE type = 'ITEMTOP10' AND use_yn = 'Y'
+                              										) cm ON itemtop10.category = cm.item_cd
+         WHERE ( convert(char(8),sale.order_date,112) BETWEEN :ad_sdate AND :ad_edate )
+          AND ((:as_openclose  = 'Y' AND sale.open_close LIKE '%') OR
+/*                 (:as_openclose <> 'Y' AND sale.open_close  NOT IN ('X','C'))	 한도초과 */
+                 (:as_openclose <> 'Y' AND sale.open_close  = 'O')
+                )
+            AND ((:as_area     = '%' AND sale.area_no  LIKE :as_area) OR
+                 (:as_area    <> '%' AND sale.area_no     = :as_area)
+                )
+            AND ((:as_inside   = '%') OR
+                 (:as_inside  <> '%' AND sale.cust_no NOT IN (SELECT cust_no FROM V_CUST_INSIDE))
+                )
+            AND ( (:as_itemtop10  = '%' AND isnull(itemtop10.category, 'TOP1999') LIKE '%'           ) OR
+             (:as_itemtop10 <> '%' AND isnull(itemtop10.category, 'TOP1999')    = :as_itemtop10 )
+           ) " arguments=(("as_area", string),("ad_sdate", string),("ad_edate", string),("as_itemtop10", string),("as_openclose", string),("as_inside", string))  sort="org_user A " )
+text(band=header[1] alignment="0" text="Due Date" border="0" color="33554432" x="347" y="4" height="60" width="288" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="수주일자" border="6" color="16711680" x="9" y="4" height="68" width="334" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="@due_date" border="6" color="33554432" x="347" y="4" height="68" width="951" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="수주계" border="6" color="33554432" x="1303" y="4" height="68" width="338" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="라인계" border="6" color="33554432" x="1650" y="4" height="68" width="338" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="금액계" border="6" color="33554432" x="1998" y="4" height="68" width="512" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="등록자" border="6" color="16777215" x="9" y="8" height="64" width="329" html.valueishtml="0"  name=org_user_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="32896" )
+text(band=header[3] alignment="2" text="수주" border="6" color="33554432" x="347" y="8" height="64" width="288" html.valueishtml="0"  name=val_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="라인" border="6" color="33554432" x="645" y="8" height="64" width="279" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="금액" border="6" color="33554432" x="933" y="8" height="64" width="361" html.valueishtml="0"  name=amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="933" y="4" height="72" width="361" format="#,##0" html.valueishtml="0"  name=amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1303" y="4" height="72" width="338" format="#,##0" html.valueishtml="0"  name=grand_count_val visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(2)"border="0" color="33554432" x="1650" y="4" height="72" width="338" format="#,##0" html.valueishtml="0"  name=grand_count_seq_no visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(3)"border="0" color="33554432" x="1998" y="4" height="72" width="512" format="#,##0" html.valueishtml="0"  name=grand_sum_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="329" format="[general]" html.valueishtml="0"  name=org_user visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="347" y="4" height="72" width="288" format="[general]" html.valueishtml="0"  name=val visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="645" y="4" height="72" width="279" format="#,##0" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="'합 계'"border="0" color="33554432" x="9" y="4" height="80" width="329" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(val for all )"border="0" color="33554432" x="347" y="4" height="80" width="288" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(seq_no for all )"border="0" color="33554432" x="645" y="4" height="80" width="279" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(amt for all )"border="0" color="33554432" x="933" y="4" height="80" width="361" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(grand_count_val for all )"border="0" color="33554432" x="1303" y="4" height="80" width="338" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(grand_count_seq_no for all )"border="0" color="33554432" x="1650" y="4" height="80" width="338" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(grand_sum_amt for all )"border="0" color="33554432" x="1998" y="4" height="80" width="512" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "due_date" rows = "org_user" values = "count(order_no for crosstab distinct order_no), count(seq_no for crosstab), sum(amt for crosstab)" sourcenames = "org_user, open_close, order_no, seq_no, amt, due_date")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

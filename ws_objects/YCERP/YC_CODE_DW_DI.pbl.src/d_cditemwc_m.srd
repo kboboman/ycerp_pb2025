@@ -1,0 +1,79 @@
+﻿$PBExportHeader$d_cditemwc_m.srd
+$PBExportComments$제품별작업장관리(1998/03/13 - 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=78160032 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes key=yes name=item_no dbname="item_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=qa dbname="qa" )
+ column=(type=long update=yes updatewhereclause=yes key=yes name=operation dbname="operation" )
+ column=(type=char(2) update=yes updatewhereclause=yes name=concurrent dbname="concurrent" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=wc_no dbname="wc_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=rout_desc dbname="rout_desc" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=setup_time dbname="setup_time" initial="0" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=queue_time dbname="queue_time" initial="0" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=run_time dbname="run_time" initial="0" )
+ column=(type=long update=yes updatewhereclause=yes name=delivery_time dbname="delivery_time" initial="0" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=assembly dbname="assembly" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=assy_qa dbname="assy_qa" )
+ column=(type=long update=yes updatewhereclause=yes name=bom_no dbname="bom_no" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=qpa dbname="qpa" initial="1" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=represent dbname="represent" values="대표	Y/	N/" )
+ column=(type=char(10) updatewhereclause=yes name=wc_work_name dbname="work_name" initial=" " )
+ column=(type=long updatewhereclause=yes name=bomtran_parent_no dbname="parent_no" )
+ column=(type=long update=yes updatewhereclause=yes name=work_per dbname="work_per" )
+ column=(type=char(60) updatewhereclause=yes name=item_item_name dbname="item_name" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" initial=" " )
+ column=(type=char(2) updatewhereclause=yes name=groupitem_mp_uom dbname="mp_uom" )
+ retrieve="  SELECT DISTINCT rout.item_no   
+       , rout.qa                 
+       , rout.operation          
+       , rout.concurrent         
+       , rout.wc_no              
+       , rout.rout_desc          
+       , rout.setup_time         
+       , rout.queue_time         
+       , rout.run_time           
+       , rout.delivery_time      
+       , rout.assembly           
+       , rout.assy_qa            
+       , rout.bom_no             
+       , rout.qpa
+       , isnull(rout.represent, 'N' ) represent
+       , wc.work_name            
+       , bomtran.parent_no       
+       , rout.work_per           
+       , groupitem.item_name     
+       , groupitem.uom           
+       , groupitem.mp_uom  
+    FROM rout      
+         LEFT OUTER JOIN wc        ON rout.wc_no    = wc.work_no
+         LEFT OUTER JOIN groupitem ON rout.assembly = groupitem.item_no
+         LEFT OUTER JOIN bomtran   ON rout.item_no  = bomtran.item_no   AND rout.qa      = bomtran.qa
+                                  AND rout.assembly = bomtran.component AND rout.assy_qa = bomtran.comp_qa
+   WHERE ( rout.item_no    = :as_itemno ) 
+     AND ( rout.qa         = :as_qa     )    
+" update="rout" updatewhere=0 updatekeyinplace=no arguments=(("as_itemno", string),("as_qa", string))  sort="bomtran_parent_no D bom_no D operation A " )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="64" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=3 alignment="2" tabsequence=10 border="0" color="255~tif(trim( concurrent ) = 'Y', rgb(255,0,0), rgb(0,0,255))" x="9" y="4" height="68" width="160" format="[general]" html.valueishtml="0"  name=operation visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="작업장" border="6" color="0" x="178" y="8" height="64" width="507" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=5 alignment="0" tabsequence=20 border="0" color="0" x="178" y="4" height="68" width="507" format="[general]" html.valueishtml="0"  name=wc_no  tag="작업장" visible="1" dddw.name=d_cditemwc_c dddw.displaycolumn=work_name dddw.datacolumn=work_no dddw.percentwidth=150 dddw.lines=7 dddw.limit=0 dddw.allowedit=yes dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+text(band=header alignment="2" text="인원" border="6" color="0" x="695" y="8" height="64" width="165" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="시간당수량" border="6" color="0" x="869" y="8" height="64" width="338" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림" font.height="-9" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="1216" y="8" height="64" width="165" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="제조품명" border="6" color="0" x="1390" y="8" height="64" width="1371" html.valueishtml="0"  name=assembly_t visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=18 alignment="1" tabsequence=30 border="0" color="0" x="695" y="4" height="68" width="165" format="[general]" html.valueishtml="0"  name=work_per visible="1" accelerator=" " edit.name="#####" editmask.mask="#####" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="1" tabsequence=40 border="0" color="0" x="869" y="4" height="68" width="338" format="[General]" html.valueishtml="0"  name=run_time  tag="수행시간" visible="1" accelerator=" " editmask.mask="###,###.00" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="0" x="1216" y="4" height="68" width="165" format="[general]" html.valueishtml="0"  name=groupitem_mp_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=11 alignment="2" tabsequence=50 border="0" color="0" x="1390" y="4" height="68" width="1371" format="[general]" html.valueishtml="0" protect="0~tif( trim(concurrent) = 'Y',1,0)"  name=assembly visible="1" dddw.name=d_salegroup_c dddw.displaycolumn=item_name dddw.datacolumn=item_no dddw.percentwidth=170 dddw.lines=7 dddw.limit=0 dddw.allowedit=yes dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="2770" y="8" height="64" width="768" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="캐파" border="6" color="0" x="3547" y="8" height="64" width="165" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="공정대표유무" border="6" color="0" x="3721" y="8" height="64" width="384" html.valueishtml="0"  name=represent_t visible="1"  font.face="굴림" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=14 alignment="2" tabsequence=70 border="0" color="0" x="3547" y="4" height="68" width="165" format="[general]" html.valueishtml="0" protect="0~tif( trim(concurrent) = 'Y',1,0)"  name=qpa visible="1" editmask.mask="###,###" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=12 alignment="2" tabsequence=60 border="0" color="0" x="2770" y="4" height="68" width="768" format="[general]" html.valueishtml="0" protect="0~tif( trim(concurrent) = 'Y',1,0)"  name=assy_qa visible="1" dddw.name=d_cditemqa1_c dddw.displaycolumn=qa1 dddw.datacolumn=qa1 dddw.percentwidth=100 dddw.lines=10 dddw.limit=0 dddw.allowedit=yes dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="16711680" x="3721" y="4" height="68" width="384" format="[general]" html.valueishtml="0"  name=represent visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

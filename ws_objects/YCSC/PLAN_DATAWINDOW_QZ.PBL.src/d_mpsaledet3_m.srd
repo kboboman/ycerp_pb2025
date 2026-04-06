@@ -1,0 +1,125 @@
+﻿$PBExportHeader$d_mpsaledet3_m.srd
+$PBExportComments$수주로부터생산계획생성상세(1998/2/16,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1090519039 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no row.resize=1 grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(17) update=yes updatewhereclause=yes key=yes name=plan_no dbname="mpsdet.plan_no" )
+ column=(type=char(17) update=yes updatewhereclause=yes name=order_no dbname="mpsdet.order_no" initial=" " )
+ column=(type=char(10) update=yes updatewhereclause=yes name=item_no dbname="mpsdet.item_no" initial=" " )
+ column=(type=char(2) update=yes updatewhereclause=yes name=uom dbname="mpsdet.uom" initial=" " )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=order_qty dbname="mpsdet.order_qty" initial="0" )
+ column=(type=datetime update=yes updatewhereclause=yes name=due_date dbname="mpsdet.due_date" initial="today" )
+ column=(type=long update=yes updatewhereclause=yes name=priority dbname="mpsdet.priority" initial="1" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=qa dbname="mpsdet.qa" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=wc_no dbname="mpsdet.wc_no" )
+ column=(type=char(14) update=yes updatewhereclause=yes name=sale_no dbname="mpsdet.sale_no" initial="NONE" )
+ column=(type=long update=yes updatewhereclause=yes name=seq_no dbname="mpsdet.seq_no" initial="0" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=suju_type dbname="mpsdet.suju_type" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=work_time dbname="mpsdet.work_time" initial="0" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=setup_time dbname="mpsdet.setup_time" initial="0" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=rcpt_type dbname="mpsdet.rcpt_type" initial="N" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=rcpt_qty dbname="mpsdet.rcpt_qty" initial="0" )
+ column=(type=datetime update=yes updatewhereclause=yes name=napgi_date dbname="mpsdet.napgi_date" )
+ column=(type=char(4) update=yes updatewhereclause=yes name=item_color dbname="mpsdet.item_color" )
+ column=(type=char(4) update=yes updatewhereclause=yes name=cust_no dbname="mpsdet.cust_no" initial="NONE" )
+ column=(type=char(11) update=yes updatewhereclause=yes name=scene_code dbname="mpsdet.scene_code" initial="NONE" )
+ column=(type=long update=yes updatewhereclause=yes name=work_per dbname="mpsdet.work_per" )
+ column=(type=long update=yes updatewhereclause=yes name=division dbname="mpsdet.division" )
+ column=(type=char(60) updatewhereclause=yes name=item_item_name dbname="groupitem.item_name" initial=" " )
+ column=(type=char(50) update=yes updatewhereclause=yes name=rem dbname="mpsdet.rem" )
+ column=(type=long update=yes updatewhereclause=yes name=operation dbname="mpsdet.operation" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="scene.scene_desc" )
+ retrieve="  SELECT mpsdet.plan_no        
+       , mpsdet.order_no       
+       , mpsdet.item_no        
+       , mpsdet.uom            
+       , mpsdet.order_qty      
+       , mpsdet.due_date       
+       , mpsdet.priority       
+       , mpsdet.qa             
+       , mpsdet.wc_no          
+       , mpsdet.sale_no        
+       , mpsdet.seq_no         
+       , mpsdet.suju_type      
+       , mpsdet.work_time      
+       , mpsdet.setup_time     
+       , mpsdet.rcpt_type      
+       , mpsdet.rcpt_qty       
+       , mpsdet.napgi_date     
+       , mpsdet.item_color     
+       , mpsdet.cust_no        
+       , mpsdet.scene_code     
+       , mpsdet.work_per       
+       , mpsdet.division       
+       , groupitem.item_name   
+       , mpsdet.rem            
+       , mpsdet.operation      
+       , customer.cust_name    
+       , scene.scene_desc  
+    FROM mpsdet with(nolock)     
+       inner join groupitem with(nolock) on mpsdet.item_no       = groupitem.item_no
+       left outer join customer with(nolock) on mpsdet.cust_no   = customer.cust_no
+       left outer join scene with(nolock)  on mpsdet.scene_code  = scene.scene_code
+     AND ( mpsdet.order_no   LIKE :arg_order        )   
+   ORDER BY mpsdet.priority ASC   
+/*
+   WHERE ( mpsdet.cust_no      *= customer.cust_no  )   
+     AND ( mpsdet.scene_code   *= scene.scene_code  )   
+     AND ( mpsdet.item_no       = groupitem.item_no )   
+     AND ( mpsdet.order_no   LIKE :arg_order        )   
+   ORDER BY mpsdet.priority ASC   
+*/
+" update="mpsdet" updatewhere=0 updatekeyinplace=no arguments=(("arg_order", string))  sort="item_no A qa A " )
+group(level=1 header.height=0 trailer.height=72 by=("item_no" , "left ( qa, 13)" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="순위" border="6" color="0" x="9" y="8" height="60" width="105" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="생산지시번호" border="6" color="0" x="123" y="8" height="60" width="471" html.valueishtml="0"  name=mpsdet_plan_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="물품번호" border="6" color="0" x="603" y="8" height="60" width="347" html.valueishtml="0"  name=mpsdet_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="물품명" border="6" color="0" x="960" y="8" height="60" width="613" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1582" y="8" height="60" width="631" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="색상" border="6" color="0" x="2222" y="8" height="60" width="274" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2505" y="8" height="60" width="123" html.valueishtml="0"  name=mpsdet_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="계획수량" border="6" color="0" x="2638" y="8" height="60" width="352" html.valueishtml="0"  name=mpsdet_order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="2999" y="8" height="60" width="361" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="0" text="작업인원" border="6" color="0" x="3369" y="8" height="60" width="251" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="납기일자" border="6" color="0" x="3630" y="8" height="60" width="379" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="설치시간" border="6" color="0" x="4018" y="8" height="60" width="302" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="작업시간(분)" border="6" color="0" x="4329" y="8" height="60" width="384" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="소요시간(분)" border="6" color="0" x="4722" y="8" height="60" width="379" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="판매주문번호" border="6" color="0" x="5129" y="8" height="60" width="539" html.valueishtml="0"  name=mpsdet_sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="순번" border="6" color="0" x="5678" y="8" height="60" width="123" html.valueishtml="0"  name=mpsdet_seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="유형" border="6" color="0" x="5810" y="8" height="60" width="123" html.valueishtml="0"  name=mpsdet_suju_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="5943" y="8" height="60" width="617" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현장" border="6" color="0" x="6569" y="8" height="60" width="553" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="비고" border="6" color="0" x="7131" y="8" height="60" width="1591" html.valueishtml="0"  name=t_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=7 alignment="2" tabsequence=10 border="0" color="255" x="9" y="8" height="64" width="105" format="[general]" html.valueishtml="0"  name=priority visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="123" y="8" height="64" width="471" format="[general]" html.valueishtml="0"  name=plan_no  tag="계획번호" visible="1" edit.limit=17 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="603" y="8" height="64" width="347" format="[general]" html.valueishtml="0"  name=item_no  tag="물품번호" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="0" x="2222" y="8" height="64" width="274" format="[general]" html.valueishtml="0"  name=item_color visible="1" dddw.name=d_cditemcolor_c dddw.displaycolumn=color_name dddw.datacolumn=color_code dddw.percentwidth=100 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="2505" y="8" height="64" width="123" format="[general]" html.valueishtml="0"  name=uom  tag="단위" visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=14 alignment="1" tabsequence=30 border="0" color="0" x="4018" y="8" height="64" width="302" format="[general]" html.valueishtml="0"  name=setup_time visible="1" editmask.mask="###,###" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="0" x="3630" y="8" height="64" width="379" format="[shortdate] [time]" html.valueishtml="0"  name=napgi_date visible="1" editmask.mask="yyyy/mm/dd" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="4329" y="8" height="64" width="384" format="#,##0.0000" html.valueishtml="0"  name=work_time visible="1" accelerator=" " editmask.mask="###,##0" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="5129" y="8" height="64" width="539" format="[general]" html.valueishtml="0"  name=sale_no  tag="판매주문번호" visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0" x="5678" y="8" height="64" width="123" format="[General]" html.valueishtml="0"  name=seq_no  tag="순번" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="0" x="5810" y="8" height="64" width="123" format="[general]" html.valueishtml="0"  name=suju_type  tag="수주유형" visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+compute(band=detail alignment="1" expression=" setup_time +  work_time"border="0" color="16711680" x="4722" y="8" height="64" width="379" format="#,##0" html.valueishtml="0"  name=ppp visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="0" color="0" x="3369" y="8" height="64" width="251" format="[general]" html.valueishtml="0"  name=work_per visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="0" color="0" x="960" y="8" height="64" width="613" format="[general]" html.valueishtml="0"  name=item_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="1582" y="8" height="64" width="631" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=5 alignment="1" tabsequence=20 border="0" color="0" x="2638" y="8" height="64" width="352" format="[general]" html.valueishtml="0"  name=order_qty  tag="계획수량" visible="1" editmask.mask="###,###,###.00" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="79741120~tif  (order_qty <= 0 , rgb(255,0,0), rgb(255,255,255))" )
+compute(band=detail alignment="1" expression="if(left( item_no ,1) = 'P' and mid(item_no, 3,1) = 'Y' and (mid(item_no, 7,1) = 'A' or mid(item_no, 7,1) = 'B' or mid(item_no, 7,1) = 'C' or mid(item_no, 7,1) = 'D'), order_qty, if(uom = 'M2' or uom = ~"SS~" ,truncate( long(mid( qa ,5,4)) * long(mid(qa,10,4)) *    order_qty / 1000000 + 0.000000001, 2), if(uom = 'M', if( order_qty < 0 , truncate(long(mid(  qa , 15,5)) *   order_qty / 1000 - 0.00001,2), truncate(long(mid(  qa , 15,5)) *  order_qty / 1000 + 0.00001,2)) ,     order_qty )))"border="0" color="0" x="2999" y="8" height="64" width="361" format="#,##0.00" html.valueishtml="0"  name=cqty visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=detail alignment="0" expression="cumulativeSum(  ppp  for all )"border="0" color="16711680" x="5111" y="8" height="64" width="9" format="" html.valueishtml="0"  name=aaa visible="1~t0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="0" color="0" x="5943" y="8" height="64" width="617" format="[general]" html.valueishtml="0"  name=customer_cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=27 alignment="0" tabsequence=32766 border="0" color="0" x="6569" y="8" height="64" width="553" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+column(band=detail id=24 alignment="0" tabsequence=32766 border="0" color="0" x="7131" y="8" height="64" width="1591" format="[general]" html.valueishtml="0"  name=rem visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="77897888" )
+compute(band=trailer.1 alignment="1" expression="sum(if(left( item_no ,1) = 'P' and mid(item_no, 3,1) = 'Y' and (mid(item_no, 7,1) = 'A' or mid(item_no, 7,1) = 'B' or mid(item_no, 7,1) = 'C' or mid(item_no, 7,1) = 'D'), order_qty, if(uom = 'M2' or uom = ~"SS~" ,truncate( long(mid( qa ,5,4)) * long(mid(qa,10,4)) *    order_qty / 1000000 + 0.000000001, 2), if(uom = 'M', if( order_qty < 0 , truncate(long(mid(  qa , 15,5)) *   order_qty / 1000 - 0.00001,2), truncate(long(mid(  qa , 15,5)) *  order_qty / 1000 + 0.00001,2)) ,     order_qty ))) for group 1)"border="0" color="16711680" x="2999" y="4" height="60" width="361" format="#,##0.00" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="123" y="4" height="68" width="471" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="2" text="총소요시간:" border="0" color="16711680" x="4329" y="4" height="68" width="384" html.valueishtml="0"  name=t_15 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(ppp for all)"border="0" color="16711680" x="4722" y="4" height="68" width="379" format="#,##0 분" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(ppp for all)/60"border="0" color="16711680" x="5129" y="4" height="68" width="539" format="==>  #,##0.0 시간" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,65 @@
+﻿$PBExportHeader$gf_dwclick2info.srf
+$PBExportComments$DataWindow 클릭정보
+global type gf_dwclick2info from function_object
+end type
+
+forward prototypes
+global subroutine gf_dwclick2info (datawindow arg_dw, dropdownlistbox arg_ddlb_nm, dropdownlistbox arg_ddlb_op, singlelineedit arg_sle, long arg_row, string arg_dwoname, dropdownlistbox arg_dwtitles)
+end prototypes
+
+global subroutine gf_dwclick2info (datawindow arg_dw, dropdownlistbox arg_ddlb_nm, dropdownlistbox arg_ddlb_op, singlelineedit arg_sle, long arg_row, string arg_dwoname, dropdownlistbox arg_dwtitles);/*
+  Function Name : GF_DWClick2Info (Datawindow 컬럼을 클릭한 경우 Item 정보를 보여주기)
+       Argument : arg_dw, arg_ddlb_nm, arg_ddlb_op, arg_sle, arg_row, arg_dwoname, arg_dwtitles
+    Return Type : None
+*/
+string ls_colname_split[], ls_nullarray[]
+string ls_col, ls_text, ls_type, ls_op
+
+long	 ii
+
+if arg_row < 1 Or arg_row > arg_dw.rowcount() then RETURN
+
+//arg_dw.SelectRow(0, FALSE)
+//arg_dw.SelectRow(ll_row, TRUE)
+arg_dw.scrolltorow( arg_row )
+
+//ls_value = string(long(ls_columnx[ii]),"00000") + "|" + ls_columnt[ii] + "|" + ls_column[ii]
+for ii = 1 to arg_dwtitles.TotalItems()
+	ls_colname_split = ls_nullarray		// 초기화
+	GF_SPLIT( arg_dwtitles.Text(ii), "|", ls_colname_split )
+	if ls_colname_split[3] = arg_dwoname then
+		ls_col = ls_colname_split[2]
+		exit
+	end if
+next
+
+ls_op   = "="
+ls_type = arg_dw.Describe(arg_dwoname + ".coltype")
+choose case LeftA(ls_type,4)
+	case "char"
+		ls_op   = "LIKE"
+		ls_text = string( arg_dw.GetItemString( arg_row, arg_dwoname ) )
+	case "deci"
+      ls_op   = "="
+		ls_text = string( arg_dw.GetItemDecimal( arg_row, arg_dwoname ) )
+	case "numb", "long"
+      ls_op   = "="
+		ls_text = string( arg_dw.GetItemNumber( arg_row, arg_dwoname ) ) 		
+	case "time"
+      ls_op   = "="
+		ls_text = string( arg_dw.GetItemTime( arg_row, arg_dwoname ) )
+	case "date"
+      ls_op   = ">="
+		if ls_type = "datetime" then
+			ls_text = string( arg_dw.GetItemDateTime( arg_row, arg_dwoname ) )		
+		else
+			ls_text = string( arg_dw.GetItemDate( arg_row, arg_dwoname ) )
+		end if
+end choose
+
+arg_ddlb_nm.text = ls_col
+arg_ddlb_op.text = ls_op
+arg_sle.text     = ls_text
+arg_dw.setfocus()
+end subroutine
+

@@ -1,0 +1,247 @@
+﻿$PBExportHeader$d_glapoivc_s.srd
+$PBExportComments$구매내역조회
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=92 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N" )
+ column=(type=char(10) updatewhereclause=yes name=insp_flag dbname="insp_flag" )
+ column=(type=char(15) updatewhereclause=yes name=icube_no dbname="icube_no" )
+ column=(type=char(10) updatewhereclause=yes name=supp_no dbname="supp_no" )
+ column=(type=char(30) updatewhereclause=yes name=supp_name dbname="supp_name" )
+ column=(type=char(1) updatewhereclause=yes name=supp_round dbname="round" )
+ column=(type=char(1) updatewhereclause=yes name=prepayment dbname="prepayment" )
+ column=(type=char(1) updatewhereclause=yes name=weight dbname="weight" )
+ column=(type=char(6) updatewhereclause=yes name=login_id dbname="login_id" )
+ column=(type=char(4) updatewhereclause=yes name=team_name dbname="team_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_name1 dbname="user_name1" )
+ column=(type=char(30) updatewhereclause=yes name=team_name1 dbname="team_name1" )
+ column=(type=char(62) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=decimal(2) updatewhereclause=yes name=rcpt_qty dbname="rcpt_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=comqty dbname="comqty" )
+ column=(type=decimal(0) updatewhereclause=yes name=ship_amount dbname="ship_amount" )
+ column=(type=decimal(4) updatewhereclause=yes name=insp_cash dbname="insp_cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=insp_rate dbname="insp_rate" )
+ column=(type=decimal(4) updatewhereclause=yes name=insp_total dbname="insp_total" )
+ column=(type=long updatewhereclause=yes name=keysort dbname="keysort" )
+ column=(type=char(1) updatewhereclause=yes name=keycolor dbname="keycolor" )
+ retrieve="  SELECT chk         = 'N'            
+       , insp_flag   = a.insp_flag    
+       , icube_no    = a.icube_no     
+       , supp_no     = a.supp_no      
+       , supp_name   = a.supp_name    
+       , round       = a.round        
+       , prepayment  = a.prepayment   
+       , weight      = a.weight       
+       , login_id    = a.login_id     
+       , team_name   = a.team_name    
+       , user_name1  = a.user_name1   
+       , team_name1  = a.team_name1   
+       , item_name   = b.item_name+'外'
+       , rcpt_qty    = b.rcpt_qty     
+       , comqty      = b.comqty       
+       , ship_amount = a.ship_amount  
+       , insp_cash   = a.insp_cash    
+       , insp_rate   = a.insp_rate    
+       , insp_total  = a.insp_total   
+       , keysort     = 0              
+       , keycolor    = 'N'            
+    FROM (
+         SELECT insp_flag   = a.insp_flag 
+              , icube_no    = a.icube_no
+              , supp_no     = a.supp_no      
+              , supp_name   = a.supp_name     
+              , round       = a.round               
+              , prepayment  = a.prepayment
+              , weight      = a.weight
+              , login_id    = a.login_id               
+              , team_name   = a.team_name
+              , user_name1  = a.user_name1
+              , team_name1  = a.team_name1
+              , ship_amount = sum(a.ship_amount)
+              , insp_cash   = sum(a.insp_cash)
+              , insp_rate   = sum(a.insp_rate)
+              , insp_total  = sum(a.insp_total)
+           FROM (
+                SELECT insp_flag   = (case insp.insp_flag 
+                                           when 'W' then '1.원자재'  when 'B' then '2.부자재' 
+                                           when 'S' then '3.상품'    when 'Y' then '4.외주가공'
+                                           else '5.' + insp.insp_flag
+                                      end)
+                     , icube_no    = supp.icube_no
+                     , supp_no     = insp.supp_no      
+                     , supp_name   = supp.supp_name     
+                     , round       = supp.round
+                     , prepayment  = supp.prepayment
+                     , weight      = supp.weight
+                     , log_date    = insp.log_date
+                     , login_id    = login.duzon_sabun
+                     , team_name   = login.duzon_dept
+                     , user_name1  = login.user_name
+                     , team_name1  = team.team_name
+                     , ship_amount = isnull(insp.ship_amount,0)
+                     , insp_cash   = isnull(insp.insp_cash,0)
+                     , insp_rate   = isnull(insp.insp_rate,0)
+                     , insp_total  = isnull(insp.insp_total,0)
+                  FROM insp
+                       LEFT OUTER JOIN supp    ON insp.supp_no    = supp.supp_no
+                       LEFT OUTER JOIN login   ON supp.salesman   = login.user_id
+                       LEFT OUTER JOIN team    ON login.team_code = team.team_code
+                 WHERE ( insp.insp_date   BETWEEN :ad_sdate AND :ad_edate )
+                   AND ((:as_salesman  = '%' ) OR
+                        (:as_salesman <> '%' AND supp.salesman = :as_salesman )
+                       )
+                ) A
+          GROUP BY a.insp_flag, a.icube_no, a.supp_no, a.supp_name
+                 , a.round, a.prepayment, a.weight, a.login_id, a.team_name, a.user_name1, a.team_name1
+         ) A
+         LEFT OUTER JOIN (
+              SELECT insp_flag  = a.insp_flag
+                   , supp_no    = a.supp_no
+                   , item_name  = b.item_name
+                   , rcpt_qty   = a.rcpt_qty
+                   , comqty     = a.comqty
+                   , amount     = b.amount
+                FROM ( /* 입고수량, 환산수량 */
+                          SELECT insp_flag   = (case insp.insp_flag 
+                                                     when 'W' then '1.원자재'  when 'B' then '2.부자재' 
+                                                     when 'S' then '3.상품'    when 'Y' then '4.외주가공'
+                                                     else '5.' + insp.insp_flag
+                                                end)
+                               , supp_no     = insp.supp_no      
+                               , rcpt_qty    = sum(inspdet.rcpt_qty)
+                               , comqty      = sum(inspdet.comqty)
+                            FROM inspdet
+                                 LEFT OUTER JOIN insp ON inspdet.insp_no = insp.insp_no
+                           WHERE ( insp.insp_date   BETWEEN :ad_sdate AND :ad_edate )
+                           GROUP BY insp.insp_flag, insp.supp_no
+                     ) A         
+                     LEFT OUTER JOIN ( /* 입고금액 기준으로 품명 가져오기 */
+                          SELECT insp_flag = a.insp_flag
+                               , supp_no   = a.supp_no
+                               , item_name = b.item_name
+                               , comqty    = a.comqty
+                               , amount    = a.amount
+                            FROM (
+                                 SELECT insp_flag = a.insp_flag
+                                      , supp_no   = a.supp_no
+                                      , comqty    = sum(a.comqty)
+                                      , amount    = max(a.amount)
+                                   FROM (
+                                        SELECT insp_flag = a.insp_flag 
+                                             , supp_no   = a.supp_no
+                                             , item_name = a.item_name
+                                             , comqty    = sum(a.comqty)
+                                             , amount    = sum(a.amount)
+                                          FROM (
+                                               SELECT insp_flag = (case insp.insp_flag 
+                                                                        when 'W' then '1.원자재'  when 'B' then '2.부자재' 
+                                                                        when 'S' then '3.상품'    when 'Y' then '4.외주가공'
+                                                                        else '5.' + insp.insp_flag
+                                                                   end)
+                                                    , supp_no   = insp.supp_no
+                                                    , item_no   = inspdet.item_no
+                                                    , item_name = g.item_name
+                                                    , comqty    = inspdet.comqty
+                                                    , amount    = (inspdet.comqty * price)
+                                                 FROM inspdet (NOLOCK)
+                                                      LEFT OUTER JOIN insp        (NOLOCK) ON inspdet.insp_no = insp.insp_no
+                                                      LEFT OUTER JOIN groupitem G (NOLOCK) ON inspdet.item_no = g.item_no
+                                                WHERE ( insp.insp_date   BETWEEN :ad_sdate AND :ad_edate )
+                                                ) A
+                                          GROUP BY a.insp_flag, a.supp_no, a.item_name
+                                        ) A
+                                  GROUP BY a.insp_flag, a.supp_no
+                                  ) A
+                                  
+                                  LEFT OUTER JOIN (
+                                        SELECT insp_flag = a.insp_flag
+                                             , supp_no   = a.supp_no
+                                             , item_name = a.item_name
+                                             , amount    = max(a.amount)
+                                          FROM (
+                                               SELECT insp_flag = a.insp_flag
+                                                    , supp_no   = a.supp_no
+                                                    , item_name = a.item_name
+                                                    , amount    = sum(a.amount)
+                                                 FROM (
+                                                      SELECT insp_flag   = (case insp.insp_flag 
+                                                                                 when 'W' then '1.원자재'  when 'B' then '2.부자재' 
+                                                                                 when 'S' then '3.상품'    when 'Y' then '4.외주가공'
+                                                                                 else '5.' + insp.insp_flag
+                                                                            end)
+                                                           , supp_no   = insp.supp_no
+                                                           , item_no   = inspdet.item_no
+                                                           , item_name = g.item_name
+                                                           , amount    = (inspdet.comqty * price)
+                                                        FROM inspdet  (NOLOCK)
+                                                             LEFT OUTER JOIN insp        (NOLOCK) ON inspdet.insp_no = insp.insp_no
+                                                             LEFT OUTER JOIN groupitem G (NOLOCK) ON inspdet.item_no = g.item_no
+                                                       WHERE ( insp.insp_date   BETWEEN :ad_sdate AND :ad_edate )
+                                                       ) A
+                                                 GROUP BY a.insp_flag, a.supp_no, a.item_name
+                                               ) A
+                                         GROUP BY a.insp_flag, a.supp_no, a.item_name
+                                  ) B ON a.insp_flag = b.insp_flag AND a.supp_no = b.supp_no AND a.amount = b.amount
+                     ) B ON a.insp_flag = b.insp_flag AND a.supp_no = b.supp_no
+             ) B ON a.insp_flag = b.insp_flag AND a.supp_no = b.supp_no
+" arguments=(("as_salesman", string),("ad_sdate", date),("ad_edate", date))  sort="insp_flag A supp_name A " )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="60" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고수량" border="6" color="0" x="3022" y="8" height="60" width="594" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="3625" y="8" height="60" width="590" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="부가세" border="6" color="0" x="5344" y="8" height="60" width="603" html.valueishtml="0"  name=insp_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송비용" border="6" color="0" x="4224" y="8" height="60" width="503" html.valueishtml="0"  name=ship_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입고금액" border="6" color="0" x="4736" y="8" height="60" width="599" html.valueishtml="0"  name=insp_cash_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="정렬" border="6" color="0" x="7767" y="8" height="60" width="169" html.valueishtml="0"  name=keysort_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="더존코드" border="6" color="0" x="773" y="8" height="60" width="430" html.valueishtml="0"  name=icube_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="합계금액" border="6" color="0" x="5957" y="8" height="60" width="594" html.valueishtml="0"  name=insp_total_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="6560" y="8" height="60" width="247" html.valueishtml="0"  name=login_id_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="부서명" border="6" color="0" x="6816" y="8" height="60" width="242" html.valueishtml="0"  name=team_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="사원명" border="6" color="0" x="7067" y="8" height="60" width="352" html.valueishtml="0"  name=user_name1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="팀명" border="6" color="0" x="7429" y="8" height="60" width="329" html.valueishtml="0"  name=team_name1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고유형" border="6" color="0" x="347" y="8" height="60" width="416" html.valueishtml="0"  name=insp_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="선택" border="6" color="0" x="178" y="8" height="60" width="160" html.valueishtml="0"  name=chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구매거래처" border="6" color="0" x="1211" y="8" height="60" width="859" html.valueishtml="0"  name=supp_supp_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="선급" border="6" color="0" x="2080" y="8" height="60" width="160" html.valueishtml="0"  name=prepayment_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="중량" border="6" color="0" x="2249" y="8" height="60" width="160" html.valueishtml="0"  name=weight_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="2418" y="8" height="60" width="594" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="8" height="76" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="3625" y="8" height="76" width="590" format="#,##0.00" html.valueishtml="0"  name=comqty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="4224" y="8" height="76" width="503" format="#,##0" html.valueishtml="0"  name=ship_amount visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="4736" y="8" height="76" width="599" format="#,##0" html.valueishtml="0"  name=insp_cash visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="5344" y="8" height="76" width="603" format="#,##0" html.valueishtml="0"  name=insp_rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="1211" y="8" height="76" width="859" format="[general]" html.valueishtml="0"  name=supp_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="773" y="8" height="76" width="430" format="[general]" html.valueishtml="0"  name=icube_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="7767" y="8" height="76" width="169" format="[general]" html.valueishtml="0"  name=keysort visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="5957" y="8" height="76" width="594" format="#,##0" html.valueishtml="0"  name=insp_total visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="6560" y="8" height="76" width="247" format="[general]" html.valueishtml="0"  name=login_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="6816" y="8" height="76" width="242" format="[general]" html.valueishtml="0"  name=team_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="7067" y="8" height="76" width="352" format="[general]" html.valueishtml="0"  name=user_name1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="7429" y="8" height="76" width="329" format="[general]" html.valueishtml="0"  name=team_name1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="347" y="8" height="76" width="416" format="[general]" html.valueishtml="0"  name=insp_flag visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="178" y="8" height="76" width="160" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="2080" y="8" height="76" width="160" format="[general]" html.valueishtml="0"  name=prepayment visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="2249" y="8" height="76" width="160" format="[general]" html.valueishtml="0"  name=weight visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="3022" y="8" height="76" width="594" format="#,##0.00" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0~tif ( keycolor = ~"Y~", rgb(255, 0, 0), rgb(0, 0, 0) )" x="2418" y="8" height="76" width="594" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+compute(band=footer alignment="1" expression="sum( comqty for all )"border="0" color="0" x="3625" y="4" height="72" width="590" format="#,##0.00" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( rcpt_qty for all )"border="0" color="0" x="3022" y="4" height="72" width="594" format="#,##0.00" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="72" width="160" format="[General]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( ship_amount for all )"border="0" color="0" x="4224" y="4" height="72" width="503" format="#,##0" html.valueishtml="0"  name=totshipamt visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( insp_cash for all )"border="0" color="0" x="4736" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( insp_rate for all )"border="0" color="0" x="5344" y="4" height="72" width="603" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( if ( isNumber( icube_no ), 0, 1 ) for all )"border="0" color="255" x="773" y="4" height="72" width="430" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( insp_total for all )"border="0" color="0" x="5957" y="4" height="72" width="594" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( if ( isNumber(login_id), 0, 1 ) for all )"border="0" color="255" x="6560" y="4" height="72" width="247" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( if ( isNumber( team_name ), 0, 1 ) for all )"border="0" color="255" x="6816" y="4" height="72" width="242" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( user_name1 for all DISTINCT user_name1 )"border="0" color="0" x="7067" y="4" height="72" width="352" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( team_name1 for all DISTINCT team_name1 )"border="0" color="0" x="7429" y="4" height="72" width="329" format="[GENERAL]" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( insp_flag for all DISTINCT insp_flag )"border="0" color="0" x="347" y="4" height="72" width="416" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( if (chk = ~"Y~", 1, 0 ) for all )"border="0" color="0" x="178" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=tchk visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( supp_name for all DISTINCT supp_name )"border="0" color="0" x="1211" y="4" height="72" width="859" format="[General]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( if ( prepayment = ~"Y~", 1, 0 ) for all )"border="0" color="0" x="2080" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_15 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="sum( if ( weight = ~"Y~", 1, 0 ) for all )"border="0" color="0" x="2249" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

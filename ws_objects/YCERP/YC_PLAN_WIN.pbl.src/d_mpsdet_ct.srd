@@ -1,0 +1,51 @@
+﻿$PBExportHeader$d_mpsdet_ct.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=72 color="536870912" )
+header[2](height=72 color="536870912" )
+header[3](height=72 color="536870912" )
+summary(height=80 color="8421504" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=work_no dbname="work_no" )
+ column=(type=char(20) updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=number updatewhereclause=yes name=cqty dbname="cqty" )
+ retrieve="  SELECT work_no      = h.work_no
+       , work_name    = h.work_name                                                      
+       , napgi_mm     = convert(char(7),b.order_date,111)
+       , napgi_week   = dbo.UF_MonthWEEK(b.order_date,1)
+       , napgi_dd     = datepart(day,b.order_date)
+       , napgi_dw     = datepart(dw, b.order_date)
+
+       , cqty         = (case when datalength(rtrim(a.qa)) <> 19 then 0           
+                              when left(a.wc_no,1) IN ('P', 'B') then
+       									  isnull(DBO.UF_GetItemCalc_PUB( a.wc_no, a.item_no, a.qa, a.order_qty ),0)
+                              else round(dbo.uf_getqty(a.item_no, a.qa, a.uom, a.order_qty),2,1) 
+                         end)
+    FROM mpsdet   A
+         LEFT OUTER JOIN mps      B ON a.order_no   = b.order_no
+         INNER JOIN wc            H ON a.wc_no      = h.work_no   
+   WHERE ( b.order_date    >= DATEadd(day,-7, getdate() ) )         
+     AND ( a.napgi_date    >= '2013/04/01'                )                        
+   ORDER BY a.priority ASC
+"  sort="work_no A work_name A " )
+text(band=header[1] alignment="0" text="환산" border="0" color="0" x="9" y="8" height="60" width="242" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[1] alignment="0" text="계획년월" border="0" color="0" x="261" y="8" height="60" width="338" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[1] alignment="1" text="일자" border="0" color="0" x="608" y="8" height="60" width="293" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="@napgi_mm" border="0" color="0" x="608" y="4" height="60" width="293" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[3] alignment="0" text="작업장" border="0" color="0" x="9" y="4" height="64" width="242" html.valueishtml="0"  name=work_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="작업장명" border="0" color="0" x="261" y="4" height="64" width="338" html.valueishtml="0"  name=work_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="@napgi_dd" border="0" color="0" x="608" y="4" height="64" width="293" html.valueishtml="0"  name=cqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="합계" border="0" color="0" x="910" y="4" height="64" width="379" html.valueishtml="0"  name=grand_sum_cqty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="242" format="[general]" html.valueishtml="0"  name=work_no visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="261" y="4" height="72" width="338" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="608" y="4" height="72" width="293" format="#,##0" html.valueishtml="0"  name=cqty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="910" y="4" height="72" width="379" format="#,##0" html.valueishtml="0"  name=grand_sum_cqty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=summary alignment="1" expression="~"합계~""border="0" color="0" x="9" y="4" height="72" width="242" format="[general]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(grand_sum_cqty for all )"border="0" color="33554432" x="910" y="4" height="72" width="379" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(cqty for all )"border="0" color="33554432" x="608" y="4" height="72" width="293" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="1" text="" border="0" color="0" x="261" y="4" height="72" width="338" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "napgi_mm, napgi_dd" rows = "work_no, work_name" values = "sum(cqty for crosstab)" sourcenames = "work_no, work_name, napgi_mm, napgi_week, napgi_dd, napgi_dw, cqty")
+sparse(names="work_no")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

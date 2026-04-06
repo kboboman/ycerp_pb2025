@@ -1,0 +1,176 @@
+﻿$PBExportHeader$d_oiitemtot_t1.srd
+$PBExportComments$물품별 출고현황(집계)_거래처
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=152 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(12) updatewhereclause=yes name=reg_no dbname="reg_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=area_name dbname="area_name" )
+ column=(type=char(6) updatewhereclause=yes name=cat_name dbname="cat_name" )
+ column=(type=char(10) updatewhereclause=yes name=cstart dbname="cstart" )
+ column=(type=char(10) updatewhereclause=yes name=cend dbname="cend" )
+ column=(type=decimal(1) updatewhereclause=yes name=ship_total dbname="ship_total" )
+ column=(type=decimal(2) updatewhereclause=yes name=qty dbname="ship_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=c_qty dbname="c_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=c_price dbname="c_price" )
+ column=(type=decimal(8) updatewhereclause=yes name=c_amt dbname="c_amt" )
+ column=(type=decimal(4) updatewhereclause=yes name=c_rate dbname="c_rate" )
+ column=(type=decimal(8) updatewhereclause=yes name=c_tot dbname="c_tot" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_rate dbname="do_rate" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_cash dbname="do_cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_total dbname="do_total" )
+ retrieve="   SELECT reg_no      = a.reg_no
+        , cust_name   = a.cust_name
+        , area_name   = a.area_name
+        , cat_name    = a.cat_name
+        , cstart      = a.cstart
+        , cend        = a.cend
+        , ship_total  = SUM(a.ship_total  )
+        , ship_qty    = SUM(a.ship_qty    )
+        , c_qty       = SUM(a.c_qty       )
+        , c_price     = SUM(a.c_price     )
+        , c_amt       = SUM(a.c_amt       )
+        , c_rate      = SUM(a.c_rate      )
+        , c_tot       = SUM(a.c_tot       )
+        , do_rate     = SUM(a.do_rate     )
+        , do_cash     = SUM(a.do_cash     )
+        , do_total    = SUM(a.do_total    )    
+     FROM (
+          SELECT cust_no     = aa.cust_no                           
+               , reg_no      = aa.reg_no
+               , item_name   = aa.item_name                  
+               , item_no     = aa.item_no                        
+               , qa          = aa.qa                             
+               , uom         = aa.uom                            
+               , cust_name   = aa.cust_name
+               , area_name   = aa.area_name
+               , cat_name    = aa.cat_name
+               , cstart      = aa.cstart
+               , cend        = aa.cend
+               , do_rate     = isnull(bb.do_rate, 0)
+               , do_cash     = isnull(bb.do_cash, 0)
+               , do_total    = isnull(bb.do_total,0)    
+               , ship_total  = aa.ship_total
+               , ship_qty    = aa.ship_qty
+               , c_qty       = aa.c_qty
+               , c_price     = aa.c_price
+               , c_amt       = aa.c_amt
+               , c_rate      = aa.c_rate
+               , c_tot       = aa.c_tot
+            FROM (  /* 출고HEAD의 공급가와 출고상세 집계금액 단수차이 발생함 */
+                 SELECT cust_no     = do.cust_no                           
+                      , reg_no      = customer.register_no
+                      , item_name   = groupitem.item_name                  
+                      , item_no     = dodet.item_no                        
+                      , qa          = dodet.qa                             
+                      , uom         = dodet.uom                            
+                      , do_no       = do.do_no                             
+                      , oi_no       = dodet.oi_no                          
+                      , cust_name   = customer.cust_name
+                      , area_name   = (case when :as_area = '%'     then '전체사업장'
+                                            when :as_area = 'Z0001' then '대전사업장'
+                                            when :as_area = 'S0001' then '시화사업장'
+                                            when :as_area = 'B0001' then 'YSP사업장'
+                                            when :as_area = 'H0001' then '화곡사업장'
+                                            when :as_area = 'T0001' then '화성사업장'
+                                            else :as_area
+                                       end)
+                      , cat_name    = (case when :as_category = '%'  then '전체'
+                                            when :as_category = 'P%' then '제품'
+                                            when :as_category = 'G%' then '상품'
+                                            when :as_category = 'M%' then '원재료'
+                                            else substring(dodet.item_no,1,1)
+                                       end)
+                      , cstart      = (case when :as_start    = ''  then '          ' else :as_start          end)
+                      , cend        = (case when :as_end      = ''  then '          ' else :as_end            end)
+                      , do_rate      = do.do_rate     
+                      , do_cash      = do.do_cash     
+                      , do_total     = do.do_total    
+                      , ship_total  = (case when do.ship_flag = 'D' and do.shipamt_case = 'R' and dodet.oi_no = 1 then /* 대여, 부담 */
+                                                 (case when do.do_rate <> 0 then /* 영세율이 아닌것 */
+                                                            do.ship_amount * 1.1 
+                                                       else do.ship_amount 
+                                                  end)
+                                            else 0
+                                       end)
+                      , ship_qty    = dodet.ship_qty
+                      , c_qty       = round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1)
+                      , c_price     = dodet.price
+                      , c_amt       = (case when customer.round = 'Y' then 
+                                                 round((dodet.price * round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1) ), 0,0)
+                                            else round((dodet.price * round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1) ), 0,1) 
+                                       end )                      
+                      , c_rate      = dodet.rate_cash
+                      , c_tot       = (case when customer.round = 'Y' then 
+                                                 round((dodet.price * round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1) ), 0,0)
+                                            else round((dodet.price * round(dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty),2,1) ), 0,1) 
+                                       end) + dodet.rate_cash
+                   FROM do           
+                      , dodet        
+                      , groupitem    
+                      , customer  
+                  WHERE ( do.do_no                = dodet.do_no       ) 
+                    AND ( dodet.item_no           = groupitem.item_no ) 
+                    AND ( do.cust_no              = customer.cust_no  )             
+                    AND ( do.area_no           LIKE :as_area          )
+                    AND ( convert(char(10),do.do_date,111)  BETWEEN :as_start AND :as_end )
+                    AND ( do.cust_no           LIKE :as_cust          )
+                    AND ( dodet.item_no        LIKE :as_category      )    
+               /* ORDER BY groupitem.item_name, dodet.qa */
+               ) AA
+               LEFT OUTER JOIN (  /* 출고상세 삭제시 순번 재정의 안됨 */
+                  SELECT do_no    = a.do_no
+                       , oi_no    = min(a.oi_no)
+                       , do_rate  = max(a.do_rate)
+                       , do_cash  = max(a.do_cash)
+                       , do_total = max(a.do_total)
+                    FROM (
+                          SELECT do_no        = do.do_no                             
+                               , oi_no        = dodet.oi_no
+                               , do_rate      = do.do_rate     
+                               , do_cash      = do.do_cash     
+                               , do_total     = do.do_total    
+                            FROM do           
+                               , dodet        
+                               , groupitem    
+                               , customer  
+                           WHERE ( do.do_no                = dodet.do_no       ) 
+                             AND ( dodet.item_no           = groupitem.item_no ) 
+                             AND ( do.cust_no              = customer.cust_no  )             
+                             AND ( do.area_no           LIKE :as_area          )
+                             AND ( convert(char(10),do.do_date,111)  BETWEEN :as_start AND :as_end )
+                             AND ( do.cust_no           LIKE :as_cust          )
+                             AND ( dodet.item_no        LIKE :as_category      )    
+                        /* order by 1, 2 */
+                        ) a
+                    GROUP BY a.do_no
+               ) BB  ON aa.do_no  = bb.do_no  AND aa.oi_no  = bb.oi_no                         
+          ) A
+      GROUP BY a.reg_no
+             , a.cust_name   
+             , a.area_name   
+             , a.cat_name    
+             , a.cstart      
+             , a.cend        
+" arguments=(("as_area", string),("as_start", string),("as_end", string),("as_cust", string),("as_category", string))  sort="cust_name A " )
+text(band=header alignment="2" text="공급가액" border="6" color="0" x="1038" y="84" height="60" width="549" html.valueishtml="0"  name=c_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="세액" border="6" color="0" x="1595" y="84" height="60" width="571" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="9" y="84" height="60" width="1019" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="재고구분" border="6" color="0" x="9" y="8" height="60" width="1019" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=header id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1038" y="8" height="60" width="549" format="[general]" html.valueishtml="0"  name=cat_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="합계금액(운+)" border="6" color="0" x="2176" y="84" height="60" width="594" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사업자번호" border="6" color="0" x="2779" y="84" height="60" width="503" html.valueishtml="0"  name=reg_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="1038" y="4" height="60" width="549" format="#,##0" html.valueishtml="0"  name=c_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="1595" y="4" height="60" width="571" format="#,##0" html.valueishtml="0"  name=c_rate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="1019" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="c_tot + ship_total"border="0" color="0" x="2176" y="4" height="60" width="594" format="#,##0" html.valueishtml="0"  name=c_total visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="2779" y="4" height="60" width="503" format="[general]" html.valueishtml="0"  name=reg_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression=" sum( do_do_rate  for all )"border="0" color="0" x="1595" y="8" height="60" width="571" format="#,##0" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression=" sum(  do_do_total  for all ) "border="0" color="0" x="2176" y="8" height="60" width="594" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression=" sum( do_do_cash  for all ) "border="0" color="0" x="1038" y="8" height="60" width="549" format="#,##0" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="60" width="1019" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

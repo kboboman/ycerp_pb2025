@@ -1,0 +1,355 @@
+﻿$PBExportHeader$d_apoiinvcheck_r.srd
+$PBExportComments$매입계산서 미발행 리스트
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="67108864" )
+detail(height=88 color="536870912" )
+table(column=(type=char(6) updatewhereclause=yes name=담당자 dbname="담당자" )
+ column=(type=char(10) updatewhereclause=yes name=코드 dbname="코드" )
+ column=(type=char(30) updatewhereclause=yes name=거래처명 dbname="거래처명" )
+ column=(type=long updatewhereclause=yes name=전년이월 dbname="전년이월" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0005 dbname="compute_0005" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0006 dbname="compute_0006" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0007 dbname="compute_0007" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0008 dbname="compute_0008" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0009 dbname="compute_0009" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0010 dbname="compute_0010" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0011 dbname="compute_0011" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0012 dbname="compute_0012" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0013 dbname="compute_0013" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0014 dbname="compute_0014" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0015 dbname="compute_0015" )
+ column=(type=decimal(8) updatewhereclause=yes name=compute_0016 dbname="compute_0016" )
+ column=(type=decimal(5) updatewhereclause=yes name=vatamt dbname="VATAMT" )
+ column=(type=decimal(0) updatewhereclause=yes name=차액 dbname="차액" )
+ column=(type=long updatewhereclause=yes name=yyy dbname="YYY" )
+ column=(type=decimal(6) updatewhereclause=yes name=m01 dbname="M01" )
+ column=(type=decimal(6) updatewhereclause=yes name=m02 dbname="M02" )
+ column=(type=decimal(6) updatewhereclause=yes name=m03 dbname="M03" )
+ column=(type=decimal(6) updatewhereclause=yes name=m04 dbname="M04" )
+ column=(type=decimal(6) updatewhereclause=yes name=m05 dbname="M05" )
+ column=(type=decimal(6) updatewhereclause=yes name=m06 dbname="M06" )
+ column=(type=decimal(6) updatewhereclause=yes name=m07 dbname="M07" )
+ column=(type=decimal(6) updatewhereclause=yes name=m08 dbname="M08" )
+ column=(type=decimal(6) updatewhereclause=yes name=m09 dbname="M09" )
+ column=(type=decimal(6) updatewhereclause=yes name=m10 dbname="M10" )
+ column=(type=decimal(6) updatewhereclause=yes name=m11 dbname="M11" )
+ column=(type=decimal(6) updatewhereclause=yes name=m12 dbname="M12" )
+ retrieve="SELECT *
+/*--------------------------------------------------------------
+--  거래명세서 매입금액 과 매입계산서 총금액 비교             --
+--------------------------------------------------------------*/
+  FROM (
+        SELECT A.USERNM                        AS [담당자]    
+             , A.CUSTNO                        AS [코드]      
+             , A.CUSTNM                        AS [거래처명]  
+             , A.YEARAMT                       AS [전년이월]     
+             , A.MON01                         AS [01월매입]     
+             , A.MON02                         AS [02월매입]     
+             , A.MON03                         AS [03월매입]     
+             , A.MON04                         AS [04월매입]     
+             , A.MON05                         AS [05월매입]     
+             , A.MON06                         AS [06월매입]     
+             , A.MON07                         AS [07월매입]     
+             , A.MON08                         AS [08월매입]     
+             , A.MON09                         AS [09월매입]     
+             , A.MON10                         AS [10월매입]     
+             , A.MON11                         AS [11월매입]     
+             , A.MON12                         AS [12월매입]  
+             , ISNULL(B.VATAMT,0)              AS [VATAMT]
+             , CASE WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '01' THEN ISNULL( FLOOR(A.MON01 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '02' THEN ISNULL( FLOOR(A.MON02 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '03' THEN ISNULL( FLOOR(A.MON03 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '04' THEN ISNULL( FLOOR(A.MON04 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '05' THEN ISNULL( FLOOR(A.MON05 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '06' THEN ISNULL( FLOOR(A.MON06 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '07' THEN ISNULL( FLOOR(A.MON07 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '08' THEN ISNULL( FLOOR(A.MON08 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '09' THEN ISNULL( FLOOR(A.MON09 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '10' THEN ISNULL( FLOOR(A.MON10 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '11' THEN ISNULL( FLOOR(A.MON11 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '12' THEN ISNULL( FLOOR(A.MON12 * 1.1) - ISNULL(B.VATAMT, 0), 0) 
+               END                             AS [차액]  
+             , YYY     = (CASE WHEN A.YEARAMT < 0 THEN A.YEARAMT * -1 ELSE A.YEARAMT END)
+             , M01     = (CASE WHEN A.MON01   < 0 THEN A.MON01   * -1 ELSE A.MON01   END)
+             , M02     = (CASE WHEN A.MON02   < 0 THEN A.MON02   * -1 ELSE A.MON02   END)
+             , M03     = (CASE WHEN A.MON03   < 0 THEN A.MON03   * -1 ELSE A.MON03   END)
+             , M04     = (CASE WHEN A.MON04   < 0 THEN A.MON04   * -1 ELSE A.MON04   END)
+             , M05     = (CASE WHEN A.MON05   < 0 THEN A.MON05   * -1 ELSE A.MON05   END)
+             , M06     = (CASE WHEN A.MON06   < 0 THEN A.MON06   * -1 ELSE A.MON06   END)
+             , M07     = (CASE WHEN A.MON07   < 0 THEN A.MON07   * -1 ELSE A.MON07   END)
+             , M08     = (CASE WHEN A.MON08   < 0 THEN A.MON08   * -1 ELSE A.MON08   END)
+             , M09     = (CASE WHEN A.MON09   < 0 THEN A.MON09   * -1 ELSE A.MON09   END)
+             , M10     = (CASE WHEN A.MON10   < 0 THEN A.MON10   * -1 ELSE A.MON10   END)
+             , M11     = (CASE WHEN A.MON11   < 0 THEN A.MON11   * -1 ELSE A.MON11   END)
+             , M12     = (CASE WHEN A.MON12   < 0 THEN A.MON12   * -1 ELSE A.MON12   END)
+          FROM ( 
+                /* 거래처별 입고내역 */
+                SELECT USERNM      = '구매팀'
+                     , CUSTNO      = MAX(BB.SUPP_NO)
+                     , CUSTNM      = MAX(BB.SUPP_NAME)
+                     , YEARAMT     = 0
+                     , MON01       = SUM(BB.MON01)
+                     , MON02       = SUM(BB.MON02)
+                     , MON03       = SUM(BB.MON03)
+                     , MON04       = SUM(BB.MON04)
+                     , MON05       = SUM(BB.MON05)
+                     , MON06       = SUM(BB.MON06)
+                     , MON07       = SUM(BB.MON07)
+                     , MON08       = SUM(BB.MON08)
+                     , MON09       = SUM(BB.MON09)
+                     , MON10       = SUM(BB.MON10)
+                     , MON11       = SUM(BB.MON11)
+                     , MON12       = SUM(BB.MON12)
+                  FROM (
+                        SELECT AA.YYYY
+                             , AA.SUPP_NO
+                             , AA.SUPP_NAME
+                             , CASE WHEN AA.MM = '01' THEN AA.PRICE ELSE 0 END AS MON01
+                             , CASE WHEN AA.MM = '02' THEN AA.PRICE ELSE 0 END AS MON02
+                             , CASE WHEN AA.MM = '03' THEN AA.PRICE ELSE 0 END AS MON03
+                             , CASE WHEN AA.MM = '04' THEN AA.PRICE ELSE 0 END AS MON04
+                             , CASE WHEN AA.MM = '05' THEN AA.PRICE ELSE 0 END AS MON05
+                             , CASE WHEN AA.MM = '06' THEN AA.PRICE ELSE 0 END AS MON06
+                             , CASE WHEN AA.MM = '07' THEN AA.PRICE ELSE 0 END AS MON07
+                             , CASE WHEN AA.MM = '08' THEN AA.PRICE ELSE 0 END AS MON08
+                             , CASE WHEN AA.MM = '09' THEN AA.PRICE ELSE 0 END AS MON09
+                             , CASE WHEN AA.MM = '10' THEN AA.PRICE ELSE 0 END AS MON10
+                             , CASE WHEN AA.MM = '11' THEN AA.PRICE ELSE 0 END AS MON11
+                             , CASE WHEN AA.MM = '12' THEN AA.PRICE ELSE 0 END AS MON12
+                             
+                          FROM (
+                                SELECT YYYY      = SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),1,4)
+                                     , MM        = SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),6,2)
+                                     , B.SUPP_NO
+                                     , E.SUPP_NAME
+                                     , PRICE     = SUM(A.COMQTY * A.PRICE)
+                            FROM  inspdet a with(nolock) inner join insp b with(nolock) on a.insp_no = b.insp_no
+                                                                inner join GROUPITEM f with(nolock) on  a.item_no    = f.item_no
+                                                                inner join  pur d with(nolock) on a.pur_no    = d.order_no
+                                                                inner join  purdet c  with(nolock) on  a.pur_no  = c.order_no and a.seq_no  = c.seq_no 
+                                                                inner join  supp  e with(nolock) on b.supp_no       = e.supp_no   
+                                                                left outer join coilmst g with(nolock) on a.coil_no = g.coil_no and a.loc_no = g.loc_no
+                                 WHERE ( 
+                                                       ( B.SUPP_NO        LIKE :as_supp_no ) AND  
+                                                       ( CONVERT(CHAR(4),B.INSP_DATE,112) = SUBSTRING(:as_yyyymm, 1, 4) ) AND  
+                                                       ((B.AREA_NO        LIKE 'S0001' + '%' ) OR ( 'S0001' = 'S' AND A.PUR_NO LIKE 'PUR%'))
+                                                    ) 
+                                 GROUP BY B.SUPP_NO
+                                                      , E.SUPP_NAME 
+                                                      , SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),1,4)
+                                                      , SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),6,2)
+                               ) AA  
+                        ) BB
+                    GROUP BY BB.YYYY, BB.SUPP_NO, BB.SUPP_NAME
+                 
+               )  A  left outer join
+               (
+                      SELECT CUSTNO     = A.SUPP_NO                                
+                           , IMONTH     = SUBSTRING(CONVERT(CHAR(10), A.OI_DATE, 111), 6, 2)
+                           , VATAMT     = SUM(A.APOIINV_CASH + A.APOIINV_RATE + (A.SHIP_COST * 1.1))
+                        FROM APOIINV   AS A  with(nolock) 
+                       WHERE SUBSTRING(CONVERT(CHAR(10), A.OI_DATE, 111), 1, 7) = :as_yyyymm
+                         AND A.DELETE_FLAG  =  'N'
+                       GROUP BY A.SUPP_NO, SUBSTRING(CONVERT(CHAR(10), A.OI_DATE, 111), 6, 2)
+                       /* ( 공급가 + 부가세 + (운반비 * 1.1) ) */  
+               )  B  on   A.CUSTNO  = B.CUSTNO
+       )  AB
+ WHERE (AB.YYY + AB.M01 + AB.M02 + AB.M03 + AB.M04 + AB.M05 + AB.M06
+               + AB.M07 + AB.M08 + AB.M09 + AB.M10 + AB.M11 + AB.M12
+       )  <>  0
+ ORDER  BY  AB.[코드]
+/*
+SELECT *
+/*--------------------------------------------------------------
+--  거래명세서 매입금액 과 매입계산서 총금액 비교             --
+--------------------------------------------------------------*/
+  FROM (
+        SELECT A.USERNM                        AS [담당자]    
+             , A.CUSTNO                        AS [코드]      
+             , A.CUSTNM                        AS [거래처명]  
+             , A.YEARAMT                       AS [전년이월]     
+             , A.MON01                         AS [01월매입]     
+             , A.MON02                         AS [02월매입]     
+             , A.MON03                         AS [03월매입]     
+             , A.MON04                         AS [04월매입]     
+             , A.MON05                         AS [05월매입]     
+             , A.MON06                         AS [06월매입]     
+             , A.MON07                         AS [07월매입]     
+             , A.MON08                         AS [08월매입]     
+             , A.MON09                         AS [09월매입]     
+             , A.MON10                         AS [10월매입]     
+             , A.MON11                         AS [11월매입]     
+             , A.MON12                         AS [12월매입]  
+             , ISNULL(B.VATAMT,0)              AS [VATAMT]
+             , CASE WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '01' THEN ISNULL( FLOOR(A.MON01 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '02' THEN ISNULL( FLOOR(A.MON02 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '03' THEN ISNULL( FLOOR(A.MON03 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '04' THEN ISNULL( FLOOR(A.MON04 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '05' THEN ISNULL( FLOOR(A.MON05 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '06' THEN ISNULL( FLOOR(A.MON06 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '07' THEN ISNULL( FLOOR(A.MON07 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '08' THEN ISNULL( FLOOR(A.MON08 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '09' THEN ISNULL( FLOOR(A.MON09 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '10' THEN ISNULL( FLOOR(A.MON10 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '11' THEN ISNULL( FLOOR(A.MON11 * 1.1) - ISNULL(B.VATAMT, 0), 0)
+                    WHEN SUBSTRING(:as_yyyymm, 6, 2)  =  '12' THEN ISNULL( FLOOR(A.MON12 * 1.1) - ISNULL(B.VATAMT, 0), 0) 
+               END                             AS [차액]  
+             , YYY     = (CASE WHEN A.YEARAMT < 0 THEN A.YEARAMT * -1 ELSE A.YEARAMT END)
+             , M01     = (CASE WHEN A.MON01   < 0 THEN A.MON01   * -1 ELSE A.MON01   END)
+             , M02     = (CASE WHEN A.MON02   < 0 THEN A.MON02   * -1 ELSE A.MON02   END)
+             , M03     = (CASE WHEN A.MON03   < 0 THEN A.MON03   * -1 ELSE A.MON03   END)
+             , M04     = (CASE WHEN A.MON04   < 0 THEN A.MON04   * -1 ELSE A.MON04   END)
+             , M05     = (CASE WHEN A.MON05   < 0 THEN A.MON05   * -1 ELSE A.MON05   END)
+             , M06     = (CASE WHEN A.MON06   < 0 THEN A.MON06   * -1 ELSE A.MON06   END)
+             , M07     = (CASE WHEN A.MON07   < 0 THEN A.MON07   * -1 ELSE A.MON07   END)
+             , M08     = (CASE WHEN A.MON08   < 0 THEN A.MON08   * -1 ELSE A.MON08   END)
+             , M09     = (CASE WHEN A.MON09   < 0 THEN A.MON09   * -1 ELSE A.MON09   END)
+             , M10     = (CASE WHEN A.MON10   < 0 THEN A.MON10   * -1 ELSE A.MON10   END)
+             , M11     = (CASE WHEN A.MON11   < 0 THEN A.MON11   * -1 ELSE A.MON11   END)
+             , M12     = (CASE WHEN A.MON12   < 0 THEN A.MON12   * -1 ELSE A.MON12   END)
+          FROM ( 
+                /* 거래처별 입고내역 */
+                SELECT USERNM      = '구매팀'
+                     , CUSTNO      = MAX(BB.SUPP_NO)
+                     , CUSTNM      = MAX(BB.SUPP_NAME)
+                     , YEARAMT     = 0
+                     , MON01       = SUM(BB.MON01)
+                     , MON02       = SUM(BB.MON02)
+                     , MON03       = SUM(BB.MON03)
+                     , MON04       = SUM(BB.MON04)
+                     , MON05       = SUM(BB.MON05)
+                     , MON06       = SUM(BB.MON06)
+                     , MON07       = SUM(BB.MON07)
+                     , MON08       = SUM(BB.MON08)
+                     , MON09       = SUM(BB.MON09)
+                     , MON10       = SUM(BB.MON10)
+                     , MON11       = SUM(BB.MON11)
+                     , MON12       = SUM(BB.MON12)
+                  FROM (
+                        SELECT AA.YYYY
+                             , AA.SUPP_NO
+                             , AA.SUPP_NAME
+                             , CASE WHEN AA.MM = '01' THEN AA.PRICE ELSE 0 END AS MON01
+                             , CASE WHEN AA.MM = '02' THEN AA.PRICE ELSE 0 END AS MON02
+                             , CASE WHEN AA.MM = '03' THEN AA.PRICE ELSE 0 END AS MON03
+                             , CASE WHEN AA.MM = '04' THEN AA.PRICE ELSE 0 END AS MON04
+                             , CASE WHEN AA.MM = '05' THEN AA.PRICE ELSE 0 END AS MON05
+                             , CASE WHEN AA.MM = '06' THEN AA.PRICE ELSE 0 END AS MON06
+                             , CASE WHEN AA.MM = '07' THEN AA.PRICE ELSE 0 END AS MON07
+                             , CASE WHEN AA.MM = '08' THEN AA.PRICE ELSE 0 END AS MON08
+                             , CASE WHEN AA.MM = '09' THEN AA.PRICE ELSE 0 END AS MON09
+                             , CASE WHEN AA.MM = '10' THEN AA.PRICE ELSE 0 END AS MON10
+                             , CASE WHEN AA.MM = '11' THEN AA.PRICE ELSE 0 END AS MON11
+                             , CASE WHEN AA.MM = '12' THEN AA.PRICE ELSE 0 END AS MON12
+                             
+                          FROM (
+                                SELECT YYYY      = SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),1,4)
+                                     , MM        = SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),6,2)
+                                     , B.SUPP_NO
+                                     , E.SUPP_NAME
+                                     , PRICE     = SUM(A.COMQTY * A.PRICE)
+                                  FROM INSPDET   A,   
+                                       INSP      B,   
+                                       PURDET    C,
+                                       PUR       D,
+                                       SUPP      E,
+                                       GROUPITEM F,                     
+                                       COILMST   G
+                                 WHERE ( F.ITEM_NO             = A.ITEM_NO  )  
+                                   AND ( B.INSP_NO             = A.INSP_NO  )  
+                                   AND ( A.PUR_NO              = C.ORDER_NO )  
+                                   AND ( A.SEQ_NO              = C.SEQ_NO   )  
+                                   AND ( D.ORDER_NO            = A.PUR_NO   )  
+                                   AND ( B.SUPP_NO             = E.SUPP_NO  )  
+                                   AND ( ( B.SUPP_NO        LIKE :as_supp_no ) AND  
+                                         ( CONVERT(CHAR(4),B.INSP_DATE,112) = SUBSTRING(:as_yyyymm, 1, 4) ) AND  
+                                         ((B.AREA_NO        LIKE 'S0001' + '%' ) OR ( 'S0001' = 'S' AND A.PUR_NO LIKE 'PUR%'))
+                                       ) 
+                                   AND ( ( A.COIL_NO *= G.COIL_NO ) AND ( A.LOC_NO *= G.LOC_NO ) )
+                                 GROUP BY B.SUPP_NO
+                                        , E.SUPP_NAME 
+                                        , SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),1,4)
+                                        , SUBSTRING(CONVERT(CHAR(10),B.INSP_DATE,111),6,2)
+                               ) AA  
+                        ) BB
+                    GROUP BY BB.YYYY, BB.SUPP_NO, BB.SUPP_NAME
+                 
+               )  A  ,
+               (
+                SELECT CUSTNO     = A.SUPP_NO                                
+                     , IMONTH     = SUBSTRING(CONVERT(CHAR(10), A.OI_DATE, 111), 6, 2)
+                     , VATAMT     = SUM(A.APOIINV_CASH + A.APOIINV_RATE + (A.SHIP_COST * 1.1))
+                  FROM APOIINV   AS A
+                 WHERE SUBSTRING(CONVERT(CHAR(10), A.OI_DATE, 111), 1, 7) = :as_yyyymm
+                   AND A.DELETE_FLAG  =  'N'
+                 GROUP BY A.SUPP_NO, SUBSTRING(CONVERT(CHAR(10), A.OI_DATE, 111), 6, 2)
+                 /* ( 공급가 + 부가세 + (운반비 * 1.1) ) */  
+               )  B
+         WHERE A.CUSTNO            *=  B.CUSTNO
+       )  AB
+ WHERE (AB.YYY + AB.M01 + AB.M02 + AB.M03 + AB.M04 + AB.M05 + AB.M06
+               + AB.M07 + AB.M08 + AB.M09 + AB.M10 + AB.M11 + AB.M12
+       )  <>  0
+ ORDER  BY  AB.[코드]
+*/" arguments=(("as_yyyymm", string),("as_supp_no", string)) )
+text(band=header alignment="2" text="코드" border="6" color="33554432" x="9" y="8" height="60" width="183" html.valueishtml="0"  name=코드_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전년이월" border="6" color="33554432" x="2235" y="8" height="60" width="430" html.valueishtml="0"  name=전년이월_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="01월매입" border="6" color="33554432" x="2674" y="8" height="60" width="507" html.valueishtml="0"  name=compute_0005_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="02월매입" border="6" color="33554432" x="3191" y="8" height="60" width="512" html.valueishtml="0"  name=compute_0006_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="03월매입" border="6" color="33554432" x="3712" y="8" height="60" width="507" html.valueishtml="0"  name=compute_0007_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="04월매입" border="6" color="33554432" x="4229" y="8" height="60" width="503" html.valueishtml="0"  name=compute_0008_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="05월매입" border="6" color="33554432" x="4741" y="8" height="60" width="517" html.valueishtml="0"  name=compute_0009_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="06월매입" border="6" color="33554432" x="5266" y="8" height="60" width="517" html.valueishtml="0"  name=compute_0010_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="07월매입" border="6" color="33554432" x="5792" y="8" height="60" width="498" html.valueishtml="0"  name=compute_0011_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="08월매입" border="6" color="33554432" x="6299" y="8" height="60" width="512" html.valueishtml="0"  name=compute_0012_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="09월매입" border="6" color="33554432" x="6821" y="8" height="60" width="507" html.valueishtml="0"  name=compute_0013_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="10월매입" border="6" color="33554432" x="7337" y="8" height="60" width="507" html.valueishtml="0"  name=compute_0014_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="11월매입" border="6" color="33554432" x="7854" y="8" height="60" width="512" html.valueishtml="0"  name=compute_0015_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="12월매입" border="6" color="33554432" x="8375" y="8" height="60" width="507" html.valueishtml="0"  name=compute_0016_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="년 합계" border="6" color="33554432" x="8891" y="8" height="60" width="512" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="차액" border="6" color="33554432" x="1723" y="8" height="60" width="503" html.valueishtml="0"  name=차액_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="201" y="8" height="60" width="1001" html.valueishtml="0"  name=거래처명_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매입계산서" border="6" color="33554432" x="1211" y="8" height="60" width="503" html.valueishtml="0"  name=vatamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( 차액 <> 0, rgb(255,0,0), rgb(0,0,0))" x="9" y="8" height="72" width="183" format="[general]" html.valueishtml="0"  name=코드 visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2235" y="8" height="72" width="430" format="#,##0" html.valueishtml="0"  name=전년이월 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2674" y="8" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_0005 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="3191" y="8" height="72" width="512" format="#,##0" html.valueishtml="0"  name=compute_0006 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="3712" y="8" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_0007 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="4229" y="8" height="72" width="503" format="#,##0" html.valueishtml="0"  name=compute_0008 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="4741" y="8" height="72" width="517" format="#,##0" html.valueishtml="0"  name=compute_0009 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="5266" y="8" height="72" width="517" format="#,##0" html.valueishtml="0"  name=compute_0010 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="5792" y="8" height="72" width="498" format="#,##0" html.valueishtml="0"  name=compute_0011 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="6299" y="8" height="72" width="512" format="#,##0" html.valueishtml="0"  name=compute_0012 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="6821" y="8" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_0013 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="7337" y="8" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_0014 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="33554432" x="7854" y="8" height="72" width="512" format="#,##0" html.valueishtml="0"  name=compute_0015 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="8375" y="8" height="72" width="507" format="#,##0" html.valueishtml="0"  name=compute_0016 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=detail alignment="1" expression="compute_0005 + compute_0006 + compute_0007 + compute_0008 + compute_0009 + compute_0010 + compute_0011 + compute_0012 + compute_0013 + compute_0014 + compute_0015 + compute_0016"border="0" color="33554432" x="8891" y="8" height="72" width="512" format="#,##0" html.valueishtml="0"  name=compute_32 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( 차액 <> 0, rgb(255,0,0), rgb(0,0,0))" x="201" y="8" height="72" width="1001" format="[general]" html.valueishtml="0"  name=거래처명 visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( 차액 <> 0, rgb(255,0,0), rgb(255,255,255))" x="1723" y="8" height="72" width="503" format="#,##0" html.valueishtml="0"  name=차액 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( 차액 <> 0, rgb(255,0,0), rgb(255,255,255))" x="1211" y="8" height="72" width="503" format="#,##0" html.valueishtml="0"  name=vatamt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)
+" )
+compute(band=footer alignment="1" expression="sum(compute_0005 for all)"border="0" color="33554432" x="2674" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0006 for all)"border="0" color="33554432" x="3191" y="8" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0007 for all)"border="0" color="33554432" x="3712" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_21 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0008 for all)"border="0" color="33554432" x="4229" y="8" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_22 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0009 for all)"border="0" color="33554432" x="4741" y="8" height="60" width="517" format="#,##0" html.valueishtml="0"  name=compute_23 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0010 for all)"border="0" color="33554432" x="5266" y="8" height="60" width="517" format="#,##0" html.valueishtml="0"  name=compute_24 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0011 for all)"border="0" color="33554432" x="5792" y="8" height="60" width="498" format="#,##0" html.valueishtml="0"  name=compute_25 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0012 for all)"border="0" color="33554432" x="6299" y="8" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_26 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0013 for all)"border="0" color="33554432" x="6821" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_27 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0014 for all)"border="0" color="33554432" x="7337" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_28 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0015 for all)"border="0" color="33554432" x="7854" y="8" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_29 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_0016 for all)"border="0" color="33554432" x="8375" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_30 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(compute_32 for all)"border="0" color="33554432" x="8891" y="8" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_33 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=footer alignment="2" text="합계" border="0" color="0" x="9" y="8" height="60" width="183" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(전년이월 for all)"border="0" color="33554432" x="2235" y="8" height="60" width="430" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression="count(  코드  for all ) "border="0" color="33554432" x="201" y="8" height="60" width="1001" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(  vatamt for all )"border="0" color="33554432" x="1211" y="8" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(차액 for all)"border="0" color="33554432" x="1723" y="8" height="60" width="503" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( compute_2 <> 0, rgb(255,0,0), rgb(217, 217, 217))" )
+
+sparse(names="코드	거래처명")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

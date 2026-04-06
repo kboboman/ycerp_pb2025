@@ -1,0 +1,91 @@
+﻿$PBExportHeader$d_routetempnew_paint.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=72 color="536870912" )
+header[2](height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=color_name dbname="color_name" )
+ column=(type=char(20) updatewhereclause=yes name=item_name1 dbname="item_name1" )
+ column=(type=char(20) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=number updatewhereclause=yes name=plan_qty dbname="plan_qty" )
+ retrieve="  SELECT wc_no      = (SELECT work_name FROM wc WHERE work_no = routtempnew.wc_no)
+       , routtempnew.operation   
+       , routtempnew.sale_no   
+       , routtempnew.seq_no   
+         
+       , routtempnew.work_date   
+       , routtempnew.plan_flag   
+       , routtempnew.process_flag   
+       , routtempnew.cust_no   
+       , customer.cust_name   
+       , routtempnew.scene_code   
+       , scene.scene_desc   
+       , routtempnew.napgi_date   
+       , routtempnew.item_no   
+       , item_name1 = (case when routtempnew.item_no = 'NO_ITEM' then 'NO_ITEM' else G1.item_name end)   
+       , routtempnew.qa   
+       , routtempnew.item_color   
+       , color_name = color.color_name   
+       , routtempnew.order_qty   
+       , routtempnew.assy_item   
+       , groupitem.item_name   
+       , routtempnew.assy_qa   
+       , routtempnew.uom   
+       , routtempnew.plan_qty   
+       , routtempnew.make_qty   
+       , ship_qty  = dbo.uf_getdosumqty(routtempnew.sale_no, routtempnew.seq_no)
+       , routtempnew.qpa   
+       , routtempnew.reserved_qty   
+       , routtempnew.rem   
+       , user_name = (SELECT user_name FROM login WHERE user_id = customer.salesman)
+    FROM routtempnew   
+         LEFT OUTER JOIN groupitem    ON routtempnew.assy_item  = groupitem.item_no
+         LEFT OUTER JOIN groupitem G1 ON routtempnew.item_no    = G1.item_no  
+         LEFT OUTER JOIN customer     ON routtempnew.cust_no    = customer.cust_no
+         LEFT OUTER JOIN scene        ON routtempnew.scene_code = scene.scene_code
+         LEFT OUTER JOIN sale         ON routtempnew.sale_no    = sale.order_no
+         LEFT OUTER JOIN salepic      ON routtempnew.sale_no    = salepic.order_no
+         LEFT OUTER JOIN color        ON routtempnew.item_color = color.color_code
+   WHERE ( routtempnew.napgi_date   >= '2013/04/01' )   
+     AND ( sale.open_close           = 'O' ) 
+     AND ( routtempnew.process_flag <> 'C' ) 
+     AND ( routtempnew.work_date    >= DATEadd(year, -1 ,getdate()) ) 
+     AND ( sale.order_date          >= DATEadd(year, -1 ,getdate()) ) 
+     AND ( routtempnew.plan_flag = 'N'     )
+     AND ( routtempnew.area_no   = :as_area)
+     AND ( routtempnew.wc_no between 'P00' AND 'P05' )
+" arguments=(("as_area", string))  sort="color_name A item_name1 A rem A " )
+group(level=1 header.height=0 trailer.height=72 by=("color_name" ) header.color="536870912" trailer.color="12639424" )
+group(level=2 header.height=0 trailer.height=72 by=("item_name1" ) header.color="536870912" trailer.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=color_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="434" y="4" height="72" width="1115" format="[general]" html.valueishtml="0"  name=item_name1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1559" y="4" height="72" width="773" format="[general]" html.valueishtml="0"  name=rem visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2341" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=plan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2693" y="4" height="72" width="416" format="#,##0" html.valueishtml="0"  name=grand_sum_plan_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="0" expression="item_name1 + ~" 계~""border="0" color="33554432" x="434" y="4" height="72" width="1115" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(plan_qty for group 2)"border="0" color="33554432" x="2341" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(grand_sum_plan_qty for group 2)"border="0" color="33554432" x="2693" y="4" height="72" width="416" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="color_name + ~" 계~""border="0" color="33554432" x="9" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(plan_qty for group 1)"border="0" color="33554432" x="2341" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_plan_qty for group 1)"border="0" color="33554432" x="2693" y="4" height="72" width="416" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(plan_qty for all )"border="0" color="33554432" x="2341" y="4" height="72" width="343" format="[general]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_plan_qty for all )"border="0" color="33554432" x="2693" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Sum Of Plan Qty" border="6" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[1] alignment="0" text="Wc No" border="6" color="33554432" x="434" y="4" height="60" width="1115" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="색상" border="6" color="33554432" x="9" y="4" height="60" width="416" html.valueishtml="0"  name=color_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="품명" border="6" color="33554432" x="434" y="4" height="60" width="1115" html.valueishtml="0"  name=item_name1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="비고" border="6" color="33554432" x="1559" y="4" height="60" width="773" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="2" text="@wc_no" border="6" color="33554432" x="2341" y="4" height="60" width="343" html.valueishtml="0"  name=plan_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[2] alignment="1" text="합계" border="6" color="33554432" x="2693" y="4" height="60" width="416" html.valueishtml="0"  name=grand_sum_plan_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=summary alignment="2" expression="count( color_name for all DISTINCT color_name )"border="0" color="33554432" x="9" y="4" height="72" width="416" format="[General]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="count( item_name1 for all DISTINCT item_name1 )"border="0" color="33554432" x="434" y="4" height="60" width="1115" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_7"border="0" color="33554432" x="5" y="4" height="72" width="421" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_10 "border="0" color="33554432" x="434" y="4" height="72" width="1115" format="[GENERAL]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_8 "border="0" color="33554432" x="2341" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_9 "border="0" color="33554432" x="2693" y="4" height="72" width="416" format="#,##0" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "wc_no" rows = "color_name, item_name1, rem" values = "sum(plan_qty for crosstab)" sourcenames = "wc_no, operation, sale_no, seq_no, work_date, plan_flag, process_flag, cust_no, cust_name, scene_code, scene_desc, napgi_date, item_no, item_name1, qa, item_color, color_name, order_qty, assy_item, item_name, assy_qa, uom, plan_qty, make_qty, ship_qty, qpa, reserved_qty, rem, user_name")
+sparse(names="color_name	item_name1")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

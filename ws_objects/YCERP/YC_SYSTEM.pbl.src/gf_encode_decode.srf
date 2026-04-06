@@ -1,0 +1,65 @@
+﻿$PBExportHeader$gf_encode_decode.srf
+global type gf_encode_decode from function_object
+end type
+
+forward prototypes
+global function string gf_encode_decode (string as_type, string as_val)
+end prototypes
+
+global function string gf_encode_decode (string as_type, string as_val);/*
+파워빌더에서는 웹에서 사용하는 urlencoding 을 제공하지 않습니다.
+따라서, 별도로 구현을 해야 합니다.
+
+아래 예제를 참고 하시고, 관련함수를 생성하셔서 사용하시면 되겠습니다.
+
+참고로 빈칸은 %20 으로 표현되는데 다음 같은데서는 +로 대체하더군요.
+하지만, %20으로 넘겨도 같은 결과가 나오네요.
+decode 쪽에서는 따로 처리를 했습니다.
+
+[참고 사이트]
+http://www.cresc.co.jp/tech/java/URLencoding/JavaScript_URLEncoding.htm#_Toc25488573
+<===샘플 스크립트 ===>
+string ls_val
+ls_val = p2f_urlencode_decode('E', '학교종이 땡땡 우하하')
+messagebox("encode",ls_val)
+ls_val = p2f_urlencode_decode('D', ls_val)
+messagebox("decode",ls_val)
+2018.07.15 jowonsuk 만듬
+ 
+ utf-8f로 encoding해주는 프로그램
+
+*/
+
+long ll_ret, ll_pos
+string ls_temp, ls_val
+OLEObject objVBS
+
+objVBS = create OLEObject // ← VBScript 오브젝트 생성
+ll_ret = objVBS.ConnectToNewObject("MSScriptControl.ScriptControl")
+if ll_ret <> 0 then
+  return "OLE Error : " + string(ll_ret) + ' Error connection to MSScriptControl.ScriptControl' 
+end if
+
+objVBS.Language = "javascript"
+objVBS.addcode("function URLEncoding(s) { return encodeURIComponent(s); }")
+objVBS.addcode("function URLDecoding(s) { return decodeURIComponent(s); }")
+
+choose case upper(as_type)
+ case 'E', 'ENCODE', 'EN'
+  ls_temp = objVBS.eval('URLEncoding("'+as_val+'")')
+ case 'D', 'DECODE', 'DE'
+  //만일 값중에 + 가 있다면.. %20 으로 변환한다.
+  ls_val = as_val
+  do while true
+   ll_pos = PosA(ls_val, '+')
+   if ll_pos = 0 then exit
+   ls_val = ReplaceA(ls_val, ll_pos, 1, '%20')
+  loop
+  ls_temp = objVBS.eval('Decoding("'+ls_val+'")')
+ case else
+  ls_temp = ''
+end choose
+
+return ls_temp
+end function
+

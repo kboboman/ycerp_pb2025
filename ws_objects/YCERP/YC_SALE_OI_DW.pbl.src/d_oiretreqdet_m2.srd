@@ -1,0 +1,104 @@
+﻿$PBExportHeader$d_oiretreqdet_m2.srd
+$PBExportComments$반품요청서관리상세(2000/04/27,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=68 color="8421504" )
+detail(height=92 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=sale_no dbname="sale_no" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="saledet.seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="saledet.item_no" )
+ column=(type=char(4) updatewhereclause=yes name=color dbname="saledet.color" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="saledet.qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="saledet.uom" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_order_qty dbname="saledet.order_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_rlse_qty dbname="saledet.rlse_qty" )
+ column=(type=long updatewhereclause=yes name=ret_seq dbname="ret_seq" )
+ column=(type=decimal(1) updatewhereclause=yes name=acc_qty dbname="acc_qty" )
+ column=(type=char(40) updatewhereclause=yes name=decision_desc dbname="decision_desc" )
+ column=(type=char(40) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=char(14) updatewhereclause=yes name=ret_no dbname="ret_no" )
+ column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N/	0" )
+ column=(type=char(1) updatewhereclause=yes name=acc_degree dbname="acc_degree" values="A	A/B	B/C	C/" )
+ column=(type=decimal(2) updatewhereclause=yes name=t_ret_qty dbname="t_ret_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=ret_qty dbname="ret_qty" )
+ retrieve="  SELECT DISTINCT sale_no = saledet.order_no
+       , saledet.seq_no   
+       , saledet.item_no   
+       , saledet.color   
+       , saledet.qa   
+       , saledet.uom   
+       , groupitem.item_name   
+       , saledet.order_qty   
+       , saledet.rlse_qty   
+       , ret_seq       = 0   
+       , acc_qty       = 0.0   
+       , decision_desc = space(40)   
+       , rem           = space(40)   
+       , ret_no        = space(14)   
+       , chk           = ' '   
+       , acc_degree    = 'B'   
+       , t_ret_qty     = sum(retdet.acc_qty)   
+       , ret_qty       = saledet.rlse_qty 
+from saledet with(nolock) inner join groupitem with(nolock) on saledet.item_no   = groupitem.item_no 
+ 							      left outer join retdet with(nolock) on saledet.order_no = retdet.sale_no and saledet.seq_no = retdet.seq_no
+where ( saledet.order_no  = :as_sale_no       ) 
+     AND ( saledet.rlse_qty  > 0                 )
+   GROUP BY saledet.order_no   
+          , saledet.seq_no   
+          , saledet.item_no   
+          , saledet.qa   
+          , saledet.uom   
+          , saledet.order_qty   
+          , saledet.rlse_qty   
+          , saledet.color   
+          , groupitem.item_name  
+/*
+    FROM retdet
+       , saledet
+       , groupitem  
+   WHERE ( saledet.order_no *= retdet.sale_no    ) 
+     AND ( saledet.seq_no   *= retdet.seq_no     ) 
+     AND ( saledet.item_no   = groupitem.item_no ) 
+     AND ( saledet.order_no  = :as_sale_no       ) 
+     AND ( saledet.rlse_qty  > 0                 )
+   GROUP BY saledet.order_no   
+          , saledet.seq_no   
+          , saledet.item_no   
+          , saledet.qa   
+          , saledet.uom   
+          , saledet.order_qty   
+          , saledet.rlse_qty   
+          , saledet.color   
+          , groupitem.item_name  
+*/" arguments=(("as_sale_no", string))  sort="seq_no A " )
+text(band=header alignment="2" text="비고" border="6" color="0" x="4795" y="8" height="64" width="832" html.valueishtml="0"  name=retdet_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="판정내용" border="6" color="0" x="3886" y="8" height="64" width="901" html.valueishtml="0"  name=retdet_decision_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="출고수량" border="6" color="0" x="3419" y="8" height="64" width="457" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="주문수량" border="6" color="0" x="2990" y="8" height="64" width="421" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="기반품수량" border="6" color="0" x="2560" y="8" height="64" width="421" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="색상" border="6" color="0" x="1536" y="8" height="64" width="297" html.valueishtml="0"  name=retdet_color_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="1842" y="8" height="64" width="128" html.valueishtml="0"  name=retdet_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="선택" border="6" color="16777215" x="1979" y="8" height="64" width="142" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16711680" )
+text(band=header alignment="2" text="반품수량" border="6" color="0" x="2130" y="8" height="64" width="421" html.valueishtml="0"  name=retdet_ret_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="64" width="155" html.valueishtml="0"  name=retdet_ret_seq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="855" y="8" height="64" width="672" html.valueishtml="0"  name=retdet_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="174" y="8" height="64" width="672" html.valueishtml="0"  name=retdet_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=13 alignment="0" tabsequence=40 border="0" color="0" x="4795" y="8" height="76" width="832" format="[general]" html.valueishtml="0"  name=rem  tag="비고" visible="1" edit.limit=40 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175),rgb(255,255,255))" )
+column(band=detail id=12 alignment="0" tabsequence=30 border="0" color="0" x="3886" y="8" height="76" width="901" format="[general]" html.valueishtml="0"  name=decision_desc  tag="물품상태" visible="1" edit.limit=40 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175),rgb(255,255,255))" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="3419" y="8" height="76" width="457" format="#,##0.00" html.valueishtml="0"  name=saledet_rlse_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="79741120~tif (  ret_qty > saledet_rlse_qty , rgb(255,0,0), 78682240)" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="2990" y="8" height="76" width="421" format="#,##0.00" html.valueishtml="0"  name=saledet_order_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="255" x="2560" y="8" height="76" width="421" format="#,##0.00" html.valueishtml="0"  name=t_ret_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="1536" y="8" height="76" width="297" format="[general]" html.valueishtml="0"  name=color visible="1" dddw.name=d_cdcolor_m dddw.displaycolumn=color_name dddw.datacolumn=color_code dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="855" y="8" height="76" width="672" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="174" y="8" height="76" width="672" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=18 alignment="1" tabsequence=20 border="0" color="0~tif (chk = ~"Y~" , rgb(255,255,255), rgb(0,0,0))" x="2130" y="8" height="76" width="421" format="#,##0.00" html.valueishtml="0"  name=ret_qty  tag="반품요구수량" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (chk = ~"Y~" , rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="1842" y="8" height="76" width="128" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=15 alignment="2" tabsequence=10 border="0" color="0" x="1979" y="8" height="76" width="142" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.other="0" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="8" height="76" width="155" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=footer alignment="1" expression="sum(if (chk = ~"Y~", ret_qty, 0) for all)"border="0" color="0" x="2130" y="4" height="64" width="421" format="#,##0.00" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="0" height="64" width="155" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,60 @@
+﻿$PBExportHeader$d_oiyspitemtype_s3.srd
+$PBExportComments$YSP TYPE별 실적현황(판매단가)(2000/03/06,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=72 color="536870912" )
+header[2](height=72 color="536870912" )
+header[3](height=76 color="536870912" )
+summary(height=84 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa1 dbname="qa1" )
+ column=(type=number updatewhereclause=yes name=qty dbname="qty" )
+ column=(type=number updatewhereclause=yes name=amt dbname="amt" )
+ retrieve="  SELECT groupitem.item_name,
+			qa1 = substring(dodet.qa, 1,3),
+			mon = right('00' + convert(char(2), datepart(month, do.do_date)) ,2),
+         qty = sum(dodet.ship_qty),
+         amt = sum( dodet.ship_qty  *  dodet.price )
+    FROM do,   
+         dodet,
+			groupitem	
+   WHERE ( do.do_no = dodet.do_no) and  
+			( do.do_no like ~"B%~" ) AND 
+         ( do.do_date between :ad_start and :ad_end ) and
+         ( dodet.item_no = groupitem.item_no ) and  
+         ( not(( dodet.item_no like 'PCYSYS%' ) or ( dodet.item_no like 'GCYSYS%' ) or ( dodet.item_no like 'PCYSZ%' )) )
+group by do.do_date, groupitem.item_name,dodet.qa
+order by do.do_date, groupitem.item_name,dodet.qa
+
+" arguments=(("ad_start", date),("ad_end", date))  sort="item_name A qa1 A " )
+group(level=1 header.height=0 trailer.height=84 by=("item_name" ) header.color="536870912" trailer.color="536870912" )
+compute(band=header[1] alignment="0" expression="string( ad_start, 'yyyy/mm' ) + trim('~~ ')  +  string(  ad_end, 'yyyy/mm' ) "border="0" color="0" x="9" y="8" height="60" width="489" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="@mon" border="0" color="0" x="640" y="8" height="60" width="928" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="수량합계" border="0" color="0" x="1563" y="8" height="60" width="434" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="금액합계" border="0" color="0" x="2007" y="8" height="60" width="544" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header[3] alignment="0" text="품명" border="0" color="0" x="9" y="12" height="60" width="485" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header[3] alignment="0" text="규격" border="0" color="0" x="503" y="12" height="60" width="128" html.valueishtml="0"  name=qa1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header[3] alignment="1" text="수량" border="0" color="0" x="640" y="12" height="60" width="375" html.valueishtml="0"  name=qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header[3] alignment="1" text="금액" border="0" color="0" x="1024" y="12" height="60" width="530" html.valueishtml="0"  name=amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="68" width="485" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="503" y="4" height="68" width="128" format="[general]" html.valueishtml="0"  name=qa1 visible="1" edit.limit=6 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="0" x="640" y="4" height="68" width="375" format="#,##0.00" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="1024" y="4" height="68" width="530" format="#,##0" html.valueishtml="0"  name=amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="0" x="1563" y="4" height="68" width="434" format="#,##0.00" html.valueishtml="0"  name=grand_sum_qty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=detail alignment="1" expression="crosstabsum(2)"border="0" color="0" x="2007" y="4" height="68" width="544" format="#,##0" html.valueishtml="0"  name=grand_sum_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="~" 소계~""border="0" color="0" x="9" y="4" height="72" width="485" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(qty for group 1)"border="0" color="0" x="640" y="4" height="72" width="375" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(amt for group 1)"border="0" color="0" x="1024" y="4" height="72" width="530" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_qty for group 1)"border="0" color="0" x="1563" y="4" height="72" width="434" format="#,##0.00" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_amt for group 1)"border="0" color="0" x="2007" y="4" height="72" width="544" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="~"합계~""border="0" color="0" x="9" y="4" height="72" width="485" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(qty for all )"border="0" color="0" x="640" y="4" height="72" width="375" format="#,##0.00" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(amt for all )"border="0" color="0" x="1024" y="4" height="72" width="530" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(grand_sum_qty for all )"border="0" color="0" x="1563" y="4" height="72" width="434" format="#,##0.00" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(grand_sum_amt for all )"border="0" color="0" x="2007" y="4" height="72" width="544" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "mon" rows = "item_name, qa1" values = "sum(qty for crosstab), sum(amt for crosstab)" sourcenames = "item_name, qa1, mon, qty, amt")
+sparse(names="item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

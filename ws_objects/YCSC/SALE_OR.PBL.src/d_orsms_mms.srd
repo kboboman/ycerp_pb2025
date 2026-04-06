@@ -1,0 +1,80 @@
+﻿$PBExportHeader$d_orsms_mms.srd
+$PBExportComments$MMS 전송리스트
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(255) updatewhereclause=yes name=tr_senddate dbname="tr_senddate" )
+ column=(type=char(255) updatewhereclause=yes name=tr_phone dbname="tr_phone" )
+ column=(type=char(50) updatewhereclause=yes name=tr_phonename dbname="tr_phonename" )
+ column=(type=char(20) updatewhereclause=yes name=tr_callback dbname="tr_callback" )
+ column=(type=char(255) updatewhereclause=yes name=tr_msg dbname="tr_msg" )
+ column=(type=char(172) updatewhereclause=yes name=tr_etc6 dbname="tr_etc6" )
+ retrieve="SELECT tr_senddate
+     , tr_phone
+     , tr_phonename
+     , tr_callback
+     , tr_msg
+     , tr_etc6
+  FROM (
+       SELECT tr_senddate = replace(replace(replace(convert(char(20),tr_senddate,120),'-',''),':',''),' ','')
+            , tr_phone    = replace(tr_phone,'-','')
+            , tr_phonename= ''
+            , tr_callback
+            , tr_msg
+            , tr_etc6 = rtrim(login.user_name) + '[' + tr_etc6 + ']'
+         FROM YC.DBO.sc_log
+            , login
+        WHERE YC.DBO.sc_log.tr_etc6  = login.user_id
+          AND convert(char(10),tr_senddate,111) BETWEEN :as_sdate AND :as_edate
+          AND ( tr_etc6   = :as_userid  OR (:as_admin = 'Y' AND tr_etc6   LIKE '%') )
+
+       UNION ALL
+       
+       SELECT tr_senddate = s.send_date
+            , tr_phone    = s.reserved1
+            , tr_phonename= s.reserved2
+            , tr_callback = ''
+            , tr_msg      = s.sms_msg
+            , tr_etc6     = rtrim(login.user_name) + '[' + s.reserved1 + ']'
+         FROM YC.DBO.sdk_sms_report S
+            , login
+        WHERE ( s.user_id = login.user_id )
+          AND ( substring(s.send_date,1,8) BETWEEN replace(:as_sdate,'/','') AND replace(:as_edate,'/','') )
+          AND ( s.user_id = :as_userid  OR (:as_admin = 'Y' AND s.user_id LIKE '%') )
+
+       UNION ALL
+       
+       SELECT tr_senddate = m.send_date
+            , tr_phone    = m.reserved1
+            , tr_phonename= m.reserved2
+            , tr_callback = ''
+            , tr_msg      = cast(m.mms_msg   as varchar(2000))
+            , tr_etc6     = rtrim(login.user_name) + '[' + m.reserved1 + ']'
+         FROM YC.DBO.sdk_mms_report M
+            , login
+        WHERE ( m.user_id = login.user_id )
+          AND ( substring(m.send_date,1,8) BETWEEN replace(:as_sdate,'/','') AND replace(:as_edate,'/','') )
+          AND ( m.user_id = :as_userid  OR (:as_admin = 'Y' AND m.user_id LIKE '%') )
+       ) A
+   ORDER BY tr_senddate DESC
+" arguments=(("as_userid", string),("as_sdate", string),("as_edate", string),("as_admin", string))  sort="tr_senddate D " )
+text(band=header alignment="2" text="전송자" border="0" color="33554432" x="4137" y="8" height="64" width="430" html.valueishtml="0"  name=tr_etc6_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="NO" border="0" color="33554432" x="9" y="8" height="64" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="문자내용" border="0" color="33554432" x="1902" y="8" height="64" width="2226" html.valueishtml="0"  name=tr_msg_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="수신자명" border="0" color="33554432" x="1129" y="8" height="64" width="763" html.valueishtml="0"  name=tr_phonename_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="수신번호" border="0" color="33554432" x="699" y="8" height="64" width="421" html.valueishtml="0"  name=tr_phone_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="전송시간" border="0" color="33554432" x="183" y="8" height="64" width="507" html.valueishtml="0"  name=tr_senddate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="699" y="8" height="72" width="421" format="[general]" html.valueishtml="0"  name=tr_phone visible="1" edit.limit=255 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="4137" y="8" height="72" width="430" format="[general]" html.valueishtml="0"  name=tr_etc6 visible="1" edit.limit=172 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="72" width="507" format="[general]" html.valueishtml="0"  name=tr_senddate visible="1" edit.limit=16 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="80" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1902" y="8" height="72" width="2226" format="[general]" html.valueishtml="0"  name=tr_msg visible="1" edit.limit=255 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1129" y="8" height="72" width="763" format="[general]" html.valueishtml="0"  name=tr_phonename visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="60" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count(  tr_senddate for all distinct  tr_senddate )"border="0" color="33554432" x="183" y="8" height="60" width="507" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count(  tr_phone for all distinct  tr_phone )"border="0" color="33554432" x="699" y="8" height="60" width="421" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

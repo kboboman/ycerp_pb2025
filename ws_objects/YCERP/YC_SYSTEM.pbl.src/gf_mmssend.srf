@@ -1,0 +1,237 @@
+﻿$PBExportHeader$gf_mmssend.srf
+$PBExportComments$KT-MMS 전송
+global type gf_mmssend from function_object
+end type
+
+forward prototypes
+global function boolean gf_mmssend (string as_userid, string as_sendhp, string as_recvhp, string as_recvname, string as_message)
+end prototypes
+
+global function boolean gf_mmssend (string as_userid, string as_sendhp, string as_recvhp, string as_recvname, string as_message);////////////////////////////////////////////////////////////////////
+// 문자전송(단문, 장문)
+////////////////////////////////////////////////////////////////////
+// GF_MMSSEND  Return Type : Boolean
+// GF_MMSSEND( as_userid, as_sendhp, as_recvhp, as_recvname, as_message )
+////////////////////////////////////////////////////////////////////
+// as_userid   string
+// as_sendhp   string
+// as_recvhp   string
+// as_recvname string
+// as_message  string
+////////////////////////////////////////////////////////////////////
+//	2018.12.6 jowonsuk 신규로직  
+//	1. http://crs.kttcs.com/ kt 발신번호 변작 사이트  변작사이트에서 전화번호 추가
+//	2. codemst , smssend 에 추가
+//-------------------------------------------------------------------
+// 2021.06.15 bkkim
+// - 알림톡 기능 추가
+////////////////////////////////////////////////////////////////////		
+Long ll_gubun = 0
+
+Select 
+	count(*)
+Into
+	:ll_gubun
+From
+	sdk_popbill_template
+Where
+	use_yn = 'Y'
+And	
+	template_cd = :as_userid
+Using sqlca;
+
+choose Case ll_gubun
+	Case 1	//알림톡 전송
+		//알림톡 용 함수 생성
+		//gf_popbill_send('','','','','')
+		GF_POPBILL_SEND( as_userid, '0226481998', as_recvhp, as_recvname, as_message )		
+	Case else	//SMS전송
+		string ls_reqtext, ls_rem, ls_sysdate, ls_exist
+		string ls_subject, ls_nowdate, ls_senddate, ls_destinfo
+		long   lr_lenmessage
+		
+		string SMSSERVER, SMSCOMPANY
+		
+		as_message  = trim(as_message)
+		as_message  = GF_ReplaceAll(as_message,"'","`")
+		
+		debugbreak()
+		
+		lr_lenmessage = LenA(as_message)		// 메시지길이
+		
+		
+		/*2018.10.26 jowonsuk login -> dual로 대체 */
+		// "2014-09-24 15:13:55.373" -> "20140924151355"
+		//SELECT top 1 convert(char(8), getdate(), 112) + replace(convert(char(8),getdate(), 108), ':', '') 
+		//  INTO :ls_nowdate
+		//  FROM login;
+		
+		SELECT convert(char(8), getdate(), 112) + replace(convert(char(8),getdate(), 108), ':', '') 
+		  INTO :ls_nowdate
+		FROM dual;
+		
+		ls_senddate = ls_nowdate
+		
+		SELECT rtrim(item_nm), rtrim(bigo) INTO :SMSSERVER, :SMSCOMPANY 
+		  FROM codemst 
+		 WHERE item_cd = 'SMSSERVER' AND use_yn = 'Y';
+		if SMSSERVER = "" then SMSSERVER = "192.168.1.5"
+		
+		if IsValid(w_orsms_m) = true then 
+			if w_orsms_m.cbx_mms.checked = true then SMSCOMPANY = "KT"
+		end if
+				
+		choose case SMSCOMPANY
+			case "LGU+"
+				as_message = GF_HANGLE_TR(as_message,80)
+		
+		//      // SC_LOG (전송시간 체크해야함)
+		//      SELECT tr_phone INTO :ls_exist 
+		//		  FROM sc_log 
+		//		 WHERE tr_msg = :as_message AND tr_phone = :as_recvhp AND convert(char(10),tr_senddate,111) = convert(char(10),tr_senddate,111);
+		//      if isnull(ls_exist) or ls_exist = "" then
+					INSERT INTO sc_tran ( tr_senddate, tr_sendstat, tr_rsltstat, tr_phone, tr_callback, tr_msg )
+					VALUES ( getdate(), '0', '00', :as_recvhp, :as_sendhp, :as_message );
+					if SQLCA.SQLCode = -1 then
+						MessageBox('문자전송 오류발생', SQLCA.SQLErrText,Exclamation!)
+						RETURN false
+					else
+						COMMIT;
+					end if				            
+		//      else
+		//         MessageBox("확인(SC_LOG)", "동일한 문자 내용으로 발송한 내역이 존재합니다.")
+		//      end if
+				
+		//      // SC_TRAN
+		//      SELECT tr_phone INTO :ls_exist FROM sc_tran WHERE tr_msg = :as_message AND tr_phone = :as_recvhp;
+		//      if isnull(ls_exist) or ls_exist = "" then
+		//         INSERT INTO sc_tran ( tr_senddate, tr_sendstat, tr_rsltstat, tr_phone, tr_callback, tr_msg )
+		//         VALUES ( getdate(), '0', '00', :as_recvhp, :as_sendhp, :as_message );
+		//			if SQLCA.SQLCode = -1 then
+		//				MessageBox('문자전송 오류발생', SQLCA.SQLErrText,Exclamation!)
+		//				RETURN false
+		//			else
+		//				COMMIT;
+		//			end if				            
+		//      else
+		//         //MessageBox("확인(SC_TRAN)", "동일한 문자 내용으로 발송한 내역이 존재합니다.")
+		//      end if
+				
+			// KT-MMS
+			case "KT"
+				debugbreak()
+				if ls_senddate > "20151015" then
+		//			02-2640-4628 -> 0226404627	한미란 /* 2018.02.12 조원석 */
+		//			02-2690-1999	서부영업소(화곡)
+		//			031-499-9600	시화공장
+		//			031-355-9631	화성공장
+		//			042-635-7002	중부호남영업지점
+		//			031-755-1600	동부영업소(성남)
+		//			02-2648-9600	관리본부
+		//			02-2640-4675	기술영업부
+		//			02-2648-1998	고객센터
+		//			02-2648-1998	수금문자
+		//			02-2648-1998	통제문자
+		//			02-2648-1998	업체등록
+		//			02-2648-1998	수주초과
+		//			02-2648-1998	출고의뢰
+		//			02-2648-1998	스케쥴문자
+					
+		/*			2018.12.6 jowonsuk 주석처리
+					
+					choose case as_sendhp
+						case "0226404629", "0226404556", "0226404625", "0226404622", "0226404631", "0226404605", "0226404628","0226404627", "0226901999",	"0226489600",	"0226404675",	"0226481998"
+								  /*"0226404628","0226404627", "0226901999",	"0226489600",	"0226404675",	"0226481998"*/
+							// 한미란, 서부영업소(화곡), 관리본부, 기술영업부, 고객센터
+		
+						case "0314999600", "0313559631",	"0317551600",	"0426357002"
+							// 시화공장, 화성공장, 동부영업소(성남), 중부호남영업지점
+			
+						case else
+							MessageBox("[발신번호]"+as_sendhp, "2015년10월 16일부터 미인증 발신번호는 모두차단입니다.",Exclamation!)
+							RETURN false
+					end choose
+		*/			
+		
+		/*
+				2018.12.6 jowonsuk 신규로직  
+				전화번호 등록 여부는 쿼리로 변경
+				codemst SMSSEND 에 있는지 여부. 시작
+		*/
+					int L_COUNT_PHONE
+					L_COUNT_PHONE = 0;
+					
+					SELECT COUNT(A.PHONE) COUNT
+					INTO :L_COUNT_PHONE
+					FROM 
+					(
+						select DISTINCT REPLACE(RTRIM(BIGO), '-','')  PHONE
+						from codemst
+						where type = 'SMSSEND' AND use_yn = 'Y'
+					) A
+					WHERE A.PHONE = :as_sendhp;
+					
+					if L_COUNT_PHONE = 0 then
+						MessageBox("[발신번호]"+as_sendhp, "2015년10월 16일부터 미인증 발신번호는 모두차단입니다.",Exclamation!)
+						RETURN false				
+					end if
+					
+		/*
+				2018.12.6 jowonsuk 신규로직  
+				전화번호 등록 여부는 쿼리로 변경
+				codemst SMSSEND 에 있는지 여부. 끝
+		*/			
+					
+				end if
+			
+				ls_destinfo = as_recvname + "^" + as_recvhp
+		
+				if lr_lenmessage < 81 then
+					as_message = GF_HANGLE_TR(as_message,80)
+		
+		//         // 즉시발송: SMS  (전송시간 체크해야함)
+		//			SELECT subject INTO :ls_exist FROM sdk_sms_send WHERE sms_msg = :as_message AND reserved1 = :gs_userid AND reserved2 = :as_recvhp;
+		//			if isnull(ls_exist) or ls_exist = "" then			
+						INSERT INTO sdk_sms_send ( user_id, schedule_type, subject, sms_msg, now_date, send_date, callback, dest_info, reserved1, reserved2 )   
+						VALUES ( :gs_userid, 0, :ls_subject, :as_message, :ls_nowdate, :ls_senddate, :as_sendhp, :ls_destinfo, :as_recvhp, :as_recvname ); 
+						if SQLCA.SQLCode = -1 then
+							MessageBox('단문전송 오류발생', SQLCA.SQLErrText,Exclamation!)
+							RETURN false
+						else
+							COMMIT;
+						end if				            
+		//			else
+		//				//MessageBox("확인(단문전송)", "동일한 문자 내용으로 발송한 내역이 존재합니다.")
+		//			end if
+				else
+					as_message = GF_HANGLE_TR(as_message,2000)
+		
+					// 즉시발송: LMS(url, telephone 포함)
+		//			SELECT subject INTO :ls_exist FROM sdk_mms_send 
+		//			 WHERE cast(mms_msg as varchar(2000)) = :as_message AND reserved1 = :gs_userid AND reserved2 = :as_recvhp;
+		//			if isnull(ls_exist) or ls_exist = "" then			
+						INSERT INTO sdk_mms_send ( user_id, schedule_type, subject, now_date, send_date, callback, dest_count, dest_info
+														 , msg_type, mms_msg,     content_count, content_data, reserved1,  reserved2 ) 
+						VALUES ( :gs_userid, 0, :ls_subject, :ls_nowdate, :ls_senddate, :as_sendhp, 1, :ls_destinfo
+														 , 0       , :as_message, 0,             '',           :as_recvhp, :as_recvname ); 
+						if SQLCA.SQLCode = -1 then
+							MessageBox('장문전송 오류발생', SQLCA.SQLErrText,Exclamation!)
+							RETURN false
+						else
+							COMMIT;
+						end if				            
+		//			else
+		//				//MessageBox("확인(장문전송)", "동일한 문자 내용으로 발송한 내역이 존재합니다.")
+		//			end if
+				end if
+				
+			case else
+				RETURN false
+		end choose
+		
+End Choose		
+
+RETURN true
+
+end function
+

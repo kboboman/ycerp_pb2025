@@ -1,0 +1,65 @@
+﻿$PBExportHeader$d_cdcustmaster_r_class.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=88 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=customer_cust_no dbname="customer.cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=customer_salesman dbname="customer.salesman" )
+ column=(type=char(10) updatewhereclause=yes name=login_user_name dbname="login.user_name" )
+ column=(type=char(10) updatewhereclause=yes name=top_level dbname="customer.top_level" )
+ column=(type=char(1) updatewhereclause=yes name=open_close dbname="open_close" )
+ column=(type=char(10) updatewhereclause=yes name=toplevel dbname="toplevel" )
+ column=(type=char(255) updatewhereclause=yes name=custname_sort dbname="custname_sort" )
+ retrieve="SELECT customer.cust_no
+     , customer.cust_name
+     , customer.salesman
+     , login.user_name
+     , customer.top_level
+     , customer.open_close
+/*
+     , toplevel   = (case substring(customer.top_level,1,2)
+								when 'Aa' then 1
+								when 'Ab'  then 2
+								when 'Ac'  then 3
+								when 'Ba' then 4
+								when 'Bb'  then 5
+								when 'Bc'  then 6
+								when 'Ca' then 7
+								when 'Cb'  then 8
+								when 'Cc'  then 9
+								else  10
+                     end)
+*/
+	  , dbo.uf_toplevel_sort(customer.top_level) toplevel
+       , custname_sort = replace(replace(replace(customer.cust_name,'(주)',''),'(재)',''),'(사)','')
+  FROM opeom    (nolock)
+       LEFT OUTER JOIN customer (nolock) ON opeom.cust_no     = customer.cust_no
+       LEFT OUTER JOIN login    (nolock) ON customer.salesman = login.user_id
+ WHERE ( datepart(year,opeom.eom_year) = :as_year )
+   AND ((:as_salesman  = '%' ) OR
+        (:as_salesman <> '%' AND customer.salesman = :as_salesman )
+       )
+   AND (( :as_open  = '%' ) OR
+        ( :as_open <> '%' AND customer.open_close = 'O' )           
+       )
+   AND (( :as_top_level  = '%' ) OR
+        ( :as_top_level <> '%' AND customer.top_level  = :as_top_level )           
+       )
+
+" arguments=(("as_open", string),("as_salesman", string),("as_year", number),("as_top_level", string))  sort="login_user_name A toplevel A custname_sort A " )
+text(band=header alignment="2" text="상호" border="6" color="33554432" x="183" y="8" height="60" width="809" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="1001" y="8" height="60" width="251" html.valueishtml="0"  name=customer_salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사용자명" border="6" color="33554432" x="1262" y="8" height="60" width="352" html.valueishtml="0"  name=login_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="종합판정" border="6" color="33554432" x="1623" y="8" height="60" width="320" html.valueishtml="0"  name=top_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1001" y="8" height="72" width="251" format="[general]" html.valueishtml="0"  name=customer_salesman  tag="판매담당자" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="72" width="809" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1262" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=login_user_name  tag="사용자명" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1623" y="8" height="72" width="320" format="[general]" html.valueishtml="0"  name=top_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="76" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

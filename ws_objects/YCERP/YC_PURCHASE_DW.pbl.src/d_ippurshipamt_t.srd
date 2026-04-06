@@ -1,0 +1,138 @@
+﻿$PBExportHeader$d_ippurshipamt_t.srd
+$PBExportComments$운반비발생내역
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=supp_name dbname="supp_name" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene_desc" )
+ column=(type=datetime updatewhereclause=yes name=insp_date dbname="insp_date" )
+ column=(type=decimal(4) updatewhereclause=yes name=totamount dbname="totamount" )
+ column=(type=decimal(6) updatewhereclause=yes name=ship_amount dbname="ship_amount" )
+ column=(type=char(14) updatewhereclause=yes name=insp_no dbname="insp_no" )
+ column=(type=long updatewhereclause=yes name=oi_no dbname="oi_no" )
+ column=(type=char(14) updatewhereclause=yes name=dono dbname="dono" )
+ column=(type=long updatewhereclause=yes name=doseq dbname="doseq" )
+ column=(type=decimal(0) updatewhereclause=yes name=doshipamt dbname="doshipamt" )
+ column=(type=char(1) updatewhereclause=yes name=doshipflag dbname="doshipflag" )
+ column=(type=char(14) updatewhereclause=yes name=sale_no dbname="sale_no" )
+ column=(type=long updatewhereclause=yes name=sale_seq dbname="sale_seq" )
+ retrieve="  SELECT DISTINCT supp_name   = supp.supp_name        
+       , cust_name   = (case when patindex('%/%',purdet.cust_name) > 0 
+                                  then substring(purdet.cust_name,1, patindex('%/%',purdet.cust_name) - 1)
+                             else purdet.cust_name
+                        end)
+       , scene_desc  = c.scene_desc          
+       , insp_date   = insp.insp_date        
+       , totamount   = insp.insp_cash /*(case when supp.round = 'N' 
+                                  then CEILING(inspdet.comqty * inspdet.price)
+                             else round( inspdet.comqty * inspdet.price, 0) 
+                        end)*/
+       , ship_amount = b.ship_amount         
+       , insp_no     = inspdet.insp_no       
+       , oi_no       = inspdet.oi_no         
+       , dono        = dodet.do_no
+       , doseq       = dodet.oi_no
+       , doshipamt   = (SELECT ship_amount FROM do WHERE do_no = dodet.do_no )
+       , doshipflag  = (SELECT ship_flag   FROM do WHERE do_no = dodet.do_no )
+       , sale_no     = purdet.sale_no
+       , sale_seq    = purdet.sale_seq
+    FROM inspdet  with (nolock)
+         LEFT OUTER JOIN insp      with (nolock) ON insp.insp_no    = inspdet.insp_no
+         LEFT OUTER JOIN purdet    with (nolock) ON inspdet.pur_no  = purdet.order_no AND inspdet.seq_no = purdet.seq_no
+         LEFT OUTER JOIN pur       with (nolock) ON inspdet.pur_no  = pur.order_no
+         LEFT OUTER JOIN supp      with (nolock) ON insp.supp_no    = supp.supp_no
+         LEFT OUTER JOIN ( /* 운반비 집계 */
+              SELECT insp_no     = a.insp_no
+                   , oi_no       = min(a.oi_no)
+                   , ship_amount = avg(a.ship_amount)
+                FROM (
+                     SELECT inspdet.insp_no
+                          , inspdet.oi_no
+                          , ship_amount = insp.ship_amount
+                       FROM inspdet with (nolock) 
+                          , insp    with (nolock) 
+                      WHERE ( insp.insp_no         = inspdet.insp_no )   
+                        AND ( insp.ship_flag       = 'D' )
+                        AND ( insp.insp_date BETWEEN :ad_date1 AND :ad_date2 )
+                     ) A
+               GROUP BY a.insp_no
+         ) B ON inspdet.insp_no = b.insp_no AND inspdet.oi_no = b.oi_no
+         
+         LEFT OUTER JOIN ( /* 출고내역 */
+              SELECT a.sale_no, a.seq_no, do_no = max(a.do_no), oi_no = max(a.oi_no), prt_date = max(a.prt_date)
+                FROM (
+                     SELECT do.do_no, dodet.oi_no, do.prt_date, dodet.sale_no, dodet.seq_no
+                       FROM dodet with (nolock)
+                            LEFT OUTER JOIN do with (nolock) ON dodet.do_no = do.do_no
+                      WHERE do.do_date >= dateadd(month, -2, :ad_date1)  /* 이월반영 */
+                     ) A
+               GROUP BY a.sale_no, a.seq_no
+         ) DODET ON purdet.sale_no = dodet.sale_no AND purdet.sale_seq = dodet.seq_no
+
+         LEFT OUTER JOIN ( /* 현장명 */
+              SELECT sale_no     = a.sale_no
+                   , sale_seq    = a.sale_seq
+                   , scene_desc  = scene.scene_desc
+                FROM (
+                     SELECT sale_no     = purdet.sale_no
+                          , sale_seq    = purdet.sale_seq
+                       FROM inspdet with (nolock) 
+                            LEFT OUTER JOIN insp   with (nolock) ON inspdet.insp_no = insp.insp_no
+                            LEFT OUTER JOIN purdet with (nolock) ON inspdet.pur_no  = purdet.order_no AND inspdet.seq_no = purdet.seq_no
+                      WHERE ( insp.insp_date     BETWEEN :ad_date1 AND :ad_date2 )
+                     ) A
+                     LEFT OUTER JOIN sale  with (nolock) ON a.sale_no = sale.order_no
+                     LEFT OUTER JOIN scene with (nolock) ON sale.scene_code = scene.scene_code
+               WHERE scene.scene_desc IS NOT NULL
+         ) C ON purdet.sale_no = c.sale_no AND purdet.sale_seq = c.sale_seq
+   WHERE ( insp.insp_date     BETWEEN :ad_date1 AND :ad_date2  )
+     AND ( ( :as_supp  = '%'      AND insp.supp_no   LIKE :as_supp ) or
+           ( :as_supp <> '%'      AND insp.supp_no      = :as_supp )
+         )
+     AND ( ( :as_area  = 'S'      AND inspdet.pur_no LIKE 'PUR%'   ) or
+           ( :as_area  = '%'      AND insp.area_no   LIKE '%'      ) or
+           ( inspdet.pur_no      LIKE :as_area + '%'               ) 
+         ) 
+     AND b.ship_amount <> 0
+   ORDER BY purdet.cust_name, inspdet.insp_no
+" arguments=(("as_supp", string),("ad_date1", date),("ad_date2", date),("as_area", string))  sort="supp_name A insp_date A sale_no A " )
+text(band=header alignment="2" text="판매거래처" border="6" color="0" x="859" y="8" height="64" width="695" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="출고번호" border="6" color="0" x="5074" y="8" height="64" width="521" html.valueishtml="0"  name=dono_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="매입일자" border="6" color="0" x="2423" y="8" height="64" width="425" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="1563" y="8" height="64" width="850" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="운송비(대)" border="6" color="0" x="3287" y="8" height="64" width="425" html.valueishtml="0"  name=ship_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입고금액" border="6" color="0" x="2857" y="8" height="64" width="421" html.valueishtml="0"  name=totamount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="4398" y="8" height="64" width="507" html.valueishtml="0"  name=purdet_sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구매거래처" border="6" color="0" x="183" y="8" height="64" width="667" html.valueishtml="0"  name=supp_supp_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="64" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO1" border="6" color="0" x="4242" y="8" height="64" width="146" html.valueishtml="0"  name=inspdet_oi_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO2" border="6" color="0" x="4914" y="8" height="64" width="151" html.valueishtml="0"  name=purdet_sale_seq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO3" border="6" color="0" x="5605" y="8" height="64" width="160" html.valueishtml="0"  name=doseq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="입고번호" border="6" color="0" x="3726" y="8" height="64" width="507" html.valueishtml="0"  name=insp_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="6" color="0" x="9" y="4" height="64" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="859" y="4" height="64" width="695" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="183" y="4" height="64" width="667" format="[general]" html.valueishtml="0"  name=supp_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="0" x="4914" y="4" height="64" width="151" format="[general]" html.valueishtml="0"  name=sale_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0" x="5074" y="4" height="64" width="521" format="[general]" html.valueishtml="0"  name=dono visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="5605" y="4" height="64" width="160" format="[general]" html.valueishtml="0"  name=doseq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="2423" y="4" height="64" width="425" format="yyyy/mm/dd" html.valueishtml="0"  name=insp_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1563" y="4" height="64" width="850" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="3287" y="4" height="64" width="425" format="#,##0" html.valueishtml="0"  name=ship_amount visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="2857" y="4" height="64" width="421" format="#,##0" html.valueishtml="0"  name=totamount visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="0" x="4398" y="4" height="64" width="507" format="[general]" html.valueishtml="0"  name=sale_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0" x="4242" y="4" height="64" width="146" format="[general]" html.valueishtml="0"  name=oi_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="3726" y="4" height="64" width="507" format="[general]" html.valueishtml="0"  name=insp_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif (getrow() = currentrow(), RGB(254,252,175), 1087434968)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="64" width="165" format="[General]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count ( supp_name for all DISTINCT )"border="0" color="0" x="183" y="4" height="64" width="667" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count ( cust_name  for all DISTINCT )"border="0" color="0" x="859" y="4" height="64" width="695" format="#,##0" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( dono for all )"border="0" color="0" x="5074" y="4" height="64" width="521" format="#,##0" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count ( sale_no for all DISTINCT )"border="0" color="0" x="4398" y="4" height="64" width="507" format="#,##0" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  totamount for all )"border="0" color="0" x="2857" y="4" height="64" width="421" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( ship_amount for all )"border="0" color="0" x="3287" y="4" height="64" width="425" format="#,##0" html.valueishtml="0"  name=totshipamt visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count(  insp_no for all distinct insp_no )"border="0" color="0" x="3726" y="4" height="64" width="507" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

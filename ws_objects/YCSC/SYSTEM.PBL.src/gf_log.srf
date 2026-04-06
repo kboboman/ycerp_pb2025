@@ -1,0 +1,28 @@
+﻿$PBExportHeader$gf_log.srf
+$PBExportComments$접근로그
+global type gf_log from function_object
+end type
+
+forward prototypes
+global subroutine gf_log (string as_userid, string as_title, string as_desc)
+end prototypes
+
+global subroutine gf_log (string as_userid, string as_title, string as_desc);string ls_date
+string ls_time
+
+select convert(char(8),getdate(),112) , convert(char(12),getdate(),114) into :ls_date,:ls_time 
+  from login 
+ where user_id = '1999010s';
+if sqlca.sqldbcode <> 0 then
+	return
+end if	
+
+INSERT INTO level_log (user_id, user_desc, acc_date, acc_time, se_etc) VALUES (:as_userid, :as_title, :ls_date, :ls_time, :as_desc);
+if sqlca.sqldbcode <> 0 then
+	rollback;
+	return
+end if	
+commit;
+
+end subroutine
+

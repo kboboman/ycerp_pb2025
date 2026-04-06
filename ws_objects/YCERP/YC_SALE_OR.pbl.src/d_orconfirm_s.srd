@@ -1,0 +1,99 @@
+﻿$PBExportHeader$d_orconfirm_s.srd
+$PBExportComments$판매수주확정 수주번호선택(1998/04/06, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes key=yes name=order_no dbname="sale.order_no" initial=" " )
+ column=(type=datetime updatewhereclause=yes name=input_date dbname="sale.input_date" )
+ column=(type=datetime update=yes updatewhereclause=yes name=confirm_date dbname="sale.confirm_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=sale_confirm_user dbname="sale.confirm_user" )
+ column=(type=datetime updatewhereclause=yes name=cust_po_date dbname="sale.cust_po_date" initial=" " )
+ column=(type=datetime updatewhereclause=yes name=order_date dbname="sale.order_date" initial=" " )
+ column=(type=datetime updatewhereclause=yes name=due_date dbname="sale.due_date" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="sale.cust_no" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=confirm_flag dbname="sale.confirm_flag" values="	T/	N" )
+ column=(type=char(10) updatewhereclause=yes name=area_no dbname="sale.area_no" )
+ column=(type=char(20) updatewhereclause=yes name=tel_no dbname="sale.tel_no" )
+ column=(type=datetime updatewhereclause=yes name=cust_po_date dbname="sale.cust_po_date" )
+ column=(type=long update=yes updatewhereclause=yes name=revision_no dbname="sale.revision_no" )
+ column=(type=datetime update=yes updatewhereclause=yes name=revision_date dbname="sale.revision_date" )
+ column=(type=char(10) updatewhereclause=yes name=fob dbname="sale.fob" )
+ column=(type=decimal(4) updatewhereclause=yes name=total dbname="total" )
+ column=(type=decimal(4) updatewhereclause=yes name=balance_amt dbname="customer.balance_amt" )
+ column=(type=decimal(4) updatewhereclause=yes name=bill_amount dbname="customer.bill_amount" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="customer.cust_name" )
+ column=(type=char(1) updatewhereclause=yes name=credit_level dbname="customer.credit_level" )
+ column=(type=decimal(4) updatewhereclause=yes name=credit_limit dbname="customer.credit_limit" )
+ column=(type=char(11) updatewhereclause=yes name=scene_code dbname="sale.scene_code" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="SCENE.scene_desc" )
+ column=(type=char(100) updatewhereclause=yes name=area_name dbname="area_name" )
+ retrieve="  SELECT sale.order_no
+       , sale.input_date
+       , sale.confirm_date         
+       , sale.confirm_user
+       , sale.cust_po_date     
+       , sale.order_date       
+       , sale.due_date      
+       , sale.cust_no
+	  , sale.confirm_flag
+	  , sale.area_no
+	  , sale.tel_no
+       , sale.cust_po_date
+       , sale.revision_no
+       , sale.revision_date
+	  , sale.fob
+       , isnull(sale.sale_tax,0) + isnull(sale.sale_amount,0) total
+	  , customer.balance_amt
+	  , customer.bill_amount
+       , customer.cust_name 
+       , customer.credit_level
+	  , customer.credit_limit
+       , sale.scene_code
+       , scene.scene_desc	  
+	  , dbo.uf_sale_area(sale.order_no,  convert(char(8), sale.order_date,112) ) area_name
+		FROM sale  inner join customer on sale.cust_no          = customer.cust_no
+						inner join scene on  sale.scene_code       = scene.scene_code
+   WHERE ( sale.cust_no          = customer.cust_no ) 
+     AND ( sale.scene_code       = scene.scene_code )
+     AND ( sale.cust_no       LIKE :as_custno       )   
+     AND ( sale.order_date      >= :ad_sdate        )   
+     AND ( sale.order_date      <= :ad_edate        )   
+     AND ( sale.CONFIRM_FLAG     = :as_confirm_flag ) 
+     AND ( sale.open_close       = 'O'              )    
+
+/*
+    FROM sale  
+       , customer
+       , scene
+   WHERE ( sale.cust_no          = customer.cust_no ) 
+     AND ( sale.scene_code       = scene.scene_code )
+     AND ( sale.cust_no       LIKE :as_custno       )   
+     AND ( sale.order_date      >= :ad_sdate        )   
+     AND ( sale.order_date      <= :ad_edate        )   
+     AND ( sale.CONFIRM_FLAG     = :as_confirm_flag )   
+     AND ( sale.open_close       = 'O'              )    
+*/" update="sale" updatewhere=0 updatekeyinplace=no arguments=(("as_custno", string),("ad_sdate", date),("ad_edate", date),("as_confirm_flag", string))  sort="input_date D order_no A " )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="68" width="165" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+button(band=header text="수정"filename=""action="0" border="0" color="0" x="183" y="0" height="84" width="155" vtextalign="0" htextalign="0"  name=b_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="입력일자" border="6" color="16711680" x="343" y="8" height="68" width="599" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="확정일자" border="6" color="16711680" x="951" y="8" height="68" width="677" html.valueishtml="0"  name=confirm_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="거래처명" border="6" color="0" x="2679" y="8" height="68" width="763" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="납기일자" border="6" color="0" x="2245" y="8" height="68" width="425" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="수주번호" border="6" color="0" x="1637" y="8" height="68" width="599" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="생산 위치" border="6" color="0" x="5179" y="8" height="68" width="754" html.valueishtml="0"  name=area_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="3451" y="8" height="68" width="1719" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=detail alignment="2" expression="getrow()"border="6" color="0" x="9" y="8" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=10 border="0" color="0" x="183" y="8" height="68" width="151" format="[general]" html.valueishtml="0"  name=confirm_flag visible="1" checkbox.text="" checkbox.on="T" checkbox.off="N" checkbox.scale=yes checkbox.threed=yes  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="343" y="8" height="68" width="599" format="yyyy/mm/dd hh:mm" html.valueishtml="0"  name=input_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="951" y="8" height="68" width="677" format="yyyy/mm/dd hh:mm" html.valueishtml="0"  name=confirm_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="2245" y="8" height="68" width="425" format="yyyy/mm/dd" html.valueishtml="0"  name=due_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="0" x="2679" y="8" height="68" width="763" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="1637" y="8" height="68" width="599" format="[general]" html.valueishtml="0"  name=order_no  tag="판매주문번호" visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=24 alignment="0" tabsequence=32766 border="0" color="0" x="5179" y="8" height="68" width="754" format="[general]" html.valueishtml="0"  name=area_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="0" color="0" x="3451" y="8" height="68" width="1719" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

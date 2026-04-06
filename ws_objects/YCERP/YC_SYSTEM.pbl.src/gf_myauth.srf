@@ -1,0 +1,28 @@
+﻿$PBExportHeader$gf_myauth.srf
+$PBExportComments$권한(권역장,본부장,팀장)
+global type gf_myauth from function_object
+end type
+
+forward prototypes
+global function string gf_myauth (string as_userid)
+end prototypes
+
+global function string gf_myauth (string as_userid);string ls_myauth
+
+SELECT lvl = min(a.lvl) INTO :ls_myauth
+  FROM (
+       SELECT lvl = '1', user_id, rank, team FROM opeom_org (NOLOCK) WHERE area_mgr   = :as_userid
+  
+       UNION ALL
+       SELECT cnt = '2', user_id, rank, team FROM opeom_org (NOLOCK) WHERE sector_mgr = :as_userid
+    
+       UNION ALL
+       SELECT cnt = '3', user_id, rank, team FROM opeom_org (NOLOCK) WHERE team_mgr   = :as_userid
+     ) A
+ WHERE a.user_id = :as_userid
+ GROUP BY a.user_id, a.rank, a.team;
+
+RETURN ls_myauth
+
+end function
+

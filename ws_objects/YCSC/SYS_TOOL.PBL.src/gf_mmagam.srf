@@ -1,0 +1,49 @@
+﻿$PBExportHeader$gf_mmagam.srf
+$PBExportComments$월마감 체크
+global type gf_mmagam from function_object
+end type
+
+forward prototypes
+global function boolean gf_mmagam (string arg_yymm, string arg_gb)
+end prototypes
+
+global function boolean gf_mmagam (string arg_yymm, string arg_gb);string ls_magam_yn, ls_yymm, ls_gb, ls_gb_nm
+
+ls_yymm = arg_yymm
+ls_gb = arg_gb
+
+select magam_yn
+  into :ls_magam_yn
+  from mmagam
+ where yyyymm = :ls_yymm
+   and sys_gb = :ls_gb;
+
+choose case sqlca.sqlcode
+	case 0
+		if ls_magam_yn = 'Y' then
+			choose case ls_gb
+				case '00'
+					ls_gb_nm = '수불'
+				case '01'
+					ls_gb_nm = '수주'
+				case '02'
+					ls_gb_nm = '매입'
+				case '03'
+					ls_gb_nm = '매출'
+				case '04'
+					ls_gb_nm = '회계'
+				case '05'
+					ls_gb_nm = '급여'
+			end choose
+			messageBox('알림', '해당월은 ' + ls_gb_nm + '이(가) 마감 되었습니다. 전산실로 문의 바람!', StopSign!)
+			return True
+		end if
+	case 100
+		return False
+	case else
+		MessageBox('오류', '데이터베이스 오류입니다. 전산실로 문의 바람 (234)')
+		return True
+end choose
+
+end function
+

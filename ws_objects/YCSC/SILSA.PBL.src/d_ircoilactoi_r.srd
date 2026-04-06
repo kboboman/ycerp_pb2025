@@ -1,0 +1,101 @@
+﻿$PBExportHeader$d_ircoilactoi_r.srd
+$PBExportComments$코일실사관리(2004/12/30,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=492 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=coileoymu_cdate dbname="coileoymu.cdate" )
+ column=(type=char(10) updatewhereclause=yes name=coileoymu_user_id dbname="coileoymu.user_id" )
+ column=(type=char(20) updatewhereclause=yes name=c_coil_coil_no dbname="coileoymu.coil_no" )
+ column=(type=char(10) updatewhereclause=yes name=coileoymu_loc_no dbname="coileoymu.loc_no" )
+ column=(type=long updatewhereclause=yes name=coileoymu_cnt dbname="coileoymu.cnt" )
+ column=(type=char(1) updatewhereclause=yes name=coileoymu_mode_flag dbname="coileoymu.mode_flag" )
+ column=(type=datetime updatewhereclause=yes name=coileoymu_log_date dbname="coileoymu.log_date" )
+ column=(type=char(10) updatewhereclause=yes name=coileoymu_item_no dbname="coileoymu.item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=coilmst_qa dbname="coilmst.qa" )
+ column=(type=long updatewhereclause=yes name=coilmst_unit_qty dbname="coilmst.unit_qty" )
+ column=(type=long updatewhereclause=yes name=coilmst_qcnt dbname="coilmst.qcnt" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ retrieve="  SELECT distinct coileoymu.cdate,   
+         coileoymu.user_id,   
+         c_coil.coil_no,   
+         coileoymu.loc_no,   
+         coileoymu.cnt,   
+         coileoymu.mode_flag,   
+         coileoymu.log_date,   
+         item_no,   
+         item_name = dbo.uf_getitemname(coilmst.item_no),   
+         coilmst.qa,   
+         coilmst.unit_qty,   
+         coilmst.qcnt,
+			location.loc_name  
+    FROM  (
+                           select coil_no, loc_no from coileoymu 
+                    			  where cdate = :as_date 
+                    				 and ( (:as_wc = 'N' and loc_no = :as_loc )
+                    						or (:as_wc = 'Y' and (loc_no = :as_loc or loc_no in (select loc_no from location where loc_type ='W'))))
+                    			 union all
+                    			 select distinct coil_no, loc_no from coilmst
+                    			  where open_close <> 'C'
+                    				and flag like :as_ws
+                    				and item_no like :as_item
+                    				and not exists ( select * from lossitem where loss_item = coilmst.item_no )
+                    				 and ( (:as_wc = 'N' and loc_no = :as_loc )
+                    						or (:as_wc = 'Y' and (loc_no = :as_loc or loc_no in (select loc_no from location where loc_type ='W'))))
+                  ) c_coil  inner join location on c_coil.loc_no =  location.loc_no
+                                left outer join coileoymu on c_coil.coil_no =  coileoymu.coil_no
+                                                and c_coil.loc_no =  coileoymu.loc_no
+                                left outer join coilmst on c_coil.coil_no =  coilmst.coil_no and c_coil.loc_no =  coilmst.loc_no
+   WHERE coilmst.open_close <> 'C' and
+			            coilmst.flag like :as_ws and
+			            item_no like :as_item and
+			          	coileoymu.cdate = :as_date
+" arguments=(("as_date", string),("as_loc", string),("as_wc", string),("as_ws", string),("as_item", string))  sort="mid(coileoymu_item_no, 3, 1)
+ A coileoymu_item_no A coilmst_qa A coilmst_unit_qty A c_coil_coil_no A coileoymu_loc_no A " )
+group(level=1 header.height=0 trailer.height=92 by=("mid( coileoymu_item_no , 3,1) + mid( coileoymu_item_no , 2,1)" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=88 by=("coileoymu_item_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="코일 실사차이보고서" border="0" color="0" x="809" y="32" height="148" width="1902" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="실사자" border="2" color="33554432" x="2629" y="428" height="60" width="187" html.valueishtml="0"  name=coileoymu_user_id_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코일번호" border="2" color="33554432" x="1312" y="428" height="60" width="576" html.valueishtml="0"  name=c_coil_coil_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="재고단중" border="2" color="33554432" x="1897" y="428" height="60" width="283" html.valueishtml="0"  name=coilmst_unit_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="갯수" border="2" color="33554432" x="2190" y="428" height="60" width="155" html.valueishtml="0"  name=coilmst_qcnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실사갯수" border="2" color="33554432" x="2354" y="428" height="60" width="265" html.valueishtml="0"  name=coileoymu_cnt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품   명" border="2" color="33554432" x="9" y="428" height="60" width="969" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="2" color="33554432" x="987" y="428" height="60" width="315" html.valueishtml="0"  name=coilmst_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="저장소:" border="0" color="0" x="32" y="224" height="96" width="384" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-16" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="0" text="일  자:" border="0" color="0" x="32" y="320" height="96" width="384" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-16" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=header id=13 alignment="0" tabsequence=32766 border="0" color="0" x="434" y="224" height="96" width="942" format="[general]" html.valueishtml="0"  name=location_loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" font.underline="1" background.mode="2" background.color="16777215" )
+column(band=header id=1 alignment="0" tabsequence=32766 border="0" color="0" x="434" y="320" height="96" width="562" format="[general]" html.valueishtml="0"  name=coileoymu_cdate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" font.underline="1" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="2629" y="8" height="60" width="187" format="[general]" html.valueishtml="0"  name=coileoymu_user_id  tag="입력자" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432" x="2354" y="8" height="60" width="265" format="[general]" html.valueishtml="0"  name=coileoymu_cnt  tag="갯수" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="2" color="33554432" x="2190" y="8" height="60" width="155" format="[General]" html.valueishtml="0"  name=coilmst_qcnt  tag="재고갯수" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="2" color="33554432" x="1312" y="8" height="60" width="576" format="[general]" html.valueishtml="0"  name=c_coil_coil_no visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="2" color="33554432" x="1897" y="8" height="60" width="283" format="#,##0" html.valueishtml="0"  name=coilmst_unit_qty  tag="재고단중" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="2" color="33554432" x="9" y="8" height="60" width="969" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="2" color="33554432" x="987" y="8" height="60" width="315" format="[general]" html.valueishtml="0"  name=coilmst_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="TRIM(   item_name ) + ~" 합계 == > ~""border="0" color="33554432" x="101" y="16" height="60" width="1344" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15793151" )
+compute(band=trailer.2 alignment="1" expression="sum( coilmst_unit_qty  *  coilmst_qcnt  for group 2)"border="0" color="33554432" x="2034" y="16" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.2 alignment="1" text="재고총중량 = " border="0" color="0" x="1573" y="16" height="60" width="439" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="0" expression="case( mid( coileoymu_item_no , 3, 1) when  ~"A~" then ( case( mid( coileoymu_item_no , 2, 1) when ~"1~"  then  ~"AL 원코일~"  when ~"3~"  then ~"AL 스리팅~" ) ) ELSE ( case( mid( coileoymu_item_no , 2, 1) when ~"1~"  then ~"GI 원코일~"  when ~"3~"  then ~"GI 스리팅~" ) ) )+ ~" 합계 == > ~"
+"border="0" color="16711680" x="9" y="16" height="60" width="1138" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15793151" )
+compute(band=trailer.1 alignment="1" expression="sum( coilmst_unit_qty  *  coilmst_qcnt  for group 1)"border="0" color="33554432" x="2034" y="16" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="1" text="재고총중량 = " border="0" color="0" x="1577" y="16" height="60" width="439" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="sum( coilmst_unit_qty  *  coileoymu_cnt  for group 2)"border="0" color="33554432" x="2990" y="16" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=trailer.2 alignment="1" text="실사총중량 = " border="0" color="0" x="2546" y="16" height="60" width="421" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum( coilmst_unit_qty  *  coileoymu_cnt  for group 1)"border="0" color="33554432" x="2990" y="16" height="60" width="389" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=trailer.1 alignment="1" text="실사총중량 = " border="0" color="0" x="2551" y="16" height="60" width="421" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=header alignment="0" expression="page() + ' / ' + pageCount()"border="0" color="0" x="2994" y="348" height="60" width="389" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="today()"border="0" color="0" x="2994" y="276" height="60" width="389" format="yyyy/mm/dd" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Page:" border="0" color="0" x="2825" y="348" height="60" width="160" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Date:" border="0" color="0" x="2825" y="276" height="60" width="160" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="실사시간" border="2" color="33554432" x="2825" y="428" height="60" width="558" html.valueishtml="0"  name=coileoymu_log_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="2" color="33554432" x="2825" y="8" height="60" width="558" format="[shortdate] [time]" html.valueishtml="0"  name=coileoymu_log_date  tag="입력시간" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=trailer.2 x1="0" y1="0" x2="3387" y2="0"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.2 x1="0" y1="84" x2="3387" y2="84"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="0" y1="0" x2="3387" y2="0"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="0" y1="88" x2="3387" y2="88"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

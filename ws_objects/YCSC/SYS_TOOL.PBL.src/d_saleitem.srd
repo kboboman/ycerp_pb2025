@@ -1,0 +1,157 @@
+﻿$PBExportHeader$d_saleitem.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="item_name" )
+ column=(type=char(10) updatewhereclause=yes name=itemloc_item_no dbname="item_no" )
+ column=(type=char(20) updatewhereclause=yes name=itemloc_qa dbname="qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=compute_0004 dbname="compute_0004" )
+ column=(type=char(10) updatewhereclause=yes name=c_date dbname="c_date" )
+ retrieve="select item_name, item_no, qa, sum(qoh), c_date from (
+      	select tb_ax.item_name, tb_ax.item_no, tb_ax.qa, sum(tb_ax.qoh) as qoh, tb_ax.c_date
+        from (
+                		SELECT location.loc_name,
+                			itemloc.loc_no,   
+                			groupitem.item_name,   
+                			itemloc.item_no,   
+                			itemloc.qa,   
+                			qoh = isnull(itemloc.qoh, 0) - isnull(H.rcptqty, 0) + isnull(H.issueqty, 0),   
+                			c_date = convert(varchar(10), :as_date, 111)
+                		FROM 	itemloc inner join groupitem on  itemloc.item_no = groupitem.item_no  
+                            			            inner join location on itemloc.loc_no = location.loc_no
+                                          		left outer join 	(
+                                                                          select 	ineoday.item_no, 
+                                                                                      ineoday.qa, 
+                                                                                      rcptqty = isnull(sum(ineoday.rcpt_qty), 0),
+                                                                    				          issueqty = isnull(sum(ineoday.issue_qty), 0)
+                                                                    			from ineoday
+                                                                    			WHERE (( ineoday.loc_no = 'WS00000000')	
+                                                                    			AND not ( ineoday.item_no >= 'PZZZFZ' 
+                                                                    			or  ( ineoday.item_no like 'm%' and ineoday.item_no like 'm[13]_[12]%') ) )    
+                                                                    			and cdate > :as_date2
+                                                                    			group by ineoday.item_no, ineoday.qa
+                                                                    		
+                                                                    			union
+                                                                    			select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+                                                                			) H on itemloc.item_no = H.item_no and itemloc.qa = H.qa
+                            		              inner join tmp_item80 xx on itemloc.item_no = xx.item_no and itemloc.qa = xx.qa
+                		WHERE  ( NOT (groupitem.uom = 'M2' and groupitem.item_no like 'PCY%') ) and  
+                              			(  ( itemloc.loc_no = 'WS00000000') and 
+                              		        not ( groupitem.item_no >= 'PZZZFZ' 
+                              		         or  ( groupitem.item_no like 'm%' and groupitem.item_no like 'm[13]_[12]%') ) ) 
+      		
+              		union 
+              		
+              		SELECT location.loc_name,
+              			itemloc.loc_no,   
+              			groupitem.item_name,   
+              			itemloc.item_no,   
+              			itemloc.qa,   
+              			qoh = isnull(itemloc.qoh, 0) - isnull(H.rcptqty, 0) + isnull(H.issueqty, 0),   
+              			c_date = convert(varchar(10), :as_date, 111)
+              		FROM 	itemloc  inner join groupitem on itemloc.item_no = groupitem.item_no
+                          			             inner join location on itemloc.loc_no = location.loc_no
+                                        		 left outer join (select 	ineoday.item_no, ineoday.qa, rcptqty = isnull(sum(ineoday.rcpt_qty), 0),
+                                                                          				issueqty = isnull(sum(ineoday.issue_qty), 0)
+                                                                          			from ineoday
+                                                                          			WHERE (( ineoday.loc_no = 'WS00000006')	
+                                                                          			AND not ( ineoday.item_no >= 'PZZZFZ' 
+                                                                          			or  ( ineoday.item_no like 'm%' and ineoday.item_no like 'm[13]_[12]%') ) )    
+                                                                          			and cdate > :as_date2
+                                                                          			group by ineoday.item_no, ineoday.qa
+                                                                          		
+                                                                          			union
+                                                                          			select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+                                                                			) H on itemloc.item_no = H.item_no 
+                                                            and itemloc.qa = H.qa
+              		                           inner join tmp_item80 xx on itemloc.item_no = xx.item_no 
+                                                            and itemloc.qa = xx.qa
+              		WHERE ( NOT (groupitem.uom = 'M2' and groupitem.item_no like 'PCY%') ) and  
+              			                        (  ( itemloc.loc_no = 'WS00000006') and 
+              		                              not ( groupitem.item_no >= 'PZZZFZ' 
+              		                              or  ( groupitem.item_no like 'm%' and groupitem.item_no like 'm[13]_[12]%') ) ) 
+      	) tb_ax
+      	group by tb_ax.item_name, tb_ax.item_no, tb_ax.qa, tb_ax.c_date		
+	
+	union
+	
+    	select tb_ax.item_name, tb_ax.item_no, tb_ax.qa, sum(tb_ax.qoh) as qoh, tb_ax.c_date 
+      from (
+              		SELECT location.loc_name,
+              			itemloc.loc_no,   
+              			groupitem.item_name,   
+              			itemloc.item_no,   
+              			itemloc.qa,   
+              			qoh = isnull(itemloc.qoh, 0) - isnull(H.rcptqty, 0) + isnull(H.issueqty, 0),   
+              			c_date = convert(varchar(10), :as_date, 111)
+              		FROM 	itemloc inner join groupitem on itemloc.item_no = groupitem.item_no
+              			                        inner join location on itemloc.loc_no = location.loc_no
+                                      			left outer join (select 	ineoday.item_no, ineoday.qa, rcptqty = isnull(sum(ineoday.rcpt_qty), 0),
+                                                                				issueqty = isnull(sum(ineoday.issue_qty), 0)
+                                                                			from ineoday
+                                                                			WHERE (( ineoday.loc_no = 'WS00000007')	
+                                                                			AND not ( ineoday.item_no >= 'PZZZFZ' 
+                                                                			or  ( ineoday.item_no like 'm%' and ineoday.item_no like 'm[13]_[12]%') ) )    
+                                                                			and cdate > :as_date2
+                                                                			group by ineoday.item_no, ineoday.qa
+                                                                		
+                                                                			union
+                                                                			select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+                                            			          ) H on itemloc.item_no = H.item_no and itemloc.qa = H.qa
+                            		             inner join  tmp_item80 xx on itemloc.item_no = xx.item_no and itemloc.qa = xx.qa
+                		WHERE ( NOT (groupitem.uom = 'M2' and groupitem.item_no like 'PCY%') ) and  
+                			              (  ( itemloc.loc_no = 'WS00000007') and 
+                		                    not ( groupitem.item_no >= 'PZZZFZ' 
+                		                    or  ( groupitem.item_no like 'm%' and groupitem.item_no like 'm[13]_[12]%') ) ) 
+    		
+    		union
+    	
+    		SELECT location.loc_name,
+    			itemloc.loc_no,   
+    			groupitem.item_name,   
+    			itemloc.item_no,   
+    			itemloc.qa,   
+    			qoh = isnull(itemloc.qoh, 0) - isnull(H.rcptqty, 0) + isnull(H.issueqty, 0),   
+    			c_date = convert(varchar(10), :as_date, 111)
+    		FROM 	itemloc inner join groupitem on itemloc.item_no = groupitem.item_no
+    			                        inner join location on itemloc.loc_no = location.loc_no
+                            			left outer join (
+                                                          select 	ineoday.item_no, ineoday.qa, rcptqty = isnull(sum(ineoday.rcpt_qty), 0),
+                                                    				issueqty = isnull(sum(ineoday.issue_qty), 0)
+                                                    			from ineoday
+                                                    			WHERE (( ineoday.loc_no = 'WS00000008')	
+                                                    			AND not ( ineoday.item_no >= 'PZZZFZ' 
+                                                    			or  ( ineoday.item_no like 'm%' and ineoday.item_no like 'm[13]_[12]%') ) )    
+                                                    			and cdate > :as_date2
+                                                    			group by ineoday.item_no, ineoday.qa
+                                                    		
+                                                    			union
+                                                    			select item_no = '', qa = '', rcptqty = 0 , issueqty = 0 
+                            			) H on itemloc.item_no = H.item_no and itemloc.qa = H.qa
+                                  inner join  tmp_item80 xx on itemloc.item_no = xx.item_no and itemloc.qa = xx.qa
+    		WHERE ( NOT (groupitem.uom = 'M2' and groupitem.item_no like 'PCY%') ) and  
+    			              (  ( itemloc.loc_no = 'WS00000008') and 
+    		                    not ( groupitem.item_no >= 'PZZZFZ' 
+    		                    or  ( groupitem.item_no like 'm%' and groupitem.item_no like 'm[13]_[12]%') ) ) 
+    	
+    	) tb_ax
+    	group by tb_ax.item_name, tb_ax.item_no, tb_ax.qa, tb_ax.c_date
+
+) tb_bx
+group by item_name, item_no, qa, c_date
+order by 2,3" arguments=(("as_date", date),("as_date2", string))  sort="itemloc_item_no A itemloc_qa A " )
+text(band=header alignment="2" text="품명" border="0" color="33554432" x="9" y="8" height="60" width="1024" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="물품번호" border="0" color="33554432" x="1042" y="8" height="60" width="416" html.valueishtml="0"  name=itemloc_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="규격" border="0" color="33554432" x="1467" y="8" height="60" width="640" html.valueishtml="0"  name=itemloc_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="C Date" border="0" color="33554432" x="2491" y="8" height="60" width="352" html.valueishtml="0"  name=c_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="수량" border="0" color="0" x="2117" y="8" height="60" width="366" html.valueishtml="0"  name=compute_0004_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="1024" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1042" y="8" height="72" width="416" format="[general]" html.valueishtml="0"  name=itemloc_item_no  tag="물품번호" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1467" y="8" height="72" width="640" format="[general]" html.valueishtml="0"  name=itemloc_qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="2491" y="8" height="72" width="352" format="[General]" html.valueishtml="0"  name=c_date visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2117" y="8" height="72" width="366" format="#,##0" html.valueishtml="0"  name=compute_0004 visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

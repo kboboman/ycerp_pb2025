@@ -1,0 +1,64 @@
+﻿$PBExportHeader$d_oidaydo_use_detail_list1.srd
+$PBExportComments$의뢰품명 수량
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=116 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=96 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=item_gubun dbname="item_gubun" )
+ column=(type=decimal(12) updatewhereclause=yes name=calc_amt1 dbname="calc_amt1" )
+ column=(type=decimal(12) updatewhereclause=yes name=calc_amt2 dbname="calc_amt2" )
+ retrieve="SELECT  a.item_gubun,
+               sum(case when a.cust_no is null then a.CALC_AMT else 0 end ) calc_amt1,
+               sum(case when a.cust_no is not null then a.CALC_AMT else 0 end ) calc_amt2
+FROM
+(
+       SELECT 	isnull(i.item_nm,'99) 미분류') item_gubun,
+       v.cust_no,
+       (dbo.uf_getqty(dodet.item_no, dodet.qa, dodet.uom, dodet.ship_qty) * dodet.price)/1000 CALC_AMT
+           FROM do   with (nolock)
+                INNER  join dodet   with (nolock) ON do.do_no      = dodet.do_no 
+                LEFT OUTER JOIN v_cust_inside  V          ON do.cust_no    = v.cust_no
+                LEFT OUTER JOIN groupitem G with (nolock) ON dodet.item_no = g.item_no 
+                LEFT OUTER JOIN (                
+                                                    select a.item_no, a.category, a.item_name, a.type, b.item_nm
+                                                      from itemtop10 a with(nolock) inner join (SELECT item_nm, item_cd  FROM codemst with(nolock) WHERE type = 'ITEMTOP10' AND use_yn = 'Y' ) b on a.category = b.item_cd                
+                                                ) i ON dodet.item_no = i.item_no    
+          WHERE ( do.do_date   BETWEEN :ad_sdate AND :ad_edate )
+) A
+group by a.item_gubun" arguments=(("ad_sdate", date),("ad_edate", date))  sort="item_gubun A " )
+line(band=detail x1="18" y1="0" x2="18" y2="128"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="50" y="8" height="68" width="919" format="[general]" html.valueishtml="0"  name=item_gubun visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=detail x1="3415" y1="0" x2="3415" y2="128"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="18" y1="92" x2="3419" y2="92"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2619" y1="0" x2="2619" y2="128"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1806" y1="0" x2="1806" y2="128"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="992" y1="0" x2="992" y2="128"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="0" x="1029" y="8" height="72" width="750" format="#,##0" html.valueishtml="0"  name=calc_amt1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="0" x="1842" y="8" height="72" width="750" format="#,##0" html.valueishtml="0"  name=calc_amt2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression="calc_amt1 + calc_amt2"border="0" color="33554432" x="2647" y="8" height="72" width="750" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=footer x1="18" y1="0" x2="18" y2="128"  name=l_20 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="3415" y1="0" x2="3415" y2="128"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="18" y1="0" x2="3419" y2="0"  name=l_26 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="18" y1="76" x2="3419" y2="76"  name=l_27 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="2619" y1="0" x2="2619" y2="104"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="1806" y1="0" x2="1806" y2="104"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=footer x1="992" y1="0" x2="992" y2="104"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=footer alignment="1" text="총계" border="0" color="33554432" x="370" y="8" height="60" width="599" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(calc_amt1 + calc_amt2 for all)"border="0" color="0" x="2647" y="4" height="72" width="750" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(calc_amt2 for all)"border="0" color="0" x="1842" y="4" height="72" width="750" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(calc_amt1 for all)"border="0" color="0" x="1029" y="4" height="72" width="750" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="18" y1="4" x2="18" y2="132"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="중분류" border="0" color="33554432" x="50" y="28" height="60" width="919" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="992" y1="4" x2="992" y2="132"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1806" y1="4" x2="1806" y2="132"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="2619" y1="4" x2="2619" y2="132"  name=l_19 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="일반영업" border="0" color="33554432" x="1029" y="28" height="60" width="750" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="계열사" border="0" color="33554432" x="1842" y="28" height="60" width="750" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="총 계" border="0" color="33554432" x="2647" y="28" height="60" width="750" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="3415" y1="4" x2="3415" y2="132"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="18" y1="112" x2="3419" y2="112"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="18" y1="4" x2="3419" y2="4"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

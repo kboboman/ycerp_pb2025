@@ -1,0 +1,27 @@
+﻿$PBExportHeader$gf_custprice.srf
+$PBExportComments$판매거래처별 표준단가(2001/04/06,이인호)
+global type gf_custprice from function_object
+end type
+
+forward prototypes
+global function real gf_custprice (string as_scene_no, string as_cust_no, string as_com_qa, string as_item_no, string as_com_qa1)
+end prototypes
+
+global function real gf_custprice (string as_scene_no, string as_cust_no, string as_com_qa, string as_item_no, string as_com_qa1);real lr_price
+datastore gs_ds_price
+
+gs_ds_price = CREATE datastore
+gs_ds_price.DataObject = 'd_wfprice'
+gs_ds_price.SetTransObject(SQLCA)
+gs_ds_price.retrieve(as_scene_no,as_cust_no,as_com_qa,as_item_no,as_com_qa1)
+
+if gs_ds_price.rowcount() > 0 then
+	lr_price = gs_ds_price.object.price[1]
+else
+	lr_price = 0
+end if
+destroy gs_ds_price
+return(lr_price)
+
+end function
+

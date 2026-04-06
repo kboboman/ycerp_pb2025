@@ -1,0 +1,44 @@
+﻿$PBExportHeader$d_whsale_issue_c.srd
+$PBExportComments$판매부(7100)사원(1999/03/29,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(30) updatewhereclause=yes name=team_team_name dbname="team_name" )
+ retrieve="  SELECT DISTINCT a.user_id
+       , a.user_name
+       , a.team_name 
+    FROM (
+         SELECT login.user_id
+              , login.user_name
+              , team.team_name 
+           FROM login
+              , salehp
+              , team  
+          WHERE login.user_id    = salehp.user_id  
+            AND salehp.salesman  = 'Y'
+            AND login.team_code  = team.team_code
+         
+         UNION ALL
+         
+         SELECT a.salesman
+              , login.user_name
+              , team.team_name 
+           FROM issuereqdet a
+              , login
+              , team
+          WHERE a.salesman      = login.user_id
+            AND login.team_code = team.team_code
+            AND convert(char(10),a.req_date,111) = convert(char(10),getdate(),111)
+            AND a.req_flag      = 'A'
+          GROUP BY a.salesman, login.user_name, team.team_name
+         ) A
+   ORDER BY user_name"  sort="team_team_name A user_name A " )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="5" y="4" height="60" width="315" format="[general]" html.valueishtml="0"  name=user_id visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="343" y="4" height="60" width="352" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="695" y="4" height="60" width="960" format="[general]" html.valueishtml="0"  name=team_team_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

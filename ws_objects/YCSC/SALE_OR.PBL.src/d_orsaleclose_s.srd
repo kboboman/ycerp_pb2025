@@ -1,0 +1,39 @@
+﻿$PBExportHeader$d_orsaleclose_s.srd
+$PBExportComments$판매주문마감 수주번호선택(1998/04/08, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=79219928 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=72 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=order_no dbname="sale.order_no" initial=" " )
+ column=(type=datetime updatewhereclause=yes name=order_date dbname="sale.order_date" initial=" " )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="scene.scene_desc" )
+ retrieve="  SELECT sale.order_no
+       , sale.order_date  
+       , customer.cust_name
+       , scene.scene_desc
+    FROM sale  
+         left outer join customer   on sale.cust_no = customer.cust_no
+         left outer join scene      on ( sale.cust_no = scene.cust_no  and sale.scene_code = scene.scene_code )
+   WHERE ( sale.cust_no          like :as_cust_no    ) 
+     AND ( sale.order_date         >= :sconfirm_date ) 
+     AND ( sale.order_date         <= :econfirm_date ) 
+     AND ( sale.confirm_flag        = :arg_confirm   ) 
+     AND ( ( sale.open_close     like :as_open_close ) or
+			  ( :as_open_close = 'C' and sale.open_close = 'X' ) 
+         )
+   ORDER BY sale.order_date ASC   
+" arguments=(("as_cust_no", string),("sconfirm_date", date),("econfirm_date", date),("as_open_close", string),("arg_confirm", string)) )
+text(band=header alignment="2" text="수주번호" border="2" color="0" x="9" y="8" height="60" width="448" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="주문일자" border="2" color="0" x="471" y="8" height="60" width="352" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="거래처명" border="2" color="0" x="837" y="8" height="60" width="905" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="현장명" border="2" color="0" x="1760" y="8" height="60" width="1280" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="0" x="471" y="4" height="60" width="352" format="yyyy/mm/dd" html.valueishtml="0"  name=order_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="2" color="0" x="9" y="4" height="60" width="448" format="[general]" html.valueishtml="0"  name=order_no  tag="판매주문번호" visible="1" edit.limit=14 edit.case=upper edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 edit.displayonly=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+compute(band=footer alignment="2" expression="count(  order_no  for all )"border="0" color="0" x="9" y="4" height="60" width="448" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="2" color="0" x="837" y="4" height="60" width="905" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="2" color="0" x="1760" y="4" height="60" width="1280" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif (getrow() = currentrow(), RGB(254,252,175), 78682240)" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

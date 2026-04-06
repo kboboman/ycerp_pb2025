@@ -1,0 +1,168 @@
+﻿$PBExportHeader$d_ocsalereceivable_s.srd
+$PBExportComments$거래처 미수채권현황(2004/05/14,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=144 color="67108864" )
+summary(height=72 color="12632256" )
+footer(height=72 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(1) updatewhereclause=yes name=credit_level dbname="credit_level" )
+ column=(type=decimal(2) updatewhereclause=yes name=inv_amt dbname="inv_amt" )
+ column=(type=decimal(2) updatewhereclause=yes name=inv_rem dbname="inv_rem" )
+ column=(type=decimal(2) updatewhereclause=yes name=invrate dbname="invrate" )
+ column=(type=decimal(6) updatewhereclause=yes name=pinv_avr dbname="pinv_avr" )
+ column=(type=decimal(6) updatewhereclause=yes name=cinv_avr dbname="cinv_avr" )
+ column=(type=decimal(15) updatewhereclause=yes name=inv_inc dbname="inv_inc" )
+ column=(type=decimal(2) updatewhereclause=yes name=pinv_rem dbname="pinv_rem" )
+ column=(type=decimal(18) updatewhereclause=yes name=rem_inc dbname="rem_inc" )
+ column=(type=char(1) updatewhereclause=yes name=inv3_mon dbname="inv3_mon" )
+ column=(type=char(1) updatewhereclause=yes name=coll3_mon dbname="coll3_mon" )
+ column=(type=long updatewhereclause=yes name=cyear dbname="cyear" )
+ column=(type=long updatewhereclause=yes name=cmon dbname="cmon" )
+ column=(type=char(5) updatewhereclause=yes name=clevel dbname="clevel" )
+ column=(type=char(10) updatewhereclause=yes name=cuser dbname="cuser" )
+ column=(type=long updatewhereclause=yes name=crate dbname="crate" )
+ column=(type=char(21) updatewhereclause=yes name=c3mon dbname="c3mon" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ retrieve="  SELECT cust_name    = a.cust_name                                                            
+       , cust_no      = a.cust_no                                                              
+       , credit_level = a.credit_level                                                         
+       , inv_amt      = a.inv_amt                                     /* 당월매출 */     
+       , inv_rem      = a.inv_rem                                     /* 월말 미수잔액 */
+       , invrate      = a.invrate                                     /* 회수율 */       
+       , pinv_avr     = a.pinv_avr                                    /* 평균매출전년 */ 
+       , cinv_avr     = a.cinv_avr                                    /* 평균매출당년 */
+       , inv_inc      = (case when isnull( a.inv_inc3, a.inv_inc4 - a.inv_inc5 ) = 0 then 0
+                              else ( a.inv_inc1  - a.inv_inc2 ) / isnull( a.inv_inc3, a.inv_inc4 - a.inv_inc5 )
+                         end)                                         /* 매출신장율 */  
+       , pinv_rem     = a.pinv_rem                                    /* 전년미수잔액 */ 
+       , rem_inc      = (case when isnull( a.rem_inc2, a.rem_inc3 ) = 0 then 0
+                              else a.rem_inc1 / isnull( a.rem_inc2, a.rem_inc3 )
+                         end)                                         /* 미수채권증감율 = 월말 미수잔액 - 전년미수잔액 / 전년미수잔액(월말 미수잔액 - 전년미수잔액)*/ 
+       , inv3_mon     = a.inv3_mon                                    /* 최근3개월매출유무 */  
+       , coll3_mon    = a.coll3_mon                                   /* 최근3개월수금유무 */  
+       , cyear        = a.cyear              
+       , cmon         = a.cmon               
+       , clevel       = a.clevel             
+       , cuser        = a.cuser              
+       , crate        = a.crate              
+       , c3mon        = a.c3mon              
+       , salesman     = a.salesman           
+    FROM (
+         SELECT cust_name    = c.cust_name                                                     
+              , cust_no      = c.cust_no                                                       
+              , credit_level = c.credit_level                                                  
+              , inv_amt      = isnull(dbo.uf_getopeom_inv(  c.cust_no, :ai_year, :ai_mon)  ,0)           /* 당월매출 */     
+              , inv_rem      = isnull(dbo.uf_getopeom_Srem( c.cust_no, :ai_year, :ai_mon)  ,0)           /* 월말 미수잔액 */
+              , invrate      = isnull(dbo.uf_getopeom_rate( c.cust_no, :ai_year, :ai_mon)  ,0)           /* 회수율 */       
+              , pinv_avr     = isnull(dbo.uf_getopeom_Sinv( c.cust_no, (:ai_year -1), 12)  ,0) / 12      /* 평균매출전년 */ 
+              , cinv_avr     = isnull(dbo.uf_getopeom_Sinv( c.cust_no, :ai_year, :ai_mon)  ,0) / :ai_mon /* 평균매출당년 */
+            /*, inv_inc0     = ( dbo.uf_getopeom_Sinv( c.cust_no, :ai_year,      :ai_mon) / :ai_mon  - ( dbo.uf_getopeom_Sinv( c.cust_no, (:ai_year -1), 12) / 12 ) )
+                      / isnull( ( dbo.uf_getopeom_Sinv( c.cust_no, (:ai_year -1),      12) / 12 )
+                              , ( dbo.uf_getopeom_Sinv( c.cust_no, :ai_year,      :ai_mon) / :ai_mon  - ( dbo.uf_getopeom_Sinv( c.cust_no, (:ai_year -1), 12) / 12 ) )
+                              )*/ /* 매출신장율 */                                                                                       
+              , inv_inc1     = dbo.uf_getopeom_Sinv( c.cust_no, :ai_year,      :ai_mon) / :ai_mon
+              , inv_inc2     = dbo.uf_getopeom_Sinv( c.cust_no, (:ai_year -1), 12)      / 12
+              , inv_inc3     = dbo.uf_getopeom_Sinv( c.cust_no, (:ai_year -1),      12) / 12
+              , inv_inc4     = dbo.uf_getopeom_Sinv( c.cust_no, :ai_year,      :ai_mon) / :ai_mon
+              , inv_inc5     = dbo.uf_getopeom_Sinv( c.cust_no, (:ai_year -1), 12)      / 12 
+              , pinv_rem     = isnull(copeom.balbf_amount, 0)                                            /* 전년미수잔액 */ 
+            /*, rem_inc0     = dbo.uf_getopeom_Srem( c.cust_no, :ai_year, :ai_mon) - isnull(copeom.balbf_amount, 0)
+                             / isnull( copeom.balbf_amount, dbo.uf_getopeom_Srem( c.cust_no, :ai_year, :ai_mon ) - copeom.balbf_amount )*/ /* 미수채권증감율 */ 
+              , rem_inc1     = dbo.uf_getopeom_Srem( c.cust_no, :ai_year, :ai_mon ) - isnull(copeom.balbf_amount, 0) /* 월말 미수잔액 - 전년미수잔액 */
+              , rem_inc2     = copeom.balbf_amount                                                       /* 전년미수잔액 */
+              , rem_inc3     = dbo.uf_getopeom_Srem( c.cust_no, :ai_year, :ai_mon ) - copeom.balbf_amount /* 월말 미수잔액 - 전년미수잔액 */
+
+              , inv3_mon     = dbo.uf_getopeom_3mon( c.cust_no, :ai_year, :ai_mon, 'I')              /* 최근3개월매출유무 */ 
+              , coll3_mon    = dbo.uf_getopeom_3mon( c.cust_no, :ai_year, :ai_mon, 'C')              /* 최근3개월수금유무 */ 
+              , cyear        = :ai_year                                                                       
+              , cmon         = :ai_mon                                                                        
+              , clevel       = (case when :as_level = '%' then '전 체' else :as_level           end)          
+              , cuser        = (case when :as_user  = '%' then '전 체' else login.user_name     end)          
+              , crate        = :ai_rate                                                                       
+              , c3mon        = (case when :as_3mon  = 'A' then '전체'  else '3개월 수금/매출無' end) + '업체' 
+              , salesman     = login.user_name                                                       /* 비고 (미수잔액에는 부도어음 미수채권 포함) */ 
+           FROM customer  c                                                  
+                LEFT OUTER JOIN opeom copeom  ON c.cust_no  = copeom.cust_no 
+                LEFT OUTER JOIN login         ON c.salesman = login.user_id  
+          WHERE c.open_close             = 'O'                               
+            AND c.cust_flag              = 'N'                               
+            AND c.credit_level        LIKE :as_level                         
+            AND datepart(year, copeom.eom_year) = :ai_year                   
+            AND dbo.uf_getopeom_rate( c.cust_no, :ai_year, :ai_mon) >= :ai_rate
+            AND ( :as_user = '%' or (:as_user <> '%' and c.salesman  = :as_user) )
+            AND ( :as_3mon = 'A' or ( :as_3mon = '3' and                          
+                                      dbo.uf_getopeom_3mon( c.cust_no, :ai_year, :ai_mon, 'C') = 'N' and 
+                                      dbo.uf_getopeom_3mon( c.cust_no, :ai_year, :ai_mon, 'I') = 'N' 
+                                    ) 
+                )
+         ) A
+         " filter="inv_amt <> 0 or inv_rem <> 0 or pinv_avr <> 0 or cinv_avr  <> 0 or pinv_rem  <> 0"arguments=(("ai_year", number),("ai_mon", number),("as_level", string),("as_user", string),("ai_rate", number),("as_3mon", string))  sort="cust_name A " )
+text(band=header alignment="2" text="" border="6" color="0" x="2459" y="8" height="60" width="439" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="평균매출" border="6" color="33554432" x="2907" y="8" height="60" width="457" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="6" color="0" x="3374" y="8" height="60" width="315" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="최근3개월" border="6" color="0" x="4494" y="8" height="60" width="265" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-8" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="발생유무" border="6" color="0" x="4768" y="8" height="60" width="242" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-8" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전년" border="6" color="0" x="2459" y="76" height="60" width="439" html.valueishtml="0"  name=pinv_avr_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="당년" border="6" color="0" x="2907" y="76" height="60" width="457" html.valueishtml="0"  name=cinv_avr_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="신장율" border="6" color="0" x="3374" y="76" height="60" width="315" html.valueishtml="0"  name=inv_inc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="매출" border="6" color="0" x="4494" y="76" height="60" width="265" html.valueishtml="0"  name=inv3_mon_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수금" border="6" color="0" x="4768" y="76" height="60" width="242" html.valueishtml="0"  name=coll3_mon_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="미수채권
+증감율" border="6" color="0" x="4155" y="8" height="128" width="329" html.valueishtml="0"  name=rem_inc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전  년
+미수잔액" border="6" color="0" x="3698" y="8" height="128" width="448" html.valueishtml="0"  name=pinv_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="
+회전율" border="6" color="0" x="2208" y="8" height="128" width="242" html.valueishtml="0"  name=invrate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="
+당월말미수" border="6" color="0" x="1691" y="8" height="128" width="507" html.valueishtml="0"  name=inv_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="
+당월매출" border="6" color="0" x="1170" y="8" height="128" width="512" html.valueishtml="0"  name=inv_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="
+등급" border="6" color="33554432" x="1015" y="8" height="128" width="146" html.valueishtml="0"  name=customer_credit_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="
+거래처명" border="6" color="33554432" x="457" y="8" height="128" width="549" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="
+코드" border="6" color="33554432" x="261" y="8" height="128" width="187" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="
+담당자" border="6" color="33554432" x="9" y="8" height="128" width="242" html.valueishtml="0"  name=salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="4494" y="8" height="60" width="265" format="[general]" html.valueishtml="0"  name=inv3_mon visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1170" y="8" height="60" width="512" format="#,##0" html.valueishtml="0"  name=inv_amt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2459" y="8" height="60" width="439" format="#,##0" html.valueishtml="0"  name=pinv_avr visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2907" y="8" height="60" width="457" format="#,##0" html.valueishtml="0"  name=cinv_avr visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="3374" y="8" height="60" width="315" format="#,##0.00%" html.valueishtml="0"  name=inv_inc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432~tif( pinv_rem <> pinv_rem2 , rgb(255,0,0), rgb(0,0,0))" x="3698" y="8" height="60" width="448" format="#,##0" html.valueishtml="0"  name=pinv_rem visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="4155" y="8" height="60" width="329" format="0.00%" html.valueishtml="0"  name=rem_inc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1691" y="8" height="60" width="507" format="#,##0" html.valueishtml="0"  name=inv_rem visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2208" y="8" height="60" width="242" format="#,##0.00" html.valueishtml="0"  name=invrate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1015" y="8" height="60" width="146" format="[general]" html.valueishtml="0"  name=credit_level visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="4768" y="8" height="60" width="242" format="[general]" html.valueishtml="0"  name=coll3_mon visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=1 alignment="0" tabsequence=20 border="0" color="33554432" x="457" y="8" height="60" width="549" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=2 alignment="2" tabsequence=10 border="0" color="33554432" x="261" y="8" height="60" width="187" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="60" width="242" format="[general]" html.valueishtml="0"  name=salesman visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+text(band=summary alignment="2" text="" border="0" color="0" x="1015" y="4" height="60" width="146" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=summary alignment="2" text="총 합 계" border="0" color="0" x="457" y="4" height="60" width="549" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=summary alignment="2" text="" border="0" color="0" x="261" y="4" height="60" width="187" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=summary alignment="2" text="" border="0" color="0" x="9" y="4" height="60" width="242" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum (  inv_amt for all )"border="0" color="0" x="1170" y="4" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum (  inv_rem for all )"border="0" color="0" x="1691" y="4" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=summary alignment="2" text="" border="0" color="0" x="2208" y="4" height="60" width="242" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum ( cinv_avr  for all )"border="0" color="0" x="2907" y="4" height="60" width="457" format="#,##0" html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=summary alignment="1" text="" border="0" color="0" x="3374" y="4" height="60" width="315" html.valueishtml="0"  name=t_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum (  pinv_rem for all )"border="0" color="0" x="3698" y="4" height="60" width="448" format="#,##0" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum (  pinv_avr for all )"border="0" color="0" x="2459" y="4" height="60" width="439" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  invrate  for all )"border="0" color="0" x="2208" y="4" height="60" width="242" format="#,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  inv_inc  for all )"border="0" color="0" x="3374" y="4" height="60" width="315" format="#,##0.00" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  rem_inc  for all )"border="0" color="0" x="4155" y="4" height="60" width="329" format="#,##0.00" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  pinv_rem  for all )"border="0" color="0" x="3698" y="4" height="60" width="448" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  cinv_avr  for all )"border="0" color="0" x="2907" y="4" height="60" width="457" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  pinv_avr  for all )"border="0" color="0" x="2459" y="4" height="60" width="439" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  inv_rem  for all )"border="0" color="0" x="1691" y="4" height="60" width="507" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count(  cust_no  for all )"border="0" color="33554432" x="9" y="4" height="60" width="242" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="2" text="평 균 값" border="0" color="0" x="457" y="4" height="60" width="549" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="avg(  inv_amt  for all )"border="0" color="0" x="1170" y="4" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=footer alignment="1" text="text" border="0" color="0" x="261" y="444" height="60" width="187" html.valueishtml="0"  name=t_13 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

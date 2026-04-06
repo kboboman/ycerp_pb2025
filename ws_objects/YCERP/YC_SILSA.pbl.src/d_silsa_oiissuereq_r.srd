@@ -1,0 +1,250 @@
+﻿$PBExportHeader$d_silsa_oiissuereq_r.srd
+$PBExportComments$의뢰품명 수량
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=132 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=100 color="536870912" )
+table(column=(type=char(12) updatewhereclause=yes name=gubun dbname="gubun" )
+ column=(type=char(10) updatewhereclause=yes name=l_loc_no dbname="issuereq.loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=accept_user dbname="issuereq.accept_user" )
+ column=(type=char(10) updatewhereclause=yes name=accept_user_name dbname="issuereq.accept_user_name" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="issuereq.salesman" )
+ column=(type=char(10) updatewhereclause=yes name=salesman_name dbname="issuereq.salesman_name" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="issuereq.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="issuereq.scene_desc" )
+ column=(type=long updatewhereclause=yes name=req_seq dbname="issuereq.req_seq" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="issuereq.item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="issuereq.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="issuereq.qa" )
+ column=(type=char(14) updatewhereclause=yes name=order_no dbname="issuereq.order_no" )
+ column=(type=decimal(2) updatewhereclause=yes name=issue_qty dbname="issue_qty" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="issuereq.seq_no" )
+ column=(type=decimal(2) updatewhereclause=yes name=order_qty dbname="issuereq.order_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=rlse_qty dbname="issuereq.rlse_qty" )
+ column=(type=char(160) updatewhereclause=yes name=sale_rem dbname="sale_rem" )
+ column=(type=char(10) updatewhereclause=yes name=issue_schedule_name dbname="issue_schedule_name" )
+ retrieve="			 SELECT  '출고의뢰예정' gubun,
+			              		l.loc_no,
+                         a.accept_user,
+                         j.user_name accept_user_name,
+                       b.salesman salesman
+                     , f.USER_NAME salesman_name
+                     , d.cust_name cust_name
+                     , e.scene_desc scene_desc
+                     , a.req_seq req_seq
+			               , c.item_no item_no
+                     , g.item_name item_name           
+		            	     , c.qa qa
+                     , C.ORDER_NO order_no
+			              	,  ISNULL(c.issue_qty,0) issue_qty
+                     , c.seq_no seq_no
+                     , h.order_qty order_qty
+                     , h.rlse_qty rlse_qty
+                     , rtrim(i.rem) + rtrim(i.rem1) sale_rem
+				, (case b.issue_schedule                                      
+							when 'A' then '직출'                                   
+							when 'B' then '생산후직출'                             
+							when 'C' then '자동작성'                               
+							when 'D' then '방문'                                   
+							when 'E' then '외주(시화)'                             
+							when 'F' then '외주(본사)'                             
+							when 'G' then '유창강건'                               
+							when 'H' then '지점이송'                               
+							when 'I' then '야간도착'                               
+							when 'J' then '저녁상차'                               
+							when 'K' then '택배/정기'                              
+							else           ''                                      
+					 end) issue_schedule_name
+			 FROM issuereq   A WITH (NOLOCK)
+			  LEFT OUTER JOIN issuereqdet   B WITH (NOLOCK) ON a.req_date  = b.req_date AND a.salesman = b.salesman AND a.req_seq = b.req_seq
+			  LEFT OUTER JOIN issuereqdet_sale c with(nolock) on b.req_date = c.req_date and b.salesman = c.salesman and b.req_seq = c.req_seq and  b.seq = c.seq
+			  LEFT OUTER JOIN saledet   h WITH (NOLOCK) ON c.order_no    = h.order_no and c.seq_no = h.seq_no
+			  LEFT OUTER JOIN sale     i WITH (NOLOCK) ON b.sale_no    = i.order_no
+			  LEFT OUTER JOIN location L WITH (NOLOCK) ON a.accept_user = l.loc_manager
+			  LEFT OUTER JOIN login     f WITH (NOLOCK) ON b.salesman   = f.user_id
+		       LEFT OUTER JOIN login     j WITH (NOLOCK) ON a.accept_user   = j.user_id
+			  LEFT OUTER JOIN customer  D WITH (NOLOCK) ON b.cust_no    = d.cust_no
+			  LEFT OUTER JOIN scene     E WITH (NOLOCK) ON b.scene_code = e.scene_code
+			  LEFT OUTER JOIN groupitem G WITH (NOLOCK) ON c.item_no    = g.item_no
+			 where a.req_date BETWEEN convert(datetime,  :as_reqdate +' 00:00:00' ) and convert(datetime,  :as_reqdate + ' 23:59:59' )
+				 AND ( c.item_no    is not null     )
+                      AND ( isnull(h.order_qty,0) - isnull(h.rlse_qty,0) > 0 )
+				 AND ( b.req_flag    = 'A'              ) /* 출고의뢰 */
+				 AND ( a.confirm_flag= 'Y'           ) /* 확정     */		
+                      AND   C.ITEM_NO = :as_item_no
+                      AND   C.QA = :as_qa
+				 AND NOT EXISTS (
+                                                                 SELECT * 
+                                                                  FROM
+                                                                (
+                                                                            SELECT  B.SALE_NO, B.SEQ_NO, SUM(B.SHIP_QTY) SALE_QTY
+                                                                            FROM DO A WITH(NOLOCK) INNER JOIN DODET B WITH(NOLOCK) ON A.DO_NO = B.DO_NO
+                                                                            WHERE A.DO_DATE BETWEEN convert(datetime,  :as_reqdate +' 00:00:00' ) and convert(datetime,  :as_reqdate + ' 23:59:59' )
+                                                                                    AND B.ITEM_NO = :as_item_no
+                                                                                    AND B.QA = :as_qa                                                                  
+                                                                            GROUP BY B.SALE_NO, B.SEQ_NO
+                                                                  ) A
+                                                                  WHERE A.SALE_NO = C.ORDER_NO
+                                                                  AND        A.SEQ_NO = c.seq_no
+                                                    )					
+				 AND isnull( l.loc_no, (  case when a.accept_area = 'B0001'    then 'WS00000006'
+																										  when a.accept_area = 'H0001'    then 'WS00000007'
+																										  when a.accept_area = 'S0001'    then 'WS00000000'
+																										  when a.accept_area = 'T0001'    then 'WS00000008'
+																										  when a.accept_area = 'Z0001'    then 'WS00000011'
+																										  else 'WS99999999'
+																								  end
+																								)
+											)	LIKE :as_locno
+		union all
+		SELECT '물품출고예정' gubun
+				                 ,  ask_det.loc_no loc_no
+                        , ask_head.act_user accept_user
+                        , l.user_name accept_user_name
+                        , ask_head.ask_user
+                         , j.user_name ask_head_user_name
+                         , ask_head.f_area cust_name
+                         , ''  scene_desc
+                         , 0 req_seq
+    			         , ask_det.item_no item_no
+                         , groupitem.item_name item_name           
+    			         , ask_det.qa qa
+                         , ask_det.sale_no  order_no
+    			                , isnull(ask_det.ask_qty,0)  - isnull(ask_det.rlse_qty,0) issue_qty
+                         , 0 seq_no
+                         , ask_det.ask_qty order_qty
+                         , ask_det.rlse_qty rlse_qty
+                         , '' sale_rem
+                         , '' issue_schedule_name
+				  FROM ask_det   WITH (NOLOCK)  
+				    LEFT OUTER JOIN ask_head  WITH (NOLOCK) ON ask_det.ask_no = ask_head.ask_no
+                         LEFT OUTER JOIN login l  WITH (NOLOCK) ON ask_head.act_user = l.user_id
+                         LEFT OUTER JOIN login j  WITH (NOLOCK) ON ask_head.ask_user = j.user_id
+                          LEFT OUTER JOIN groupitem  WITH (NOLOCK) ON ask_det.item_no   = groupitem.item_no
+				 WHERE ( convert(char(10), ask_head.ask_date, 112) =  :as_reqdate )
+					 AND ( ask_det.loc_no LIKE :as_locno )
+					AND ( ask_head.proc_flag <> 'Y' )  /* 완료(Y), 부분(P), 요청(N) */ 
+					AND ( ask_det.rlse_flag   = 'N'  ) /* 완료(Y), 진행(N) */
+					AND ( ask_det.loc_no = (case when ask_head.f_area = 'T0001' then 'WS00000008' 
+																											 when ask_head.f_area = 'S0001' then 'WS00000000' 
+														  else  'WS99999999' 
+													end)
+							 ) 
+					AND  ask_det.item_no = :as_item_no
+    			           AND ask_det.qa =  :as_qa   
+		union all
+	SELECT   '수주출고예정' gubun,
+                                        ISNULL( l.loc_no,     ( case when a.area_no = 'B0001'    then 'WS00000006'
+                                                        																				 when a.area_no = 'H0001'    then 'WS00000007'
+                                                        																				 when a.area_no = 'S0001'    then 'WS00000000'
+                                                        																				 when a.area_no = 'T0001'    then 'WS00000008'
+                                                        																				 when a.area_no = 'Z0001'    then 'WS00000011'
+                                                        																				 else 'WS99999999'
+                                                        																				end )
+												)  loc
+                      ,  a.org_user
+                      , m.user_name  
+                      , a.salesman
+                      , n.user_name salesman_user_name
+				 , c.cust_name cust_name
+                      , ''  scene_desc
+                      , 0 req_seq
+											,  b.item_no
+                      , i.item_name
+				 ,  qa             = b.qa
+                         , a.order_no  order_no
+    			                , isnull(b.order_qty,0) - isnull(b.rlse_qty,0) issue_qty
+                         , 0 seq_no
+                         , b.order_qty
+                         , b.rlse_qty
+                         , '' sale_rem
+                         , '' issue_schedule_name
+									FROM sale   A WITH (NOLOCK)
+										  	   INNER JOIN saledet  B WITH (NOLOCK) ON a.order_no = b.order_no
+										  	   LEFT OUTER JOIN location L WITH (NOLOCK) ON a.org_user = l.loc_manager
+                           LEFT OUTER JOIN login m  with(nolock) on  a.org_user = m.user_id
+                           LEFT OUTER JOIN login n  with(nolock) on  a.salesman = n.user_id
+                           LEFT OUTER JOIN groupitem i  with(nolock) on  b.item_no = i.item_no
+					 LEFT OUTER JOIN customer c with(nolock) on a.cust_no = c.cust_no 
+								  WHERE ( convert(char(10), a.order_date, 112) =  :as_reqdate )
+									  AND  ISNULL( l.loc_no,     ( case when a.area_no = 'B0001'    then 'WS00000006'
+																								 when a.area_no = 'H0001'    then 'WS00000007'
+																								 when a.area_no = 'S0001'    then 'WS00000000'
+																								 when a.area_no = 'T0001'    then 'WS00000008'
+																								 when a.area_no = 'Z0001'    then 'WS00000011'
+																								 else 'WS99999999'
+																								end )
+																) LIKE :as_locno
+					         AND  b.item_no = :as_item_no
+    			         AND b.qa =  :as_qa    
+									 AND ( a.do_reserved = 'Y'              ) /* 출고예정 */      " arguments=(("as_locno", string),("as_reqdate", string),("as_item_no", string),("as_qa", string))  sort="gubun A salesman_name A req_seq A order_no A cust_name A scene_desc A " )
+line(band=header x1="14" y1="20" x2="14" y2="148"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="NO" border="0" color="33554432" x="27" y="44" height="68" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="차수" border="0" color="33554432" x="617" y="44" height="68" width="160" html.valueishtml="0"  name=req_seq_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=header x1="786" y1="20" x2="786" y2="148"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="1070" y1="20" x2="1070" y2="148"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="의뢰자" border="0" color="0" x="795" y="44" height="68" width="256" html.valueishtml="0"  name=f_salesman_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+line(band=header x1="1353" y1="20" x2="1353" y2="148"  name=l_32 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="접수자" border="0" color="0" x="1079" y="44" height="60" width="256" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="4695" y="24" height="104" width="398" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+line(band=header x1="2158" y1="20" x2="2158" y2="148"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3191" y1="20" x2="3191" y2="148"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3721" y1="20" x2="3721" y2="148"  name=l_17 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="3886" y1="20" x2="3886" y2="148"  name=l_19 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="4288" y1="20" x2="4288" y2="148"  name=l_21 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="4690" y1="20" x2="4690" y2="148"  name=l_22 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5093" y1="20" x2="5093" y2="148"  name=l_24 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="5641" y1="20" x2="5641" y2="148"  name=l_26 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="출고방법" border="0" color="0" x="5102" y="44" height="68" width="530" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주문수량" border="0" color="33554432" x="3895" y="44" height="68" width="384" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text="순번" border="0" color="33554432" x="3735" y="44" height="68" width="142" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수주번호" border="0" color="33554432" x="3205" y="44" height="68" width="512" html.valueishtml="0"  name=order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현장" border="0" color="33554432" x="2167" y="44" height="68" width="1019" html.valueishtml="0"  name=scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="0" color="33554432" x="1381" y="44" height="68" width="768" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="기출수량" border="0" color="33554432" x="4297" y="44" height="68" width="384" html.valueishtml="0"  name=rlse_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고예정" border="0" color="33554432" x="4695" y="44" height="68" width="398" html.valueishtml="0"  name=issue_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+line(band=header x1="7625" y1="20" x2="7625" y2="148"  name=l_28 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="수주특기사항" border="0" color="0" x="5659" y="44" height="68" width="1957" html.valueishtml="0"  name=sale_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=header x1="197" y1="20" x2="197" y2="148"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="613" y1="20" x2="613" y2="148"  name=l_30 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="구분" border="0" color="33554432" x="229" y="44" height="60" width="352" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=header x1="14" y1="20" x2="7625" y2="20"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="14" y1="128" x2="7621" y2="128"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="14" y1="0" x2="14" y2="128"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="27" y="8" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="224" y="8" height="72" width="384" format="[general]" html.valueishtml="0"  name=gubun visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="786" y1="0" x2="786" y2="128"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1070" y1="0" x2="1070" y2="128"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="1353" y1="0" x2="1353" y2="128"  name=l_33 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="2158" y1="0" x2="2158" y2="128"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3191" y1="0" x2="3191" y2="128"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3721" y1="0" x2="3721" y2="128"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3886" y1="0" x2="3886" y2="128"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="4288" y1="0" x2="4288" y2="128"  name=l_20 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="4690" y1="0" x2="4690" y2="128"  name=l_23 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5093" y1="0" x2="5093" y2="128"  name=l_25 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="5641" y1="0" x2="5641" y2="128"  name=l_27 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="33554432" x="5102" y="8" height="72" width="530" format="[general]" html.valueishtml="0"  name=issue_schedule_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="3735" y="8" height="72" width="142" format="[general]" html.valueishtml="0"  name=seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="3205" y="8" height="72" width="512" format="[general]" html.valueishtml="0"  name=order_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="2167" y="8" height="72" width="1019" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="1381" y="8" height="72" width="768" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="7625" y1="0" x2="7625" y2="128"  name=l_29 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="5659" y="8" height="72" width="1957" format="[general]" html.valueishtml="0"  name=sale_rem visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="795" y="8" height="72" width="256" format="[general]" html.valueishtml="0"  name=salesman_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1079" y="8" height="72" width="256" format="[general]" html.valueishtml="0"  name=accept_user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="617" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=req_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="197" y1="0" x2="197" y2="128"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="613" y1="0" x2="613" y2="128"  name=l_31 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="14" y1="92" x2="7625" y2="92"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="4699" y="8" height="72" width="384" format="#,##0" html.valueishtml="0"  name=issue_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="33554432" x="4297" y="8" height="72" width="384" format="#,##0" html.valueishtml="0"  name=rlse_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="3895" y="8" height="72" width="384" format="#,##0" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="rowcount()"border="2" color="33554432" x="27" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(  issue_qty for all )"border="2" color="16711680" x="4699" y="4" height="72" width="384" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( rlse_qty for all )"border="2" color="0" x="4297" y="4" height="72" width="384" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( order_qty for all )"border="2" color="0" x="3895" y="4" height="72" width="384" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

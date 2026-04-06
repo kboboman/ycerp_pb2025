@@ -1,0 +1,541 @@
+﻿$PBExportHeader$d_whitemret_r_all.srd
+$PBExportComments$품목별 재고수불부
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=loc_name dbname="LOC_NAME" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="ITEM_NO" )
+ column=(type=char(60) updatewhereclause=yes name=item_nm dbname="ITEM_NM" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="QA" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="UOM" )
+ column=(type=datetime updatewhereclause=yes name=sdate dbname="SDATE" )
+ column=(type=datetime updatewhereclause=yes name=edate dbname="EDATE" )
+ column=(type=decimal(4) updatewhereclause=yes name=b_qoh dbname="B_QOH" )
+ column=(type=decimal(2) updatewhereclause=yes name=in_qty dbname="IN_QTY" )
+ column=(type=decimal(2) updatewhereclause=yes name=out_qty dbname="OUT_QTY" )
+ column=(type=decimal(4) updatewhereclause=yes name=itemloc_qoh dbname="ITEMLOC_QOH" )
+ column=(type=decimal(2) updatewhereclause=yes name=c_stock dbname="C_STOCK" )
+ retrieve="SELECT LOC_NAME    = (SELECT L.LOC_NAME  FROM LOCATION L  WHERE L.LOC_NO = Y.LOC_NO)
+     , ITEM_NO     = Y.ITEM_NO 
+     , ITEM_NM     = (SELECT ITEM_NAME   FROM GROUPITEM I WHERE I.ITEM_NO = Y.ITEM_NO)
+     , QA          = Y.QA
+     , UOM         = DBO.UF_GETUOM( (SELECT DISTINCT UOM  FROM ITEM WHERE ITEM_NO = Y.ITEM_NO) )
+     , SDATE       = CONVERT(SMALLDATETIME, :as_from, 111)   
+     , EDATE       = CONVERT(SMALLDATETIME, :as_to, 111)
+     , B_QOH       = Y.QOH                     /*전월이월수량[재고조사량]*/
+     
+     /*(생산)입고, 대체(입고), *저장소이동(입고), 반품(입고), 무상(입고), 가공(입고), 가입고*/
+     , IN_QTY      = SUM(ISNULL(S.M_IQTY, 0)) + SUM(ISNULL(S.A_IQTY, 0)) + SUM(ISNULL(S.V_IQTY, 0)) +
+                     SUM(ISNULL(S.R_IQTY, 0)) + SUM(ISNULL(S.N_IQTY, 0)) + SUM(ISNULL(S.W_IQTY, 0)) + SUM(ISNULL(S.I_IQTY, 0)) 
+     
+     /*정상(출고), 대체(출고), 저장소이동(출고), 샘플(출고), 폐기, 가공(출고), 작업일보사용, (재고생산)출고*/
+     , OUT_QTY     = SUM(ISNULL(S.D_OQTY, 0)) + SUM(ISNULL(S.A_OQTY, 0)) + SUM(ISNULL(S.V_OQTY, 0)) +
+                     SUM(ISNULL(S.S_OQTY, 0)) + SUM(ISNULL(S.P_OQTY, 0)) + SUM(ISNULL(S.W_OQTY, 0)) + SUM(ISNULL(S.U_OQTY, 0)) + SUM(ISNULL(S.J_OQTY, 0))  
+
+     , ITEMLOC_QOH = SUM(ISNULL(S.QOH, 0)) - (SELECT NQTY = ISNULL(SUM(A.RCPT_QTY), 0) - ISNULL(SUM(A.ISSUE_QTY), 0) 
+                                                FROM INEODAY A
+                                               WHERE CONVERT(CHAR(10),A.CDATE,111)  > :as_from
+                                                 AND ( A.ITEM_NO = Y.ITEM_NO  )
+                                                 AND ( A.QA      = Y.QA       )
+                                                 AND ( A.LOC_NO  = :as_loc_no )
+                                             ) /*ITEMLOC의 현재고*/
+     , C_STOCK = ISNULL(Y.QOH, 0) + ISNULL(A.PRE_QTY, 0) 
+               + SUM(S.M_IQTY + S.A_IQTY + S.V_IQTY + S.R_IQTY + S.N_IQTY + S.W_IQTY + S.I_IQTY
+                   - S.D_OQTY - S.A_OQTY - S.V_OQTY - S.S_OQTY - S.P_OQTY - S.W_OQTY - S.U_OQTY - S.J_OQTY) /*전산재고*/
+  FROM (
+       SELECT LOC_NO    = Y.LOC_NO 
+            , ITEM_NO   = Y.ITEM_NO             
+            , QA        = Y.QA                  
+            , QOH       = ISNULL(Y.QOH, 0)      /*전월이월수량[재고조사량]*/
+         FROM INEOYM Y
+        WHERE Y.CYEAR      = CONVERT(CHAR(4), DATEPART(YEAR, :as_from))
+          AND Y.CMON       = RIGHT('00' + CONVERT(CHAR(2),DATEADD(MONTH, -1, :as_from)),2)
+          AND Y.LOC_NO     = :as_loc_no
+       ) Y
+
+       LEFT OUTER JOIN 
+       (
+       SELECT LOC_NO    = D.LOC_NO
+            , ITEM_NO   = D.ITEM_NO             
+            , QA        = D.QA                  
+            , PRE_QTY   = SUM(ISNULL(D.RCPT_QTY, 0)) - SUM(ISNULL(D.RCPT_QTY, 0)) /*전월이월수량이후 날짜분*/
+         FROM INEODAY D
+        WHERE D.CDATE      > LEFT(REPLACE(:as_from,'/',''), 6) + '00'
+          AND D.CDATE      < REPLACE(:as_from,'/','')
+          AND D.LOC_NO     = :as_loc_no
+        GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+       ) A  
+       ON Y.LOC_NO = A.LOC_NO  AND Y.ITEM_NO = A.ITEM_NO  AND Y.QA = A.QA
+       
+       LEFT OUTER JOIN 
+       (
+       SELECT LOC_NO     = AA.LOC_NO
+            , ITEM_NO    = AA.ITEM_NO    
+            , QA         = AA.QA 
+            , M_IQTY     = SUM(AA.M_IQTY  ) /*(생산)입고*/
+            , A_IQTY     = SUM(AA.A_IQTY  ) /*대체입고*/
+            , V_IQTY     = SUM(AA.V_IQTY  ) /*저장소이동(입고)*/
+            , R_IQTY     = SUM(AA.R_IQTY  ) /*반품(입고)*/
+            , N_IQTY     = SUM(AA.N_IQTY  ) /*무상(입고)*/
+            , W_IQTY     = SUM(AA.W_IQTY  ) /*가공입고*/
+            , I_IQTY     = SUM(AA.I_IQTY  ) /*가입고*/ 
+            , D_OQTY     = SUM(AA.D_OQTY  ) /*출고(정상)*/
+            , A_OQTY     = SUM(AA.A_OQTY  ) /*대체출고*/ 
+            , V_OQTY     = SUM(AA.V_OQTY  ) /*저장소이동(출고)*/
+            , S_OQTY     = SUM(AA.S_OQTY  ) /*샘플(출고)*/
+            , P_OQTY     = SUM(AA.P_OQTY  ) /*폐기*/ 
+            , W_OQTY     = SUM(AA.W_OQTY  ) /*가공출고*/ 
+            , U_OQTY     = SUM(AA.U_OQTY  ) /*작업일보사용*/  
+            , J_OQTY     = SUM(AA.J_OQTY  ) /*(재고생산)출고*/
+            , QOH        = SUM(AA.QOH     ) /*현재고*/ 
+         FROM (
+              SELECT LOC_NO     = D.LOC_NO
+                   , ITEM_NO    = D.ASSEMBLY    
+                   , QA         = D.ASSEMBLY_QA 
+                   , M_IQTY     = D.MAKE_QTY /*(생산)입고*/
+                   , A_IQTY     = 0 
+                   , V_IQTY     = 0 
+                   , R_IQTY     = 0 
+                   , N_IQTY     = 0 
+                   , W_IQTY     = 0 
+                   , I_IQTY     = 0 
+                   , D_OQTY     = 0 
+                   , A_OQTY     = 0 
+                   , V_OQTY     = 0 
+                   , S_OQTY     = 0 
+                   , P_OQTY     = 0 
+                   , W_OQTY     = 0 
+                   , U_OQTY     = 0 
+                   , J_OQTY     = 0 
+                   , QOH        = 0 
+                FROM SFCDAY D
+               WHERE CONVERT(CHAR(10),D.SFC_DATE,111)  BETWEEN :as_from AND :as_to
+                 AND D.LOC_NO          = :as_loc_no
+                 
+               UNION ALL
+               SELECT LOC_NO     = D.TAR_LOC
+                    , ITEM_NO    = D.TAR_ITEM 
+                    , QA         = D.TAR_QA   
+                    , M_IQTY     = 0 
+                    , A_IQTY     = SUM(ISNULL(D.TAR_QTY, 0)) /*대체입고*/
+                    , V_IQTY     = 0 
+                    , R_IQTY     = 0 
+                    , N_IQTY     = 0 
+                    , W_IQTY     = 0 
+                    , I_IQTY     = 0 
+                    , D_OQTY     = 0 
+                    , A_OQTY     = 0 
+                    , V_OQTY     = 0 
+                    , S_OQTY     = 0 
+                    , P_OQTY     = 0 
+                    , W_OQTY     = 0 
+                    , U_OQTY     = 0 
+                    , J_OQTY     = 0 
+                    , QOH        = 0 
+                 FROM ITEMALTER D
+                WHERE CONVERT(CHAR(10),D.ALTER_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.TAR_LOC          = :as_loc_no
+                GROUP BY D.TAR_LOC, D.TAR_ITEM, D.TAR_QA
+              
+               UNION ALL
+               SELECT LOC_NO     = H.ASK_LOC
+                    , ITEM_NO    = D.ITEM_NO 
+                    , QA         = D.QA      
+                    , M_IQTY     = 0 
+                    , A_IQTY     = 0 
+                    , V_IQTY     = SUM(ISNULL(D.RLSE_QTY, 0)) /*저장소이동(입고)*/
+                    , R_IQTY     = 0 
+                    , N_IQTY     = 0 
+                    , W_IQTY     = 0 
+                    , I_IQTY     = 0 
+                    , D_OQTY     = 0 
+                    , A_OQTY     = 0 
+                    , V_OQTY     = 0 
+                    , S_OQTY     = 0 
+                    , P_OQTY     = 0 
+                    , W_OQTY     = 0 
+                    , U_OQTY     = 0 
+                    , J_OQTY     = 0 
+                    , QOH        = 0 
+                 FROM ASK_HEAD H
+                    , ASK_DET  D
+                WHERE H.ASK_NO          = D.ASK_NO
+                  AND CONVERT(CHAR(10),D.RLSE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.ASK_LOC         = :as_loc_no
+                GROUP BY H.ASK_LOC, D.ITEM_NO, D.QA
+              
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , M_IQTY      = 0 
+                    , A_IQTY      = 0 
+                    , V_IQTY      = 0 
+                    , R_IQTY      = SUM(ISNULL(D.SHIP_QTY, 0) * -1) /*반품(입고)*/
+                    , N_IQTY      = 0 
+                    , W_IQTY      = 0 
+                    , I_IQTY      = 0 
+                    , D_OQTY      = 0 
+                    , A_OQTY      = 0 
+                    , V_OQTY      = 0 
+                    , S_OQTY      = 0 
+                    , P_OQTY      = 0 
+                    , W_OQTY      = 0 
+                    , U_OQTY      = 0 
+                    , J_OQTY      = 0 
+                    , QOH         = 0 
+                 FROM DO    H
+                    , DODET D
+                WHERE H.DO_NO            = D.DO_NO
+                  AND H.DO_CASE          = 'D'
+                  AND CONVERT(CHAR(10),H.ISSUE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO           = :as_loc_no
+                GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+                
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO 
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , M_IQTY      = 0 
+                    , A_IQTY      = 0 
+                    , V_IQTY      = 0 
+                    , R_IQTY      = 0 
+                    , N_IQTY      = SUM(ISNULL(D.FREE_QTY, 0)) /*무상(입고)*/
+                    , W_IQTY      = 0 
+                    , I_IQTY      = 0 
+                    , D_OQTY      = 0 
+                    , A_OQTY      = 0 
+                    , V_OQTY      = 0 
+                    , S_OQTY      = 0 
+                    , P_OQTY      = 0 
+                    , W_OQTY      = 0 
+                    , U_OQTY      = 0 
+                    , J_OQTY      = 0 
+                    , QOH         = 0 
+                 FROM RET    H
+                    , RETDET D
+                WHERE CONVERT(CHAR(10),H.RET_DATE,111)    BETWEEN :as_from AND :as_to
+                  AND H.RET_NO            = D.RET_NO
+                  AND H.PROCESS_FLAG NOT IN ('O', 'Y')
+                  AND D.LOC_NO            = :as_loc_no
+                GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+              
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO
+                    , QA          = D.QA     
+                    , M_IQTY      = 0 
+                    , A_IQTY      = 0 
+                    , V_IQTY      = 0 
+                    , R_IQTY      = 0 
+                    , N_IQTY      = 0 
+                    , W_IQTY      = SUM(ISNULL(D.RCPT_QTY, 0)) /*가공입고*/
+                    , I_IQTY      = 0 
+                    , D_OQTY      = 0 
+                    , A_OQTY      = 0 
+                    , V_OQTY      = 0 
+                    , S_OQTY      = 0 
+                    , P_OQTY      = 0 
+                    , W_OQTY      = 0 
+                    , U_OQTY      = 0 
+                    , J_OQTY      = 0 
+                    , QOH         = 0 
+                 FROM INSP    H
+                    , INSPDET D
+                WHERE CONVERT(CHAR(10),H.INSP_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.INSP_NO         = D.INSP_NO
+                  AND D.LOC_NO          = :as_loc_no
+                GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+              
+               UNION ALL
+               SELECT LOC_NO      = H.LOC_NO
+                    , ITEM_NO     = H.ITEM_NO 
+                    , QA          = H.QA      
+                    , M_IQTY      = 0 
+                    , A_IQTY      = 0 
+                    , V_IQTY      = 0 
+                    , R_IQTY      = 0 
+                    , N_IQTY      = 0 
+                    , W_IQTY      = 0 
+                    , I_IQTY      = SUM(ISNULL(H.QTY, 0)) /*가입고*/
+                    , D_OQTY      = 0 
+                    , A_OQTY      = 0 
+                    , V_OQTY      = 0 
+                    , S_OQTY      = 0 
+                    , P_OQTY      = 0 
+                    , W_OQTY      = 0 
+                    , U_OQTY      = 0 
+                    , J_OQTY      = 0 
+                    , QOH         = 0 
+                 FROM INTEMP H
+                WHERE CONVERT(CHAR(10),H.INTEMP_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.LOC_NO            = :as_loc_no
+                GROUP BY H.LOC_NO, H.ITEM_NO, H.QA
+                
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO
+                    , QA          = D.QA     
+                    , M_IQTY      = 0 
+                    , A_IQTY      = 0 
+                    , V_IQTY      = 0 
+                    , R_IQTY      = 0 
+                    , N_IQTY      = 0 
+                    , W_IQTY      = 0 
+                    , I_IQTY      = 0 
+                    , D_OQTY      = SUM(ISNULL(D.SHIP_QTY, 0)) /*출고(정상)*/
+                    , A_OQTY      = 0 
+                    , V_OQTY      = 0 
+                    , S_OQTY      = 0 
+                    , P_OQTY      = 0 
+                    , W_OQTY      = 0 
+                    , U_OQTY      = 0 
+                    , J_OQTY      = 0 
+                    , QOH         = 0 
+                 FROM DO    H
+                    , DODET D
+                WHERE CONVERT(CHAR(10),H.ISSUE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.DO_NO            = D.DO_NO
+                  AND H.DO_CASE         IN ('A', 'B', 'C')
+                  AND D.LOC_NO           = :as_loc_no
+                GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+              
+               UNION ALL
+               SELECT LOC_NO      = D.SRC_LOC
+                    , ITEM_NO     = D.SRC_ITEM 
+                    , QA          = D.SRC_QA   
+                    , M_IQTY      = 0 
+                    , A_IQTY      = 0 
+                    , V_IQTY      = 0 
+                    , R_IQTY      = 0 
+                    , N_IQTY      = 0 
+                    , W_IQTY      = 0 
+                    , I_IQTY      = 0 
+                    , D_OQTY      = 0 
+                    , A_OQTY      = SUM(ISNULL(D.SRC_QTY, 0)) /*대체출고*/
+                    , V_OQTY      = 0 
+                    , S_OQTY      = 0 
+                    , P_OQTY      = 0 
+                    , W_OQTY      = 0 
+                    , U_OQTY      = 0 
+                    , J_OQTY      = 0 
+                    , QOH         = 0 
+                 FROM ITEMALTER D
+                WHERE CONVERT(CHAR(10),D.ALTER_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.SRC_LOC          = :as_loc_no
+                  AND D.ISSUE_FLAG       = 'Y'
+                GROUP BY D.SRC_LOC, D.SRC_ITEM, D.SRC_QA
+             
+               UNION ALL
+               SELECT LOC_NO      = D.LOC_NO
+                    , ITEM_NO     = D.ITEM_NO 
+                    , QA          = D.QA      
+                    , M_IQTY      = 0 
+                    , A_IQTY      = 0 
+                    , V_IQTY      = 0 
+                    , R_IQTY      = 0 
+                    , N_IQTY      = 0 
+                    , W_IQTY      = 0 
+                    , I_IQTY      = 0 
+                    , D_OQTY      = 0 
+                    , A_OQTY      = 0 
+                    , V_OQTY      = SUM(ISNULL(D.RLSE_QTY, 0)) /*저장소이동(출고)*/
+                    , S_OQTY      = 0 
+                    , P_OQTY      = 0 
+                    , W_OQTY      = 0 
+                    , U_OQTY      = 0 
+                    , J_OQTY      = 0 
+                    , QOH         = 0 
+                 FROM ASK_HEAD H
+                    , ASK_DET  D
+                WHERE H.ASK_NO          = D.ASK_NO
+                  AND CONVERT(CHAR(10),D.RLSE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO          = :as_loc_no
+                GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+                 
+               UNION ALL
+               SELECT LOC_NO       = D.LOC_NO
+                    , ITEM_NO      = D.ITEM_NO 
+                    , QA           = D.QA      
+                    , M_IQTY       = 0 
+                    , A_IQTY       = 0 
+                    , V_IQTY       = 0 
+                    , R_IQTY       = 0 
+                    , N_IQTY       = 0 
+                    , W_IQTY       = 0 
+                    , I_IQTY       = 0 
+                    , D_OQTY       = 0 
+                    , A_OQTY       = 0 
+                    , V_OQTY       = 0 
+                    , S_OQTY       = SUM(ISNULL(D.ISSUE_QTY, 0)) /*샘플(출고)*/
+                    , P_OQTY       = 0 
+                    , W_OQTY       = 0 
+                    , U_OQTY       = 0 
+                    , J_OQTY       = 0 
+                    , QOH          = 0 
+                 FROM SAMP    H
+                    , SAMPDET D
+                WHERE H.SAMP_NO          = D.SAMP_NO
+                  AND CONVERT(CHAR(10),H.ORDER_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO           = :as_loc_no
+                GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+                
+               UNION ALL
+               SELECT LOC_NO       = H.LOC_NO
+                    , ITEM_NO      = D.ITEM_NO  
+                    , QA           = D.QA       
+                    , M_IQTY       = 0 
+                    , A_IQTY       = 0 
+                    , V_IQTY       = 0 
+                    , R_IQTY       = 0 
+                    , N_IQTY       = 0 
+                    , W_IQTY       = 0 
+                    , I_IQTY       = 0 
+                    , D_OQTY       = 0 
+                    , A_OQTY       = 0 
+                    , V_OQTY       = 0 
+                    , S_OQTY       = 0 
+                    , P_OQTY       = SUM(ISNULL(D.QTY, 0)) /*폐기*/
+                    , W_OQTY       = 0 
+                    , U_OQTY       = 0 
+                    , J_OQTY       = 0 
+                    , QOH          = 0 
+                 FROM ITEMABAN    H
+                    , ITEMABANDET D
+                WHERE CONVERT(CHAR(10),H.ABAN_DATE,111) BETWEEN :as_from AND :as_to
+                  AND H.LOC_NO          = :as_loc_no
+                  AND H.ABAN_NO         = D.ABAN_NO
+                GROUP BY H.LOC_NO, D.ITEM_NO, D.QA
+                
+               UNION ALL
+               SELECT LOC_NO       = D.ISSUE_LOC
+                    , ITEM_NO      = D.COMPONENT    
+                    , QA           = D.COMPONENT_QA 
+                    , M_IQTY       = 0 
+                    , A_IQTY       = 0 
+                    , V_IQTY       = 0 
+                    , R_IQTY       = 0 
+                    , N_IQTY       = 0 
+                    , W_IQTY       = 0 
+                    , I_IQTY       = 0 
+                    , D_OQTY       = 0 
+                    , A_OQTY       = 0 
+                    , V_OQTY       = 0 
+                    , S_OQTY       = 0 
+                    , P_OQTY       = 0 
+                    , W_OQTY       = SUM(ISNULL(D.ISSUE_QTY, 0)) /*가공출고*/
+                    , U_OQTY       = 0 
+                    , J_OQTY       = 0 
+                    , QOH          = 0 
+                 FROM SUDODET D
+                WHERE CONVERT(CHAR(10),D.ISSUE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.ISSUE_LOC        = :as_loc_no
+                GROUP BY D.ISSUE_LOC, D.COMPONENT, D.COMPONENT_QA
+                
+               UNION ALL
+               SELECT LOC_NO       = D.LOC_NO
+                    , ITEM_NO      = D.ITEM_NO 
+                    , QA           = D.QA      
+                    , M_IQTY       = 0 
+                    , A_IQTY       = 0 
+                    , V_IQTY       = 0 
+                    , R_IQTY       = 0 
+                    , N_IQTY       = 0 
+                    , W_IQTY       = 0 
+                    , I_IQTY       = 0 
+                    , D_OQTY       = 0 
+                    , A_OQTY       = 0 
+                    , V_OQTY       = 0 
+                    , S_OQTY       = 0 
+                    , P_OQTY       = 0 
+                    , W_OQTY       = 0 
+                    , U_OQTY       = SUM(ISNULL(D.USE_QTY, 0)) /*작업일보사용*/
+                    , J_OQTY       = 0 
+                    , QOH          = 0 
+                 FROM SFCUSE D
+                WHERE CONVERT(CHAR(10),D.USE_DATE,111) BETWEEN :as_from AND :as_to
+                  AND D.LOC_NO         = :as_loc_no
+                GROUP BY D.LOC_NO, D.ITEM_NO, D.QA
+                
+               UNION ALL
+               SELECT LOC_NO       = D.ISSUE_LOC
+                    , ITEM_NO      = D.ASSY_ITEM 
+                    , QA           = D.ASSY_QA   
+                    , M_IQTY       = 0 
+                    , A_IQTY       = 0 
+                    , V_IQTY       = 0 
+                    , R_IQTY       = 0 
+                    , N_IQTY       = 0 
+                    , W_IQTY       = 0 
+                    , I_IQTY       = 0 
+                    , D_OQTY       = 0 
+                    , A_OQTY       = 0 
+                    , V_OQTY       = 0 
+                    , S_OQTY       = 0 
+                    , P_OQTY       = 0 
+                    , W_OQTY       = 0 
+                    , U_OQTY       = 0 
+                    , J_OQTY       = SUM(ISNULL(D.OUT_QTY, 0)) /*(재고생산)출고*/
+                    , QOH          = 0 
+                 FROM JAJAESUDO D
+                WHERE CONVERT(CHAR(10),D.ORDER_DT,111)  BETWEEN :as_from AND :as_to
+                  AND D.ISSUE_LOC       = :as_loc_no
+                GROUP BY D.ISSUE_LOC, D.ASSY_ITEM, D.ASSY_QA
+              
+               UNION ALL
+               SELECT LOC_NO       = D.LOC_NO
+                    , ITEM_NO      = D.ITEM_NO 
+                    , QA           = D.QA      
+                    , M_IQTY       = 0         
+                    , A_IQTY       = 0         
+                    , V_IQTY       = 0         
+                    , R_IQTY       = 0         
+                    , N_IQTY       = 0         
+                    , W_IQTY       = 0         
+                    , I_IQTY       = 0         
+                    , D_OQTY       = 0         
+                    , A_OQTY       = 0         
+                    , V_OQTY       = 0         
+                    , S_OQTY       = 0         
+                    , P_OQTY       = 0         
+                    , W_OQTY       = 0         
+                    , U_OQTY       = 0         
+                    , J_OQTY       = 0         
+                    , QOH          = ISNULL(D.QOH, 0) /*현재고*/
+                 FROM ITEMLOC D
+                WHERE D.LOC_NO     = :as_loc_no
+              ) AA
+          GROUP BY LOC_NO, ITEM_NO, QA 
+       ) S 
+       ON Y.LOC_NO = S.LOC_NO AND Y.ITEM_NO = S.ITEM_NO AND Y.QA = S.QA
+ GROUP BY Y.LOC_NO, Y.ITEM_NO, Y.QA, Y.QOH, A.PRE_QTY
+
+" arguments=(("as_from", string),("as_to", string),("as_loc_no", string)) )
+text(band=header alignment="2" text="저장소" border="6" color="33554432" x="9" y="8" height="60" width="594" html.valueishtml="0"  name=loc_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코드" border="6" color="33554432" x="613" y="8" height="60" width="352" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="물품" border="6" color="33554432" x="974" y="8" height="60" width="754" html.valueishtml="0"  name=item_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="1737" y="8" height="60" width="690" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="33554432" x="2437" y="8" height="60" width="146" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="이월수량" border="6" color="33554432" x="2592" y="8" height="60" width="347" html.valueishtml="0"  name=b_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고" border="6" color="33554432" x="2949" y="8" height="60" width="421" html.valueishtml="0"  name=in_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="ITEMLOC" border="6" color="33554432" x="4242" y="8" height="60" width="411" html.valueishtml="0"  name=itemloc_qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전산재고" border="6" color="33554432" x="4663" y="8" height="60" width="434" html.valueishtml="0"  name=c_stock_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고" border="6" color="33554432" x="3378" y="8" height="60" width="425" html.valueishtml="0"  name=out_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="재고" border="6" color="33554432" x="3813" y="8" height="60" width="421" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="2437" y="8" height="72" width="146" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="2592" y="8" height="72" width="347" format="#,##0" html.valueishtml="0"  name=b_qoh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="2949" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=in_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="4242" y="8" height="72" width="411" format="#,##0" html.valueishtml="0"  name=itemloc_qoh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="4663" y="8" height="72" width="434" format="#,##0" html.valueishtml="0"  name=c_stock visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="9" y="8" height="72" width="594" format="[general]" html.valueishtml="0"  name=loc_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="3378" y="8" height="72" width="425" format="#,##0" html.valueishtml="0"  name=out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" b_qoh + in_qty -  out_qty "border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="3813" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count(  item_no  for all )"border="0" color="0" x="9" y="8" height="64" width="594" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="613" y="8" height="72" width="352" format="[general]" html.valueishtml="0"  name=item_no visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="974" y="8" height="72" width="754" format="[general]" html.valueishtml="0"  name=item_nm visible="1" edit.limit=60 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="1737" y="8" height="72" width="690" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

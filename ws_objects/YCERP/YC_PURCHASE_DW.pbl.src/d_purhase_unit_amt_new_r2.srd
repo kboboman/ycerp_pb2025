@@ -1,0 +1,53 @@
+﻿$PBExportHeader$d_purhase_unit_amt_new_r2.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=68 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=년월주 dbname="년월주" )
+ column=(type=decimal(1) updatewhereclause=yes name=열연내수가 dbname="열연내수가" )
+ column=(type=decimal(1) updatewhereclause=yes name=열연수출가 dbname="열연수출가" )
+ column=(type=decimal(1) updatewhereclause=yes name=냉연수출가 dbname="냉연수출가" )
+ column=(type=decimal(1) updatewhereclause=yes name=gi포두 dbname="GI포두" )
+ column=(type=decimal(1) updatewhereclause=yes name=gi동부 dbname="GI동부" )
+ column=(type=decimal(1) updatewhereclause=yes name=철근수출가 dbname="철근수출가" )
+ retrieve="select a.yyyymm 년월주,
+          ( case when a.unit_amt00001 = 0 then null else a.unit_amt00001 end ) 열연내수가, 
+          ( case when a.unit_amt00002 = 0 then null else a.unit_amt00002 end ) 열연수출가, 
+          ( case when a.unit_amt00003 = 0 then null else a.unit_amt00003 end ) 냉연수출가, 
+          ( case when a.unit_amt00004 = 0 then null else a.unit_amt00004 end ) GI포두, 
+          ( case when a.unit_amt00004 = 0 then null else a.unit_amt00005 end ) GI동부, 
+          ( case when a.unit_amt00006 = 0 then null else a.unit_amt00006 end ) 철근수출가 
+
+from 
+(
+	select  	 yyyymm yyyymmddwk,
+				 substring(yyyymm,3,2) + '-' + substring(yyyymm,5,2) +'-'+substring(yyyymm,8,1)+'주' yyyymm,
+				 sum(case when purchase_code = '00001' then unit_amt else 0 end) unit_amt00001,
+				 sum(case when purchase_code = '00002' then unit_amt else 0 end) unit_amt00002,
+				 sum(case when purchase_code = '00003' then unit_amt else 0 end) unit_amt00003,
+				 sum(case when purchase_code = '00004' then unit_amt else 0 end) unit_amt00004,			 
+				 sum(case when purchase_code = '00005' then unit_amt else 0 end) unit_amt00005,		
+				 sum(case when purchase_code = '00006' then unit_amt else 0 end) unit_amt00006						 
+	from purchase_unit_amt
+	where yyyymm between :as_fr_date + '01'  and :as_to_date + '05'
+	 AND use_yn = 'Y'
+	 and  purchase_code in ('00001', '00002', '00003', '00004', '00005', '00006')
+	group by yyyymm, substring(yyyymm,3,2) + '-' + substring(yyyymm,5,2) +'-'+substring(yyyymm,8,1)+'주'
+) a order by a.yyyymmddwk" arguments=(("as_fr_date", string),("as_to_date", string)) )
+text(band=header alignment="2" text="Yyyymm" border="0" color="33554432" x="5" y="4" height="60" width="672" html.valueishtml="0"  name=yyyymm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Unit Amt00001" border="0" color="33554432" x="681" y="4" height="60" width="416" html.valueishtml="0"  name=unit_amt00001_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Unit Amt00002" border="0" color="33554432" x="1102" y="4" height="60" width="416" html.valueishtml="0"  name=unit_amt00002_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Unit Amt00003" border="0" color="33554432" x="1522" y="4" height="60" width="416" html.valueishtml="0"  name=unit_amt00003_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Unit Amt00004" border="0" color="33554432" x="1943" y="4" height="60" width="416" html.valueishtml="0"  name=unit_amt00004_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Unit Amt00006" border="0" color="33554432" x="2368" y="4" height="60" width="416" html.valueishtml="0"  name=unit_amt00006_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="2784" y="0" height="76" width="448" format="[general]" html.valueishtml="0"  name=년월주 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="3232" y="0" height="76" width="2784" format="[general]" html.valueishtml="0"  name=열연내수가 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="6016" y="0" height="76" width="2784" format="[general]" html.valueishtml="0"  name=열연수출가 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="8800" y="0" height="76" width="2784" format="[general]" html.valueishtml="0"  name=냉연수출가 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="11584" y="0" height="76" width="2784" format="[general]" html.valueishtml="0"  name=gi포두 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="14368" y="0" height="76" width="2784" format="[general]" html.valueishtml="0"  name=gi동부 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="17152" y="0" height="76" width="2784" format="[general]" html.valueishtml="0"  name=철근수출가 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="Arial" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

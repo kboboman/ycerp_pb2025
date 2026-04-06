@@ -1,0 +1,65 @@
+﻿$PBExportHeader$d_osytotal_r2.srd
+$PBExportComments$년 미수채권 총괄현황(2002/11/11,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=92 color="536870912" )
+summary(height=72 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=y1 dbname="y1" )
+ column=(type=char(1) updatewhereclause=yes name=credit_level dbname="credit_level" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=decimal(2) updatewhereclause=yes name=b1 dbname="B1" )
+ column=(type=decimal(2) updatewhereclause=yes name=b2 dbname="B2" )
+ column=(type=decimal(2) updatewhereclause=yes name=b3 dbname="B3" )
+ column=(type=decimal(2) updatewhereclause=yes name=b4 dbname="B4" )
+ retrieve="select y1 = :ai_year -1 , 
+          customer.credit_level, 
+          customer.cust_no, 
+          customer.cust_name, 
+          A1.B1, 
+          A2.B2, 
+          A2.B3, 
+          A2.B4 
+from customer LEFT OUTER JOIN ( select  cust_no, B1 = sum(balbf_amount) 
+                                                                from opeom 
+					                                                    where  DATEPART(YEAR, opeom.eom_year) = :ai_year
+					                                                    group by cust_no ) A1 ON customer.cust_no = A1.cust_no
+                          LEFT OUTER JOIN ( select cust_no, B2 = sum(balbf_amount) 
+                                                    								+ sum(inv_01 + inv_02 + inv_03 + inv_04 + inv_05 + inv_06 +
+                                                    							 inv_07 + inv_08 + inv_09 + inv_10 + inv_11 + inv_12 ) 
+                                                    								- sum(coll_01 + coll_02 + coll_03 + coll_04 + coll_05 + coll_06 +
+                                                    							 coll_07 + coll_08 + coll_09 + coll_10 + coll_11 + coll_12),
+                                                    						B3 = sum(inv_01 + inv_02 + inv_03 + inv_04 + inv_05 + inv_06 +
+                                                    							 inv_07 + inv_08 + inv_09 + inv_10 + inv_11 + inv_12 ),
+                                                    						B4 = sum(coll_01 + coll_02 + coll_03 + coll_04 + coll_05 + coll_06 +
+                                                    							 coll_07 + coll_08 + coll_09 + coll_10 + coll_11 + coll_12) from opeom
+                                                    				where  DATEPART(YEAR, opeom.eom_year) = :ai_year 
+                                                    				group by cust_no ) A2 ON customer.cust_no = A2.cust_no
+where customer.CUST_NO <> 'N004'" filter=" b1 <> 0 or  b2 <> 0 or   b3  <> 0 or  b4 <> 0 "arguments=(("ai_year", number))  sort="credit_level A cust_name A " )
+group(level=1 header.height=0 trailer.height=68 by=("credit_level" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="등급" border="0" color="0" x="9" y="16" height="60" width="123" html.valueishtml="0"  name=credit_level_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=header alignment="2" expression="string( y1 + 1) + ~"년 총매출액~""border="0" color="0" x="2437" y="16" height="60" width="608" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코드" border="0" color="0" x="960" y="16" height="60" width="224" html.valueishtml="0"  name=cust_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=header alignment="2" expression="string( y1 + 1) + ~"년 총수금액~""border="0" color="0" x="3054" y="16" height="60" width="631" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=header alignment="2" expression=" y1 + ~"/12 미수잔액~""border="0" color="0" x="1193" y="16" height="60" width="622" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=header alignment="2" expression="string( y1 + 1) + ~"/12 미수잔액~""border="0" color="0" x="1824" y="16" height="60" width="603" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="0" color="0" x="142" y="16" height="60" width="809" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="123" format="[general]" html.valueishtml="0"  name=credit_level visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="960" y="8" height="72" width="224" format="[general]" html.valueishtml="0"  name=cust_no visible="1" edit.limit=4 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="142" y="8" height="72" width="809" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="3054" y="8" height="72" width="631" format="#,##0" html.valueishtml="0"  name=b4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2437" y="8" height="72" width="608" format="#,##0" html.valueishtml="0"  name=b3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="1824" y="8" height="72" width="603" format="#,##0" html.valueishtml="0"  name=b2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1193" y="8" height="72" width="622" format="#,##0" html.valueishtml="0"  name=b1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(b1 for group 1)"border="0" color="33554432" x="1193" y="4" height="60" width="622" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(b2 for group 1)"border="0" color="33554432" x="1824" y="4" height="60" width="603" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(b3 for group 1)"border="0" color="33554432" x="2437" y="4" height="60" width="608" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=trailer.1 alignment="1" expression="sum(b4 for group 1)"border="0" color="33554432" x="3054" y="4" height="60" width="631" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+compute(band=summary alignment="1" expression="sum(b4 for all)"border="0" color="33554432" x="3054" y="4" height="60" width="631" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(b3 for all)"border="0" color="33554432" x="2437" y="4" height="60" width="608" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(b2 for all)"border="0" color="33554432" x="1824" y="4" height="60" width="603" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(b1 for all)"border="0" color="33554432" x="1193" y="4" height="60" width="622" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

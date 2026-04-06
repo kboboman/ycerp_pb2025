@@ -1,0 +1,69 @@
+﻿$PBExportHeader$gf_sort_random.srf
+$PBExportComments$데이타윈도우를 받아 랜덤하게 정렬하는 함수
+global type gf_sort_random from function_object
+end type
+
+forward prototypes
+global subroutine gf_sort_random (datawindow a_dw, boolean a_option)
+end prototypes
+
+global subroutine gf_sort_random (datawindow a_dw, boolean a_option);String temp, object, temp_name, sort_column, sort_type
+Integer object_pos, temp_x1, temp_x2, column_idx, column_cnt
+
+if IsNull(a_dw) = True then
+	Return
+end if
+
+temp   = a_dw.GetObjectAtPointer()
+object = gf_get_token(temp, "~t")
+
+if gf_null_chk(object) = True then
+	Return
+end if
+if object = "bg_detail" then
+	Return
+end if
+if object = "bg_header" then
+	Return
+end if
+
+SetPointer(HourGlass!)
+
+if a_option = True then
+	a_dw.Modify(object + ".Border = '5'")
+end if
+
+object_pos = Integer(a_dw.Describe(object + ".X")) + &
+             (Integer(a_dw.Describe(object + ".Width")) / 2)
+
+column_cnt = Integer(a_dw.Describe("DataWindow.Column.Count"))
+
+For column_idx = 1 To column_cnt
+	temp_name = a_dw.Describe("#" + String(column_idx) + ".Name")
+	temp_x1   = Integer(a_dw.Describe(temp_name + ".X"))
+	temp_x2   = temp_x1 + Integer(a_dw.Describe(temp_name + ".Width"))
+	
+	if (object_pos > temp_x1) And (object_pos < temp_x2) then
+		sort_column = temp_name
+		Exit
+	end if
+Next
+
+if a_dw.Describe(object + ".Font.Escapement") = "0" then
+	sort_type = "A"
+	a_dw.Modify(object + ".Font.Escapement = '-0'")
+else
+	sort_type = "D"
+	a_dw.Modify(object + ".Font.Escapement = '0'")
+end if
+
+a_dw.SetSort(sort_column + " " + sort_type)
+a_dw.Sort()
+
+if a_option = True then
+	a_dw.Modify(object + ".Border = '6'")
+end if
+
+SetPointer(Arrow!)
+end subroutine
+

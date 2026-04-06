@@ -1,0 +1,49 @@
+﻿$PBExportHeader$gf_dddw_detl_cd.srf
+global type gf_dddw_detl_cd from function_object
+end type
+
+forward prototypes
+global function integer gf_dddw_detl_cd (datawindow ad_dw, string as_col, string as_mast_cd, string as_gubun)
+end prototypes
+
+global function integer gf_dddw_detl_cd (datawindow ad_dw, string as_col, string as_mast_cd, string as_gubun);////////////////////////////////////////////////////////////
+// Function : f_dddw_detl_cd
+// Function Description : 공통코드 DDDW 조회
+//	gf_dddw_detl_cd(ad_dw, as_col, as_mast_cd, as_gubun)
+// 인수 : ad_dw			- datawindow명
+//        as_col 			- child datawindow column 명
+//        as_mast_cd		- mast_cd
+//			 as_gubun		- '%' 전체 추가
+// return : 0 -> Success, 1 -> Fail
+////////////////////////////////////////////////////////////
+DataWindowChild     ldwc_code
+
+//IF ad_dw.RowCount() = 0 THEN
+//	ad_dw.InsertRow(0)
+//END IF
+
+IF ad_dw.GetChild(as_col, ldwc_code) <> 1 THEN
+	MessageBox ( '확인', 'Column을 찾을 수 없습니다.' )
+	return 1
+END IF
+
+IF ldwc_code.SetTransObject(sqlca) <> 1 THEN
+	MessageBox ( '확인', 'DB가 이상합니다. ~r~n전산실로 문의바랍니다.~r~n' + '/' + as_mast_cd)
+	return 1
+END IF
+
+ldwc_code.Retrieve(as_mast_cd)
+if as_gubun = '%' then
+	ldwc_code.InsertRow(1)
+	ldwc_code.SetItem(1, "detl_cd", "%")
+	ldwc_code.SetItem(1, "detl_nm", "전체")
+end if
+
+IF SQLCA.SQLCODE <> 0 THEN
+	return -1
+ELSE
+	return 0
+END IF
+
+end function
+

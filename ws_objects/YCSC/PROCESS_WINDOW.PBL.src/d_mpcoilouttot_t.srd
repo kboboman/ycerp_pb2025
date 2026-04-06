@@ -1,0 +1,260 @@
+﻿$PBExportHeader$d_mpcoilouttot_t.srd
+$PBExportComments$제품별 출고집계표(1998/12/10,조현춘)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=152 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=char(2) updatewhereclause=yes name=com_uom dbname="com_uom" )
+ column=(type=char(50) updatewhereclause=yes name=work_name dbname="work_name" )
+ column=(type=char(4) updatewhereclause=yes name=cat_name dbname="cat_name" )
+ column=(type=char(10) updatewhereclause=yes name=cstart dbname="cstart" )
+ column=(type=char(10) updatewhereclause=yes name=cend dbname="cend" )
+ column=(type=long updatewhereclause=yes name=qty dbname="ship_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=c_qty dbname="c_qty" )
+ column=(type=decimal(6) updatewhereclause=yes name=c_price dbname="c_price" )
+ column=(type=decimal(8) updatewhereclause=yes name=c_amt dbname="c_amt" )
+ column=(type=decimal(11) updatewhereclause=yes name=c_rate dbname="c_rate" )
+ column=(type=decimal(11) updatewhereclause=yes name=c_tot dbname="c_tot" )
+ retrieve="   SELECT item_name = a.item_name                              
+        , item_no   = a.item_no                                
+        , qa        = a.qa                                     
+        , uom       = a.uom                                    
+        , com_uom   = a.com_uom                                
+        , work_name = a.work_name                              
+        , cat_name  = (case when :as_category = '%' then '전체'
+                            when :as_category = 'S' then '판매'
+                            when :as_category = 'I' then '사내'
+                            when :as_category = 'O' then '외주'
+                       end)                                    
+        , cstart    = (case when :as_start = ''  then '          ' else :as_start    end)
+        , cend      = (case when :as_end   = ''  then '          ' else :as_end      end)
+        , ship_qty  = a.ship_qty                               
+        , c_qty     = a.c_qty                                  
+        , c_price   = a.c_price                                
+        , c_amt     = a.c_amt                                  
+        , c_rate    = a.c_rate                                 
+        , c_tot     = a.c_tot                                  
+     FROM ( /* 원재료 출고는 판매,스리팅(사내,외주),유압,YSP직접투입 */
+          SELECT item_name = a.item_name                       
+               , item_no   = a.item_no                         
+               , qa        = a.qa                              
+               , uom       = a.uom                             
+               , com_uom   = a.com_uom                         
+               , work_name = a.work_name                       
+               , ship_qty  = sum(a.ship_qty)                   
+               , c_qty     = sum(a.c_qty)                      
+               , c_price   = avg(a.c_price)                    
+               , c_amt     = sum(a.c_amt)                      
+               , c_rate    = sum(a.c_rate)                     
+               , c_tot     = sum(a.c_tot)                      
+            FROM (                                             
+                 /* 코일판매 */                                
+                 SELECT work_no   = d.cust_no                  
+                      , work_name = (case when :as_locno = '%' then '전 체' else d.cust_name end) 
+                      , item_name = c.item_name
+                      , item_no   = a.item_no
+                      , qa        = a.qa
+                      , uom       = a.uom
+                      , com_uom   = a.uom
+                      , ship_qty  = a.cnt
+                      , c_qty     = coilsheet.unit_qty
+                      , c_price   = a.price
+                      , c_amt     = a.price * coilsheet.unit_qty
+                      , c_rate    = a.rate_cash
+                      , c_tot     = a.price * coilsheet.unit_qty + a.rate_cash
+                   FROM dodet    a
+                        LEFT OUTER JOIN do        b  ON a.do_no   = b.do_no 
+                        LEFT OUTER JOIN groupitem c  ON a.item_no = c.item_no 
+                        LEFT OUTER JOIN customer  d  ON b.cust_no = d.cust_no 
+                        LEFT OUTER JOIN inspdet   e  ON a.coil_no = e.coil_no
+                        LEFT OUTER JOIN (SELECT loc_no, coil_no,  unit_qty, etc_no, flag  FROM coilmst
+                                         UNION
+                                         SELECT loc_no, sheet_no, unit_qty, '',     flag  FROM sheetmst
+                                        ) coilsheet  ON a.coil_no = coilsheet.coil_no and a.loc_no = coilsheet.loc_no
+                  WHERE ( b.do_date      BETWEEN :as_start AND :as_end )
+                    AND ( substring(a.item_no,1,2) = 'M1'              ) /* 순수 원코일만  */ 
+                    AND ( (:as_area    = '%' AND b.area_no   LIKE '%'  ) or
+                          (:as_area   <> '%' AND b.area_no      = :as_area )
+                        )
+                    AND ( ( a.coil_no  IS NOT NULL  and coilsheet.flag  = 'W' ) and
+                          ( :as_category   IN ( '%', 'S' ) )
+                        )
+                    AND ( (:as_locno   = '%' AND e.loc_no   LIKE '%'  ) or 
+                          (:as_locno  <> '%' AND e.loc_no      = :as_locno )  /* 입고저장소 */
+                        )
+
+                 UNION ALL
+                 
+                 /*스리팅 작업계획 현황(사내,외주) */
+                 SELECT work_no   = c.wc_no
+                      , work_name = (case when :as_locno = '%' then '전 체' else d.work_name end) 
+                      , item_name = f.item_name
+                      , item_no   = e.item_no  
+                      , qa        = e.qa       
+                      , uom       = f.uom
+                      , com_uom   = g.com_uom
+                      , ship_qty  = c.cnt                   /* 입고수량 */
+                      , c_qty     = c.unit_qty              /* 환산수량 */
+                      , c_price   = g.price                 /* 입고단가 */
+                      , c_amt     = (c.unit_qty * g.price)  /* 공급가   */
+                      , c_rate    = g.rate_cash             /* 부가세   */
+                      , c_tot     = (c.unit_qty * g.price) + g.rate_cash
+                   FROM (
+                        /* 스리팅 작업계획 현황 */
+                        SELECT DISTINCT ga.item_name   
+                             , coilmst.item_no
+                             , coilmst.qa              
+                             , wc_no     = (case when coilorder.wc_place = 'I' then coilorder.wc_no else coilorder.supp_no end)
+                             , wc_place  = coilorder.wc_place
+                             , coilmst.unit_qty        
+                             , coilmst.cnt         
+                             , coilmst.coil_no     
+                          FROM coilmst        
+                             , groupitem ga   
+                             , coilorder      
+                             , coilorderdet   
+                             , coilsliting  
+                         WHERE ( coilorderdet.order_no        = coilsliting.order_no         )   
+                           AND ( coilorder.order_no           = coilorderdet.coilorder_order )   
+                           AND ( coilorderdet.coil_no         = coilmst.coil_no              )   
+                           AND ( coilmst.item_no              = ga.item_no                   )   
+                           AND ( substring(coilmst.item_no,1,2) = 'M1'                       ) /* 순수 원코일만  */
+                           AND ( coilmst.loc_no              <> 'WS00000003'                 ) /* 장기저장소 제외*/
+                           AND ( coilorder.order_date   between :as_start and :as_end        )    
+                           AND ((:as_category   = 'S' and coilorder.wc_place   = 'S'          ) or /* 판매조회시 SKIP */
+                                (:as_category  <> 'S' and ( (:as_category  = '%' and coilorder.wc_place  IN ('I', 'O')  ) or 
+                                                            (:as_category <> '%' and coilorder.wc_place   = :as_category)
+                                                          )
+                                )  
+                               )
+                        ) C
+                        LEFT OUTER JOIN (SELECT a.work_no, a.work_name, a.area_no
+                                           FROM (SELECT work_no, work_name, area_no FROM wc   
+                                                 UNION
+                                                 SELECT supp_no, supp_name, 'S0001' FROM supp /* 외주는 시화사업장으로 */
+                                                ) A
+                                        /*ORDER BY a.work_no*/
+                                        ) D
+                          ON c.wc_no   = d.work_no
+                        LEFT OUTER JOIN coilmst   E ON c.coil_no  = e.coil_no
+                        LEFT OUTER JOIN groupitem F ON e.item_no  = f.item_no
+                        LEFT OUTER JOIN inspdet   G ON c.coil_no  = g.coil_no
+                  WHERE ( (:as_area    = '%' AND d.area_no   LIKE '%'  ) or
+                          (:as_area   <> '%' AND d.area_no      = :as_area  )
+                        )
+                    AND ( (:as_locno   = '%' AND e.loc_no    LIKE '%'  ) or 
+                          (:as_locno  <> '%' AND e.loc_no       = :as_locno )  /* 입고저장소 */
+                        )
+                    AND ( e.loc_no            <> 'WS00000003'               )  /* 코일장기저장소 */
+
+                 UNION ALL
+                 
+                 /* 유압, YSP 작업실적 처리분 */
+                 SELECT wc_no      = aa.wc_no                  /* 작업장 */
+                      , work_name  = aa.work_name              
+                      , item_name  = aa.item_name              
+                      , item_no    = aa.item_no                
+                      , qa         = aa.qa                     /* 규격 */ 
+                      , uom        = aa.uom                    /* 단위 */
+                      , com_uom    = aa.uom                    /* 환산단위 */
+                      , ship_qty   = aa.ship_qty               
+                      , c_qty      = aa.c_qty                  /* 환산값 */                 
+                      , c_price    = aa.c_price                /* 입고단가 */
+                      , c_amt      = round(aa.c_qty * aa.c_price, 0)                  /* 공급가 */
+                      , c_rate     = round(round(aa.c_qty * aa.c_price, 0) / 11, 0)   /* 부가세 */
+                      , c_tot      = round(aa.c_qty * aa.c_price, 0) + round(round(aa.c_qty * aa.c_price, 0) / 11, 0) /* 합계금액 */
+                   FROM (
+                        SELECT wc_no      = a.wc_no                  /* 작업장 */
+                             , work_name  = (case when :as_locno = '%' then '전 체' else e.loc_name end)           
+                             , item_name  = b.item_name           
+                             , item_no    = a.item_no             
+                             , qa         = a.qa                     /* 규격 */ 
+                             , uom        = a.uom                    /* 단위 */
+                             , com_uom    = a.uom                    /* 환산단위 */
+                             , ship_qty   = (case when substring(a.coil_no,2,1) = 'C' then 
+                                                       (case when len(a.coil_no) > 11 then 0 else d.cnt end) /* 원코일수량 */     
+                                                  else a.cnt         /* SHEET 수량 */
+                                             end)
+                             , c_qty      = (case when substring(a.coil_no,2,1) = 'C' then (a.unit_qty - a.rem_qty) /* 원코일 사용중량 */
+                                                  else dbo.uf_getsheetkg(a.item_no, a.qa, a.cnt) /* SHEET 사용중량 */
+                                             end) 
+                             , c_price    = d.price                  /* 입고단가 */
+                          FROM sfcuse  A
+                               LEFT OUTER JOIN groupitem  B  ON a.item_no = b.item_no
+                               LEFT OUTER JOIN wc         C  ON a.wc_no   = c.work_no 
+                               LEFT OUTER JOIN inspdet    D  ON substring(a.coil_no,1,11) = d.coil_no
+                               LEFT OUTER JOIN location   E  ON a.loc_no  = e.loc_no 
+                         WHERE ( substring(a.item_no,1,2)  = 'M1' )
+                           AND ( a.use_date       BETWEEN :as_start AND :as_end ) 
+                           AND ( a.coil_no             IS NOT NULL              )
+                           AND ((:as_category   = 'S' AND a.wc_no   = 'S'     ) or /* 판매조회시 SKIP */
+                                (:as_category  <> 'S' AND ( :as_category  IN ('%', 'I') and c.work_type = 'D') )  /* 사내(D), 외주(S) */
+                               )
+                           AND ((:as_area       = '%' AND a.area_no  LIKE '%' ) or
+                                (:as_area      <> '%' AND a.area_no     = :as_area  )
+                               )               
+                           AND ((:as_locno      = '%' AND a.loc_no   LIKE '%' ) or 
+                                (:as_locno     <> '%' AND a.loc_no      = :as_locno )  /* 입고저장소 */
+                               )
+                        ) AA
+                 ) A
+           GROUP BY a.item_name
+                  , a.item_no  
+                  , a.qa   
+                  , a.uom      
+                  , a.com_uom  
+                  , a.work_name
+          ) A
+    ORDER BY a.item_name
+           , a.qa
+           , a.uom
+" arguments=(("as_area", string),("as_start", string),("as_end", string),("as_locno", string),("as_category", string)) )
+group(level=1 header.height=0 trailer.height=68 by=("item_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="0" text="저 장 소 명:" border="6" color="0" x="9" y="8" height="60" width="768" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="물품명" border="6" color="0" x="9" y="84" height="60" width="768" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="786" y="84" height="60" width="686" html.valueishtml="0"  name=dodet_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="평균단가" border="6" color="0" x="2789" y="84" height="60" width="453" html.valueishtml="0"  name=c_price_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="공급가액" border="6" color="0" x="3250" y="84" height="60" width="549" html.valueishtml="0"  name=c_amt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="세액" border="6" color="0" x="3808" y="84" height="60" width="571" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="합계금액(운+)" border="6" color="0" x="4389" y="84" height="60" width="635" html.valueishtml="0"  name=c_tot_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수량" border="6" color="0" x="1664" y="84" height="60" width="416" html.valueishtml="0"  name=ship_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="구분" border="0" color="0" x="1481" y="8" height="60" width="174" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="환산값" border="6" color="0" x="2089" y="84" height="60" width="498" html.valueishtml="0"  name=c_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=header id=6 alignment="0" tabsequence=32766 border="0" color="0" x="786" y="8" height="60" width="686" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=header id=7 alignment="0" tabsequence=32766 border="0" color="0" x="1664" y="8" height="60" width="416" format="[general]" html.valueishtml="0"  name=cat_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="1481" y="84" height="60" width="174" html.valueishtml="0"  name=dodet_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="환단" border="6" color="0" x="2597" y="84" height="60" width="183" html.valueishtml="0"  name=com_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="768" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="786" y="4" height="60" width="686" format="[general]" html.valueishtml="0"  name=qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="0" x="2789" y="4" height="60" width="453" format="#,##0" html.valueishtml="0"  name=c_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="3250" y="4" height="60" width="549" format="#,##0" html.valueishtml="0"  name=c_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0" x="3808" y="4" height="60" width="571" format="#,##0" html.valueishtml="0"  name=c_rate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0" x="4389" y="4" height="60" width="635" format="#,##0" html.valueishtml="0"  name=c_tot visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="1481" y="4" height="60" width="174" format="[general]" html.valueishtml="0"  name=uom  tag="단위" visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="1664" y="4" height="60" width="416" format="#,##0" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="2089" y="4" height="60" width="498" format="#,##0.000" html.valueishtml="0"  name=c_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="2597" y="4" height="60" width="183" format="[general]" html.valueishtml="0"  name=com_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(getrow()=currentrow(), rgb(254, 252, 175), 1087434968)" )
+compute(band=trailer.1 alignment="1" expression="sum(c_amt for group 1)"border="0" color="0" x="3250" y="4" height="60" width="549" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(c_rate for group 1)"border="0" color="0" x="3808" y="4" height="60" width="571" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(c_tot for group 1)"border="0" color="0" x="4389" y="4" height="60" width="635" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="2" text="소     계" border="0" color="0" x="786" y="4" height="60" width="686" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="2789" y="4" height="60" width="453" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression=" sum (  qty for group 1 ) "border="0" color="0" x="1664" y="4" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=trailer.1 alignment="1" expression="sum(c_qty for group 1)"border="0" color="0" x="2089" y="4" height="60" width="498" format="#,##0.000" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="1481" y="4" height="60" width="174" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="2597" y="4" height="60" width="183" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=footer alignment="1" expression="sum(c_tot for all)"border="0" color="0" x="4389" y="8" height="60" width="635" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(c_rate for all)"border="0" color="0" x="3808" y="8" height="60" width="571" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(c_amt for all)"border="0" color="0" x="3250" y="8" height="60" width="549" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="string( count ( item_no for all DISTINCT ) ) + ~" / ~" + string( count ( item_no for all ) )"border="0" color="0" x="9" y="8" height="60" width="768" format="[General]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( qty for all )"border="0" color="0" x="1664" y="8" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( c_qty for all )"border="0" color="0" x="2089" y="8" height="60" width="498" format="#,##0.000" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

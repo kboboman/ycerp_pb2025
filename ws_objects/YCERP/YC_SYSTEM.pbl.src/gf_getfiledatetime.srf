@@ -1,0 +1,53 @@
+﻿$PBExportHeader$gf_getfiledatetime.srf
+global type gf_getfiledatetime from function_object
+end type
+
+forward prototypes
+global function string gf_getfiledatetime (string as_filename, string as_findfile)
+end prototypes
+
+global function string gf_getfiledatetime (string as_filename, string as_findfile);n_filesys ln_fsys
+String ls_path, ls_name[], ls_fullname, ls_filename
+String ls_filetype, ls_prevextn, ls_extn
+Integer li_cnt, li_max, li_item
+DateTime ldt_write[], ldt_modified
+Boolean lb_subdir[]
+Double ld_size[]
+Long ll_sorttype, ll_filesize, ll_row, ll_max
+Long ll_index, ll_large, ll_small, ll_folder, ll_unknown
+
+ln_fsys = create n_filesys
+
+//ls_path = 'C:\Program Files (x86)\YCERP_MAIN'
+ls_path = as_filename
+If ls_path = '' Then Return '0000-00-00'
+
+// get the list of files
+li_max = ln_fsys.of_getfiles(ls_path, False, ls_name, &
+					ld_size, ldt_write, lb_subdir)
+If li_max = -1 Then
+	MessageBox("There is no disk in drive " , ls_path, Exclamation!)
+	return '0000-00-00'
+Else
+	// load files & directories into datawindow for sorting
+	For li_cnt = 1 To li_max
+		If lb_subdir[li_cnt] Then
+			ll_sorttype = 0
+			ll_filesize = 0
+		Else
+			ll_sorttype = 1
+			ll_filesize = (ld_size[li_cnt] + 512) / 1024
+			If ld_size[li_cnt] > 0 And ll_filesize = 0 Then
+				ll_filesize = 1
+			End If
+		End If
+		ls_fullname = ls_path + "\" + ls_name[li_cnt]
+		ls_filename = ls_name[li_cnt]
+		ldt_modified = ldt_write[li_cnt]
+		if as_findfile = ls_filename then exit		
+	Next
+End If
+
+return string(ldt_modified)
+end function
+

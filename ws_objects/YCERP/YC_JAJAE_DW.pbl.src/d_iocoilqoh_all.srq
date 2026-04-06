@@ -1,0 +1,159 @@
+﻿$PBExportHeader$d_iocoilqoh_all.srq
+-- 품목별 코일재고 현황 --
+SELECT item_name = replace(A.item_name,'스리팅 ','') 
+     , q_cnt_1   = sum(q_cnt_1)                       /*원코일,시화*/
+     , q_cnt_2   = sum(q_cnt_2)                       /*원코일,외주*/
+     , t_cnt_1   = sum(q_cnt_1) + sum(q_cnt_2)        /*원코일,계*/
+     , q_cnt_3   = sum(q_cnt_3)                       /*스리팅,시화*/
+     , q_cnt_4   = sum(q_cnt_4)                       /*스리팅,외주*/
+     , t_cnt_2   = sum(q_cnt_3) + sum(q_cnt_4)        /*스리팅,계*/
+     , t_cnt_3   = sum(q_cnt_1) + sum(q_cnt_2) + sum(q_cnt_3) + sum(q_cnt_4) /*총계*/
+     , sort1
+     , gb
+  FROM (
+       SELECT sort1     = '원코일,시화' -- substring(coilmst.item_no, 3, 1) /*원코일,시화*/
+            , gb        = dbo.uf_getcoilsort(coilmst.item_no)
+            , item_name = groupitem.item_name
+--          , q_cnt_1   = sum(coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_1   = (coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_2   = 0
+            , t_cnt_1   = 0
+            , q_cnt_3   = 0
+            , q_cnt_4   = 0
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)
+            , coil_no   = coilmst.coil_no
+            , loc_no    = coilmst.loc_no
+            , supp_no   = coilmst.supp_no
+            , unit_qty  = coilmst.unit_qty 
+            , length    = coilmst.length   
+            , cnt       = coilmst.cnt      
+            , qcnt      = coilmst.qcnt    
+            , rcpt_qty  = coilmst.rcpt_qty 
+            , item_no   = coilmst.item_no
+            , qa        = coilmst.qa
+            , flag      = coilmst.flag
+         FROM coilmst
+            , groupitem
+            , location
+        WHERE ( coilmst.item_no = groupitem.item_no)  
+          and ( coilmst.loc_no  = location.loc_no  )  
+          and ( convert(char(10),coilmst.rcpt_date,111) <= '2011/04/30' )
+          and ( ( coilmst.loc_no     IN ( 'WS00000000', 'WS00000003', 'WW01', 'WW02', 'WW03') or ( loc_type  = 'W' ) ) AND  
+                ( coilmst.flag        = 'W' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) IN ('S', 'A') ) 
+              ) 
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no )
+--      group by substring(coilmst.item_no, 3, 1),dbo.uf_getcoilsort(coilmst.item_no), groupitem.item_name
+       
+       union all
+       
+       SELECT sort1     = '원코일,외주' -- substring(coilmst.item_no, 3, 1) /*원코일,외주*/
+            , gb        = dbo.uf_getcoilsort(coilmst.item_no)
+            , item_name = groupitem.item_name
+            , q_cnt_1   = 0
+--          , q_cnt_2   = sum(coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_2   = (coilmst.unit_qty * coilmst.qcnt)
+            , t_cnt_1   = 0
+            , q_cnt_3   = 0
+            , q_cnt_4   = 0
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)
+            , coil_no   = coilmst.coil_no
+            , loc_no    = coilmst.loc_no
+            , supp_no   = coilmst.supp_no
+            , unit_qty  = coilmst.unit_qty 
+            , length    = coilmst.length   
+            , cnt       = coilmst.cnt      
+            , qcnt      = coilmst.qcnt     
+            , rcpt_qty  = coilmst.rcpt_qty 
+            , item_no   = coilmst.item_no
+            , qa        = coilmst.qa
+            , flag      = coilmst.flag
+         FROM coilmst
+            , groupitem
+            , location
+        WHERE ( coilmst.item_no       = groupitem.item_no) 
+          and ( convert(char(10),coilmst.rcpt_date,111) <= '2011/04/30' )
+          and ( ( coilmst.loc_no      = location.loc_no and loc_type = 'Y' ) and
+                ( coilmst.flag        = 'W' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) IN ('S', 'A') ) 
+              ) 
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no )
+--      group by substring(coilmst.item_no, 3, 1),dbo.uf_getcoilsort(coilmst.item_no), groupitem.item_name
+         
+       union all
+       
+       SELECT sort1     = '스리팅,시화' --substring(coilmst.item_no, 3, 1) /*스리팅,시화*/
+            , gb        = dbo.uf_getcoilsort(coilmst.item_no)
+            , item_name = groupitem.item_name
+            , q_cnt_1   = 0
+            , q_cnt_2   = 0
+            , t_cnt_1   = 0
+--          , q_cnt_3   = sum(coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_3   = (coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_4   = 0
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)
+            , coil_no   = coilmst.coil_no
+            , loc_no    = coilmst.loc_no
+            , supp_no   = coilmst.supp_no
+            , unit_qty  = coilmst.unit_qty 
+            , length    = coilmst.length   
+            , cnt       = coilmst.cnt      
+            , qcnt      = coilmst.qcnt     
+            , rcpt_qty  = coilmst.rcpt_qty 
+            , item_no   = coilmst.item_no
+            , qa        = coilmst.qa
+            , flag      = coilmst.flag
+         FROM coilmst
+            , groupitem
+            , location
+        WHERE ( coilmst.item_no   = groupitem.item_no) 
+          and ( coilmst.loc_no    = location.loc_no  )
+          and ( convert(char(10),coilmst.rcpt_date,111) <= '2011/04/30' )
+          and ( ( coilmst.loc_no     IN ( 'WS00000000', 'WS00000003', 'WW01', 'WW02', 'WW03') or ( loc_type = 'W' ) ) AND  
+                ( coilmst.flag        = 'S' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) 
+              ) 
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no)
+--      group by substring(coilmst.item_no, 3, 1),dbo.uf_getcoilsort(coilmst.item_no), groupitem.item_name
+       
+       union all
+       
+       SELECT sort1     = '스리팅,외주' -- substring(coilmst.item_no, 3, 1),/*스리팅,외주*/
+            , gb        = dbo.uf_getcoilsort(coilmst.item_no)
+            , item_name = groupitem.item_name
+            , q_cnt_1   = 0
+            , q_cnt_2   = 0
+            , t_cnt_1   = 0
+            , q_cnt_3   = 0
+--          , q_cnt_4   = sum(coilmst.unit_qty * coilmst.qcnt)
+            , q_cnt_4   = (coilmst.unit_qty * coilmst.qcnt)
+            , rcpt_date = convert(char(10),coilmst.rcpt_date,111)
+            , coil_no   = coilmst.coil_no
+            , loc_no    = coilmst.loc_no
+            , supp_no   = coilmst.supp_no
+            , unit_qty  = coilmst.unit_qty 
+            , length    = coilmst.length   
+            , cnt       = coilmst.cnt      
+            , qcnt      = coilmst.qcnt     
+            , rcpt_qty  = coilmst.rcpt_qty 
+            , item_no   = coilmst.item_no
+            , qa        = coilmst.qa
+            , flag      = coilmst.flag
+         FROM coilmst
+            , groupitem
+            , location
+        WHERE ( coilmst.item_no       = groupitem.item_no) 
+          and ( convert(char(10),coilmst.rcpt_date,111) <= '2011/04/30' )
+          and ( ( coilmst.loc_no      = location.loc_no and loc_type = 'Y' ) and
+                ( coilmst.flag        = 'S' ) AND  
+                ( coilmst.open_close <> 'C' ) AND
+                ( substring(coilmst.item_no, 3, 1) in ('S', 'A') ) 
+              )
+          and not exists ( select * from lossitem where loss_item = coilmst.item_no )
+--      group by substring(coilmst.item_no, 3, 1),dbo.uf_getcoilsort(coilmst.item_no), groupitem.item_name
+      ) A
+  GROUP BY sort1, gb, REPLACE(A.item_name,'스리팅 ','')
+

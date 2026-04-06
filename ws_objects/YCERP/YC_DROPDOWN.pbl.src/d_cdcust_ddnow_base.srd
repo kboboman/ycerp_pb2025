@@ -1,0 +1,40 @@
+﻿$PBExportHeader$d_cdcust_ddnow_base.srd
+$PBExportComments$고객코드별 고객리스트(1998/3/12,성삼지)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=68 color="8421504" )
+detail(height=68 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=cust_no dbname="customer.cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="customer.cust_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="login.user_name" )
+ column=(type=char(5) updatewhereclause=yes name=team_code dbname="team.team_code" )
+ column=(type=char(30) updatewhereclause=yes name=team_name dbname="team.team_name" )
+ column=(type=char(10) updatewhereclause=yes name=team_manager dbname="team.team_manager" )
+ column=(type=long updatewhereclause=yes name=credit_cnt dbname="credit_cnt" )
+ column=(type=char(10) updatewhereclause=yes name=salesman dbname="salesman" )
+ retrieve="  SELECT customer.cust_no
+       , customer.cust_name
+       , login.user_name  
+       , team.team_code
+       , team.team_name
+       , team.team_manager
+       , credit_cnt = ( select count(distinct cust_no) from customer_credit (nolock) where customer.cust_no = customer_credit.cust_no )
+       , salesman = customer.salesman
+    FROM customer
+         LEFT OUTER JOIN login    ON customer.salesman = login.user_id 
+         LEFT OUTER JOIN team     ON login.team_code   = team.team_code
+   WHERE customer.open_close <> 'C'   
+"  sort="cust_name A cust_no A " )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="5" y="4" height="56" width="165" format="[general]" html.valueishtml="0"  name=cust_no  tag="판매거래처코드" visible="1" edit.limit=10 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1385" y="4" height="56" width="448" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1851" y="4" height="56" width="279" format="[general]" html.valueishtml="0"  name=team_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="2149" y="4" height="56" width="530" format="[general]" html.valueishtml="0"  name=team_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="2697" y="4" height="56" width="320" format="[general]" html.valueishtml="0"  name=team_manager visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="187" y="4" height="56" width="1029" format="[general]" html.valueishtml="0"  name=cust_name  tag="상호" visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="if ( isNULL(credit_cnt) or credit_cnt < 1, ~"~",~"채~" )"border="0" color="0" x="1234" y="4" height="60" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression="sum (  if ( compute_1 = ~"채~", 1, 0 ) )"border="0" color="0" x="1234" y="4" height="60" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="0" expression="rowcount()"border="0" color="0" x="187" y="4" height="60" width="1029" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=0 border="0" color="0" x="3017" y="0" height="60" width="320" html.valueishtml="0"  name=salesman visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

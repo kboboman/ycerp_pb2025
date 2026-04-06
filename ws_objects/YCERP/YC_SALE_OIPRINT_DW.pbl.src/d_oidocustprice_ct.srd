@@ -1,0 +1,79 @@
+﻿$PBExportHeader$d_oidocustprice_ct.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=140 color="536870912" )
+header[3](height=84 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(20) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=number updatewhereclause=yes name=price dbname="price" )
+ column=(type=number updatewhereclause=yes name=price_w dbname="price_w" )
+ retrieve="SELECT user_name = l.user_name
+     , cust_name = a.cust_name
+     , item_name = g.item_name
+     , price     = a.price
+     , price_w   = i.price
+  FROM (
+       SELECT cust_no   = do.cust_no
+            , salesman  = c.salesman
+            , cust_name = c.cust_name
+            , item_no   = dodet.item_no
+            , qa        = (case when dodet.uom = 'M' then substring(dodet.qa,1,13) else dodet.qa end)
+            , uom       = dodet.uom
+            , price     = min(dodet.price)
+         FROM do
+              LEFT OUTER JOIN dodet       ON do.do_no = dodet.do_no
+              LEFT OUTER JOIN customer  C ON do.cust_no = c.cust_no
+        WHERE ( do.do_date BETWEEN :adt_sdate AND :adt_edate )
+          AND ((:as_salesman  = '%' ) OR
+               (:as_salesman <> '%' AND c.salesman = :as_salesman )
+              )
+          AND ((:as_custno    = '%' ) OR
+               (:as_custno   <> '%' AND do.cust_no = :as_custno )
+              )
+          AND ( dodet.item_no IN (SELECT item_no FROM avgcost WHERE use_yn = 'Y') )
+          AND ((:as_inside    = '%' ) OR
+               (:as_inside   <> '%' AND c.cust_no NOT IN (SELECT item_cd FROM codemst WHERE type = '내부업체' AND use_yn = 'Y') )
+              )
+        GROUP BY do.cust_no
+               , c.salesman
+               , c.cust_name
+               , dodet.item_no
+               , dodet.uom
+               , (case when dodet.uom = 'M' then substring(dodet.qa,1,13) else dodet.qa end)
+       ) A
+
+       LEFT OUTER JOIN ItemCOSTS_CUST I ON a.cust_no  = i.cust_no AND a.item_no  = i.item_no 
+                                       AND a.qa  = i.qa AND a.uom = i.uom AND i.use_yn = 'Y'
+       LEFT OUTER JOIN groupitem      G ON a.item_no  = g.item_no
+       LEFT OUTER JOIN login          L ON a.salesman = l.user_id
+" arguments=(("as_salesman", string),("as_custno", string),("adt_sdate", datetime),("adt_edate", datetime),("as_inside", string))  sort="user_name A cust_name A " )
+group(level=1 header.height=0 trailer.height=0 by=("user_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Item Name" border="0" color="33554432" x="261" y="4" height="60" width="946" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="1" text="@item_name" border="6" color="33554432" x="1216" y="4" height="128" width="521" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="1" text="단가" border="6" color="0" x="1481" y="4" height="72" width="251" html.valueishtml="0"  name=price_w_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header[3] alignment="1" text="최저가" border="6" color="33554432" x="1216" y="4" height="72" width="256" html.valueishtml="0"  name=price_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="거래처" border="6" color="33554432" x="261" y="4" height="72" width="946" html.valueishtml="0"  name=cust_name_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header[3] alignment="2" text="담당자" border="6" color="33554432" x="9" y="4" height="72" width="242" html.valueishtml="0"  name=user_name_t visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="242" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="261" y="4" height="72" width="946" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( price < price_w, rgb(255, 0, 0), rgb(0, 0, 0) )" x="1216" y="4" height="72" width="256" format="#,##0" html.valueishtml="0"  name=price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1481" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=price_w visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="0" background.mode="2" background.color="28310782" )
+compute(band=trailer.1 alignment="1" expression="user_name + ~" Total~""border="0" color="33554432" x="9" y="4" height="72" width="242" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(price for group 1)"border="0" color="33554432" x="1216" y="4" height="72" width="256" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="avg(price_w for group 1)"border="0" color="33554432" x="1481" y="4" height="72" width="251" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="avg(price_w for all )"border="0" color="33554432" x="1481" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="min(price for all )"border="0" color="33554432" x="1216" y="4" height="72" width="256" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="count( cust_name for all )"border="0" color="33554432" x="261" y="4" height="72" width="946" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="count( user_name for all DISTINCT user_name )"border="0" color="33554432" x="9" y="4" height="72" width="242" format="[General]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_6 "border="0" color="33554432" x="9" y="4" height="72" width="242" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression=" compute_4 "border="0" color="33554432" x="261" y="4" height="72" width="946" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_7 "border="0" color="33554432~tif ( compute_10 < compute_11, rgb(255, 0, 0), rgb(0, 0, 0) )" x="1216" y="4" height="72" width="256" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression=" compute_8 "border="0" color="33554432" x="1481" y="4" height="72" width="251" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "item_name" rows = "user_name, cust_name" values = "sum(price for crosstab), avg(price_w for crosstab)" sourcenames = "user_name, cust_name, item_name, price, price_w")
+sparse(names="user_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

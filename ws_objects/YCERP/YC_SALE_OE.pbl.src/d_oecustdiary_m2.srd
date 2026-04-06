@@ -1,0 +1,67 @@
+﻿$PBExportHeader$d_oecustdiary_m2.srd
+$PBExportComments$일일업무
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="8421504" )
+detail(height=92 color="536870912"  height.autosize=yes)
+table(column=(type=long update=yes updatewhereclause=yes key=yes identity=yes name=cust_diary_id dbname="cust_diary.id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=diary_date dbname="cust_diary.diary_date" )
+ column=(type=long updatewhereclause=yes name=seq dbname="opeom_org.seq" )
+ column=(type=char(4) update=yes updatewhereclause=yes name=cust_no dbname="cust_diary.cust_no" )
+ column=(type=char(51) update=yes updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=interview dbname="cust_diary.interview" )
+ column=(type=char(4099) update=yes updatewhereclause=no name=contents dbname="cust_diary.contents" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=salesman dbname="cust_diary.salesman" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="login.user_name" )
+ column=(type=long update=yes updatewhereclause=yes name=mileage dbname="cust_diary.mileage" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=user_id dbname="cust_diary.user_id" )
+ column=(type=char(10) updatewhereclause=yes name=input_name dbname="input_name" )
+ column=(type=char(1) updatewhereclause=yes name=sw_modify dbname="sw_modify" )
+ retrieve="  SELECT a.id
+       , a.diary_date   
+       , o.seq
+       , a.cust_no   
+       , cust_name = (case when a.cust_no is null or a.cust_no = '' then '*'+a.cust_name else c.cust_name end)
+       , a.interview
+       , a.contents   
+       , a.salesman
+       , l.user_name    
+       , a.mileage
+       , a.user_id
+       , input_name = u.user_name
+       , sw_modify  = 'X'  
+    FROM cust_diary A
+         LEFT OUTER JOIN customer  C ON a.cust_no  = c.cust_no
+         LEFT OUTER JOIN login     L ON a.salesman = l.user_id
+         LEFT OUTER JOIN login     U ON a.user_id  = u.user_id
+         LEFT OUTER JOIN opeom_org O ON a.salesman = o.user_id
+   WHERE ( a.diary_date  BETWEEN :as_sdate AND :as_edate )
+     AND ( :as_custno <> '%' AND a.cust_no    = :as_custno OR
+           :as_custno  = '%' AND a.cust_no LIKE :as_custno
+         )
+     AND ( :as_salesman <> '%' AND a.salesman    = :as_salesman OR
+           :as_salesman  = '%' AND a.salesman LIKE :as_salesman
+         )
+" update="cust_diary" updatewhere=0 updatekeyinplace=no arguments=(("as_custno", string),("as_sdate", string),("as_edate", string),("as_salesman", string))  sort="diary_date D seq A user_name A cust_name A mileage D " )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="4667" y="8" height="60" width="329" html.valueishtml="0"  name=login_user_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="방문일자" border="6" color="33554432" x="183" y="8" height="60" width="416" html.valueishtml="0"  name=cust_diary_diary_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="33554432" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등록자" border="6" color="33554432" x="5006" y="8" height="60" width="251" html.valueishtml="0"  name=input_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="608" y="8" height="60" width="763" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="내용" border="6" color="33554432" x="1381" y="8" height="60" width="2414" html.valueishtml="0"  name=cust_diary_contents_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="면담자" border="6" color="33554432" x="3803" y="8" height="60" width="585" html.valueishtml="0"  name=interview_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="주행거리" border="6" color="33554432" x="4398" y="8" height="60" width="261" html.valueishtml="0"  name=mileage_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="76" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="608" y="8" height="76" width="763" format="[general]" html.valueishtml="0"  name=cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="4667" y="8" height="76" width="329" format="[general]" html.valueishtml="0"  name=user_name  tag="사용자명" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="183" y="8" height="76" width="416" format="yyyy/mm/dd" html.valueishtml="0"  name=diary_date  tag="방문일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="5006" y="8" height="76" width="251" format="[general]" html.valueishtml="0"  name=input_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="0" tabsequence=10 border="0" color="33554432" x="1381" y="8" height="76" width="2414" format="[general]" html.valueishtml="0" protect="0~tif ( sw_modify = 'X', 1, 0 )"  name=contents  tag="내용" visible="1"  resizeable=1 height.autosize=yes edit.limit=4099 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autovscroll=yes edit.imemode=0 edit.vscrollbar=yes  font.face="굴림체" font.height="-11" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="0" tabsequence=20 border="0" color="33554432" x="3803" y="8" height="76" width="585" format="[general]" html.valueishtml="0"  name=interview visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="1" tabsequence=30 border="0" color="33554432" x="4398" y="8" height="76" width="261" format="#,##0" html.valueishtml="0"  name=mileage visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum ( mileage for all)"border="0" color="0" x="4398" y="8" height="72" width="261" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

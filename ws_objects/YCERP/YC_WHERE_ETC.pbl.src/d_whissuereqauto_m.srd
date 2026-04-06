@@ -1,0 +1,96 @@
+﻿$PBExportHeader$d_whissuereqauto_m.srd
+$PBExportComments$출고의뢰서헤더(2003/09/22, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=67108864 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=1104 color="536870912" )
+table(column=(type=datetime update=yes updatewhereclause=yes name=req_date dbname="req_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes key=yes name=salesman dbname="salesman" )
+ column=(type=long update=yes updatewhereclause=yes key=yes name=req_seq dbname="req_seq" )
+ column=(type=char(10) update=yes updatewhereclause=yes key=yes name=accept_user dbname="accept_user" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept1 dbname="accept1" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept2 dbname="accept2" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept3 dbname="accept3" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept4 dbname="accept4" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept5 dbname="accept5" )
+ column=(type=char(1) updatewhereclause=yes name=chk0 dbname="chk0" values="	Y/	N" )
+ column=(type=char(1) updatewhereclause=yes name=chk1 dbname="chk1" values="	Y/	N" )
+ column=(type=char(1) updatewhereclause=yes name=chk2 dbname="chk2" values="	Y/	N" )
+ column=(type=char(1) updatewhereclause=yes name=chk3 dbname="chk3" values="	Y/	N" )
+ column=(type=char(1) updatewhereclause=yes name=chk4 dbname="chk4" values="	Y/	N" )
+ column=(type=char(1) updatewhereclause=yes name=chk5 dbname="chk5" values="	Y/	N" )
+ column=(type=char(60) update=yes updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=char(255) update=yes updatewhereclause=yes name=req_text dbname="req_text" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=accept_area dbname="accept_area" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=confirm_flag dbname="confirm_flag" initial="N" values="확정	Y/미확정	N/" )
+ column=(type=datetime update=yes updatewhereclause=yes name=sys_date dbname="sys_date" )
+ column=(type=char(10) updatewhereclause=yes name=loc_no dbname="loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=location_area_no dbname="location.area_no" )
+ column=(type=char(1) updatewhereclause=yes name=issue_schedule dbname="ISSUE_SCHEDULE" values="직출	A/생산후직출	B/저녁상차	J/택배//정기	K/방문	D/야간도착	I/외주(시화)	E/외주(본사)	F/유창강건	G/지점이송	H/자동작성	C/" )
+ column=(type=char(1) updatewhereclause=yes name=ship_case dbname="SHIP_CASE" values="정기화물	J/택배	T/오토바이	A/선박	S/항공	P/기타	E/" )
+ retrieve="  SELECT req_date     = i.req_date      
+       , salesman     = i.salesman      
+       , req_seq      = i.req_seq       
+       , accept_user  = i.accept_user   
+       , accept1      = i.accept1   
+       , accept2      = i.accept2   
+       , accept3      = i.accept3
+       , accept4      = i.accept4
+       , accept5      = i.accept5
+       , chk0         = (case when i.confirm_flag = 'Y' then 'Y' else 'N' end)
+       , chk1         = (case when i.confirm_flag = 'Y' then (case when i.accept1 is null OR i.accept1 = '' then 'N' else 'Y' end) else 'N' end)
+       , chk2         = (case when i.confirm_flag = 'Y' then (case when i.accept2 is null OR i.accept2 = '' then 'N' else 'Y' end) else 'N' end)
+       , chk3         = (case when i.confirm_flag = 'Y' then (case when i.accept3 is null OR i.accept3 = '' then 'N' else 'Y' end) else 'N' end)
+       , chk4         = (case when i.confirm_flag = 'Y' then (case when i.accept4 is null OR i.accept4 = '' then 'N' else 'Y' end) else 'N' end)
+       , chk5         = (case when i.confirm_flag = 'Y' then (case when i.accept5 is null OR i.accept5 = '' then 'N' else 'Y' end) else 'N' end)
+       , rem          = i.rem           
+       , req_text     = i.req_text      
+       , accept_area  = i.accept_area   
+       , confirm_flag = i.confirm_flag  
+       , sys_date     = i.sys_date      
+       , loc_no       = l.loc_no
+       , L.area_no
+       , '' ISSUE_SCHEDULE
+       , '' SHIP_CASE
+    FROM issuereq I              
+         LEFT OUTER JOIN location L ON i.accept_user = l.loc_manager
+   WHERE ( i.req_date = :ad_date ) 
+     AND ( i.salesman = :as_user ) 
+     AND ( i.req_seq  = :ai_seq  ) 
+" update="issuereq" updatewhere=0 updatekeyinplace=no arguments=(("ad_date", date),("as_user", string),("ai_seq", number)) )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="741" y="8" height="72" width="608" format="yyyy/mm/dd hh:mm" html.valueishtml="0"  name=sys_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="차수:" border="0" color="33554432" x="2373" y="4" height="144" width="325" html.valueishtml="0"  name=req_seq_t visible="1"  font.face="굴림체" font.height="-20" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="16711680" x="2729" y="4" height="144" width="133" format="[general]" html.valueishtml="0"  name=req_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-20" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=detail alignment="0" text="차" border="0" color="33554432" x="2880" y="4" height="144" width="256" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-20" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="5" color="255" x="2432" y="152" height="60" width="379" format="[general]" html.valueishtml="0"  name=accept_area visible="0" dddw.name=d_cdarea_c2 dddw.displaycolumn=area_name dddw.datacolumn=area_no dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=detail alignment="1" text="의뢰자:" border="6" color="33554432" x="18" y="88" height="60" width="315" html.valueishtml="0"  name=salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=detail alignment="1" text="저장소:" border="6" color="33554432" x="1984" y="248" height="60" width="315" html.valueishtml="0"  name=t_3 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=21 alignment="0" tabsequence=40 border="5" color="255" x="2327" y="248" height="60" width="471" format="[general]" html.valueishtml="0"  name=loc_no visible="0" dddw.name=d_cdlocation_c dddw.displaycolumn=loc_name dddw.datacolumn=loc_no dddw.percentwidth=250 dddw.lines=0 dddw.limit=0 dddw.allowedit=yes dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.hscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=detail alignment="1" text="출고일자:" border="6" color="33554432" x="18" y="8" height="60" width="315" html.valueishtml="0"  name=req_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+line(band=detail x1="18" y1="328" x2="3141" y2="328"  name=l_1 visible="1" pen.style="0" pen.width="14" pen.color="128"  background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="비고:" border="6" color="33554432" x="18" y="516" height="60" width="315" html.valueishtml="0"  name=req_text_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=detail alignment="1" text="참고사항:" border="6" color="33554432" x="18" y="436" height="60" width="315" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=16 alignment="0" tabsequence=170 border="5" color="33554432" x="361" y="436" height="60" width="2779" format="[general]" html.valueishtml="0"  name=rem pointer="IBeam!" visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=17 alignment="0" tabsequence=180 border="5" color="33554432" x="361" y="516" height="564" width="2779" format="[general]" html.valueishtml="0"  name=req_text pointer="IBeam!" visible="1" edit.limit=255 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes edit.autovscroll=yes edit.hscrollbar=yes edit.imemode=0 edit.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="수신자:" border="6" color="33554432" x="18" y="348" height="60" width="315" html.valueishtml="0"  name=accept_user_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=4 alignment="0" tabsequence=60 border="5" color="33554432" x="498" y="348" height="60" width="352" format="[general]" html.valueishtml="0"  name=accept_user visible="1" dddw.name=d_cduser_c5 dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=500 dddw.lines=5 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=80 border="5" color="33554432" x="1010" y="348" height="60" width="279" format="[general]" html.valueishtml="0" protect="0~tif (chk1 = 'Y', 0, 1)"  name=accept1 visible="1" dddw.name=d_cduser_c2 dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=230 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=100 border="5" color="33554432" x="1449" y="348" height="60" width="279" format="[general]" html.valueishtml="0" protect="0~tif (chk2 = 'Y', 0, 1)"  name=accept2 visible="1" dddw.name=d_cduser_c2 dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=230 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=120 border="5" color="33554432" x="1888" y="348" height="60" width="279" format="[general]" html.valueishtml="0" protect="0~tif (chk3 = 'Y', 0, 1)"  name=accept3 visible="1" dddw.name=d_cduser_c2 dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=230 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="0" tabsequence=140 border="5" color="33554432" x="2327" y="348" height="60" width="320" format="[general]" html.valueishtml="0" protect="0~tif (chk4 = 'Y', 0, 1)"  name=accept4 visible="1" dddw.name=d_cduser_c2 dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=230 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=160 border="5" color="33554432" x="2807" y="348" height="60" width="320" format="[general]" html.valueishtml="0" protect="0~tif (chk5 = 'Y', 0, 1)"  name=accept5 visible="1" dddw.name=d_cduser_c2 dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=230 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="2" tabsequence=50 border="5" color="33554432" x="361" y="348" height="60" width="114" format="[general]" html.valueishtml="0"  name=chk0 visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="65535" )
+column(band=detail id=11 alignment="2" tabsequence=70 border="5" color="33554432" x="873" y="348" height="60" width="114" format="[general]" html.valueishtml="0"  name=chk1 visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="65535" )
+column(band=detail id=12 alignment="2" tabsequence=90 border="5" color="33554432" x="1312" y="348" height="60" width="114" format="[general]" html.valueishtml="0"  name=chk2 visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="65535" )
+column(band=detail id=13 alignment="2" tabsequence=110 border="5" color="33554432" x="1751" y="348" height="60" width="114" format="[general]" html.valueishtml="0"  name=chk3 visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="65535" )
+column(band=detail id=14 alignment="2" tabsequence=130 border="5" color="33554432" x="2190" y="348" height="60" width="114" format="[general]" html.valueishtml="0"  name=chk4 visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="65535" )
+column(band=detail id=15 alignment="2" tabsequence=150 border="5" color="33554432" x="2670" y="348" height="60" width="114" format="[general]" html.valueishtml="0"  name=chk5 visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="65535" )
+text(band=detail alignment="2" text="출고예정:" border="6" color="33554432" x="14" y="168" height="60" width="315" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=detail alignment="2" text="운송방법:" border="6" color="33554432" x="14" y="248" height="60" width="315" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=24 alignment="0" tabsequence=30 border="5" color="33554432" x="357" y="248" height="60" width="430" format="[general]" html.valueishtml="0"  name=ship_case visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.nilisnull=yes ddlb.vscrollbar=yes ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=23 alignment="0" tabsequence=20 border="5" color="33554432" x="357" y="168" height="60" width="430" format="[general]" html.valueishtml="0"  name=issue_schedule visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.nilisnull=yes ddlb.vscrollbar=yes ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="5" color="33554432" x="361" y="88" height="60" width="352" format="[general]" html.valueishtml="0"  name=salesman visible="1" dddw.name=d_cduser_c dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="5" color="255" x="361" y="8" height="60" width="352" format="yyyy/mm/dd" html.valueishtml="0"  name=req_date pointer="IBeam!" visible="1" editmask.autoskip=yes editmask.mask="yyyy/mm/dd" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

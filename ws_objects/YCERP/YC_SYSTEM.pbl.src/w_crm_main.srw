@@ -1,0 +1,171 @@
+﻿$PBExportHeader$w_crm_main.srw
+$PBExportComments$CRM메인화면[2006.09.28 이기영]
+forward 
+global type w_crm_main from window
+end type
+type mdi_1 from mdiclient within w_crm_main
+end type
+type mditbb_1 from tabbedbar within w_crm_main
+end type
+type mdirbb_1 from ribbonbar within w_crm_main
+end type
+end forward
+
+global type w_crm_main from window
+integer x = 5
+integer y = 4
+integer width = 3657
+integer height = 2400
+boolean titlebar = true
+string title = "CRM(M)"
+string menuname = "m_crm_main"
+boolean controlmenu = true
+boolean minbox = true
+boolean maxbox = true
+boolean resizable = true
+windowtype windowtype = mdi!
+windowstate windowstate = maximized!
+long backcolor = 79741120
+mdi_1 mdi_1
+mditbb_1 mditbb_1
+mdirbb_1 mdirbb_1
+end type
+global w_crm_main w_crm_main
+
+forward prototypes
+public subroutine wf_menu ()
+public subroutine wf_menucase1 (string arg_str1, string arg_str2)
+public subroutine wf_menucase2 (string arg_str1, string arg_str2, string arg_str3)
+public subroutine wf_menucase3 (string arg_str1, string arg_str2, string arg_str3, string arg_str4)
+end prototypes
+
+public subroutine wf_menu ();//long ll_row,ll_cnt
+//string ls_menuitem1,ls_menuitem2,ls_menuitem3,ls_menuitem4
+//datastore ds_1,ds_2,ds_3,ds_4
+//
+//ds_1 = CREATE DataStore
+//ds_2 = CREATE DataStore
+//ds_3 = CREATE DataStore
+//ds_4 = CREATE DataStore
+//
+//ds_1.dataobject = "d_authority1_login"
+//ds_2.dataobject = "d_authority2_login"
+//ds_3.dataobject = "d_authority3_login"
+//ds_4.dataobject = "d_authority4_login"
+//ds_1.settransobject(sqlca)
+//ds_2.settransobject(sqlca)
+//ds_3.settransobject(sqlca)
+//ds_4.settransobject(sqlca)
+//
+//ds_1.retrieve(gs_userid,"m_main")
+//ds_2.retrieve(gs_userid,"m_main")
+//ds_3.retrieve(gs_userid,"m_main")
+//ds_4.retrieve(gs_userid,"m_main")
+//
+//ll_row = ds_2.rowcount()
+//for ll_cnt = 1 to ll_row
+//	 ls_menuitem1 = trim(ds_2.getitemstring(ll_cnt,"menu1"))
+//    ls_menuitem2 = trim(ds_2.getitemstring(ll_cnt,"use_type"))
+//	 wf_menucase1(ls_menuitem1,ls_menuitem2)
+//next
+//
+//ll_row = ds_3.rowcount()
+//for ll_cnt = 1 to ll_row
+//	 ls_menuitem1 = trim(ds_3.getitemstring(ll_cnt,"menu1"))
+//	 ls_menuitem2 = trim(ds_3.getitemstring(ll_cnt,"menu2"))
+//    ls_menuitem3 = trim(ds_3.getitemstring(ll_cnt,"use_type"))
+//	 wf_menucase2(ls_menuitem1,ls_menuitem2,ls_menuitem3)
+//next
+//
+//ll_row = ds_4.rowcount()
+//for ll_cnt = 1 to ll_row
+//	 ls_menuitem1 = trim(ds_4.getitemstring(ll_cnt,"menu1"))
+//	 ls_menuitem2 = trim(ds_4.getitemstring(ll_cnt,"menu2"))
+//	 ls_menuitem3 = trim(ds_4.getitemstring(ll_cnt,"menu3"))
+//    ls_menuitem4 = trim(ds_4.getitemstring(ll_cnt,"use_type"))
+//	 wf_menucase3(ls_menuitem1,ls_menuitem2,ls_menuitem3,ls_menuitem4)
+//next
+end subroutine
+
+public subroutine wf_menucase1 (string arg_str1, string arg_str2);
+end subroutine
+
+public subroutine wf_menucase2 (string arg_str1, string arg_str2, string arg_str3);
+end subroutine
+
+public subroutine wf_menucase3 (string arg_str1, string arg_str2, string arg_str3, string arg_str4);
+end subroutine
+
+on w_crm_main.create
+if this.MenuName = "m_crm_main" then this.MenuID = create m_crm_main
+this.mdi_1=create mdi_1
+this.mditbb_1=create mditbb_1
+this.mdirbb_1=create mdirbb_1
+this.Control[]={this.mdi_1,&
+this.mditbb_1,&
+this.mdirbb_1}
+end on
+
+on w_crm_main.destroy
+if IsValid(MenuID) then destroy(MenuID)
+destroy(this.mdi_1)
+destroy(this.mditbb_1)
+destroy(this.mdirbb_1)
+end on
+
+event open;//SQLCA2 = CREATE Transaction
+//
+//SQLCA2.DBMS       ="MSS Microsoft SQL Server 6.x"
+//SQLCA2.Database   = "YCERP"
+//SQLCA2.LogID      = 'db_user'
+//SQLCA2.LogPass    =""
+//SQLCA2.ServerName = '192.168.1.5'
+//SQLCA2.UserID     =""
+//SQLCA2.DBPass     =""
+//SQLCA2.Lock       =""
+//SQLCA2.DbParm     =ProfileString("ycerp.INI","Database","DbParm",           " ") + " 퇴직사우근황"
+//
+//SQLCA2.Lock = "ReadOnly"
+//CONNECT using SQLCA2;
+//IF SQLCA.SQLCode = -1 THEN
+//	MessageBox("오류", "유창인사데이타베이스와 연결이 되지 않습니다.~r~n" + &
+//              "에러코드: " + String(SQLCA.SQLDBCode ) + "~r~n" + &
+//              "에러내용: " + SQLCA.SQLErrText, StopSign!, OK!, 1 )
+//	close(w_crm_main)
+//END IF
+
+
+string ls_name
+select REPLACE(area_name,'사업장','') into :ls_name from area
+ where area_no = :gs_area;
+this.title = '[' + ls_name + ']' + this.title + " " + gs_ver + "[" + gs_level + "]"
+//if gs_userid = 'root' or gs_userid = '1999010s' or gs_userid = '1999010b' then
+//else
+//	m_crm_main.m_manage2.visible = false
+////	m_crm_main.m_manage.m_mpplanm.m_mprouttemp_new.visible = false
+//end if
+
+end event
+
+event close;//rollback using sqlca2;
+//DISCONNECT using sqlca2;
+end event
+
+type mdi_1 from mdiclient within w_crm_main
+long BackColor=276856960
+end type
+
+type mditbb_1 from tabbedbar within w_crm_main
+int X=0
+int Y=0
+int Width=0
+int Height=104
+end type
+
+type mdirbb_1 from ribbonbar within w_crm_main
+int X=0
+int Y=0
+int Width=0
+int Height=596
+end type
+

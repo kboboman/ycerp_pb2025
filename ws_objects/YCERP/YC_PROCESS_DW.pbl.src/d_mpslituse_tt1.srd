@@ -1,0 +1,172 @@
+﻿$PBExportHeader$d_mpslituse_tt1.srd
+$PBExportComments$원/스리팅코일사용현황조회(사내)(2001/05/08,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=72 color="8421504" )
+detail(height=72 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=coilsfcday_sfc_date dbname="sfc_date" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=coil_no dbname="coil_no" )
+ column=(type=char(20) updatewhereclause=yes name=coilmst_qa dbname="qa" )
+ column=(type=decimal(4) updatewhereclause=yes name=qty dbname="qty" )
+ column=(type=long updatewhereclause=yes name=coilmst_cnt dbname="cnt" )
+ column=(type=char(10) updatewhereclause=yes name=wc_name dbname="wc_name" )
+ column=(type=datetime updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=datetime updatewhereclause=yes name=edate dbname="edate" )
+ column=(type=char(1) updatewhereclause=yes name=flag dbname="flag" )
+ column=(type=datetime updatewhereclause=yes name=sfc_date dbname="sfc_date" )
+ retrieve="  SELECT DISTINCT sfc_date = coilsfcday.sfc_date   
+       , item_name = groupitem.item_name           
+       , coil_no   = coilsfcday.w_coil_no          
+       , qa        = coilmst.qa                    
+       , qty       = coilmst.unit_qty              
+       , cnt       = coilmst.cnt                   
+       , wc_name   = wc.work_name                  
+       , sdate     = convert(smalldatetime, :ad_start, 111)   
+       , edate     = convert(smalldatetime, :ad_end,   111)
+       , flag      = 'W'  
+       , sfc_date  = coilsfcday.sfc_date
+   FROM coilsfcday inner join coilmst on coilsfcday.w_coil_no = coilmst.coil_no and coilsfcday.wloc_no = coilmst.loc_no
+                                  inner join groupitem on coilmst.item_no = groupitem.item_no
+                                  inner join wc on coilsfcday.wc_no = wc.work_no   
+  WHERE ( coilsfcday.sfc_date   BETWEEN :ad_start AND :ad_end ) 
+         AND ( :as_area                    = 'S0001'               )
+  UNION ALL
+  SELECT DISTINCT sfc_date = coilsfcday.sfc_date              
+       , item_name = groupitem.item_name                      
+       , coil_no   = coilordersum.coil_no                     
+       , qa        = coilmst.qa                               
+       , qty       = coilmst.unit_qty                         
+       , cnt       = coilmst.cnt                              
+       , wc_name   = wc.work_name                             
+       , sdate     = convert(smalldatetime, :ad_start, 111)   
+       , edate     = convert(smalldatetime, :ad_end, 111)  
+       , flag      = 'W'    
+       , sfc_date  = coilsfcday.sfc_date
+FROM coilsfcday inner join coilordersum on  coilsfcday.order_no = coilordersum.order_no
+                              inner join coilmst on coilordersum.coil_no = coilmst.coil_no and coilordersum.loc_no = coilmst.loc_no
+                              inner join groupitem on coilmst.item_no = groupitem.item_no
+                              inner join wc on coilsfcday.wc_no = wc.work_no
+   WHERE ( coilsfcday.sfc_date    BETWEEN :ad_start AND :ad_end ) 
+         AND ( :as_area                     = 'S0001'               )
+  UNION ALL
+  SELECT sfc_date  = /*sfcuse.use_date       */ convert(datetime, convert(char(10), sfcuse.use_date,121) )
+       , item_name = groupitem.item_name   
+       , coil_no   = sfcuse.coil_no        
+       , qa        = sfcuse.qa             
+       , qty       = sfcuse.unit_qty       
+       , cnt       = sfcuse.cnt            
+       , wc_name   = wc.work_name          
+       , sdate     = convert(smalldatetime, :ad_start, 111)   
+       , edate     = convert(smalldatetime, :ad_end,   111)
+       , flag      = 'S'  
+       , sfc_date  = sfcuse.use_date
+FROM sfcuse inner join groupitem on sfcuse.item_no = groupitem.item_no
+                            left outer join wc  on sfcuse.wc_no = wc.work_no
+WHERE ( ( sfcuse.use_date BETWEEN convert(datetime,  :ad_start +' 00:00:00' ) and convert(datetime,  :ad_end + ' 23:59:59' ) ) and
+                 ( sfcuse.coil_no        is not null              )
+                ) 
+     and ( sfcuse.area_no               = :as_area          )
+/*
+  SELECT DISTINCT sfc_date = coilsfcday.sfc_date   
+       , item_name = groupitem.item_name           
+       , coil_no   = coilsfcday.w_coil_no          
+       , qa        = coilmst.qa                    
+       , qty       = coilmst.unit_qty              
+       , cnt       = coilmst.cnt                   
+       , wc_name   = wc.work_name                  
+       , sdate     = convert(smalldatetime, :ad_start, 111)   
+       , edate     = convert(smalldatetime, :ad_end,   111)
+       , flag      = 'W'  
+       , sfc_date  = coilsfcday.sfc_date
+    FROM groupitem    
+       , coilsfcday   
+       , coilmst      
+       , wc  
+   WHERE ( coilsfcday.w_coil_no        = coilmst.coil_no       )   
+     AND ( coilsfcday.wloc_no          = coilmst.loc_no        )   
+     AND ( coilmst.item_no             = groupitem.item_no     )   
+     AND ( coilsfcday.wc_no            = wc.work_no            )   
+     AND ( coilsfcday.sfc_date   BETWEEN :ad_start AND :ad_end ) 
+     AND ( :as_area                    = 'S0001'               )
+
+  UNION ALL
+  SELECT DISTINCT sfc_date = coilsfcday.sfc_date              
+       , item_name = groupitem.item_name                      
+       , coil_no   = coilordersum.coil_no                     
+       , qa        = coilmst.qa                               
+       , qty       = coilmst.unit_qty                         
+       , cnt       = coilmst.cnt                              
+       , wc_name   = wc.work_name                             
+       , sdate     = convert(smalldatetime, :ad_start, 111)   
+       , edate     = convert(smalldatetime, :ad_end, 111)  
+       , flag      = 'W'    
+       , sfc_date  = coilsfcday.sfc_date
+    FROM groupitem      
+       , coilsfcday   
+       , coilordersum  
+       , coilmst        
+       , wc  
+   WHERE ( coilsfcday.order_no          = coilordersum.order_no )   
+     AND ( coilordersum.coil_no         = coilmst.coil_no       )   
+     AND ( coilordersum.loc_no          = coilmst.loc_no        )   
+     AND ( coilmst.item_no              = groupitem.item_no     )   
+     AND ( coilsfcday.wc_no             = wc.work_no            )   
+     AND ( coilsfcday.sfc_date    BETWEEN :ad_start AND :ad_end ) 
+     AND ( :as_area                     = 'S0001'               )
+
+  UNION ALL
+  SELECT sfc_date  = /*sfcuse.use_date       */ convert(datetime, convert(char(10), sfcuse.use_date,121) )
+       , item_name = groupitem.item_name   
+       , coil_no   = sfcuse.coil_no        
+       , qa        = sfcuse.qa             
+       , qty       = sfcuse.unit_qty       
+       , cnt       = sfcuse.cnt            
+       , wc_name   = wc.work_name          
+       , sdate     = convert(smalldatetime, :ad_start, 111)   
+       , edate     = convert(smalldatetime, :ad_end,   111)
+       , flag      = 'S'  
+       , sfc_date  = sfcuse.use_date
+    FROM groupitem   
+       , sfcuse      
+       , wc  
+   WHERE ( sfcuse.item_no              *= groupitem.item_no ) 
+     and ( sfcuse.wc_no                *= wc.work_no        ) 
+     and (/* ( sfcuse.use_date      BETWEEN :ad_start AND :ad_end ) and */  ( sfcuse.use_date BETWEEN convert(datetime,  :ad_start +' 00:00:00' ) and convert(datetime,  :ad_end + ' 23:59:59' ) ) and
+           ( sfcuse.coil_no        is not null              )
+         ) 
+     and ( sfcuse.area_no               = :as_area          )
+*/" arguments=(("ad_start", date),("ad_end", date),("as_area", string))  sort="flag D coilsfcday_sfc_date A groupitem_item_name A coilmst_qa A qty A " )
+group(level=1 header.height=68 trailer.height=68 by=("flag" ) header.color="12639424" trailer.color="79741120" )
+group(level=2 header.height=68 trailer.height=68 by=("coilsfcday_sfc_date" ) header.color="536870912" trailer.color="536870912" )
+group(level=3 header.height=0 trailer.height=0 by=("groupitem_item_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="9" y="8" height="60" width="1024" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1042" y="8" height="60" width="681" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="단중" border="6" color="0" x="1733" y="8" height="60" width="338" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수량" border="6" color="0" x="2080" y="8" height="60" width="251" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="총중량" border="6" color="0" x="2341" y="8" height="60" width="421" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="로트번호" border="6" color="0" x="2770" y="8" height="60" width="512" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="작업위치" border="6" color="0" x="3291" y="8" height="60" width="507" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="사용일자" border="6" color="0" x="3808" y="8" height="60" width="421" html.valueishtml="0"  name=sfc_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="코일" border="6" color="0" x="4238" y="8" height="60" width="165" html.valueishtml="0"  name=flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=header.1 alignment="0" expression="if ( flag = 'W', '원코일 사용현황', ' 스리팅코일 사용현황')"border="0" color="0" x="9" y="4" height="60" width="1024" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=header.2 alignment="0" expression=" coilsfcday_sfc_date "border="0" color="0" x="9" y="4" height="60" width="1024" format="yyyy/mm/dd 일" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="1024" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="1042" y="4" height="60" width="681" format="[general]" html.valueishtml="0"  name=coilmst_qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="1733" y="4" height="60" width="338" format="#,##0" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2080" y="4" height="60" width="251" format="#,##0" html.valueishtml="0"  name=coilmst_cnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" qty  *  coilmst_cnt "border="0" color="0" x="2341" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="2770" y="4" height="60" width="512" format="[general]" html.valueishtml="0"  name=coil_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="3291" y="4" height="60" width="507" format="[general]" html.valueishtml="0"  name=wc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0" x="3808" y="4" height="60" width="421" format="yyyy/mm/dd" html.valueishtml="0"  name=sfc_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="4238" y="4" height="60" width="165" format="[general]" html.valueishtml="0"  name=flag visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression="  sum( qty  *  coilmst_cnt    for group 2)  "border="0" color="0" x="2341" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=trailer.2 alignment="1" text="소 계" border="0" color="0" x="1733" y="4" height="60" width="338" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="  sum( qty  *  coilmst_cnt    for group 1)  "border="0" color="0" x="2341" y="4" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="1" text="일 계" border="0" color="0" x="1042" y="4" height="60" width="681" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="  sum(   qty  *  coilmst_cnt  for all)  "border="0" color="0" x="2341" y="4" height="64" width="421" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="groupitem_item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

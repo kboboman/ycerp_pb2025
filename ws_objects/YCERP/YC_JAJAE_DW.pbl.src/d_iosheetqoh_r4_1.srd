@@ -1,0 +1,131 @@
+﻿$PBExportHeader$d_iosheetqoh_r4_1.srd
+$PBExportComments$원/스리팅 sheet재고 상세현황(2006/01/21,정갑용)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=76 color="536870912" )
+summary(height=68 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=sheetmst_sheet_no dbname="sheetmst.sheet_no" )
+ column=(type=char(10) updatewhereclause=yes name=sheetmst_item_no dbname="sheetmst.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=sheetmst_qa dbname="sheetmst.qa" )
+ column=(type=char(10) updatewhereclause=yes name=sheetmst_loc_no dbname="sheetmst.loc_no" )
+ column=(type=datetime updatewhereclause=yes name=coilmst_rcpt_date dbname="sheetmst.rcpt_date" )
+ column=(type=decimal(4) updatewhereclause=yes name=sheetmst_unit_qty dbname="sheetmst.unit_qty" )
+ column=(type=long updatewhereclause=yes name=sheetmst_cnt dbname="sheetmst.cnt" )
+ column=(type=long updatewhereclause=yes name=sheetmst_qcnt dbname="sheetmst.qcnt" )
+ column=(type=char(4) updatewhereclause=yes name=sheetmst_color_no dbname="sheetmst.color_no" )
+ column=(type=char(10) updatewhereclause=yes name=sheetmst_supp_no dbname="sheetmst.supp_no" )
+ column=(type=char(1) updatewhereclause=yes name=sheetmst_flag dbname="sheetmst.flag" values="원코일	W/스리팅	S/" )
+ column=(type=char(14) updatewhereclause=yes name=sheetmst_porder_no dbname="sheetmst.porder_no" )
+ column=(type=long updatewhereclause=yes name=sheetmst_pseq_no dbname="sheetmst.pseq_no" )
+ column=(type=char(1) updatewhereclause=yes name=sheetmst_open_close dbname="sheetmst.open_close" values="재고	O/계획	M/작업지시	P/외주가공	S/사용완료	C/" )
+ column=(type=char(40) updatewhereclause=yes name=sheetmst_rem dbname="sheetmst.rem" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(30) updatewhereclause=yes name=location_loc_name dbname="location.loc_name" )
+ column=(type=char(30) updatewhereclause=yes name=supp_supp_name dbname="supp.supp_name" )
+ retrieve="  SELECT sheetmst.sheet_no,
+         sheetmst.item_no,   
+         sheetmst.qa,   
+         sheetmst.loc_no,   
+         sheetmst.rcpt_date,   
+         sheetmst.unit_qty, 
+         sheetmst.cnt,   
+         sheetmst.qcnt,   
+         sheetmst.color_no,   
+         sheetmst.supp_no,   
+         sheetmst.flag,   
+         sheetmst.porder_no,   
+         sheetmst.pseq_no,   
+         sheetmst.open_close,   
+         sheetmst.rem,   
+         groupitem.item_name,   
+         location.loc_name,   
+         supp.supp_name
+FROM sheetmst left outer join  groupitem  on sheetmst.item_no = groupitem.item_no
+                                        inner join  location on sheetmst.loc_no = location.loc_no
+                                        left outer join supp   on sheetmst.supp_no = supp.supp_no
+   WHERE  ( 
+                            ( :as_work_chk = 'N' and :as_stock_chk = 'N'  and sheetmst.loc_no in (:asa_loc) )   
+  		                          or (
+                                               :as_work_chk = 'Y' AND ( 
+                                                                                                              ( 'WW01' not in (:asa_loc) and sheetmst.loc_no in (:asa_loc) )
+                                                                                                                   or  
+                                                                                                              ( 
+                                                                                                                      ( 'WW01' in (:asa_loc)) and 
+                                                                                                                      ( 
+                                                                                                                              sheetmst.loc_no in (:asa_loc) 
+                                                                                                                              OR 
+                                                                                                                            ( sheetmst.loc_no in ( select loc_no from location where loc_type = 'W' or loc_type = 'Y') ) 
+                                                                                                                      ) 
+                                                                                                               ) 
+                                                                                                      )
+                                       ) 
+  		                  or ( :as_stock_chk = 'Y' AND ( ( 'WW01' not in (:asa_loc) and sheetmst.loc_no in (:asa_loc) ) 
+											 or  ( ( 'WW01' in (:asa_loc) ) 
+												and ( sheetmst.loc_no in (:asa_loc) OR sheetmst.loc_no = 'WS00000003' ) ) ) )
+			                )
+			              and ( sheetmst.item_no in (:asa_item) )
+                    and ( sheetmst.flag like :as_flag )
+                    and ( sheetmst.open_close in ( :as_oc ) )
+ 			              and not exists ( select * from lossitem where loss_item = sheetmst.item_no )
+		                and ( sheetmst.qa like :as_qa )
+/*
+    FROM sheetmst,   
+         groupitem,   
+         location,   
+         supp  
+   WHERE ( sheetmst.item_no *= groupitem.item_no )
+	  and ( sheetmst.loc_no = location.loc_no )
+     and ( sheetmst.supp_no *= supp.supp_no )
+	  and ( ( :as_work_chk = 'N' and :as_stock_chk = 'N'  and sheetmst.loc_no in (:asa_loc) )   
+  		  or ( :as_work_chk = 'Y' AND ( ( 'WW01' not in (:asa_loc) and sheetmst.loc_no in (:asa_loc) ) 
+											 or  ( ( 'WW01' in (:asa_loc)) 
+												and ( sheetmst.loc_no in (:asa_loc) OR ( sheetmst.loc_no in ( select loc_no from location where loc_type = 'W' or loc_type = 'Y') ) ) ) ) ) 
+  		 or ( :as_stock_chk = 'Y' AND ( ( 'WW01' not in (:asa_loc) and sheetmst.loc_no in (:asa_loc) ) 
+											 or  ( ( 'WW01' in (:asa_loc) ) 
+												and ( sheetmst.loc_no in (:asa_loc) OR sheetmst.loc_no = 'WS00000003' ) ) ) )
+			)
+			and ( sheetmst.item_no in (:asa_item) )
+         and ( sheetmst.flag like :as_flag )
+         and ( sheetmst.open_close in ( :as_oc ) )
+ 			and not exists ( select * from lossitem where loss_item = sheetmst.item_no )
+		and ( sheetmst.qa like :as_qa )
+*/" arguments=(("asa_loc", stringlist),("asa_item", stringlist),("as_flag", string),("as_oc", stringlist),("as_work_chk", string),("as_stock_chk", string),("as_qa", string))  sort="mid(sheetmst_item_no,3,1) A sheetmst_item_no A sheetmst_qa A sheetmst_unit_qty A sheetmst_sheet_no A sheetmst_loc_no A " )
+group(level=1 header.height=0 trailer.height=80 by=("mid(sheetmst_item_no,3,1) + mid(sheetmst_item_no,2,1)" ) header.color="536870912" trailer.color="15780518" )
+group(level=2 header.height=0 trailer.height=0 by=("sheetmst_item_no" ) header.color="536870912" trailer.color="553648127" )
+text(band=header alignment="2" text="저장소" border="2" color="0" x="5" y="8" height="60" width="485" html.valueishtml="0"  name=sheetlot_loc_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="물품명" border="2" color="0" x="494" y="8" height="60" width="818" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="규격" border="2" color="0" x="1317" y="8" height="60" width="617" html.valueishtml="0"  name=sheetlot_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="단중" border="2" color="0" x="1938" y="8" height="60" width="265" html.valueishtml="0"  name=sheetlot_unit_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="갯수" border="2" color="0" x="2208" y="8" height="60" width="251" html.valueishtml="0"  name=sheetlot_cnt_t visible="1"  font.face="굴림체" font.height="-9" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="총중량" border="2" color="0" x="2464" y="8" height="60" width="306" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="구매처" border="2" color="0" x="3255" y="8" height="60" width="585" html.valueishtml="0"  name=sheetlot_supp_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="물품번호" border="2" color="0" x="3845" y="8" height="60" width="352" html.valueishtml="0"  name=sheetlot_item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="상태" border="2" color="0" x="4201" y="8" height="60" width="288" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="로트번호" border="2" color="0" x="2775" y="8" height="60" width="475" html.valueishtml="0"  name=sheetlot_sheet_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입고" border="2" color="0" x="4494" y="8" height="60" width="169" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="0" x="5" y="4" height="60" width="485" format="[general]" html.valueishtml="0"  name=location_loc_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="0" x="494" y="4" height="60" width="818" format="[general]" html.valueishtml="0"  name=groupitem_item_name  tag="품명" visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="sheetmst_qa"border="0" color="0" x="1317" y="4" height="60" width="617" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="1938" y="4" height="60" width="265" format="#,##0.0000" html.valueishtml="0"  name=sheetmst_unit_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="0" x="3255" y="4" height="60" width="585" format="[general]" html.valueishtml="0"  name=supp_supp_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="3845" y="4" height="60" width="352" format="[general]" html.valueishtml="0"  name=sheetmst_item_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="0~tif ( sheetmst_open_close = 'O' , rgb(0, 0, 0), rgb(255,0,0))" x="4201" y="4" height="60" width="288" format="[general]" html.valueishtml="0"  name=sheetmst_open_close visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif ( sheetmst_open_close = 'O' , rgb(0, 0, 0), rgb(255,0,0))" x="2784" y="4" height="60" width="466" format="[general]" html.valueishtml="0"  name=sheetmst_sheet_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="4494" y="4" height="60" width="169" format="mm/dd" html.valueishtml="0"  name=sheetmst_rcpt_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" sheetmst_unit_qty   * sheetmst_qcnt "border="0" color="0" x="2464" y="4" height="60" width="306" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="2208" y="4" height="60" width="251" format="#,##0" html.valueishtml="0"  name=sheetmst_qcnt visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression="case( mid(sheetmst_item_no , 3, 1) when  ~"A~" then ( case( mid(sheetmst_item_no , 2, 1) when ~"1~"  then  ~"AL 원코일~"  when ~"3~"  then ~"AL 스리팅~" ) ) ELSE ( case( mid(sheetmst_item_no , 2, 1) when ~"1~"  then ~"GI 원코일~"  when ~"3~"  then ~"GI 스리팅~" ) ) )+ ~" 합계 == > ~"
+"border="0" color="0" x="128" y="8" height="60" width="1815" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="0" y1="0" x2="4599" y2="0"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=trailer.1 x1="0" y1="76" x2="4594" y2="76"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum( sheetmst_unit_qty   * sheetmst_qcnt  for group 1)"border="0" color="0" x="2464" y="8" height="60" width="306" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( sheetmst_qcnt for group 1 )"border="0" color="0" x="2203" y="8" height="60" width="256" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="1" text="전  체" border="0" color="0" x="50" y="4" height="60" width="197" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="rowcount()"border="0" color="0" x="251" y="4" height="60" width="279" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="1" text="건" border="0" color="0" x="535" y="4" height="60" width="128" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=summary alignment="1" expression="sum( sheetmst_unit_qty   * sheetmst_qcnt  for all)"border="0" color="0" x="2464" y="4" height="60" width="306" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  sheetmst_qcnt   for all)"border="0" color="0" x="2153" y="4" height="60" width="306" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

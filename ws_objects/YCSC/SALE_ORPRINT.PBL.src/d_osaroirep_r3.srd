@@ -1,0 +1,74 @@
+﻿$PBExportHeader$d_osaroirep_r3.srd
+$PBExportComments$계산서 운반비 체크
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=68 color="536870912" )
+header[2](height=68 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=do_no dbname="do_no" )
+ column=(type=char(20) updatewhereclause=yes name=aroiinv_no dbname="aroiinv_no" )
+ column=(type=number updatewhereclause=yes name=ship_amount dbname="ship_amount" )
+ retrieve="  SELECT do_no       = a.do_no
+       , cat         = a.cat
+       , ship_amount = a.ship_amount
+       , aroiinv_no  = a.aroiinv_no
+    FROM (
+         SELECT DISTINCT cat  = '1.VAT'
+              , aroi.do_no                                                     
+              , ship_amount = aroiinv.ship_cost        /* 운반비(공급가액) */
+              , aroiinv.aroiinv_no       /* 계산서번호 */                      
+           FROM  aroiinv left outer join aroi on aroiinv.aroiinv_no = aroi.aroiinv_no
+          WHERE ( aroiinv.inv_area         LIKE :as_area + '%'   )
+                 AND ( aroiinv.sale_flag          IN ( 'D','L','E' )  ) 
+                 AND ( convert(char(10),aroiinv.oi_date,111)       BETWEEN :as_sdate and :as_edate ) 
+                 AND ( aroiinv.delete_flag         = 'N'              )
+         UNION ALL
+         SELECT cat = '2.DO'
+              , do.do_no                                         
+              , do.ship_amount                                   
+              , ''
+           FROM do         
+          WHERE ( do.do_no           LIKE :as_area + '%'        ) 
+            AND ( convert(char(10),do.ship_date,111)    BETWEEN :as_sdate and :as_edate ) 
+            AND ( do.ship_flag         IN ('D' , 'B', 'A', 'R') ) 
+         
+         UNION ALL
+         SELECT cat = '3.ASK'
+              , ask_head.ask_no                                  
+              , ask_head.ship_amount                             
+              , ''
+           FROM ask_head
+          WHERE ( :as_area                  = 'S'                   ) 
+            AND ( convert(char(10),ask_head.ship_date,111)  BETWEEN :as_sdate and :as_edate )
+         
+         UNION ALL
+         SELECT cat = '4.ETC'
+              , do_no  = (case when do_no is not null then do_no else dbo.uf_getdatestring(doshipetc.etc_date) end)
+              , doshipetc.ship_amount                            
+              , ''
+           FROM doshipetc   
+          WHERE ( doshipetc.etc_area      LIKE :as_area + '%'        ) 
+            AND ( convert(char(10),doshipetc.etc_date,111)   BETWEEN :as_sdate and :as_edate )
+            AND ( doshipetc.doship_req       = 'Y'                   )
+                 
+         ) A
+     ORDER BY do_no, cat
+
+" arguments=(("as_area", string),("as_sdate", string),("as_edate", string))  sort="do_no A aroiinv_no A " )
+group(level=1 header.height=0 trailer.height=0 by=("do_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Sum Of Ship Amount" border="0" color="33554432" x="9" y="4" height="60" width="480" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Cat" border="0" color="33554432" x="498" y="4" height="60" width="416" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="Do No" border="0" color="33554432" x="9" y="4" height="60" width="480" html.valueishtml="0"  name=do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="Aroiinv No" border="0" color="33554432" x="498" y="4" height="60" width="416" html.valueishtml="0"  name=aroiinv_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="@cat" border="0" color="33554432" x="923" y="4" height="60" width="384" html.valueishtml="0"  name=ship_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="Grand Total " border="0" color="33554432" x="1317" y="4" height="60" width="686" html.valueishtml="0"  name=grand_sum_ship_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="480" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="498" y="4" height="72" width="416" format="[general]" html.valueishtml="0"  name=aroiinv_no visible="1" edit.limit=12 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="923" y="4" height="72" width="384" format="[general]" html.valueishtml="0"  name=ship_amount visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes edit.imemode=0 crosstab.repeat=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1317" y="4" height="72" width="686" format="[general]" html.valueishtml="0"  name=grand_sum_ship_amount visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "cat" rows = "do_no, aroiinv_no" values = "sum(ship_amount for crosstab)" sourcenames = "do_no, cat, ship_amount, aroiinv_no")
+sparse(names="do_no")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,93 @@
+﻿$PBExportHeader$d_mpsfcday_calc_check.srd
+$PBExportComments$생산일보조회(1998/05/08,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=76 color="8421504" )
+detail(height=76 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N" )
+ column=(type=char(10) updatewhereclause=yes name=wc_no dbname="wc_no" )
+ column=(type=char(10) updatewhereclause=yes name=work_name dbname="work_name" initial=" " )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=qty dbname="qty" )
+ column=(type=char(100) updatewhereclause=yes name=formula dbname="formula" )
+ column=(type=long updatewhereclause=yes name=calc dbname="calc" )
+ column=(type=decimal(4) updatewhereclause=yes name=calvalue dbname="calvalue" )
+ retrieve="    SELECT chk       = 'N'
+         , wc_no     = a.wc_no                
+         , work_name = a.work_name              
+         , item_no   = a.item_no   
+         , item_name = a.item_name         
+         , qa        = a.qa     
+         , uom       = a.uom                  
+         , qty       = a.qty
+         , formula   = b.formula
+         , calc      = b.calc
+         , calvalue  = a.calvalue
+      FROM (
+           SELECT wc_no     = a.wc_no                
+                , work_name = b.work_name              
+                , item_no   = a.assembly   
+                , item_name = c.item_name         
+                , qa        = a.assembly_qa     
+                , uom       = a.uom                  
+                , qty       = sum(a.make_qty)     
+                , calvalue  = isnull(DBO.UF_GetItemCalc_PUB(a.wc_no, a.assembly, a.assembly_qa, sum(a.make_qty)), 0)
+             FROM sfcday    a  
+                  LEFT OUTER JOIN wc        b  ON a.wc_no      = b.work_no
+                  LEFT OUTER JOIN groupitem c  ON a.assembly   = c.item_no
+            WHERE ( b.work_name      LIKE :as_wc + '%' ) 
+              AND ( convert(char(10),a.sfc_date,111)   BETWEEN :as_start and :as_end ) 
+              AND ( a.area_no           = :as_area     ) 
+              AND NOT ( a.assembly = 'PZAARMDB0Z' OR  /* R-몰딩(도장) */
+                        a.assembly = 'PZZZACCZZZ' OR  /* SELF-CLEANING COATING */
+                        a.assembly = 'PZZZPP3ZZZ' OR  /* 도장비 */
+                        charindex('스마트패널', c.item_name) > 0 OR 
+                        charindex('절곡판넬',   c.item_name) > 0  
+                      )
+            GROUP BY a.wc_no         
+                   , b.work_name     
+                   , a.assembly      
+                   , c.item_name
+                   , a.assembly_qa   
+                   , a.uom           
+         ) a
+         LEFT OUTER JOIN itemcalc_pub b  ON a.wc_no = b.work_no AND a.item_no = b.item_no AND a.qa = b.qa
+    WHERE ( a.qty      > 0    )
+      AND ( a.calvalue = 0    )
+    ORDER BY a.work_name, a.item_name, a.qa
+    " arguments=(("as_wc", string),("as_start", string),("as_end", string),("as_area", string))  sort="work_name A item_name A qa A " )
+group(level=1 header.height=0 trailer.height=0 by=("wc_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="공식" border="6" color="0" x="4590" y="8" height="60" width="1216" html.valueishtml="0"  name=formula_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="생산량" border="6" color="0" x="2574" y="8" height="60" width="311" html.valueishtml="0"  name=qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="단위" border="6" color="0" x="2400" y="8" height="60" width="165" html.valueishtml="0"  name=sfcday_uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="규격" border="6" color="0" x="1742" y="8" height="60" width="649" html.valueishtml="0"  name=sfcday_qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="작업장" border="6" color="0" x="343" y="8" height="60" width="338" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="78160032" )
+text(band=header alignment="2" text="계산값" border="6" color="0" x="2894" y="8" height="60" width="283" html.valueishtml="0"  name=calvalue_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="0" x="690" y="8" height="60" width="1042" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="계산식(TYPE)" border="6" color="0" x="3365" y="8" height="60" width="1216" html.valueishtml="0"  name=calc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="식" border="6" color="0" x="3186" y="8" height="60" width="169" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="10789024" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="1742" y="4" height="68" width="649" format="[general]" html.valueishtml="0"  name=qa  tag="규격" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="343" y="4" height="68" width="338" format="[general]" html.valueishtml="0"  name=work_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0" x="2400" y="4" height="68" width="165" format="[general]" html.valueishtml="0"  name=uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="2574" y="4" height="68" width="311" format="#,##0" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="4590" y="4" height="68" width="1216" format="[general]" html.valueishtml="0"  name=formula visible="0" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="2894" y="4" height="68" width="283" format="#,##0.00" html.valueishtml="0"  name=calvalue visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="690" y="4" height="68" width="1042" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=20 border="0" color="0" x="3365" y="4" height="68" width="1216" format="[general]" html.valueishtml="0"  name=calc visible="1" dddw.name=d_cditemcalc_pub_c dddw.displaycolumn=bigo dddw.datacolumn=sort dddw.percentwidth=130 dddw.lines=15 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0 dddw.vscrollbar=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression=" calc "border="0" color="0" x="3186" y="4" height="68" width="169" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="1" expression="sum (  qty for all )"border="0" color="0" x="2574" y="4" height="68" width="311" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum (  calvalue for all )"border="0" color="0" x="2894" y="4" height="68" width="283" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="0" x="178" y="4" height="68" width="155" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="5" y="4" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="선택" border="6" color="0" x="178" y="8" height="60" width="155" html.valueishtml="0"  name=chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="5" y="8" height="60" width="165" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=footer alignment="2" expression="sum( if ( chk = 'Y', 1, 0 ) for all )"border="0" color="16711680" x="178" y="4" height="68" width="155" format="[General]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="5" y="4" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="work_name	item_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

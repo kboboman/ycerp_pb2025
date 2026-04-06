@@ -1,0 +1,77 @@
+﻿$PBExportHeader$d_whsale_w.srd
+$PBExportComments$수주조회(2002/01/14)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=84 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=68 color="12639424" )
+detail(height=76 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=sale_order_no dbname="sale.order_no" )
+ column=(type=datetime updatewhereclause=yes name=sale_due_date dbname="sale.due_date" )
+ column=(type=char(50) updatewhereclause=yes name=customer_cust_name dbname="customer.cust_name" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_order_qty dbname="saledet.order_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=saledet_rlse_qty dbname="saledet.rlse_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=corder dbname="corder" )
+ column=(type=char(2) updatewhereclause=yes name=uom dbname="saledet.uom" )
+ column=(type=char(10) updatewhereclause=yes name=citem dbname="citem" )
+ column=(type=char(20) updatewhereclause=yes name=cqa dbname="cqa" )
+ retrieve="select sale.order_no, sale.due_date, customer.cust_name, scene.scene_desc,
+		 saledet.order_qty, saledet.rlse_qty, corder = saledet.order_qty - saledet.rlse_qty,
+		 saledet.uom, citem = saledet.item_no, cqa = saledet.qa
+	from sale inner join saledet on sale.order_no = saledet.order_no
+                      inner join customer on sale.cust_no = customer.cust_no
+		           left outer join scene on sale.scene_code = scene.scene_code
+  WHERE saledet.item_no = :as_item
+	and saledet.qa = :as_qa
+	and sale.open_close = 'O'
+	and ( ( :as_area = 'S0001' and ( ( sale.area_no like :as_area ) or (sale.area_no = 'H0001') ) )
+           		or ( :as_area = 'B0001' and ( sale.area_no = :as_area ) )
+			  		or ( :as_area = 'T0001' and ( sale.area_no = :as_area ) )
+			  		or ( :as_area = '%' and ( sale.area_no like :as_area ) ) )
+	and order_date between  :ad_start and :ad_end
+
+union all
+
+select sale.order_no, sale.due_date, customer.cust_name, scene.scene_desc,
+		 saledet.order_qty, saledet.rlse_qty, corder = saledet.order_qty - saledet.rlse_qty,
+		 saledet.uom, citem = rout.assembly, cqa =  rout.assy_qa
+	from sale inner join saledet on sale.order_no = saledet.order_no
+                      inner join customer on sale.cust_no = customer.cust_no
+		           left outer join scene on sale.scene_code = scene.scene_code
+                      inner join rout on saledet.item_no = rout.item_no
+						and saledet.qa =rout.qa
+  WHERE rout.assembly = :as_item
+	and rout.assy_qa = :as_qa
+	and sale.order_no = saledet.order_no
+	and sale.open_close = 'O'
+	and ( ( :as_area = 'S0001' and ( ( sale.area_no like :as_area ) or (sale.area_no = 'H0001') ) )
+           		or ( :as_area = 'B0001' and ( sale.area_no = :as_area ) )
+			  		or ( :as_area = 'T0001' and ( sale.area_no = :as_area ) )
+			  		or ( :as_area = '%' and ( sale.area_no like :as_area ) ) )
+	and order_date between  :ad_start and :ad_end
+	and rout.item_no <>  rout.assembly
+" arguments=(("as_area", string),("ad_start", date),("ad_end", date),("as_item", string),("as_qa", string))  sort="sale_order_no A customer_cust_name A scene_scene_desc A " )
+text(band=header alignment="2" text="주문번호" border="6" color="0" x="9" y="12" height="60" width="480" html.valueishtml="0"  name=sale_order_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="거래처" border="6" color="0" x="498" y="12" height="60" width="402" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현장명" border="6" color="0" x="910" y="12" height="60" width="965" html.valueishtml="0"  name=scene_scene_desc_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="수주잔량" border="6" color="0" x="1883" y="12" height="60" width="329" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="환산수량" border="6" color="0" x="2222" y="12" height="60" width="325" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="수주수량" border="6" color="0" x="2555" y="12" height="60" width="325" html.valueishtml="0"  name=saledet_order_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="기출수량" border="6" color="0" x="2889" y="12" height="60" width="325" html.valueishtml="0"  name=saledet_rlse_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="납기" border="6" color="0" x="3223" y="12" height="60" width="347" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="8" height="60" width="480" format="[general]" html.valueishtml="0"  name=sale_order_no  tag="판매주문번호" visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="498" y="8" height="60" width="402" format="[general]" html.valueishtml="0"  name=customer_cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="910" y="8" height="60" width="965" format="[general]" html.valueishtml="0"  name=scene_scene_desc  tag="현장명" visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="8388608" x="1883" y="8" height="60" width="329" format="#,##0" html.valueishtml="0"  name=corder visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if(left( citem  ,1) = 'P' and mid( citem , 3,1) = 'Y' and (mid( citem , 7,1) = 'A' or mid( citem , 7,1) = 'B' or mid( citem , 7,1) = 'C' or mid( citem , 7,1) = 'D' or left(citem, 5) = 'PCYSZ'),  corder , if( uom  = 'M2' or uom = 'SS',truncate( long(mid(  cqa  ,5,4)) * long(mid(  cqa ,10,4)) *     corder  / 1000000 + 0.00001, 2), if( uom  = 'M',if (corder < 0 , truncate(long(mid( cqa , 15,5)) *  corder / 1000 - 0.00001,2), truncate(long(mid( cqa , 15,5)) * corder  / 1000 + 0.00001,2)) ,    corder  )))"border="0" color="8388608" x="2222" y="8" height="60" width="325" format="#,##0.00" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="2555" y="8" height="60" width="325" format="#,##0" html.valueishtml="0"  name=saledet_order_qty  tag="주문수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2889" y="8" height="60" width="325" format="#,##0" html.valueishtml="0"  name=saledet_rlse_qty  tag="출고수량" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="3223" y="8" height="60" width="347" format="yyyy/mm/dd" html.valueishtml="0"  name=sale_due_date visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(if(left( citem  ,1) = 'P' and mid( citem , 3,1) = 'Y' and (mid( citem , 7,1) = 'A' or mid( citem , 7,1) = 'B' or mid( citem , 7,1) = 'C' or mid( citem , 7,1) = 'D' or left(citem, 5) = 'PCYSZ'),  corder , if( uom  = 'M2' or uom = 'SS',truncate( long(mid(  cqa  ,5,4)) * long(mid(  cqa ,10,4)) *     corder  / 1000000 + 0.00001, 2), if( uom  = 'M',if (corder < 0 , truncate(long(mid( cqa , 15,5)) *  corder / 1000 - 0.00001,2), truncate(long(mid( cqa , 15,5)) * corder  / 1000 + 0.00001,2)) ,    corder  ))) for all)"border="0" color="0" x="2222" y="4" height="60" width="325" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(saledet_order_qty for all)"border="0" color="0" x="2555" y="4" height="60" width="325" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(saledet_rlse_qty for all)"border="0" color="0" x="2889" y="4" height="60" width="325" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(corder for all)"border="0" color="0" x="1883" y="4" height="60" width="329" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( sale_order_no for all )"border="0" color="0" x="9" y="4" height="60" width="480" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

@@ -1,0 +1,111 @@
+﻿$PBExportHeader$d_oiteam_outamt_det.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=180 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=84 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(20) updatewhereclause=yes name=area dbname="area" )
+ column=(type=char(20) updatewhereclause=yes name=sector dbname="sector" )
+ column=(type=char(20) updatewhereclause=yes name=team dbname="team" )
+ column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(20) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(10) updatewhereclause=yes name=rank dbname="rank" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=decimal(7) updatewhereclause=yes name=un_outamt dbname="un_outamt" )
+ column=(type=char(20) updatewhereclause=yes name=top10_category dbname="top10_category" )
+ retrieve="  SELECT seq         = o.seq                     /* 순서       */  
+       , area        = o.area                    /* 권역       */
+       , sector      = o.sector                  /* 본부       */
+       , team        = o.team                    /* 팀         */
+       , user_id     = o.user_id                 /* 담당자     */
+       , user_name   = o.user_name               /* 담당자명   */
+       , rank        = o.rank                    /* 직책       */
+       , item_name   = z.item_name   
+       , un_outamt   = z.un_outamt
+		 , top10_category = top10.category
+    FROM (
+			SELECT salesman  = a.salesman
+				  , item_no   = a.item_no
+              , item_name = a.item_name
+				  , un_outamt = sum(a.un_outamt)
+			  FROM (
+					 SELECT salesman  = c.salesman
+                     , item_no	= g.item_no
+                     , item_name = g.item_name
+							, cust_no   = a.cust_no             
+							, cust_name = c.cust_name
+							, un_outamt = dbo.uf_getqty(b.item_no, b.qa ,b.uom,( b.order_qty - b.rlse_qty ) ) * b.price
+						FROM sale      A   
+							  LEFT OUTER JOIN saledet   B ON a.order_no = b.order_no
+							  LEFT OUTER JOIN customer  C ON a.cust_no  = c.cust_no
+                       LEFT OUTER JOIN groupitem G ON b.item_no  = g.item_no
+					  WHERE 
+							  ( b.order_qty        > b.rlse_qty  )
+						 AND ( a.open_close       = 'O'           )
+						 AND ( a.due_date   BETWEEN DateAdd(day, - 30, :ad_date) AND DateAdd(day, 30, :ad_date) )
+						 AND ( c.salesman      LIKE :as_salesman  )
+					 ) A
+			 GROUP BY a.salesman
+					  , a.item_no
+                 , a.item_name
+         ) Z
+         LEFT OUTER JOIN (
+              SELECT DISTINCT seq= a.seq          /* 순서       */
+                   , area        = a.area         /* 권역       */
+                   , sector      = a.sector       /* 본부       */
+                   , team        = a.team         /* 팀         */
+                   , user_id     = a.user_id      /* 담당자     */
+                   , user_name   = a.user_name    /* 담당자명   */
+                   , rank        = a.rank         /* 직책       */
+                FROM (
+                     SELECT seq         = a.seq          /* 순서       */
+                          , area        = a.area         /* 권역       */
+                          , sector      = a.sector       /* 본부       */
+                          , team        = a.team         /* 팀         */
+                          , user_id     = a.user_id      /* 담당자     */
+                          , user_name   = a.user_name    /* 담당자명   */
+                          , rank        = a.rank         /* 직책       */
+       
+                       FROM UF_MyMembers( :as_salesman ) M 
+                            LEFT OUTER JOIN opeom_org A ON m.user_id = a.user_id
+       
+                     UNION ALL
+                     /* 내부업체(insite) */
+                     SELECT seq         = a.seq          /* 순서       */
+                          , area        = a.area         /* 권역       */
+                          , sector      = a.sector       /* 본부       */
+                          , team        = a.team         /* 팀         */
+                          , user_id     = a.user_id      /* 담당자     */
+                          , user_name   = a.user_name    /* 담당자명   */
+                          , rank        = a.rank         /* 직책       */
+                       FROM opeom_org A  
+                      WHERE (a.user_id     = 'insite')
+                        AND (:as_salesman  = '%' OR :as_salesman = dbo.UF_INSITE() )
+                     ) A
+         ) O  ON o.user_id = z.salesman
+			LEFT OUTER JOIN itemtop10 top10 ON z.item_no = top10.item_no
+   WHERE o.seq  IS NOT NULL
+   ORDER BY o.seq
+" arguments=(("as_salesman", string),("ad_date", date))  sort="seq A item_name A " )
+group(level=1 header.height=0 trailer.height=84 by=("user_name" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="12" height="160" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="782" y="12" height="160" width="1106" html.valueishtml="0"  name=item_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="0" x="183" y="12" height="160" width="590" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="미출고금액" border="6" color="0" x="1897" y="12" height="160" width="773" html.valueishtml="0"  name=un_outamt_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="대분류(전략제품항목)" border="6" color="0" x="2679" y="12" height="160" width="736" html.valueishtml="0"  name=top10_category_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="782" y="8" height="72" width="1106" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="0" expression="user_name + ~" ~" + rank "border="0" color="33554432" x="183" y="8" height="72" width="590" format="[GENERAL]" html.valueishtml="0"  name=username visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="1897" y="8" height="72" width="773" format="#,##0" html.valueishtml="0"  name=un_outamt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="2679" y="8" height="72" width="736" format="[general]" html.valueishtml="0"  name=top10_category visible="1" dddw.name=d_cditemtop10 dddw.displaycolumn=item_nm dddw.datacolumn=item_cd dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1073741824~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=trailer.1 alignment="1" expression="sum( un_outamt for group 1 )"border="0" color="33554432" x="1897" y="8" height="72" width="773" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="count( item_name for group 1 )"border="0" color="33554432" x="782" y="8" height="72" width="1106" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="0" expression="username"border="0" color="0" x="183" y="8" height="72" width="590" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="8" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( un_outamt for all )"border="0" color="33554432" x="1897" y="12" height="60" width="773" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( item_name for all )"border="0" color="33554432" x="782" y="12" height="60" width="1106" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( username for all )"border="0" color="33554432" x="183" y="12" height="60" width="590" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

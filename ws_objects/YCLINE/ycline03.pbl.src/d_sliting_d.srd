@@ -1,0 +1,77 @@
+﻿$PBExportHeader$d_sliting_d.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 selected.mouse=no )
+header(height=88 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes name=order_no dbname="coilsliting.order_no" )
+ column=(type=long updatewhereclause=yes name=coilsliting_seq dbname="coilsliting.seq" )
+ column=(type=decimal(1) updatewhereclause=yes name=swid dbname="swid" )
+ column=(type=long updatewhereclause=yes name=coilsliting_cnt dbname="coilsliting.cnt" )
+ column=(type=decimal(4) updatewhereclause=yes name=coilsliting_unit_qty dbname="coilsliting.unit_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=thin dbname="thin" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="GroupItem.item_name" )
+ column=(type=char(20) updatewhereclause=yes name=coilsfcday_coil_no dbname="coilsfcday.coil_no" )
+ column=(type=decimal(1) updatewhereclause=yes name=qc_chk1 dbname="coilsfcday.qc_chk1" )
+ column=(type=decimal(1) updatewhereclause=yes name=qc_chk2 dbname="coilsfcday.qc_chk2" )
+ column=(type=decimal(1) updatewhereclause=yes name=qc_chk3 dbname="coilsfcday.qc_chk3" )
+ column=(type=datetime updatewhereclause=yes name=coilsfcday_sfc_date dbname="coilsfcday.sfc_date" )
+ column=(type=char(14) updatewhereclause=yes name=coilsfcday_order_no dbname="coilsfcday.order_no" )
+ column=(type=long updatewhereclause=yes name=coilsfcday_seq dbname="coilsfcday.seq" )
+ retrieve="SELECT coilsliting.order_no
+     , coilsliting.seq   
+     , swid = convert (decimal (5,1), substring(coilsliting.qa,5,4) + '.' + substring(coilsliting.qa, 10,1))
+     , coilsliting.cnt
+     , coilsliting.unit_qty
+     , thin = convert (decimal (3,2), substring(coilsliting.qa,1,1) + '.' + substring(coilsliting.qa, 2,2))   
+     , groupitem.item_name
+     , coilsfcday.coil_no 
+     , coilsfcday.qc_chk1    
+     , coilsfcday.qc_chk2    
+     , coilsfcday.qc_chk3 
+     , coilsfcday.sfc_date
+     , coilsfcday.order_no
+     , coilsfcday.seq
+  FROM coilorderdet with(nolock) inner join coilsliting with(nolock) on coilorderdet.order_no = coilsliting.order_no 
+						   inner join groupitem with(nolock) on coilsliting.item_no = groupitem.item_no
+						   left outer join coilsfcday with(nolock) on coilsliting.order_no = coilsfcday.order_no
+                                                                        				    and coilsliting.seq = coilsfcday.seq		                        
+ WHERE ( coilorderdet.coilorder_order = :as_order_no         ) 
+        and ( coilorderdet.order_seq       = :an_order_seq        ) 
+
+/*
+  FROM coilsliting  
+       , coilorderdet 
+       , coilsfcday   
+       , groupitem
+ WHERE ( coilsliting.item_no          = groupitem.item_no    ) 
+   and ( coilorderdet.order_no        = coilsliting.order_no ) 
+   and ( coilsliting.order_no        *= coilsfcday.order_no  ) 
+   and ( coilsliting.seq             *= coilsfcday.seq       ) 
+   and ( coilorderdet.coilorder_order = :as_order_no         ) 
+   and ( coilorderdet.order_seq       = :an_order_seq        ) 
+
+*/" arguments=(("as_order_no", string),("an_order_seq", number))  sort="coilsliting_seq A " )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="72" width="105" html.valueishtml="0"  name=coilsliting_seq_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="폭" border="6" color="33554432" x="1495" y="8" height="72" width="265" html.valueishtml="0"  name=swid_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="단중" border="6" color="33554432" x="1769" y="8" height="72" width="270" html.valueishtml="0"  name=coilsliting_unit_qty_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="품명" border="6" color="33554432" x="123" y="8" height="72" width="1111" html.valueishtml="0"  name=groupitem_item_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="실두께" border="6" color="33554432" x="1243" y="8" height="72" width="242" html.valueishtml="0"  name=thin_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="수" border="6" color="33554432" x="2048" y="8" height="72" width="137" html.valueishtml="0"  name=coilsliting_cnt_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="스리팅 코일번호" border="6" color="33554432" x="2194" y="8" height="72" width="603" html.valueishtml="0"  name=coilsfcday_coil_no_t visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="X1" border="6" color="33554432" x="2807" y="8" height="72" width="279" html.valueishtml="0"  name=qc_chk1_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="X2" border="6" color="33554432" x="3095" y="8" height="72" width="270" html.valueishtml="0"  name=qc_chk2_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="X3" border="6" color="33554432" x="3374" y="8" height="72" width="265" html.valueishtml="0"  name=qc_chk3_t visible="1"  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="9" y="8" height="72" width="105" format="[general]" html.valueishtml="0"  name=coilsliting_seq  tag="코일작업순번" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1495" y="8" height="72" width="265" format="#,##0.0" html.valueishtml="0"  name=swid visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2048" y="8" height="72" width="137" format="[General]" html.valueishtml="0"  name=coilsliting_cnt  tag="갯수" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1769" y="8" height="72" width="270" format="#,##0" html.valueishtml="0"  name=coilsliting_unit_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="123" y="8" height="72" width="1111" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="1243" y="8" height="72" width="242" format="0.00" html.valueishtml="0"  name=thin visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( getrow() = currentRow(), rgb(255,255,128), rgb(0,0,0))" x="2194" y="8" height="72" width="603" format="[general]" html.valueishtml="0"  name=coilsfcday_coil_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentRow(), rgb(0,0,255), rgb(255,255,255))" )
+column(band=detail id=11 alignment="1" tabsequence=30 border="0" color="33554432" x="3374" y="8" height="72" width="265" format="#,##0.0" html.valueishtml="0" protect="0~tif ( right( trim(groupitem_item_name) , 4 ) = 'LOSS' , 1 , 0 )"  name=qc_chk3 visible="1~tif (  coilsliting_cnt  > 2, 1, 0 )" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( right( trim(groupitem_item_name) , 4 ) = 'LOSS' , rgb(128,128,128) , rgb(255,255,255) )" )
+column(band=detail id=10 alignment="1" tabsequence=20 border="0" color="33554432" x="3095" y="8" height="72" width="270" format="#,##0.0" html.valueishtml="0" protect="0~tif ( right( trim(groupitem_item_name) , 4 ) = 'LOSS' , 1 , 0 )"  name=qc_chk2 visible="1~tif (  coilsliting_cnt  > 1, 1, 0 )" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( right( trim(groupitem_item_name) , 4 ) = 'LOSS' , rgb(128,128,128) , rgb(255,255,255) )" )
+column(band=detail id=9 alignment="1" tabsequence=10 border="0" color="33554432" x="2807" y="8" height="72" width="279" format="#,##0.0" html.valueishtml="0" protect="0~tif ( right( trim(groupitem_item_name) , 4 ) = 'LOSS' , 1 , 0 )"  name=qc_chk1 visible="1~tif (  coilsliting_cnt  > 0 , 1,  0 )" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="700"  font.family="2" font.pitch="2" font.charset="129" background.mode="0" background.color="536870912~tif ( right( trim(groupitem_item_name) , 4 ) = 'LOSS' , rgb(128,128,128) , rgb(255,255,255) )" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

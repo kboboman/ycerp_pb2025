@@ -1,0 +1,74 @@
+﻿$PBExportHeader$d_oishipcostrep_r3.srd
+$PBExportComments$거래처별 운송비 대여 현황 REPORT(차량no) (2001/03/15,이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=560 color="536870912" )
+summary(height=84 color="536870912" )
+footer(height=0 color="553648127" )
+detail(height=76 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=do_do_date dbname="do.do_date" )
+ column=(type=char(1) updatewhereclause=yes name=do_do_flag dbname="do.do_flag" values="정상	1/무상	2/교환	3/오류	4/" )
+ column=(type=decimal(0) updatewhereclause=yes name=do_ship_amount dbname="do.ship_amount" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_do_rate dbname="do.do_rate" )
+ column=(type=char(3) updatewhereclause=yes name=do_curr_code dbname="do.curr_code" )
+ column=(type=char(14) updatewhereclause=yes name=do_do_no dbname="do.do_no" )
+ column=(type=char(11) updatewhereclause=yes name=do_spot_code dbname="do.spot_code" )
+ column=(type=char(10) updatewhereclause=yes name=docar_name dbname="docar.name" )
+ column=(type=char(40) updatewhereclause=yes name=docar_cargo_name dbname="docar.cargo_name" )
+ column=(type=char(12) updatewhereclause=yes name=do_driver dbname="do.driver" )
+ column=(type=char(40) updatewhereclause=yes name=scene_scene_desc dbname="SCENE.scene_desc" )
+ retrieve="  SELECT do.do_date,   
+         do.do_flag,   
+         do.ship_amount,   
+         do.do_rate,   
+         do.curr_code,   
+         do.do_no,   
+         do.spot_code,   
+         docar.name,   
+         docar.cargo_name,   
+         do.driver,
+		scene.scene_desc
+    FROM do left outer join docar on do.driver = docar.driver
+			      left outer join scene on do.spot_code = scene.scene_code
+   WHERE ( ( do.driver = :as_drv_no ) AND  
+         			( do.do_date between :ad_start and :ad_end ) AND  
+         			( do.ship_flag = 'D' ) AND  
+         			( do.ship_amount <> 0 ) )    
+" arguments=(("as_drv_no", string),("ad_start", date),("ad_end", date))  sort="do_spot_code A do_do_no A " )
+group(level=1 header.height=0 trailer.height=92 by=("do_spot_code" ) header.color="536870912" trailer.color="536870912" )
+compute(band=header alignment="0" expression="'작성일:' + string(today(), 'yyyy/mm/dd')"border="0" color="0" x="2734" y="336" height="60" width="553" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'페이지:' + page() + ' of ' + pageCount()"border="0" color="0" x="2734" y="408" height="60" width="553" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="69" y1="476" x2="3291" y2="476"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="출고번호" border="0" color="0" x="1024" y="488" height="60" width="453" html.valueishtml="0"  name=do_do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="출고일자" border="0" color="0" x="1495" y="488" height="60" width="329" html.valueishtml="0"  name=do_do_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="출고유형" border="0" color="0" x="1838" y="488" height="60" width="256" html.valueishtml="0"  name=do_do_flag_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="운송비" border="0" color="0" x="2107" y="488" height="60" width="366" html.valueishtml="0"  name=do_ship_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="부가세" border="0" color="0" x="2487" y="488" height="60" width="366" html.valueishtml="0"  name=do_do_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="총운송비" border="0" color="0" x="2866" y="488" height="60" width="421" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="69" y1="556" x2="3291" y2="556"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+column(band=header id=9 alignment="0" tabsequence=32766 border="0" color="0" x="567" y="408" height="60" width="1280" format="[general]" html.valueishtml="0"  name=docar_cargo_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=8 alignment="0" tabsequence=32766 border="0" color="0" x="73" y="408" height="60" width="471" format="[general]" html.valueishtml="0"  name=docar_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=10 alignment="0" tabsequence=32766 border="0" color="0" x="73" y="304" height="84" width="535" format="[general]" html.valueishtml="0"  name=do_driver visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-12" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="차량NO별 운송비 현황" border="0" color="0" x="905" y="64" height="148" width="1550" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="현장코드" border="0" color="0" x="73" y="488" height="60" width="933" html.valueishtml="0"  name=do_spot_code_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="1024" y="8" height="60" width="453" format="[general]" html.valueishtml="0"  name=do_do_no  tag="출고번호" visible="1" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="1495" y="8" height="60" width="329" format="[shortdate] [time]" html.valueishtml="0"  name=do_do_date  tag="출고일자" visible="1" editmask.mask="yyyy/mm/dd" editmask.imemode=0 editmask.focusrectangle=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="1838" y="8" height="60" width="256" format="[general]" html.valueishtml="0"  name=do_do_flag  tag="출고유형" visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="0" x="2107" y="8" height="60" width="366" format="#,##0" html.valueishtml="0"  name=do_ship_amount  tag="운송금액" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if( do_do_rate <> 0, truncate( do_ship_amount * 0.1, 0 ), 0)"border="0" color="0" x="2487" y="8" height="60" width="366" format="#,##0" html.valueishtml="0"  name=c_ship_rate visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression=" do_ship_amount  +  c_ship_rate "border="0" color="0" x="2866" y="8" height="60" width="421" format="#,##0" html.valueishtml="0"  name=c_ship_amt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="0" x="73" y="8" height="60" width="933" format="[general]" html.valueishtml="0"  name=scene_scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="69" y1="0" x2="3291" y2="0"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="2" text="현장 소계" border="2" color="0" x="73" y="12" height="60" width="457" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(do_ship_amount for group 1)"border="0" color="0" x="2107" y="12" height="60" width="366" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(if( do_do_rate <> 0, truncate( do_ship_amount * 0.1, 0 ), 0) for group 1)"border="0" color="0" x="2487" y="12" height="60" width="366" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum( do_ship_amount  +  c_ship_rate  for group 1)"border="0" color="0" x="2866" y="12" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="69" y1="0" x2="3291" y2="0"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=summary x1="69" y1="0" x2="3291" y2="0"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=summary alignment="2" text="합     계" border="2" color="0" x="73" y="12" height="60" width="457" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  do_ship_amount  for all )"border="0" color="0" x="2107" y="12" height="60" width="366" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  c_ship_rate  for all )"border="0" color="0" x="2487" y="12" height="60" width="366" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  c_ship_amt  for all )"border="0" color="0" x="2866" y="12" height="60" width="421" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=summary x1="69" y1="80" x2="3291" y2="80"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

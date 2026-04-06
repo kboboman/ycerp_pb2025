@@ -1,0 +1,103 @@
+﻿$PBExportHeader$d_oisalemandosum_r.srd
+$PBExportComments$영업사원 출고현황 집계표
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="79741120" )
+summary(height=28 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=user_name dbname="USER_NAME" )
+ column=(type=char(4) updatewhereclause=yes name=do_cust_no dbname="CUST_NO" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="CUST_NAME" )
+ column=(type=char(11) updatewhereclause=yes name=do_spot_code dbname="SPOT_CODE" )
+ column=(type=char(40) updatewhereclause=yes name=scene_desc dbname="SCENE_DESC" )
+ column=(type=decimal(1) updatewhereclause=yes name=ship_amount dbname="SHIP_AMOUNT" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_rate dbname="DO_RATE" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_cash dbname="DO_CASH" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_total dbname="DO_TOTAL" )
+ retrieve="  SELECT USER_NAME   = A.USER_NAME          
+       , CUST_NO     = A.CUST_NO            
+       , CUST_NAME   = A.CUST_NAME
+       , SPOT_CODE   = A.SPOT_CODE     
+       , SCENE_DESC  = A.SCENE_DESC  
+       , SHIP_AMOUNT = SUM(A.SHIP_AMOUNT)
+       , DO_RATE     = SUM(A.DO_RATE )
+       , DO_CASH     = SUM(A.DO_CASH )
+       , DO_TOTAL    = SUM(A.DO_TOTAL)
+    FROM (
+         SELECT USER_NAME   = E.USER_NAME          
+              , CUST_NO     = A.CUST_NO            
+              , CUST_NAME   = D.CUST_NAME
+              , SPOT_CODE   = A.SPOT_CODE     
+              , SCENE_DESC  = F.SCENE_DESC  
+              , DO_NO       = A.DO_NO
+              , DO_DATE     = CONVERT(CHAR(10), A.DO_DATE, 111)
+              , SHIP_AMOUNT = (CASE WHEN A.DO_RATE <> 0 THEN A.SHIP_AMOUNT * 1.1 ELSE A.SHIP_AMOUNT END)
+              , DO_RATE     = A.DO_RATE            
+              , DO_CASH     = A.DO_CASH            
+              , DO_TOTAL    = A.DO_TOTAL                                
+           FROM DO        A  
+                LEFT OUTER JOIN CUSTOMER D  ON A.CUST_NO  = D.CUST_NO
+                LEFT OUTER JOIN SCENE    F  ON A.CUST_NO  = F.CUST_NO  AND A.SPOT_CODE = F.SCENE_CODE
+                LEFT OUTER JOIN LOGIN    E  ON D.SALESMAN = E.USER_ID
+          WHERE (( CONVERT(CHAR(10), A.DO_DATE, 111)     BETWEEN :as_start AND :as_end ) AND  
+                 ( A.SALE_FLAG        IN ( :as_saleflag )               ) AND  
+                 ((D.SALESMAN       LIKE :as_salesman ) OR 
+                  (:as_team = 'T' AND D.SALESMAN  IN ( SELECT E.USER_ID  FROM LOGIN, TEAM 
+                                                   WHERE E.TEAM_CODE   = TEAM.TEAM_CODE  AND TEAM_MANAGER = :as_salesman) )
+                 ) AND
+                 ( A.AREA_NO        LIKE :as_area ) 
+                )
+         ) A
+   GROUP BY A.USER_NAME          
+          , A.CUST_NO            
+          , A.CUST_NAME
+          , A.SPOT_CODE     
+          , A.SCENE_DESC  
+   ORDER BY A.USER_NAME, A.CUST_NAME, A.SPOT_CODE DESC
+   " arguments=(("as_saleflag", stringlist),("as_start", string),("as_end", string),("as_salesman", string),("as_area", string),("as_team", string)) )
+group(level=1 header.height=0 trailer.height=80 by=("user_name" ) header.color="553648127" trailer.color="15780518" )
+group(level=2 header.height=0 trailer.height=80 by=("user_name" , "cust_name" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="판매거래처" border="6" color="0" x="485" y="8" height="68" width="722" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="현 장" border="6" color="0" x="1216" y="8" height="68" width="1294" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="합계금액" border="6" color="0" x="4329" y="8" height="68" width="681" html.valueishtml="0"  name=do_total_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부가세" border="6" color="0" x="3721" y="8" height="68" width="599" html.valueishtml="0"  name=do_rate_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송비(VAT+)" border="6" color="0" x="2519" y="8" height="68" width="594" html.valueishtml="0"  name=do_ship_amount_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고액(운임+)" border="6" color="0" x="3122" y="8" height="68" width="590" html.valueishtml="0"  name=do_cash_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자명" border="6" color="0" x="183" y="8" height="68" width="293" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+text(band=header alignment="2" text="NO" border="6" color="0" x="9" y="8" height="68" width="165" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="79741120" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="9" y="4" height="68" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_19 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.2 alignment="1" expression="sum( do_total  for group 2 )"border="0" color="0" x="4329" y="4" height="72" width="681" format="#,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( do_rate  for group 2 )"border="0" color="0" x="3721" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_17 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( do_cash  for group 2 )"border="0" color="0" x="3122" y="4" height="72" width="590" format="#,##0" html.valueishtml="0"  name=compute_16 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum( ship_amount  for group 2 )"border="0" color="0" x="2519" y="4" height="72" width="594" format="#,##0" html.valueishtml="0"  name=compute_15 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="2" expression="count( scene_desc  for group 2 )"border="0" color="0" x="1216" y="4" height="72" width="1294" format="#,##0 " html.valueishtml="0"  name=compute_13 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.2 alignment="0" text="" border="0" color="0" x="183" y="4" height="72" width="293" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.2 alignment="0" text="" border="0" color="0" x="485" y="4" height="72" width="722" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.2 alignment="2" text="" border="0" color="0" x="9" y="4" height="72" width="165" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( do_total for group 1 )"border="0" color="0" x="4329" y="4" height="72" width="681" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( do_rate  for group 1 )"border="0" color="0" x="3721" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( do_cash for group 1 )"border="0" color="0" x="3122" y="4" height="72" width="590" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( ship_amount  for group 1 )"border="0" color="0" x="2519" y="4" height="72" width="594" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="count( scene_desc for group 1 )"border="0" color="0" x="1216" y="4" height="72" width="1294" format="#,##0 " html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="count( cust_name for group 1 distinct cust_name ) "border="0" color="0" x="485" y="4" height="72" width="722" format="#,##0" html.valueishtml="0"  name=all_cust visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( do_total for all )"border="0" color="0" x="4329" y="4" height="72" width="681" format="#,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( do_rate for all )"border="0" color="0" x="3721" y="4" height="72" width="599" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( do_cash for all )"border="0" color="0" x="3122" y="4" height="72" width="590" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( ship_amount for all )"border="0" color="0" x="2519" y="4" height="72" width="594" format="#,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( scene_desc for all )"border="0" color="0" x="1216" y="4" height="72" width="1294" format="#,##0 " html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( cust_name for all distinct cust_name )"border="0" color="0" x="485" y="4" height="72" width="722" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( user_name for all DISTINCT user_name )"border="0" color="0" x="183" y="4" height="72" width="293" format="[GENERAL]" html.valueishtml="0"  name=compute_14 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_20 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="0" expression=" user_name "border="0" color="0" x="183" y="4" height="72" width="293" format="[GENERAL]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=trailer.1 alignment="2" text="" border="0" color="0" x="5" y="4" height="68" width="169" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="4329" y="4" height="68" width="681" format="#,##0" html.valueishtml="0"  name=do_total visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="3721" y="4" height="68" width="599" format="#,##0" html.valueishtml="0"  name=do_rate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="3122" y="4" height="68" width="590" format="#,##0" html.valueishtml="0"  name=do_cash visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2519" y="4" height="68" width="594" format="#,##0" html.valueishtml="0"  name=ship_amount visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="1216" y="4" height="68" width="1294" format="[general]" html.valueishtml="0"  name=scene_desc visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="485" y="4" height="68" width="722" format="[general]" html.valueishtml="0"  name=cust_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="183" y="4" height="68" width="293" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+
+sparse(names="user_name	cust_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

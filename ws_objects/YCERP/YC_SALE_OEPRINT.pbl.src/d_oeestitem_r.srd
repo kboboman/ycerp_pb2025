@@ -1,0 +1,94 @@
+﻿$PBExportHeader$d_oeestitem_r.srd
+$PBExportComments$품목별 견적현황 조회(2001/05/25, 이인호)
+release 6;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=500 color="536870912" )
+summary(height=68 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(60) updatewhereclause=yes name=estimate_head_scene_desc dbname="estimate_head.scene_desc" )
+ column=(type=long updatewhereclause=yes name=estimate_det_seq_no dbname="estimate_det.seq_no" )
+ column=(type=char(10) updatewhereclause=yes name=estimate_det_item_no dbname="estimate_det.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=estimate_det_qa dbname="estimate_det.qa" )
+ column=(type=char(2) updatewhereclause=yes name=estimate_det_uom dbname="estimate_det.uom" )
+ column=(type=decimal(3) updatewhereclause=yes name=estimate_det_order_qty dbname="estimate_det.order_qty" )
+ column=(type=decimal(2) updatewhereclause=yes name=estimate_det_acc_qty dbname="estimate_det.acc_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=estimate_det_unit_cost dbname="estimate_det.unit_cost" )
+ column=(type=decimal(4) updatewhereclause=yes name=estimate_det_item_amt dbname="estimate_det.item_amt" )
+ column=(type=datetime updatewhereclause=yes name=c_start dbname="c_start" )
+ column=(type=datetime updatewhereclause=yes name=c_end dbname="c_end" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="groupitem.item_name" )
+ column=(type=char(60) updatewhereclause=yes name=estimate_head_cust_name dbname="estimate_head.cust_name" )
+ column=(type=char(1) updatewhereclause=yes name=estimate_head_esti_flag dbname="estimate_head.esti_flag" values="완결	Y/미결	B/보류	N/수주성공	S/" )
+ column=(type=char(4) updatewhereclause=yes name=estimate_head_cust_no dbname="estimate_head.cust_no" )
+ column=(type=char(14) updatewhereclause=yes name=estimate_head_estimate_no dbname="estimate_head.estimate_no" )
+ retrieve="  SELECT estimate_head.scene_desc,   
+         estimate_det.seq_no,   
+         estimate_det.item_no,   
+         estimate_det.qa,   
+         estimate_det.uom,   
+         estimate_det.order_qty,   
+         estimate_det.acc_qty,   
+         estimate_det.unit_cost,   
+         estimate_det.item_amt,   
+         c_start = convert(smalldatetime, :ad_start, 111),   
+         c_end = convert(smalldatetime, :ad_end, 111),   
+         groupitem.item_name,   
+         estimate_head.cust_name,   
+         estimate_head.esti_flag,   
+         estimate_head.cust_no,   
+         estimate_head.estimate_no  
+    FROM estimate_det,   
+         estimate_head,   
+         groupitem  
+   WHERE ( estimate_det.estimate_no = estimate_head.estimate_no ) and  
+         ( estimate_det.item_no = groupitem.item_no ) and  
+         ( ( estimate_head.estimate_date between :ad_start and :ad_end ) )    
+		and groupitem.item_name like :as_item
+			and estimate_head.esti_flag like :as_flag
+" arguments=(("ad_start", date),("ad_end", date),("as_item", string),("as_flag", string))  sort="groupitem_item_name A estimate_head_cust_name A estimate_head_estimate_no A estimate_det_seq_no A " )
+group(level=1 header.height=72 trailer.height=76 by=("groupitem_item_name" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=76 by=("estimate_head_cust_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="품목별 견적현황"border="0" color="0" x="5" y="44" height="148" width="6057"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'작성일:' + STRING(today(), 'yyyy/mm/dd')"border="0" color="0" x="5509" y="276" height="60" width="549" format="[general]"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="견적기간:"border="0" color="0" x="2491" y="348" height="60" width="288"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=10 alignment="0" tabsequence=32766 border="0" color="0" x="2793" y="348" height="60" width="320" format="yyyy/mm/dd"  name=c_start edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="~~"border="0" color="0" x="3145" y="348" height="60" width="32"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=11 alignment="0" tabsequence=32766 border="0" color="0" x="3214" y="348" height="60" width="320" format="yyyy/mm/dd"  name=c_end edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'페이지:' + page() + ' of ' + pageCount()"border="0" color="0" x="5509" y="348" height="60" width="549" format="[general]"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="5" y1="416" x2="6062" y2="416" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="품명"border="0" color="0" x="14" y="428" height="60" width="462"  name=groupitem_item_name_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="거래처명"border="0" color="0" x="489" y="428" height="60" width="1029"  name=customer_cust_name_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="규격"border="0" color="0" x="1541" y="428" height="60" width="631"  name=estimate_det_qa_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="단위"border="0" color="0" x="2194" y="428" height="60" width="128"  name=estimate_det_uom_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="견적서번호"border="0" color="0" x="2345" y="428" height="60" width="462"  name=estimate_head_estimate_no_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="상태"border="0" color="0" x="2830" y="428" height="60" width="320"  name=estimate_head_bid_sign_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="주문수량"border="0" color="0" x="4320" y="428" height="60" width="398"  name=estimate_det_order_qty_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="환산수량"border="0" color="0" x="4741" y="428" height="60" width="398"  name=estimate_det_acc_qty_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="단가"border="0" color="0" x="5161" y="428" height="60" width="398"  name=estimate_det_unit_cost_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="물품금액"border="0" color="0" x="5577" y="428" height="60" width="480"  name=estimate_det_item_amt_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="5" y1="496" x2="6062" y2="496" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+column(band=header.1 id=12 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="1838" format="[general]"  name=groupitem_item_name  tag="품명" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header.1 id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1861" y="4" height="60" width="393" format="[general]"  name=estimate_det_item_no edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="5577" y="4" height="60" width="480" format="#,##0"  name=estimate_det_item_amt  tag="물품금액" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="0" x="343" y="4" height="60" width="128" format="[general]"  name=estimate_head_cust_no  tag="판매거래처코드" edit.limit=4 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0" x="489" y="4" height="60" width="1029" format="[general]"  name=estimate_head_cust_name edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1541" y="4" height="60" width="631" format="[general]"  name=estimate_det_qa  tag="규격" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="0" x="2345" y="4" height="60" width="462" format="[general]"  name=estimate_head_estimate_no  tag="견적서번호" edit.limit=14 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="0" x="2830" y="4" height="60" width="320" format="[general]"  name=estimate_head_esti_flag ddlb.limit=0 ddlb.allowedit=no ddlb.case=any  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="4320" y="4" height="60" width="398" format="#,##0.00"  name=estimate_det_order_qty  tag="주문수량" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="4741" y="4" height="60" width="398" format="#,##0.00"  name=estimate_det_acc_qty  tag="환산수량" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="5161" y="4" height="60" width="398" format="#,##0"  name=estimate_det_unit_cost  tag="단가" edit.limit=0 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="0" x="2194" y="4" height="60" width="128" format="[general]"  name=estimate_det_uom  tag="단위" edit.limit=2 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="2" text="거래처 소계"border="2" color="0" x="864" y="4" height="60" width="393"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(estimate_det_item_amt for group 2)"border="0" color="0" x="5170" y="4" height="60" width="887" format="#,##0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.2 x1="864" y1="72" x2="6062" y2="72" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(  estimate_det_item_amt  for group 1 )"border="0" color="0" x="5170" y="4" height="60" width="887" format="#,##0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="5" y1="72" x2="6062" y2="72" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="2" text="품목 소계"border="2" color="0" x="9" y="4" height="60" width="850"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(  estimate_det_item_amt  for all )"border="0" color="0" x="5170" y="4" height="60" width="887" format="#,##0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="2" text="합       계"border="2" color="0" x="9" y="4" height="60" width="850"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="현장명"border="0" color="0" x="3173" y="428" height="60" width="1125"  name=estimate_head_work_name_t  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="3173" y="4" height="60" width="1125" format="[general]"  name=estimate_head_scene_desc edit.limit=0 edit.case=any edit.autoselect=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="groupitem_item_name	estimate_head_cust_no	estimate_head_cust_name	estimate_head_estimate_no")htmltable(border="1" cellpadding="0" cellspacing="0" generatecss="no" nowrap="yes")

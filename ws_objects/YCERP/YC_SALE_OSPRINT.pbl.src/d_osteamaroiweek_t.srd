@@ -1,0 +1,642 @@
+﻿$PBExportHeader$d_osteamaroiweek_t.srd
+$PBExportComments$월매출 실적집계 현황(주간)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=172 color="536870912" )
+summary(height=80 color="15780518" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=long updatewhereclause=yes name=teamgroup dbname="teamgroup" )
+ column=(type=char(1) updatewhereclause=yes name=team dbname="team" )
+ column=(type=char(10) updatewhereclause=yes name=team_nm dbname="team_nm" )
+ column=(type=char(5) updatewhereclause=yes name=team_code dbname="team_code" )
+ column=(type=char(30) updatewhereclause=yes name=team_name dbname="team_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_id dbname="user_id" )
+ column=(type=char(10) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(10) updatewhereclause=yes name=rank_no dbname="rank_no" )
+ column=(type=char(20) updatewhereclause=yes name=rank dbname="rank" )
+ column=(type=long updatewhereclause=yes name=cyear dbname="cyear" )
+ column=(type=long updatewhereclause=yes name=cmon dbname="cmon" )
+ column=(type=decimal(6) updatewhereclause=yes name=mod_mm dbname="mod_mm" )
+ column=(type=decimal(6) updatewhereclause=yes name=coll1 dbname="coll1" )
+ column=(type=decimal(6) updatewhereclause=yes name=week1 dbname="week1" )
+ column=(type=decimal(6) updatewhereclause=yes name=coll2 dbname="coll2" )
+ column=(type=decimal(6) updatewhereclause=yes name=week2 dbname="week2" )
+ column=(type=decimal(6) updatewhereclause=yes name=coll3 dbname="coll3" )
+ column=(type=decimal(6) updatewhereclause=yes name=week3 dbname="week3" )
+ column=(type=decimal(6) updatewhereclause=yes name=coll4 dbname="coll4" )
+ column=(type=decimal(6) updatewhereclause=yes name=week4 dbname="week4" )
+ column=(type=decimal(6) updatewhereclause=yes name=coll5 dbname="coll5" )
+ column=(type=decimal(6) updatewhereclause=yes name=week5 dbname="week5" )
+ column=(type=decimal(6) updatewhereclause=yes name=collt dbname="collt" )
+ column=(type=decimal(6) updatewhereclause=yes name=weekt dbname="weekt" )
+ retrieve="  SELECT teamgroup = (case when a.team = 1 then 1
+                           when a.team = 2 then 1
+                           when a.team = 3 then 1
+                           when a.team = 4 then 2
+                      end)
+       , team      = a.team
+       , team_nm   = (case when a.team = 1 then '영업 1본부'
+                           when a.team = 2 then '영업 2본부'
+                           when a.team = 3 then '영업 3본부'
+                           when a.team = 4 then '시화+채권'
+                      end)
+       , team_code = a.team_code
+       , team_name = a.team_name 
+       , user_id   = a.user_id   
+       , user_name = a.user_name 
+       , rank_no   = a.rank_no   
+       , rank      = isnull(a.rank,'')      
+       , cyear     = a.cyear     
+       , cmon      = a.cmon      
+       , mod_mm    = a.mod_mm
+       , coll1     = a.coll1     
+       , week1     = a.week1     
+       , coll2     = a.coll2     
+       , week2     = a.week2     
+       , coll3     = a.coll3     
+       , week3     = a.week3     
+       , coll4     = a.coll4     
+       , week4     = a.week4     
+       , coll5     = a.coll5     
+       , week5     = a.week5     
+       , collt     = a.collt     
+       , weekt     = a.weekt
+    FROM (
+         SELECT team     = (case c.team_code  
+                                 when '71000' then '1' /*영업1팀   */
+                                 when '73000' then '1' /*특판1팀   */
+                                 when '76000' then '1' /*중부호남  */
+                                 when '77000' then '1' /*서부점    */
+                                 when '78000' then '1' /*특판2팀   */
+                                 when '74000' then '2' /*동부점    */
+                                 when '72000' then '3' /*영업2팀   */
+                                 when '75000' then '4' /*시화점    */
+                                 when '79000' then '4' /*채권팀    */
+                                 else              '5' 
+                             end)
+              , team_code = a.team_code
+              , team_name = c.team_name
+              , user_id   = a.user_id
+              , user_name = a.user_name       
+              , rank_no   = a.rank_no
+              , rank      = a.rank
+              , cyear     = :ai_year    
+              , cmon      = :ai_mon     
+              , mod_mm    = d.mod_mm
+              , coll1     = isnull(b.coll1,0)
+              , week1     = isnull(a.week1,0)
+              , coll2     = isnull(b.coll2,0)
+              , week2     = isnull(a.week2,0)
+              , coll3     = isnull(b.coll3,0)
+              , week3     = isnull(a.week3,0)
+              , coll4     = isnull(b.coll4,0)
+              , week4     = isnull(a.week4,0)
+              , coll5     = isnull(b.coll5,0)
+              , week5     = isnull(a.week5,0)
+              , collt     = isnull(b.coll1,0) + isnull(b.coll2,0) + isnull(b.coll3,0) + isnull(b.coll4,0) + isnull(b.coll5,0)
+              , weekt     = isnull(a.week1,0) + isnull(a.week2,0) + isnull(a.week3,0) + isnull(a.week4,0) + isnull(a.week5,0)
+           FROM (
+                SELECT user_id   = a.user_id
+                     , user_name = a.user_name
+                     , team_code = a.team_code
+                     , rank_no   = a.rank_no
+                     , rank      = a.rank
+                     , week1     = max(a.week1)
+                     , week2     = max(a.week2)
+                     , week3     = max(a.week3)
+                     , week4     = max(a.week4)
+                     , week5     = max(a.week5)
+                  FROM (
+                       SELECT user_id   = a.user_id
+                            , user_name = a.user_name
+                            , team_code = a.team_code
+                            , rank_no   = (case when a.user_id = 'W_POS' then '999' else a.rank_no end)
+                            , rank      = a.rank
+                            , week1     = (case when a.weeks = 1 then a.do_total else 0 end)
+                            , week2     = (case when a.weeks = 2 then a.do_total else 0 end)
+                            , week3     = (case when a.weeks = 3 then a.do_total else 0 end)
+                            , week4     = (case when a.weeks = 4 then a.do_total else 0 end)
+                            , week5     = (case when a.weeks = 5 then a.do_total else 0 end)
+                         FROM (
+                              SELECT user_id   = b.salesman
+                                   , user_name = c.user_name
+                                   , team_code = c.team_code
+                                   , rank_no   = c.rank_no
+                                   , rank      = c.rank
+                                   , weeks     = dbo.UF_MonthWEEK(a.DO_DATE, 1)
+                                   , do_total  = SUM(a.do_total) / 1.1 / 1000
+                                FROM do a
+                                     LEFT OUTER JOIN customer b  ON a.cust_no  = b.cust_no
+                                     LEFT OUTER JOIN login    c  ON b.salesman = c.user_id
+                               WHERE CONVERT(CHAR(10), a.do_date, 111) BETWEEN :as_sdate AND :as_edate
+                                 AND (a.cust_no       NOT IN ('U580','N002','K023','S396','H479','N014') )
+                                 AND ( b.cust_flag         = 'N' )
+                                 AND ( b.cust_type        <> 'E' )
+                                 AND ( b.credit_level     <> 'Z' )                        
+                               GROUP BY b.salesman, c.user_name, c.team_code, c.rank_no, c.rank, dbo.UF_MonthWEEK(a.do_date, 1)
+                              ) a
+                       ) a
+                 GROUP BY a.user_id, a.user_name, a.team_code, a.rank_no, a.rank
+                ) a
+                LEFT OUTER JOIN ( /* 매출목표 */
+                     SELECT user_id   = a.user_id
+                          , coll1     = sum(a.coll1) / 1.1 / 1000
+                          , coll2     = sum(a.coll2) / 1.1 / 1000
+                          , coll3     = sum(a.coll3) / 1.1 / 1000
+                          , coll4     = sum(a.coll4) / 1.1 / 1000
+                          , coll5     = sum(a.coll5) / 1.1 / 1000
+                       FROM (
+                            SELECT user_id   = a.user_id
+                                 , cust_no   = a.cust_no
+                                 , coll1     = max(a.coll1)
+                                 , coll2     = max(a.coll2)
+                                 , coll3     = max(a.coll3)
+                                 , coll4     = max(a.coll4)
+                                 , coll5     = max(a.coll5)
+                              FROM (                                                  
+                                   SELECT user_id   = b.salesman
+                                        , cust_no   = a.cust_no
+                                        , coll1     = (case when a.weeks = 1 then isnull(a.coll,0) else 0 end)
+                                        , coll2     = (case when a.weeks = 2 then isnull(a.coll,0) else 0 end)
+                                        , coll3     = (case when a.weeks = 3 then isnull(a.coll,0) else 0 end)
+                                        , coll4     = (case when a.weeks = 4 then isnull(a.coll,0) else 0 end)
+                                        , coll5     = (case when a.weeks = 5 then isnull(a.coll,0) else 0 end)
+                                     FROM cust_aimdet a                                      
+                                          LEFT OUTER JOIN customer b ON a.cust_no = b.cust_no
+                                    WHERE CONVERT(CHAR(7),a.tar_year,111) = :as_yyyymm
+                                      AND (a.cust_no        NOT IN ('U580','N002','K023','S396','H479','N014') )
+                                   ) a                                                
+                             GROUP BY a.user_id, a.cust_no
+                            ) a
+                      GROUP BY a.user_id
+                ) b   ON a.user_id  = b.user_id
+                LEFT OUTER JOIN team  c ON a.team_code = c.team_code
+                LEFT OUTER JOIN ( /* 수정목표 */
+                     SELECT user_id   = b.salesman
+                          , mod_mm    = sum((case :ai_mon 
+                                                when  1 then isnull(a.mod_01,0) 
+                                                when  2 then isnull(a.mod_02,0) 
+                                                when  3 then isnull(a.mod_03,0) 
+                                                when  4 then isnull(a.mod_04,0) 
+                                                when  5 then isnull(a.mod_05,0) 
+                                                when  6 then isnull(a.mod_06,0) 
+                                                when  7 then isnull(a.mod_07,0) 
+                                                when  8 then isnull(a.mod_08,0) 
+                                                when  9 then isnull(a.mod_09,0) 
+                                                when 10 then isnull(a.mod_10,0) 
+                                                when 11 then isnull(a.mod_11,0) 
+                                                when 12 then isnull(a.mod_12,0) 
+                                             end)) / 1.1 / 1000
+                      FROM cust_aim a                                      
+                           LEFT OUTER JOIN customer b ON a.cust_code = b.cust_no
+                     WHERE datepart(year, a.tar_year) = :ai_year
+                       AND ( a.cust_code      NOT IN ('U580','N002','K023','S396','H479','N014') )
+                     GROUP BY b.salesman
+                ) d   ON a.user_id  = d.user_id 
+         
+         /*====================*/
+         UNION ALL 
+         /*====================*/
+          
+         /* 매출실적(내부업체) */
+         SELECT team     = (case c.team_code  
+                                 when '71000' then '1' /*영업1팀   */
+                                 when '73000' then '1' /*특판1팀   */
+                                 when '76000' then '1' /*중부호남  */
+                                 when '77000' then '1' /*서부점    */
+                                 when '78000' then '1' /*특판2팀   */
+                                 when '74000' then '2' /*동부점    */
+                                 when '72000' then '3' /*영업2팀   */
+                                 when '75000' then '4' /*시화점    */
+                                 when '79000' then '4' /*채권팀    */
+                                 else              '5' 
+                             end)
+              , team_code = a.team_code
+              , team_name = c.team_name
+              , user_id   = a.user_id
+              , user_name = '내부업체' /* a.user_name */
+              , rank_no   = ''         /* a.rank_no   */
+              , rank      = ''         /* a.rank      */               
+              , cyear     = a.cyear          
+              , cmon      = a.cmon       
+              , mod_mm    = d.mod_mm
+              , coll1     = isnull(b.coll1,0)
+              , week1     = isnull(a.week1,0)
+              , coll2     = isnull(b.coll2,0)
+              , week2     = isnull(a.week2,0)
+              , coll3     = isnull(b.coll3,0)
+              , week3     = isnull(a.week3,0)
+              , coll4     = isnull(b.coll4,0)
+              , week4     = isnull(a.week4,0)
+              , coll5     = isnull(b.coll5,0)
+              , week5     = isnull(a.week5,0)
+              , collt     = isnull(b.coll1,0) + isnull(b.coll2,0) + isnull(b.coll3,0) + isnull(b.coll4,0) + isnull(b.coll5,0)
+              , weekt     = isnull(a.week1,0) + isnull(a.week2,0) + isnull(a.week3,0) + isnull(a.week4,0) + isnull(a.week5,0)
+           FROM (
+                SELECT user_id   = a.user_id
+                     , user_name = a.user_name
+                     , team_code = a.team_code
+                     , rank_no   = a.rank_no
+                     , rank      = a.rank
+                     , cyear     = :ai_year
+                     , cmon      = :ai_mon
+                     , week1     = max(a.week1)
+                     , week2     = max(a.week2)
+                     , week3     = max(a.week3)
+                     , week4     = max(a.week4)
+                     , week5     = max(a.week5)
+                  FROM (
+                       SELECT user_id   = a.user_id
+                            , user_name = a.user_name
+                            , team_code = a.team_code
+                            , rank_no   = (case when a.user_id = 'W_POS' then '999' else a.rank_no end)
+                            , rank      = a.rank
+                            , week1     = (case when a.weeks = 1 then a.do_total else 0 end)
+                            , week2     = (case when a.weeks = 2 then a.do_total else 0 end)
+                            , week3     = (case when a.weeks = 3 then a.do_total else 0 end)
+                            , week4     = (case when a.weeks = 4 then a.do_total else 0 end)
+                            , week5     = (case when a.weeks = 5 then a.do_total else 0 end)
+                         FROM (
+                              SELECT user_id     = b.salesman
+                                   , user_name   = c.user_name
+                                   , team_code   = c.team_code
+                                   , rank_no     = c.rank_no
+                                   , rank        = c.rank
+                                   , weeks       = dbo.UF_MonthWEEK(a.DO_DATE, 1)
+                                   , do_total    = SUM(a.do_total) / 1.1 / 1000
+                                FROM do a
+                                     LEFT OUTER JOIN customer b  ON a.cust_no  = b.cust_no
+                                     LEFT OUTER JOIN login    c  ON b.salesman = c.user_id
+                               WHERE CONVERT(CHAR(10), a.do_date, 111) BETWEEN :as_sdate AND :as_edate
+                                 AND ( b.cust_flag        = 'N' ) 
+                                 AND ( b.cust_type       <> 'E' )
+                                 AND ( b.credit_level     = 'Z' )
+                                 AND ( a.cust_no         IN ('N002','K023','S396','H479','N014') )
+                                 AND c.user_id            = 'killby' /* 길병학 */
+                               GROUP BY b.salesman, c.user_name, c.team_code, c.rank_no, c.rank, dbo.UF_MonthWEEK(a.do_date, 1)
+                              ) a
+                       ) a
+                 GROUP BY a.user_id, a.user_name, a.team_code, a.rank_no, a.rank
+                ) a
+                LEFT OUTER JOIN ( /* 매출목표 */
+                     SELECT user_id   = a.user_id
+                          , coll1     = sum(a.coll1) / 1.1 / 1000
+                          , coll2     = sum(a.coll2) / 1.1 / 1000
+                          , coll3     = sum(a.coll3) / 1.1 / 1000
+                          , coll4     = sum(a.coll4) / 1.1 / 1000
+                          , coll5     = sum(a.coll5) / 1.1 / 1000
+                       FROM (
+                            SELECT user_id   = a.user_id
+                                 , cust_no   = a.cust_no
+                                 , coll1     = max(a.coll1)
+                                 , coll2     = max(a.coll2)
+                                 , coll3     = max(a.coll3)
+                                 , coll4     = max(a.coll4)
+                                 , coll5     = max(a.coll5)
+                              FROM (                                                  
+                                   SELECT user_id   = b.salesman
+                                        , cust_no   = a.cust_no
+                                        , coll1     = (case when a.weeks = 1 then isnull(a.coll,0) else 0 end)
+                                        , coll2     = (case when a.weeks = 2 then isnull(a.coll,0) else 0 end)
+                                        , coll3     = (case when a.weeks = 3 then isnull(a.coll,0) else 0 end)
+                                        , coll4     = (case when a.weeks = 4 then isnull(a.coll,0) else 0 end)
+                                        , coll5     = (case when a.weeks = 5 then isnull(a.coll,0) else 0 end)
+                                     FROM cust_aimdet a                                      
+                                          LEFT OUTER JOIN customer b ON a.cust_no = b.cust_no
+                                    WHERE CONVERT(CHAR(7),a.tar_year,111) = :as_yyyymm
+                                      AND ( a.cust_no         IN ('N002','K023','S396','H479','N014') )
+                                   ) a                                                
+                             GROUP BY a.user_id, a.cust_no
+                            ) a
+                      GROUP BY a.user_id
+                ) b   ON a.user_id  = b.user_id
+                LEFT OUTER JOIN team  c ON a.team_code = c.team_code                     
+                LEFT OUTER JOIN ( /* 수정목표 */
+                     SELECT user_id   = b.salesman
+                          , mod_mm    = sum((case :ai_mon
+                                                when  1 then isnull(a.mod_01,0) 
+                                                when  2 then isnull(a.mod_02,0) 
+                                                when  3 then isnull(a.mod_03,0) 
+                                                when  4 then isnull(a.mod_04,0) 
+                                                when  5 then isnull(a.mod_05,0) 
+                                                when  6 then isnull(a.mod_06,0) 
+                                                when  7 then isnull(a.mod_07,0) 
+                                                when  8 then isnull(a.mod_08,0) 
+                                                when  9 then isnull(a.mod_09,0) 
+                                                when 10 then isnull(a.mod_10,0) 
+                                                when 11 then isnull(a.mod_11,0) 
+                                                when 12 then isnull(a.mod_12,0) 
+                                             end)) / 1.1 / 1000
+                      FROM cust_aim a                                      
+                           LEFT OUTER JOIN customer b ON a.cust_code = b.cust_no
+                     WHERE datepart(year, a.tar_year) = :ai_year
+                       AND ( a.cust_code             IN ('N002','K023','S396','H479','N014') )
+                     GROUP BY b.salesman
+                ) d   ON a.user_id  = d.user_id 
+
+         /*====================*/
+         UNION ALL 
+         /*====================*/
+          
+         /* 매출실적(송천건업) */
+         SELECT team     = (case c.team_code  
+                                 when '71000' then '1' /*영업1팀   */
+                                 when '73000' then '1' /*특판1팀   */
+                                 when '76000' then '1' /*중부호남  */
+                                 when '77000' then '1' /*서부점    */
+                                 when '78000' then '1' /*특판2팀   */
+                                 when '74000' then '2' /*동부점    */
+                                 when '72000' then '3' /*영업2팀   */
+                                 when '75000' then '4' /*시화점    */
+                                 when '79000' then '4' /*채권팀    */
+                                 else              '5' 
+                             end)
+              , team_code = a.team_code
+              , team_name = c.team_name
+              , user_id   = a.user_id
+              , user_name = '송천건업' /* a.user_name */
+              , rank_no   = ''         /* a.rank_no   */
+              , rank      = ''         /* a.rank      */               
+              , cyear     = a.cyear          
+              , cmon      = a.cmon       
+              , mod_mm    = d.mod_mm
+              , coll1     = isnull(b.coll1,0)
+              , week1     = isnull(a.week1,0)
+              , coll2     = isnull(b.coll2,0)
+              , week2     = isnull(a.week2,0)
+              , coll3     = isnull(b.coll3,0)
+              , week3     = isnull(a.week3,0)
+              , coll4     = isnull(b.coll4,0)
+              , week4     = isnull(a.week4,0)
+              , coll5     = isnull(b.coll5,0)
+              , week5     = isnull(a.week5,0)
+              , collt     = isnull(b.coll1,0) + isnull(b.coll2,0) + isnull(b.coll3,0) + isnull(b.coll4,0) + isnull(b.coll5,0)
+              , weekt     = isnull(a.week1,0) + isnull(a.week2,0) + isnull(a.week3,0) + isnull(a.week4,0) + isnull(a.week5,0)
+           FROM (
+                SELECT user_id   = a.user_id
+                     , user_name = a.user_name
+                     , team_code = a.team_code
+                     , rank_no   = a.rank_no
+                     , rank      = a.rank
+                     , cyear     = :ai_year
+                     , cmon      = :ai_mon
+                     , week1     = max(a.week1)
+                     , week2     = max(a.week2)
+                     , week3     = max(a.week3)
+                     , week4     = max(a.week4)
+                     , week5     = max(a.week5)
+                  FROM (
+                       SELECT user_id   = a.user_id
+                            , user_name = a.user_name
+                            , team_code = a.team_code
+                            , rank_no   = (case when a.user_id = 'W_POS' then '999' else a.rank_no end)
+                            , rank      = a.rank
+                            , week1     = (case when a.weeks = 1 then a.do_total else 0 end)
+                            , week2     = (case when a.weeks = 2 then a.do_total else 0 end)
+                            , week3     = (case when a.weeks = 3 then a.do_total else 0 end)
+                            , week4     = (case when a.weeks = 4 then a.do_total else 0 end)
+                            , week5     = (case when a.weeks = 5 then a.do_total else 0 end)
+                         FROM (
+                              SELECT user_id     = b.salesman
+                                   , user_name   = c.user_name
+                                   , team_code   = '75000'
+                                   , rank_no     = c.rank_no
+                                   , rank        = c.rank
+                                   , weeks       = dbo.UF_MonthWEEK(a.DO_DATE, 1)
+                                   , do_total    = SUM(a.do_total) / 1.1 / 1000
+                                FROM do a
+                                     LEFT OUTER JOIN customer b  ON a.cust_no  = b.cust_no
+                                     LEFT OUTER JOIN login    c  ON b.salesman = c.user_id
+                               WHERE CONVERT(CHAR(10), a.do_date, 111) BETWEEN :as_sdate AND :as_edate
+                                 AND ( a.cust_no          = 'U580' ) /* 송천건업 */
+                               GROUP BY b.salesman, c.user_name, c.team_code, c.rank_no, c.rank, dbo.UF_MonthWEEK(a.do_date, 1)
+                              ) a
+                       ) a
+                 GROUP BY a.user_id, a.user_name, a.team_code, a.rank_no, a.rank
+                ) a
+                LEFT OUTER JOIN ( /* 매출목표 */
+                     SELECT user_id   = a.user_id
+                          , coll1     = sum(a.coll1) / 1.1 / 1000
+                          , coll2     = sum(a.coll2) / 1.1 / 1000
+                          , coll3     = sum(a.coll3) / 1.1 / 1000
+                          , coll4     = sum(a.coll4) / 1.1 / 1000
+                          , coll5     = sum(a.coll5) / 1.1 / 1000
+                       FROM (
+                            SELECT user_id   = a.user_id
+                                 , cust_no   = a.cust_no
+                                 , coll1     = max(a.coll1)
+                                 , coll2     = max(a.coll2)
+                                 , coll3     = max(a.coll3)
+                                 , coll4     = max(a.coll4)
+                                 , coll5     = max(a.coll5)
+                              FROM (                                                  
+                                   SELECT user_id   = b.salesman
+                                        , cust_no   = a.cust_no
+                                        , coll1     = (case when a.weeks = 1 then isnull(a.coll,0) else 0 end)
+                                        , coll2     = (case when a.weeks = 2 then isnull(a.coll,0) else 0 end)
+                                        , coll3     = (case when a.weeks = 3 then isnull(a.coll,0) else 0 end)
+                                        , coll4     = (case when a.weeks = 4 then isnull(a.coll,0) else 0 end)
+                                        , coll5     = (case when a.weeks = 5 then isnull(a.coll,0) else 0 end)
+                                     FROM cust_aimdet a                                      
+                                          LEFT OUTER JOIN customer b ON a.cust_no = b.cust_no
+                                    WHERE CONVERT(CHAR(7),a.tar_year,111) = :as_yyyymm
+                                      AND ( a.cust_no          = 'U580' ) /* 송천건업 */
+                                   ) a                                                
+                             GROUP BY a.user_id, a.cust_no
+                            ) a
+                      GROUP BY a.user_id
+                ) b   ON a.user_id  = b.user_id
+                LEFT OUTER JOIN team  c ON a.team_code = c.team_code                     
+                LEFT OUTER JOIN ( /* 수정목표 */
+                     SELECT user_id   = b.salesman
+                          , mod_mm    = sum((case :ai_mon
+                                                when  1 then isnull(a.mod_01,0) 
+                                                when  2 then isnull(a.mod_02,0) 
+                                                when  3 then isnull(a.mod_03,0) 
+                                                when  4 then isnull(a.mod_04,0) 
+                                                when  5 then isnull(a.mod_05,0) 
+                                                when  6 then isnull(a.mod_06,0) 
+                                                when  7 then isnull(a.mod_07,0) 
+                                                when  8 then isnull(a.mod_08,0) 
+                                                when  9 then isnull(a.mod_09,0) 
+                                                when 10 then isnull(a.mod_10,0) 
+                                                when 11 then isnull(a.mod_11,0) 
+                                                when 12 then isnull(a.mod_12,0) 
+                                             end)) / 1.1 / 1000
+                      FROM cust_aim a                                      
+                           LEFT OUTER JOIN customer b ON a.cust_code = b.cust_no
+                     WHERE datepart(year, a.tar_year) = :ai_year
+                       AND ( a.cust_code        = 'U580' ) /* 송천건업 */
+                     GROUP BY b.salesman
+                ) d   ON a.user_id  = d.user_id 
+         ) a
+   ORDER BY teamgroup, team, team_code, rank_no, user_name
+" arguments=(("as_sdate", string),("as_edate", string),("as_yyyymm", string),("ai_year", number),("ai_mon", number)) )
+group(level=1 header.height=0 trailer.height=80 by=("teamgroup" ) header.color="536870912" trailer.color="12639424" )
+group(level=2 header.height=0 trailer.height=80 by=("team" ) header.color="536870912" trailer.color="12632256" )
+group(level=3 header.height=0 trailer.height=80 by=("team_code" ) header.color="536870912" trailer.color="553648127" )
+text(band=header alignment="2" text="1.실적" border="6" color="33554432" x="2167" y="104" height="60" width="329" html.valueishtml="0"  name=week1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="진행율" border="6" color="128" x="2505" y="104" height="60" width="251" html.valueishtml="0"  name=per1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="2.목표" border="6" color="33554432" x="2766" y="104" height="60" width="343" html.valueishtml="0"  name=coll2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="2.실적" border="6" color="33554432" x="3118" y="104" height="60" width="343" html.valueishtml="0"  name=week2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="진행율" border="6" color="128" x="3470" y="104" height="60" width="251" html.valueishtml="0"  name=per2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="3.목표" border="6" color="33554432" x="3730" y="104" height="60" width="329" html.valueishtml="0"  name=coll3_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="3.실적" border="6" color="33554432" x="4069" y="104" height="60" width="343" html.valueishtml="0"  name=week3_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="진행율" border="6" color="128" x="4421" y="104" height="60" width="242" html.valueishtml="0"  name=per3_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="4.목표" border="6" color="33554432" x="4672" y="104" height="60" width="347" html.valueishtml="0"  name=coll4_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="4.실적" border="6" color="33554432" x="5029" y="104" height="60" width="329" html.valueishtml="0"  name=week4_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="진행율" border="6" color="128" x="5367" y="104" height="60" width="251" html.valueishtml="0"  name=per4_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="팀명" border="6" color="33554432" x="9" y="104" height="60" width="411" html.valueishtml="0"  name=team_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당" border="6" color="33554432" x="430" y="104" height="60" width="384" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="5.목표" border="6" color="33554432" x="5627" y="104" height="60" width="334" html.valueishtml="0"  name=coll5_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="5.실적" border="6" color="33554432" x="5970" y="104" height="60" width="334" html.valueishtml="0"  name=week5_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="진행율" border="6" color="128" x="6313" y="104" height="60" width="251" html.valueishtml="0"  name=per5_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="1.목표" border="6" color="33554432" x="1815" y="104" height="60" width="343" html.valueishtml="0"  name=coll1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="목표" border="6" color="33554432" x="823" y="104" height="60" width="375" html.valueishtml="0"  name=coll0_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실적" border="6" color="33554432" x="1207" y="104" height="60" width="338" html.valueishtml="0"  name=week0_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="진행율" border="6" color="128" x="1554" y="104" height="60" width="251" html.valueishtml="0"  name=per0_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="진행율" border="6" color="33554432" x="7264" y="104" height="60" width="233" html.valueishtml="0"  name=pertot_t visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="누계실적" border="6" color="33554432" x="6921" y="104" height="60" width="334" html.valueishtml="0"  name=weekt_t visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="누계목표" border="6" color="33554432" x="6574" y="104" height="60" width="338" html.valueishtml="0"  name=collt_t visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="9" y="8" height="80" width="411" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="430" y="8" height="80" width="384" html.valueishtml="0"  name=t_11 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="목표" border="0" color="33554432" x="823" y="8" height="80" width="375" html.valueishtml="0"  name=t_w01 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="및" border="0" color="33554432" x="1207" y="8" height="80" width="338" html.valueishtml="0"  name=t_w02 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="0" text=" 실적" border="0" color="33554432" x="1554" y="8" height="80" width="251" html.valueishtml="0"  name=t_w03 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="1815" y="8" height="80" width="343" html.valueishtml="0"  name=t_w11 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="1주" border="0" color="33554432" x="2167" y="8" height="80" width="329" html.valueishtml="0"  name=t_w12 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="2505" y="8" height="80" width="251" html.valueishtml="0"  name=t_w13 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="2766" y="8" height="80" width="343" html.valueishtml="0"  name=t_w21 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="2주" border="0" color="33554432" x="3118" y="8" height="80" width="343" html.valueishtml="0"  name=t_w22 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="3470" y="8" height="80" width="251" html.valueishtml="0"  name=t_w23 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="3730" y="8" height="80" width="329" html.valueishtml="0"  name=t_w31 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="3주" border="0" color="33554432" x="4069" y="8" height="80" width="343" html.valueishtml="0"  name=t_w32 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="4421" y="8" height="80" width="242" html.valueishtml="0"  name=t_w33 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="4672" y="8" height="80" width="347" html.valueishtml="0"  name=t_w41 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="4주" border="0" color="33554432" x="5029" y="8" height="80" width="329" html.valueishtml="0"  name=t_w42 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="5367" y="8" height="80" width="251" html.valueishtml="0"  name=t_w43 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="5627" y="8" height="80" width="334" html.valueishtml="0"  name=t_w51 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="5주" border="0" color="33554432" x="5970" y="8" height="80" width="334" html.valueishtml="0"  name=t_w52 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="" border="0" color="33554432" x="6313" y="8" height="80" width="251" html.valueishtml="0"  name=t_w53 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="1" text="누계" border="0" color="33554432" x="6574" y="8" height="80" width="338" html.valueishtml="0"  name=t_wt1 visible="0"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="목표 및" border="0" color="33554432" x="6921" y="8" height="80" width="334" html.valueishtml="0"  name=t_wt2 visible="0"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="실적" border="0" color="33554432" x="7264" y="8" height="80" width="233" html.valueishtml="0"  name=t_wt3 visible="0"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="33554432" x="2766" y="8" height="72" width="343" format="#,##0" html.valueishtml="0"  name=coll2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="33554432" x="3730" y="8" height="72" width="329" format="#,##0" html.valueishtml="0"  name=coll3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="0" color="33554432" x="4672" y="8" height="72" width="347" format="#,##0" html.valueishtml="0"  name=coll4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="0" color="33554432" x="5627" y="8" height="72" width="334" format="#,##0" html.valueishtml="0"  name=coll5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="2167" y="8" height="72" width="329" format="#,##0" html.valueishtml="0"  name=week1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" week1 /  coll1 "border="0" color="33554432" x="2505" y="8" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="3118" y="8" height="72" width="343" format="#,##0" html.valueishtml="0"  name=week2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" week2 / coll2 "border="0" color="33554432" x="3470" y="8" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="33554432" x="4069" y="8" height="72" width="343" format="#,##0" html.valueishtml="0"  name=week3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" week3 / coll3 "border="0" color="33554432" x="4421" y="8" height="72" width="242" format="0.0%" html.valueishtml="0"  name=per3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="33554432" x="5029" y="8" height="72" width="329" format="#,##0" html.valueishtml="0"  name=week4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" week4 / coll4 "border="0" color="33554432" x="5367" y="8" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=22 alignment="1" tabsequence=32766 border="0" color="33554432" x="5970" y="8" height="72" width="334" format="#,##0" html.valueishtml="0"  name=week5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" week5 / coll5 "border="0" color="33554432" x="6313" y="8" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="72" width="411" format="[general]" html.valueishtml="0"  name=team_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="0" expression=" user_name + ' ' +  rank "border="0" color="33554432" x="430" y="8" height="72" width="384" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="1815" y="8" height="72" width="343" format="#,##0" html.valueishtml="0"  name=coll1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="823" y="8" height="72" width="375" format="#,##0" html.valueishtml="0"  name=mod_mm visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression="weekt"border="0" color="33554432" x="1207" y="8" height="72" width="338" format="#,##0" html.valueishtml="0"  name=mod_weekt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" mod_weekt / mod_mm"border="0" color="33554432" x="1554" y="8" height="72" width="251" format="0.0%" html.valueishtml="0"  name=pert visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=23 alignment="1" tabsequence=32766 border="0" color="33554432" x="6574" y="8" height="72" width="338" format="#,##0" html.valueishtml="0"  name=collt visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=24 alignment="1" tabsequence=32766 border="0" color="33554432" x="6921" y="8" height="72" width="334" format="#,##0" html.valueishtml="0"  name=weekt visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression=" weekt / collt "border="0" color="33554432" x="7264" y="8" height="72" width="233" format="0.0%" html.valueishtml="0"  name=pertot visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( week1 for group 3 )"border="0" color="33554432" x="2167" y="4" height="72" width="329" format="#,##0" html.valueishtml="0"  name=cf_week1_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression=" cf_week1_g3 /  cf_coll1_g3 "border="0" color="33554432" x="2505" y="4" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per1_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( coll2 for group 3 )"border="0" color="33554432" x="2766" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll2_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( week2 for group 3 )"border="0" color="33554432" x="3118" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=cf_week2_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression=" cf_week2_g3 /  cf_coll2_g3 "border="0" color="33554432" x="3470" y="4" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per2_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( coll3 for group 3 )"border="0" color="33554432" x="3730" y="4" height="72" width="329" format="#,##0" html.valueishtml="0"  name=cf_coll3_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( week3 for group 3 )"border="0" color="33554432" x="4069" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=cf_week3_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression=" cf_week3_g3 /  cf_coll3_g3 "border="0" color="33554432" x="4421" y="4" height="72" width="242" format="0.0%" html.valueishtml="0"  name=per3_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( coll4 for group 3 )"border="0" color="33554432" x="4672" y="4" height="72" width="347" format="#,##0" html.valueishtml="0"  name=cf_coll4_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( week4 for group 3 )"border="0" color="33554432" x="5029" y="4" height="72" width="329" format="#,##0" html.valueishtml="0"  name=cf_week4_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression=" cf_week4_g3 /  cf_coll4_g3 "border="0" color="33554432" x="5367" y="4" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per4_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( coll5 for group 3 )"border="0" color="33554432" x="5627" y="4" height="72" width="334" format="#,##0" html.valueishtml="0"  name=cf_coll5_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( week5 for group 3 )"border="0" color="33554432" x="5970" y="4" height="72" width="334" format="#,##0" html.valueishtml="0"  name=cf_week5_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression=" cf_week5_g3 /  cf_coll5_g3 "border="0" color="33554432" x="6313" y="4" height="72" width="251" format="0.0%" html.valueishtml="0"  name=per5_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+text(band=trailer.3 alignment="0" text=" 계" border="0" color="33554432" x="430" y="4" height="72" width="384" html.valueishtml="0"  name=t_15 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=trailer.3 alignment="1" text="소" border="0" color="33554432" x="9" y="4" height="72" width="411" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.3 alignment="1" expression="sum ( coll1 for group 3 )"border="0" color="33554432" x="1815" y="4" height="72" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll1_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( mod_mm for group 3)"border="0" color="33554432" x="823" y="4" height="72" width="375" format="#,##0" html.valueishtml="0"  name=cf_mod_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( mod_weekt for group 3)"border="0" color="33554432" x="1207" y="4" height="72" width="338" format="#,##0" html.valueishtml="0"  name=cf_modweekt_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="cf_modweekt_g3 / cf_mod_g3"border="0" color="33554432" x="1554" y="4" height="72" width="251" format="0.0%" html.valueishtml="0"  name=cf_pert_g3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( collt for group 3 )"border="0" color="33554432" x="6574" y="4" height="72" width="338" format="#,##0" html.valueishtml="0"  name=cf_collt_g3 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum ( weekt for group 3 )"border="0" color="33554432" x="6921" y="4" height="72" width="334" format="#,##0" html.valueishtml="0"  name=cf_weekt_g3 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression=" cf_weekt_g3 /  cf_collt_g3 "border="0" color="33554432" x="7264" y="4" height="72" width="233" format="0.0%" html.valueishtml="0"  name=pert_g3 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="16777215" )
+compute(band=trailer.2 alignment="1" expression=" team_nm "border="0" color="33554432" x="9" y="8" height="68" width="411" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.2 alignment="0" text=" 계" border="0" color="33554432" x="430" y="8" height="68" width="384" html.valueishtml="0"  name=t_16 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum ( week1 for group 2 )"border="0" color="33554432" x="2167" y="8" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_week1_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cf_week1_g2 /  cf_coll1_g2 "border="0" color="33554432" x="2505" y="8" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per1_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( coll2 for group 2 )"border="0" color="33554432" x="2766" y="8" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll2_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( week2 for group 2 )"border="0" color="33554432" x="3118" y="8" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_week2_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cf_week2_g2 /  cf_coll2_g2 "border="0" color="33554432" x="3470" y="8" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per2_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( coll3 for group 2 )"border="0" color="33554432" x="3730" y="8" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_coll3_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( week3 for group 2 )"border="0" color="33554432" x="4069" y="8" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_week3_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cf_week3_g2 /  cf_coll3_g2 "border="0" color="33554432" x="4421" y="8" height="68" width="242" format="0.0%" html.valueishtml="0"  name=per3_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( coll4 for group 2 )"border="0" color="33554432" x="4672" y="8" height="68" width="347" format="#,##0" html.valueishtml="0"  name=cf_coll4_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( week4 for group 2 )"border="0" color="33554432" x="5029" y="8" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_week4_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cf_week4_g2 /  cf_coll4_g2 "border="0" color="33554432" x="5367" y="8" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per4_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( coll5 for group 2 )"border="0" color="33554432" x="5627" y="8" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_coll5_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( week5 for group 2 )"border="0" color="33554432" x="5970" y="8" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_week5_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cf_week5_g2 /  cf_coll5_g2 "border="0" color="33554432" x="6313" y="8" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per5_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( coll1 for group 2 )"border="0" color="33554432" x="1815" y="8" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll1_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( mod_mm for group 2)"border="0" color="33554432" x="823" y="8" height="68" width="375" format="#,##0" html.valueishtml="0"  name=cf_mod_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum ( mod_weekt for group 2)"border="0" color="33554432" x="1207" y="8" height="68" width="338" format="#,##0" html.valueishtml="0"  name=cf_modweekt_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="cf_modweekt_g2 / cf_mod_g2"border="0" color="33554432" x="1554" y="8" height="68" width="251" format="0.0%" html.valueishtml="0"  name=cf_pert_g2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum ( collt for group 2 )"border="0" color="33554432" x="6574" y="8" height="68" width="338" format="#,##0" html.valueishtml="0"  name=cf_collt_g2 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum ( weekt for group 2 )"border="0" color="33554432" x="6921" y="8" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_weekt_g2 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression=" cf_weekt_g2 /  cf_collt_g2 "border="0" color="33554432" x="7264" y="8" height="68" width="233" format="0.0%" html.valueishtml="0"  name=pert_g2 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="if (  teamgroup = 1, '영업본부', '영업관리' )"border="0" color="33554432" x="9" y="4" height="68" width="411" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=trailer.1 alignment="0" text=" 합계" border="0" color="33554432" x="430" y="4" height="68" width="384" html.valueishtml="0"  name=t_17 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( coll1 for group 1 )"border="0" color="33554432" x="1815" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll1_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( week1 for group 1 )"border="0" color="33554432" x="2167" y="4" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_week1_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cf_week1_g1 /  cf_coll1_g1 "border="0" color="33554432" x="2505" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( coll2 for group 1 )"border="0" color="33554432" x="2766" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll2_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( week2 for group 1 )"border="0" color="33554432" x="3118" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_week2_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cf_week2_g1 /  cf_coll2_g1 "border="0" color="33554432" x="3470" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per2_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( coll3 for group 1 )"border="0" color="33554432" x="3730" y="4" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_coll3_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( week3 for group 1 )"border="0" color="33554432" x="4069" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_week3_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cf_week3_g1 /  cf_coll3_g1 "border="0" color="33554432" x="4421" y="4" height="68" width="242" format="0.0%" html.valueishtml="0"  name=per3_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( coll4 for group 1 )"border="0" color="33554432" x="4672" y="4" height="68" width="347" format="#,##0" html.valueishtml="0"  name=cf_coll4_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( week4 for group 1 )"border="0" color="33554432" x="5029" y="4" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_week4_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cf_week4_g1 /  cf_coll4_g1 "border="0" color="33554432" x="5367" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per4_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( coll5 for group 1 )"border="0" color="33554432" x="5627" y="4" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_coll5_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( week5 for group 1 )"border="0" color="33554432" x="5970" y="4" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_week5_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cf_week5_g1 /  cf_coll5_g1 "border="0" color="33554432" x="6313" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per5_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( mod_mm for group 1)"border="0" color="33554432" x="823" y="12" height="60" width="375" format="#,##0" html.valueishtml="0"  name=cf_mod_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( mod_weekt for group 1)"border="0" color="33554432" x="1207" y="12" height="60" width="338" format="#,##0" html.valueishtml="0"  name=cf_modweekt_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="cf_modweekt_g1 / cf_mod_g1"border="0" color="33554432" x="1554" y="12" height="60" width="251" format="0.0%" html.valueishtml="0"  name=cf_pert_g1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum ( collt for group 1 )"border="0" color="33554432" x="6574" y="4" height="68" width="338" format="#,##0" html.valueishtml="0"  name=cf_collt_g1 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( weekt for group 1 )"border="0" color="33554432" x="6921" y="4" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_weekt_g1 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression=" cf_weekt_g1 /  cf_collt_g1 "border="0" color="33554432" x="7264" y="4" height="68" width="233" format="0.0%" html.valueishtml="0"  name=pert_g1 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=summary alignment="1" text="총  합" border="0" color="33554432" x="9" y="4" height="68" width="411" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+text(band=summary alignment="0" text="  계" border="0" color="33554432" x="430" y="4" height="68" width="384" html.valueishtml="0"  name=t_18 visible="1"  font.face="굴림체" font.height="-12" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum ( week1 for all )"border="0" color="33554432" x="2167" y="4" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_week1_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cf_week1_a /  cf_coll1_a "border="0" color="33554432" x="2505" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per1_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( coll2 for all )"border="0" color="33554432" x="2766" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll2_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( week2 for all )"border="0" color="33554432" x="3118" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_week2_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cf_week2_a /  cf_coll2_a "border="0" color="33554432" x="3470" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per2_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( coll3 for all )"border="0" color="33554432" x="3730" y="4" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_coll3_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( week3 for all )"border="0" color="33554432" x="4069" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_week3_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cf_week3_a /  cf_coll3_a "border="0" color="33554432" x="4421" y="4" height="68" width="242" format="0.0%" html.valueishtml="0"  name=per3_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( coll4 for all )"border="0" color="33554432" x="4672" y="4" height="68" width="347" format="#,##0" html.valueishtml="0"  name=cf_coll4_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( week4 for all )"border="0" color="33554432" x="5029" y="4" height="68" width="329" format="#,##0" html.valueishtml="0"  name=cf_week4_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cf_week4_a /  cf_coll4_a "border="0" color="33554432" x="5367" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per4_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( coll5 for all )"border="0" color="33554432" x="5627" y="4" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_coll5_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( week5 for all )"border="0" color="33554432" x="5970" y="4" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_week5_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cf_week5_a /  cf_coll5_a "border="0" color="33554432" x="6313" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=per5_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( coll1 for all )"border="0" color="33554432" x="1815" y="4" height="68" width="343" format="#,##0" html.valueishtml="0"  name=cf_coll1_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( mod_mm for all )"border="0" color="33554432" x="823" y="4" height="68" width="375" format="#,##0" html.valueishtml="0"  name=cf_mod_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( mod_weekt for all)"border="0" color="33554432" x="1207" y="4" height="68" width="338" format="#,##0" html.valueishtml="0"  name=cf_modweekt_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="cf_modweekt_a / cf_mod_a"border="0" color="33554432" x="1554" y="4" height="68" width="251" format="0.0%" html.valueishtml="0"  name=cf_pert_a visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum ( collt for all )"border="0" color="33554432" x="6574" y="4" height="68" width="338" format="#,##0" html.valueishtml="0"  name=cf_collt_a visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( weekt for all )"border="0" color="33554432" x="6921" y="4" height="68" width="334" format="#,##0" html.valueishtml="0"  name=cf_weekt_a visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression=" cf_weekt_a /  cf_collt_a "border="0" color="33554432" x="7264" y="4" height="68" width="233" format="0.0%" html.valueishtml="0"  name=pert_a visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+
+sparse(names="team_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

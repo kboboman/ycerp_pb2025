@@ -1,0 +1,105 @@
+﻿$PBExportHeader$d_oidotime_list.srd
+$PBExportComments$거래명세서 출고시간
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=80 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=80 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=log_date dbname="log_date" )
+ column=(type=char(20) updatewhereclause=yes name=area_no dbname="area_no" )
+ column=(type=char(10) updatewhereclause=yes name=carname dbname="carname" )
+ column=(type=char(40) updatewhereclause=yes name=cargo_name dbname="cargo_name" )
+ column=(type=datetime updatewhereclause=yes name=do_date dbname="do_date" )
+ column=(type=char(4) updatewhereclause=yes name=prt_time dbname="prt_time" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_total dbname="do_total" )
+ column=(type=char(14) updatewhereclause=yes name=do_no dbname="do_no" )
+ column=(type=char(1) updatewhereclause=yes name=inout dbname="inout" )
+ column=(type=char(60) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=char(80) updatewhereclause=yes name=shipto_addr dbname="shipto_addr" )
+ column=(type=char(100) updatewhereclause=yes name=loc_no dbname="loc_no" )
+ retrieve="  SELECT log_date   = a.log_date
+       , area_no    = a.area_no
+       , carname    = a.carname
+       , cargo_name = a.cargo_name 
+       , do_date    = a.do_date
+       , prt_time   = a.prt_time
+       , do_total   = a.do_total
+       , do_no      = a.do_no
+       , inout      = a.inout
+       , rem        = a.rem
+       , shipto_addr= a.shipto_addr
+       , loc_no     = a.loc_no
+    FROM (
+         SELECT log_date   = do.log_date
+              , area_no    = (SELECT area_name FROM area WHERE area_no = do.area_no)
+              , carname    = docar.name
+              , cargo_name = docar.cargo_name 
+              , do_date    = do.do_date
+              , prt_time   = (case when do.prt_date is null 
+                                   then left(right(convert(char(16),do.log_date, 120),5),2)
+                                   else left(right(convert(char(16),do.prt_date, 120),5),2)
+                              end)
+              , do_total   = do.do_total
+              , do_no      = do.do_no
+              , inout      = docar.inout
+              , rem        = do.rem
+              , shipto_addr= do.shipto_addr
+              , loc_no     = isnull((SELECT bigo FROM codemst 
+                                      WHERE type = '사업장기본저장소' AND item_cd = do.user_id AND use_yn ='Y'
+                                    ), 'WS00000007')
+           FROM do with(nolock) LEFT OUTER JOIN docar with(nolock) ON do.driver = docar.driver 
+          WHERE ( do.do_total > 0 )
+            AND ( do.do_date  between :ad_sdate AND :ad_edate )
+            AND ( do.log_date between :ad_sdate + ' 00:00:00' AND :ad_edate + ' 23:59:59' ) /* 송장 수정건은 생략 */
+            AND ((:as_area  = '%') OR
+                 (:as_area <> '%' AND do.area_no = :as_area)
+                )
+            AND ((:as_custno  = '%') OR
+                 (:as_custno <> '%' AND do.cust_no = :as_custno)
+                )
+         ) A
+   WHERE ((:as_locno  = '%') OR
+          (:as_locno <> '%' AND a.loc_no = :as_locno)
+         )
+     AND ((:as_inout  = '%') OR
+          (:as_inout <> '%' AND a.inout = 'I')
+         )
+" arguments=(("as_area", string),("as_locno", string),("as_custno", string),("ad_sdate", date),("ad_edate", date),("as_inout", string))  sort="do_date A area_no A carname A cargo_name A log_date A prt_time A " )
+text(band=header alignment="2" text="차량NO" border="6" color="33554432" x="1381" y="8" height="68" width="507" html.valueishtml="0"  name=carname_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운전자" border="6" color="33554432" x="1897" y="8" height="68" width="590" html.valueishtml="0"  name=cargo_name_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="금액" border="6" color="33554432" x="2496" y="8" height="68" width="686" html.valueishtml="0"  name=do_total_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="68" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고일자" border="6" color="33554432" x="178" y="8" height="68" width="421" html.valueishtml="0"  name=do_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고번호" border="6" color="33554432" x="3863" y="8" height="68" width="599" html.valueishtml="0"  name=do_no_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="등록시간" border="6" color="33554432" x="3191" y="8" height="68" width="663" html.valueishtml="0"  name=log_date_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사업장" border="6" color="33554432" x="859" y="8" height="68" width="512" html.valueishtml="0"  name=area_no_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="시간" border="6" color="33554432" x="608" y="8" height="68" width="242" html.valueishtml="0"  name=prt_time_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="비고" border="6" color="33554432" x="4471" y="8" height="68" width="882" html.valueishtml="0"  name=rem_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="운송처 주소" border="6" color="0" x="5362" y="8" height="68" width="1541" html.valueishtml="0"  name=shipto_addr_t visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1897" y="4" height="72" width="590" format="[general]" html.valueishtml="0"  name=cargo_name visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2496" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=do_total visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1381" y="4" height="72" width="507" format="[general]" html.valueishtml="0"  name=carname visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="178" y="4" height="72" width="421" format="yyyy/mm/dd" html.valueishtml="0"  name=do_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="3863" y="4" height="72" width="599" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=14 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="3191" y="4" height="72" width="663" format="yyyy/mm/dd hh:mm" html.valueishtml="0"  name=log_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="859" y="4" height="72" width="512" format="[general]" html.valueishtml="0"  name=area_no visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="608" y="4" height="72" width="242" format="[general]" html.valueishtml="0"  name=prt_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="4471" y="4" height="72" width="882" format="[general]" html.valueishtml="0"  name=rem visible="1" edit.limit=60 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="5362" y="4" height="72" width="1541" format="[general]" html.valueishtml="0"  name=shipto_addr visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-11" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )
+" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="9" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum( do_total for all )"border="0" color="0" x="2496" y="4" height="72" width="686" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="count( string(log_date,~"yyyy/mm/dd~") for all DISTINCT string(log_date,~"yyyy/mm/dd~") )"border="0" color="0" x="3191" y="4" height="72" width="663" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

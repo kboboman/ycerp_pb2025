@@ -1,0 +1,228 @@
+﻿$PBExportHeader$d_osteamaroiweek_t.srq
+  SELECT team      = a.team  /* 매출실적 */
+       , team_nm   = (case when a.team = 1 then '영업 1본부'
+                           when a.team = 2 then '영업 2본부'
+                           when a.team = 3 then '영업 3본부'
+                           when a.team = 4 then '시화+채권'
+                      end)
+       , team_code = a.team_code 
+       , team_name = a.team_name 
+       , user_id   = a.user_id   
+       , user_name = a.user_name 
+       , rank_no   = a.rank_no   
+       , rank      = a.rank      
+       , coll1     = a.coll1     
+       , week1     = a.week1     
+       , percent1  = (case when a.coll1 = 0 then 0 else a.week1 / a.coll1 end)
+       , coll2     = a.coll2     
+       , week2     = a.week2     
+       , percent2  = (case when a.coll2 = 0 then 0 else a.week2 / a.coll2 end)
+       , coll3     = a.coll3     
+       , week3     = a.week3     
+       , percent3  = (case when a.coll3 = 0 then 0 else a.week3 / a.coll3 end)
+       , coll4     = a.coll4     
+       , week4     = a.week4     
+       , percent4  = (case when a.coll4 = 0 then 0 else a.week4 / a.coll4 end)
+       , coll5     = a.coll5     
+       , week5     = a.week5     
+       , percent5  = (case when a.coll5 = 0 then 0 else a.week5 / a.coll5 end)
+       , collt     = a.collt     
+       , weekt     = a.weekt     
+       , percentt  = (case when a.collt = 0 then 0 else a.weekt / a.collt end)
+    FROM (
+         SELECT team     = (case c.team_code  
+                                 when 71000 then '1' /*영업1팀   */
+                                 when 73000 then '1' /*특판1팀   */
+                                 when 76000 then '1' /*중부호남  */
+                                 when 77000 then '1' /*서부점    */
+                                 when 78000 then '1' /*특판2팀   */
+                                 when 74000 then '2' /*동부점    */
+                                 when 72000 then '3' /*영업2팀   */
+                                 when 75000 then '4' /*시화점    */
+                                 when 79000 then '4' /*채권팀    */
+                                 else            '5' 
+                             end)
+              , team_code = a.team_code -- (case when a.team_code  = '78000' then '73999' else a.team_code end)
+              , team_name = c.team_name
+              , user_id   = a.user_id
+              , user_name = a.user_name       
+              , rank_no   = a.rank_no
+              , rank      = a.rank
+              , coll1     = isnull(b.coll1,0)
+              , week1     = isnull(a.week1,0)
+              , coll2     = isnull(b.coll2,0)
+              , week2     = isnull(a.week2,0)
+              , coll3     = isnull(b.coll3,0)
+              , week3     = isnull(a.week3,0)
+              , coll4     = isnull(b.coll4,0)
+              , week4     = isnull(a.week4,0)
+              , coll5     = isnull(b.coll5,0)
+              , week5     = isnull(a.week5,0)
+              , collt     = isnull(b.coll1,0) + isnull(b.coll2,0) + isnull(b.coll3,0) + isnull(b.coll4,0) + isnull(b.coll5,0)
+              , weekt     = isnull(a.week1,0) + isnull(a.week2,0) + isnull(a.week3,0) + isnull(a.week4,0) + isnull(a.week5,0)
+           FROM (
+                SELECT user_id   = a.user_id
+                     , user_name = a.user_name
+                     , team_code = a.team_code
+                     , rank_no   = a.rank_no
+                     , rank      = a.rank
+                     , week1     = max(a.week1)
+                     , week2     = max(a.week2)
+                     , week3     = max(a.week3)
+                     , week4     = max(a.week4)
+                     , week5     = max(a.week5)
+                  FROM (
+                       SELECT user_id   = a.user_id
+                            , user_name = a.user_name
+                            , team_code = a.team_code
+                            , rank_no   = (case when a.user_id = 'W_POS' then '999' else a.rank_no end)
+                            , rank      = a.rank
+                            , week1     = (case when a.weeks = 1 then a.do_total else 0 end)
+                            , week2     = (case when a.weeks = 2 then a.do_total else 0 end)
+                            , week3     = (case when a.weeks = 3 then a.do_total else 0 end)
+                            , week4     = (case when a.weeks = 4 then a.do_total else 0 end)
+                            , week5     = (case when a.weeks = 5 then a.do_total else 0 end)
+                         FROM (
+                              SELECT user_id   = b.salesman
+                                   , user_name = c.user_name
+                                   , team_code = c.team_code
+                                   , rank_no   = c.rank_no
+                                   , rank      = c.rank
+                                   , weeks     = db_user.UF_MonthWEEK(a.DO_DATE, 1)
+                                   , do_total  = SUM(a.do_total)
+                                FROM do a
+                                     LEFT OUTER JOIN customer b  ON a.cust_no  = b.cust_no
+                                     LEFT OUTER JOIN login    c  ON b.salesman = c.user_id
+                               WHERE CONVERT(CHAR(10), a.do_date, 111) BETWEEN '2012/09/01' AND '2012/09/30'
+                                 AND ( b.cust_flag         = 'N' )
+                                 AND ( b.cust_type        <> 'E' )
+                                 AND ( b.credit_level     <> 'Z' )                        
+                               GROUP BY b.salesman, c.user_name, c.team_code, c.rank_no, c.rank, db_user.UF_MonthWEEK(a.do_date, 1)
+                              ) a
+                       ) a
+                 GROUP BY a.user_id, a.user_name, a.team_code, a.rank_no, a.rank
+                ) a
+                LEFT OUTER JOIN ( /* 매출목표 */
+                     SELECT user_id   = a.user_id
+                          , coll1     = max(a.coll1)                       
+                          , coll2     = max(a.coll2)                       
+                          , coll3     = max(a.coll3)                       
+                          , coll4     = max(a.coll4)                       
+                          , coll5     = max(a.coll5)                       
+                       FROM (                                                  
+                            SELECT user_id   = b.salesman
+                                 , coll1     = (case when a.weeks = 1 then isnull(a.coll,0) else 0 end)
+                                 , coll2     = (case when a.weeks = 2 then isnull(a.coll,0) else 0 end)
+                                 , coll3     = (case when a.weeks = 3 then isnull(a.coll,0) else 0 end)
+                                 , coll4     = (case when a.weeks = 4 then isnull(a.coll,0) else 0 end)
+                                 , coll5     = (case when a.weeks = 5 then isnull(a.coll,0) else 0 end)
+                              FROM cust_aimdet a                                      
+                                   LEFT OUTER JOIN customer b ON a.cust_no = b.cust_no
+                             WHERE CONVERT(CHAR(7),a.tar_year,111) = '2012/09'        
+                            ) a                                                
+                      GROUP BY a.user_id
+                ) b   ON a.user_id  = b.user_id
+                LEFT OUTER JOIN team  c ON a.team_code = c.team_code
+          --order by 1, 2, 3, 6
+          
+         UNION ALL 
+          
+         /* 매출실적(내부업체) */
+         SELECT team     = (case c.team_code  
+                                 when 71000 then '1' /*영업1팀   */
+                                 when 73000 then '1' /*특판1팀   */
+                                 when 76000 then '1' /*중부호남  */
+                                 when 77000 then '1' /*서부점    */
+                                 when 78000 then '1' /*특판2팀   */
+                                 when 74000 then '2' /*동부점    */
+                                 when 72000 then '3' /*영업2팀   */
+                                 when 75000 then '4' /*시화점    */
+                                 when 79000 then '4' /*채권팀    */
+                                 else            '5' 
+                             end)
+              , team_code = a.team_code -- (case when a.team_code  = '78000' then '73999' else a.team_code end)
+              , team_name = c.team_name
+              , user_id   = a.user_id
+              , user_name = '내부업체' /* a.user_name */
+              , rank_no   = ''         /* a.rank_no   */
+              , rank      = ''         /* a.rank      */
+              , coll1     = isnull(b.coll1,0)
+              , week1     = isnull(a.week1,0)
+              , coll2     = isnull(b.coll2,0)
+              , week2     = isnull(a.week2,0)
+              , coll3     = isnull(b.coll3,0)
+              , week3     = isnull(a.week3,0)
+              , coll4     = isnull(b.coll4,0)
+              , week4     = isnull(a.week4,0)
+              , coll5     = isnull(b.coll5,0)
+              , week5     = isnull(a.week5,0)
+              , collt     = isnull(b.coll1,0) + isnull(b.coll2,0) + isnull(b.coll3,0) + isnull(b.coll4,0) + isnull(b.coll5,0)
+              , weekt     = isnull(a.week1,0) + isnull(a.week2,0) + isnull(a.week3,0) + isnull(a.week4,0) + isnull(a.week5,0)
+           FROM (
+                SELECT user_id   = a.user_id
+                     , user_name = a.user_name
+                     , team_code = a.team_code
+                     , rank_no   = a.rank_no
+                     , rank      = a.rank
+                     , week1     = max(a.week1)
+                     , week2     = max(a.week2)
+                     , week3     = max(a.week3)
+                     , week4     = max(a.week4)
+                     , week5     = max(a.week5)
+                  FROM (
+                       SELECT user_id   = a.user_id
+                            , user_name = a.user_name
+                            , team_code = a.team_code
+                            , rank_no   = (case when a.user_id = 'W_POS' then '999' else a.rank_no end)
+                            , rank      = a.rank
+                            , week1     = (case when a.weeks = 1 then a.do_total else 0 end)
+                            , week2     = (case when a.weeks = 2 then a.do_total else 0 end)
+                            , week3     = (case when a.weeks = 3 then a.do_total else 0 end)
+                            , week4     = (case when a.weeks = 4 then a.do_total else 0 end)
+                            , week5     = (case when a.weeks = 5 then a.do_total else 0 end)
+                         FROM (
+                              SELECT user_id   = b.salesman
+                                   , user_name = c.user_name
+                                   , team_code = c.team_code
+                                   , rank_no   = c.rank_no
+                                   , rank      = c.rank
+                                   , weeks     = db_user.UF_MonthWEEK(a.DO_DATE, 1)
+                                   , do_total  = SUM(a.do_total)
+                                FROM do a
+                                     LEFT OUTER JOIN customer b  ON a.cust_no  = b.cust_no
+                                     LEFT OUTER JOIN login    c  ON b.salesman = c.user_id
+                               WHERE CONVERT(CHAR(10), a.do_date, 111) BETWEEN '2012/09/01' AND '2012/09/30'
+                                 AND ( b.cust_flag        = 'N' ) 
+                                 AND ( b.cust_type       <> 'E' )
+                                 AND ( b.credit_level     = 'Z' )
+                                 AND ( b.cust_no         IN ('N002','K023','S396','H479','N014'))
+                                 AND c.user_id            = 'killby' /* 길병학 */
+                               GROUP BY b.salesman, c.user_name, c.team_code, c.rank_no, c.rank, db_user.UF_MonthWEEK(a.do_date, 1)
+                              ) a
+                       ) a
+                 GROUP BY a.user_id, a.user_name, a.team_code, a.rank_no, a.rank
+                ) a
+                LEFT OUTER JOIN ( /* 매출목표 */
+                     SELECT user_id   = a.user_id
+                          , coll1     = max(a.coll1)                       
+                          , coll2     = max(a.coll2)                       
+                          , coll3     = max(a.coll3)                       
+                          , coll4     = max(a.coll4)                       
+                          , coll5     = max(a.coll5)                       
+                       FROM (                                                  
+                            SELECT user_id   = b.salesman
+                                 , coll1     = (case when a.weeks = 1 then isnull(a.coll,0) else 0 end)
+                                 , coll2     = (case when a.weeks = 2 then isnull(a.coll,0) else 0 end)
+                                 , coll3     = (case when a.weeks = 3 then isnull(a.coll,0) else 0 end)
+                                 , coll4     = (case when a.weeks = 4 then isnull(a.coll,0) else 0 end)
+                                 , coll5     = (case when a.weeks = 5 then isnull(a.coll,0) else 0 end)
+                              FROM cust_aimdet a                                      
+                                   LEFT OUTER JOIN customer b ON a.cust_no = b.cust_no
+                             WHERE CONVERT(CHAR(7),a.tar_year,111) = '2012/09'        
+                            ) a                                                
+                      GROUP BY a.user_id
+                ) b   ON a.user_id  = b.user_id
+                LEFT OUTER JOIN team  c ON a.team_code = c.team_code
+         ) a
+   order by 1, 2, 3, 6
+   

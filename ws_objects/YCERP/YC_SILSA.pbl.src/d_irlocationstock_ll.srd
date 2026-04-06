@@ -1,0 +1,492 @@
+﻿$PBExportHeader$d_irlocationstock_ll.srd
+$PBExportComments$지점재고현황(2013/10/19)
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=88 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=loc_no dbname="loc_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_nm dbname="item_nm" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="qa" )
+ column=(type=char(1) updatewhereclause=yes name=seq dbname="seq" )
+ column=(type=char(10) updatewhereclause=yes name=cdate dbname="cdate" )
+ column=(type=decimal(4) updatewhereclause=yes name=in_qty dbname="in_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=out_qty dbname="out_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=qoh dbname="qoh" )
+ column=(type=decimal(4) updatewhereclause=yes name=cqoh dbname="cqoh" )
+ column=(type=char(14) updatewhereclause=yes name=bigo dbname="bigo" )
+ column=(type=char(17) updatewhereclause=yes name=key_no dbname="key_no" )
+ column=(type=char(11) updatewhereclause=yes name=tbl_name dbname="tbl_name" )
+ retrieve="
+SELECT loc_no    = a.loc_no  
+     , item_no   = a.item_no 
+     , item_nm   = b.item_name
+     , qa        = a.qa      
+     , seq       = a.seq
+     , cdate     = a.cdate
+     , in_qty    = a.in_qty  
+     , out_qty   = a.out_qty 
+     , qoh       = (case when seq = '1' then a.qoh else 0 end)
+     , cqoh      = (SELECT qty = isnull(d.qoh, 0) FROM itemloc D WITH (NOLOCK)
+                     WHERE d.loc_no   = a.loc_no  AND d.item_no  = a.item_no  AND d.qa = a.qa )
+     , bigo      = a.bigo
+     , key_no    = a.key_no
+     , tbl_name  = a.tbl_name
+  FROM (
+       /*=============================================================================================================*/
+       /* 지점재고                                                                                                    */
+       /*=============================================================================================================*/
+       SELECT SEQ       = '1'
+            , loc_no    = a.loc_no
+            , item_no   = a.item_no
+            , qa        = a.qa
+            , cdate     = '전일수량' 
+            , in_qty    = 0
+            , out_qty   = 0
+            , qoh       = sum(a.before_qty + a.rcpt_qty - a.issue_qty)   /*전일수량[재고조사량]*/
+            , bigo      = ''
+            , key_no    = ''
+            , tbl_name  = 'INEODAY_LOC'
+         FROM INEODAY_LOC a WITH (NOLOCK)
+        WHERE a.loc_no   = :as_locno
+          AND a.cdate    = (case when :as_sdate < '2014/01/01' then '2014/01/01' else replace(convert(char(10),dateadd(day, -1,:as_sdate),111),'/','') end)
+          AND (:as_itemno  = '%' AND a.item_no LIKE :as_itemno AND (:as_qa  = '%' AND a.qa LIKE :as_qa OR :as_qa <> '%' AND a.qa = :as_qa)
+               OR
+               :as_itemno <> '%' AND a.item_no    = :as_itemno AND (:as_qa  = '%' AND a.qa LIKE :as_qa OR :as_qa <> '%' AND a.qa = :as_qa)
+              )
+        GROUP BY a.loc_no, a.item_no, a.qa 
+
+
+       /*==============================================================================================================*/
+       /* 입고 : 생산입고, 대체입고, 저장소이동입고, 반품입고, 무상입고, 가공입고, 가입고                     NYYYYNY  */
+       /* 출고 : 정상출고, 대체출고, 저장소이동출고, 샘플출고, 폐기,     가공출고, 작업일보사용, 재고생산출고 YYYYYNNN */
+       /* 재고조정(감모손실)                                                                                           */
+       /*==============================================================================================================*/
+       UNION ALL
+       SELECT seq       = '2'   
+            , loc_no    = b.loc_no
+            , item_no   = b.item_no
+            , qa        = b.qa
+            , cdate     = b.cdate
+            , in_qty    = b.in_qty          /* 당월 1일 부터 현재까지 */
+            , out_qty   = b.out_qty
+            , qoh       = 0
+            , bigo      = b.bigo
+            , key_no    = b.key_no
+            , tbl_name  = b.tbl_name
+         FROM (
+               SELECT loc_no      = d.loc_no
+                    , cdate       = convert(char(10),d.sfc_date,111)
+                    , item_no     = d.assembly    
+                    , qa          = d.assembly_qa 
+                    , in_qty      = d.make_qty
+                    , out_qty     = 0
+                    , bigo        = '생산입고'
+                    , key_no      = d.order_no
+                    , tbl_name    = 'SFCDAY'
+                 FROM sfcday      D WITH (NOLOCK)
+                WHERE d.loc_no    = :as_locno
+                  AND convert(char(10),d.sfc_date,111)  between :as_sdate and :as_edate
+                  AND substring(:as_rall,1,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+                  
+               UNION ALL
+               SELECT loc_no      = d.tar_loc
+                    , cdate       = convert(char(10),d.alter_date,111)
+                    , item_no     = d.tar_item 
+                    , qa          = d.tar_qa   
+                    , in_qty      = isnull(d.tar_qty, 0)
+                    , out_qty     = 0
+                    , bigo        = '대체입고'
+                    , key_no      = d.order_no
+                    , tbl_name    = 'ITEMALTER'
+                 FROM itemalter   D WITH (NOLOCK)
+                WHERE d.tar_loc   = :as_locno
+                  AND convert(char(10),d.alter_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_rall,2,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.tar_item LIKE :as_itemno AND (:as_qa  = '%' AND d.tar_qa LIKE :as_qa OR :as_qa <> '%' AND d.tar_qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.tar_item    = :as_itemno AND (:as_qa  = '%' AND d.tar_qa LIKE :as_qa OR :as_qa <> '%' AND d.tar_qa = :as_qa)
+                      )
+               
+               UNION ALL
+               SELECT loc_no      = h.ask_loc
+                    , cdate       = convert(char(10),d.rlse_date,111)
+                    , item_no     = d.item_no 
+                    , qa          = d.qa      
+                    , in_qty      = isnull(d.rlse_qty, 0)
+                    , out_qty     = 0
+                    , bigo        = '저장소이동입고'
+                    , key_no      = d.ask_no
+                    , tbl_name    = 'ASK_DET'
+                 FROM ask_head    H WITH (NOLOCK)
+                    , ask_det     D WITH (NOLOCK)
+                WHERE h.ask_no    = d.ask_no
+                  AND h.ask_loc   = :as_locno
+                  AND convert(char(10),d.rlse_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_rall,3,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+               
+               UNION ALL
+               SELECT loc_no      = d.loc_no
+                    , cdate       = convert(char(10),h.issue_date,111)
+                    , item_no     = d.item_no 
+                    , qa          = d.qa      
+                    , in_qty      = isnull(d.ship_qty, 0) * -1
+                    , out_qty     = 0
+                    , bigo        = '반품입고(송장)'
+                    , key_no      = d.do_no
+                    , tbl_name    = 'DODET'
+                 FROM do          H WITH (NOLOCK)
+                    , dodet       D WITH (NOLOCK)
+                WHERE h.do_no     = d.do_no
+                  AND h.do_case   = 'D'		/* 반품, 매출할인 */
+                  AND d.loc_no    = :as_locno
+                  AND convert(char(10),h.issue_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_rall,4,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+                 
+               UNION ALL
+               SELECT loc_no      = d.loc_no 
+                    , cdate       = convert(char(10),h.ret_date,111)
+                    , item_no     = d.item_no 
+                    , qa          = d.qa      
+                    , in_qty      = isnull(d.ret_qty, 0)
+                    , out_qty     = 0
+                    , bigo        = '반품입고'
+                    , key_no      = d.ret_no
+                    , tbl_name    = 'RETDET'
+                 FROM ret         H WITH (NOLOCK)
+                    , retdet      D WITH (NOLOCK)
+                WHERE h.ret_no    = d.ret_no
+                  AND h.process_flag NOT IN ('O', 'Y')
+                  AND convert(char(10),h.ret_date,111) between :as_sdate and :as_edate
+                  AND d.loc_no    = :as_locno
+                  AND d.ret_qty  <> 0
+                  AND substring(:as_rall,5,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+                 
+               UNION ALL
+               SELECT loc_no      = d.loc_no 
+                    , cdate       = convert(char(10),h.ret_date,111)
+                    , item_no     = d.item_no 
+                    , qa          = d.qa      
+                    , in_qty      = isnull(d.free_qty, 0)
+                    , out_qty     = 0
+                    , bigo        = '무상입고'
+                    , key_no      = d.ret_no
+                    , tbl_name    = 'RETDET'
+                 FROM ret         H WITH (NOLOCK)
+                    , retdet      D WITH (NOLOCK)
+                WHERE h.ret_no    = d.ret_no
+                  AND h.process_flag NOT IN ('O', 'Y')
+                  AND convert(char(10),h.ret_date,111) between :as_sdate and :as_edate
+                  AND d.loc_no    = :as_locno
+                  AND d.free_qty <> 0
+                  AND substring(:as_rall,5,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+
+               UNION ALL
+               SELECT loc_no      = d.loc_no
+                    , cdate       = convert(char(10),h.insp_date,111)
+                    , item_no     = d.item_no
+                    , qa          = d.qa     
+                    , in_qty      = isnull(d.rcpt_qty, 0)
+                    , out_qty     = 0
+                    , bigo        = '가공입고'
+                    , key_no      = d.insp_no
+                    , tbl_name    = 'INSPDET'
+                 FROM insp        H WITH (NOLOCK)
+                    , inspdet     D WITH (NOLOCK)
+                WHERE h.insp_no   = d.insp_no
+                  AND convert(char(10),h.insp_date,111) between :as_sdate and :as_edate
+                  AND d.loc_no    = :as_locno
+                  AND substring(:as_rall,6,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+              
+               UNION ALL
+               SELECT loc_no      = h.loc_no
+                    , cdate       = convert(char(10),h.intemp_date,111)
+                    , item_no     = h.item_no 
+                    , qa          = h.qa      
+                    , in_qty      = isnull(h.qty, 0)
+                    , out_qty     = 0
+                    , bigo        = '가입고'
+                    , key_no      = h.intemp_no
+                    , tbl_name    = 'INTEMP'
+                 FROM intemp      H WITH (NOLOCK)
+                WHERE convert(char(10),h.intemp_date,111) between :as_sdate and :as_edate
+                  AND h.loc_no    = :as_locno
+                  AND substring(:as_rall,7,1) = 'Y'
+                  AND (:as_itemno  = '%' AND h.item_no LIKE :as_itemno AND (:as_qa  = '%' AND h.qa LIKE :as_qa OR :as_qa <> '%' AND h.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND h.item_no    = :as_itemno AND (:as_qa  = '%' AND h.qa LIKE :as_qa OR :as_qa <> '%' AND h.qa = :as_qa)
+                      )
+
+               
+               /*=============================*/
+               /* 출고 */
+               /*=============================*/
+               UNION ALL
+               SELECT loc_no      = d.loc_no
+                    , cdate       = convert(char(10),h.issue_date,111)
+                    , item_no     = d.item_no
+                    , qa          = d.qa     
+                    , in_qty      = 0
+                    , out_qty     = isnull(d.ship_qty, 0)
+                    , bigo        = '정상출고'
+                    , key_no      = d.do_no
+                    , tbl_name    = 'DODET'
+                 FROM do          H WITH (NOLOCK)
+                    , dodet       D WITH (NOLOCK)
+                WHERE h.do_no     = d.do_no
+                  AND h.area_no   = :as_area
+                  AND convert(char(10),h.issue_date,111) between :as_sdate and :as_edate
+                  AND h.do_case  IN ('A', 'B', 'C')
+                  AND d.loc_no    = :as_locno
+                  AND substring(:as_iall,1,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+              
+               UNION ALL
+               SELECT loc_no      = d.src_loc
+                    , cdate       = convert(char(10),d.alter_date,111)
+                    , item_no     = d.src_item 
+                    , qa          = d.src_qa   
+                    , in_qty      = 0
+                    , out_qty     = isnull(d.src_qty, 0)
+                    , bigo        = '대체출고'
+                    , key_no      = d.order_no
+                    , tbl_name    = 'ITEMALTER'
+                 FROM itemalter   D WITH (NOLOCK)
+                WHERE d.issue_flag  = 'Y'
+                  AND d.src_loc     = :as_locno
+                  AND convert(char(10),d.alter_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_iall,2,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.src_item LIKE :as_itemno AND (:as_qa  = '%' AND d.src_qa LIKE :as_qa OR :as_qa <> '%' AND d.src_qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.src_item    = :as_itemno AND (:as_qa  = '%' AND d.src_qa LIKE :as_qa OR :as_qa <> '%' AND d.src_qa = :as_qa)
+                      )
+              
+               UNION ALL
+               SELECT loc_no      = d.loc_no
+                    , cdate       = convert(char(10),d.rlse_date,111)
+                    , item_no     = d.item_no 
+                    , qa          = d.qa      
+                    , in_qty      = 0
+                    , out_qty     = isnull(d.rlse_qty, 0)
+                    , bigo        = '저장소이동출고'
+                    , key_no      = D.ASK_NO
+                    , tbl_name    = 'ASK_DET'
+                 FROM ask_head    H WITH (NOLOCK)
+                    , ask_det     D WITH (NOLOCK)
+                WHERE h.ask_no    = d.ask_no
+                  AND d.loc_no    = :as_locno
+                  AND convert(char(10),d.rlse_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_iall,3,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+                 
+               UNION ALL
+               SELECT loc_no      = d.loc_no
+                    , cdate       = convert(char(10),h.order_date,111)
+                    , item_no     = d.item_no 
+                    , qa          = d.qa      
+                    , in_qty      = 0
+                    , out_qty     = isnull(d.issue_qty, 0)
+                    , bigo        = '샘플출고'
+                    , key_no      = d.samp_no
+                    , tbl_name    = 'SAMPDET'
+                 FROM samp        H WITH (NOLOCK)
+                    , sampdet     D WITH (NOLOCK)
+                WHERE h.samp_no   = d.samp_no
+                  AND d.loc_no    = :as_locno
+                  AND convert(char(10),h.order_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_iall,4,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+                
+               UNION ALL
+               SELECT loc_no      = h.loc_no
+                    , cdate       = convert(char(10),h.aban_date,111)
+                    , item_no     = d.item_no  
+                    , qa          = d.qa       
+                    , in_qty      = 0
+                    , out_qty     = isnull(d.qty, 0)
+                    , bigo        = '폐기'
+                    , key_no      = d.aban_no
+                    , tbl_name    = 'ITEMABANDET'
+                 FROM itemaban    H WITH (NOLOCK)
+                    , itemabandet D WITH (NOLOCK)
+                WHERE h.aban_no   = d.aban_no
+                  AND h.loc_no    = :as_locno
+                  AND convert(char(10),h.aban_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_iall,5,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+
+               UNION ALL
+               SELECT loc_no      = d.issue_loc
+                    , cdate       = convert(char(10),d.issue_date,111)
+                    , item_no     = d.component    
+                    , qa          = d.component_qa 
+                    , in_qty      = 0
+                    , out_qty     = isnull(d.issue_qty, 0)
+                    , bigo        = '가공출고'
+                    , key_no      = d.order_no
+                    , tbl_name    = 'SUDODET'
+                 FROM sudodet     D WITH (NOLOCK)
+                WHERE d.issue_loc = :as_locno
+                  AND convert(char(10),d.issue_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_iall,6,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+                
+               UNION ALL
+               SELECT loc_no      = (case when h.accept_area = 'H0001' then 'WS00000007'
+                                          when h.accept_area = 'S0001' then 'WS00000000'
+                                          when h.accept_area = 'Z0001' then 'WS00000011'
+                                          when h.accept_area = 'T0001' then 'WS00000008'
+                                     end)
+                    , cdate       = convert(char(10),d.req_date,111)
+                    , item_no     = s.item_no
+                    , qa          = s.qa   
+                    , in_qty      = 0
+                    , qty         = isnull(s.order_qty - s.rlse_qty, 0)
+                    , bigo        = '가출고'
+                    , key_no      = s.order_no
+                    , tbl_name    = 'ISSUEREQDET'
+                 FROM issuereq    H  WITH (NOLOCK) /* 출고의뢰 */
+                    , issuereqdet D  WITH (NOLOCK) /* 출고상세 */
+                    , saledet     S  WITH (NOLOCK) /* 수주상세 */
+                WHERE h.req_date  = d.req_date  and h.salesman = d.salesman  and h.req_seq = d.req_seq  and h.confirm_flag = 'Y'
+                  AND d.sale_no   = s.order_no  and d.seq      = s.seq_no
+                  AND h.accept_area = :as_area
+                  AND convert(char(10),d.req_date,111) between :as_sdate and :as_edate
+                  AND NOT EXISTS (SELECT dodet.sale_no, dodet.seq_no 
+                                    FROM dodet 
+                                       , do
+                                   WHERE do.do_no   = dodet.do_no
+                                     AND do.do_date = :as_sdate
+                                     AND s.order_no = dodet.sale_no
+                                     AND s.seq_no   = dodet.seq_no
+                                 )
+                  AND substring(:as_iall,7,1) = 'Y'
+                  AND (:as_itemno  = '%' AND s.item_no LIKE :as_itemno AND (:as_qa  = '%' AND s.qa LIKE :as_qa OR :as_qa <> '%' AND s.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND s.item_no    = :as_itemno AND (:as_qa  = '%' AND s.qa LIKE :as_qa OR :as_qa <> '%' AND s.qa = :as_qa)
+                      )
+
+               UNION ALL
+               SELECT loc_no      = d.loc_no
+                    , cdate       = convert(char(10),d.use_date,111)
+                    , item_no     = d.item_no 
+                    , qa          = d.qa      
+                    , in_qty      = 0
+                    , out_qty     = isnull(d.use_qty, 0)
+                    , bigo        = '작업일보사용'
+                    , key_no      = d.order_no
+                    , tbl_name    = 'SFCUSE'
+                 FROM sfcuse      D WITH (NOLOCK)
+                WHERE d.loc_no    = :as_locno
+                  AND convert(char(10),d.use_date,111) between :as_sdate and :as_edate
+                  AND substring(:as_iall,8,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.item_no LIKE :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.item_no    = :as_itemno AND (:as_qa  = '%' AND d.qa LIKE :as_qa OR :as_qa <> '%' AND d.qa = :as_qa)
+                      )
+                
+               UNION ALL
+               SELECT loc_no      = d.issue_loc
+                    , cdate       = convert(char(10),d.order_dt,111)
+                    , item_no     = d.assy_item 
+                    , qa          = d.assy_qa   
+                    , in_qty      = 0
+                    , qty         = isnull(d.out_qty, 0)
+                    , bigo        = '재고생산출고'
+                    , key_no      = d.order_no
+                    , tbl_name    = 'JAJAESUDO'
+                 FROM jajaesudo   D WITH (NOLOCK)
+                WHERE d.issue_loc = :as_locno
+                  AND convert(char(10),d.order_dt,111) between :as_sdate and :as_edate
+                  AND substring(:as_iall,9,1) = 'Y'
+                  AND (:as_itemno  = '%' AND d.assy_item LIKE :as_itemno AND (:as_qa  = '%' AND d.assy_qa LIKE :as_qa OR :as_qa <> '%' AND d.assy_qa = :as_qa)
+                       OR
+                       :as_itemno <> '%' AND d.assy_item    = :as_itemno AND (:as_qa  = '%' AND d.assy_qa LIKE :as_qa OR :as_qa <> '%' AND d.assy_qa = :as_qa)
+                      )
+              ) B
+       ) A
+       LEFT OUTER JOIN groupitem B  ON a.item_no = b.item_no
+/* ORDER BY A.LOC_NO, A.ITEM_NM, A.QA, A.SEQ, A.CDATE */
+" arguments=(("as_area", string),("as_locno", string),("as_sdate", string),("as_edate", string),("as_rall", string),("as_iall", string),("as_itemno", string),("as_qa", string))  sort="loc_no A item_nm A qa A seq A cdate A " )
+group(level=1 header.height=0 trailer.height=84 by=("loc_no" , "item_no" , "qa" ) header.color="536870912" trailer.color="553648127" )
+text(band=header alignment="2" text="규격" border="6" color="33554432" x="1070" y="8" height="60" width="690" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="일자" border="6" color="33554432" x="1769" y="8" height="60" width="379" html.valueishtml="0"  name=cdate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="품목(TABLE)" border="6" color="128" x="229" y="8" height="60" width="832" html.valueishtml="0"  name=item_nm_t visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입출형태" border="6" color="0" x="4265" y="8" height="60" width="530" html.valueishtml="0"  name=bigo_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Key값" border="6" color="0" x="4805" y="8" height="60" width="535" html.valueishtml="0"  name=key_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="테이블" border="6" color="0" x="5349" y="8" height="60" width="558" html.valueishtml="0"  name=tbl_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="출고" border="6" color="16711680" x="3035" y="8" height="60" width="425" html.valueishtml="0"  name=out_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="입고" border="6" color="255" x="2606" y="8" height="60" width="421" html.valueishtml="0"  name=in_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="전일재고" border="6" color="128" x="2158" y="8" height="60" width="439" html.valueishtml="0"  name=qoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="현재고" border="6" color="33554432" x="3470" y="8" height="60" width="421" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="전산재고" border="6" color="33554432" x="3899" y="8" height="60" width="357" html.valueishtml="0"  name=cqoh_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="SEQ" border="6" color="0" x="9" y="8" height="60" width="210" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="1769" y="8" height="72" width="379" format="[general]" html.valueishtml="0"  name=cdate visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="1070" y="8" height="72" width="690" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=20 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="229" y="8" height="72" width="832" format="[general]" html.valueishtml="0"  name=item_nm visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0 criteria.override_edit=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="4805" y="8" height="72" width="535" format="[general]" html.valueishtml="0"  name=key_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="5349" y="8" height="72" width="558" format="[general]" html.valueishtml="0"  name=tbl_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="128" x="2158" y="8" height="72" width="439" format="#,##0" html.valueishtml="0"  name=qoh visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="4265" y="8" height="72" width="530" format="[general]" html.valueishtml="0"  name=bigo visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="1" expression="cumulativeSum( qoh  for group 1 ) + cumulativeSum(  in_qty  for group 1 ) - cumulativeSum(  out_qty  for group 1 )"border="0" color="33554432~tif ( jaego < 0, rgb(255, 0, 0), rgb(0, 0, 0) )" x="3470" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=jaego visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="128" x="3899" y="8" height="72" width="357" format="#,##0" html.valueishtml="0"  name=cqoh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="2606" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=in_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0~tif (  compute_2 <>  itemloc_qoh , rgb(255, 0, 0), rgb(0, 0, 0) )" x="3035" y="8" height="72" width="425" format="#,##0" html.valueishtml="0"  name=out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254,252,175), rgb(255, 255, 255) )" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="210" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.1 alignment="0" expression=" item_nm "border="0" color="0" x="229" y="8" height="72" width="832" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="2" expression=" qa "border="0" color="0" x="1070" y="8" height="72" width="690" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="2" expression=" cdate "border="0" color="0" x="1769" y="8" height="72" width="379" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( qoh for group 1 )"border="0" color="0" x="2158" y="8" height="72" width="439" format="#,##0" html.valueishtml="0"  name=tqoh visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( in_qty for group 1 )"border="0" color="0" x="2606" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=in_tqty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( out_qty for group 1 )"border="0" color="0" x="3035" y="8" height="72" width="425" format="#,##0" html.valueishtml="0"  name=out_tqty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="tqoh + in_tqty - out_tqty"border="0" color="0~tif ( tjaego < 0, rgb(255, 0, 0), rgb(0, 0, 0) )" x="3470" y="8" height="72" width="421" format="#,##0" html.valueishtml="0"  name=tjaego visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="68" width="210" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(  out_qty  for all )"border="0" color="33554432" x="3035" y="4" height="72" width="425" format="#,##0" html.valueishtml="0"  name=out_sqty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(  in_qty  for all )"border="0" color="33554432" x="2606" y="4" height="72" width="421" format="#,##0" html.valueishtml="0"  name=in_sqty visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum(  qoh  for all )"border="0" color="33554432" x="2158" y="4" height="72" width="439" format="#,##0" html.valueishtml="0"  name=sqoh visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sqoh + in_sqty - out_sqty"border="0" color="33554432" x="3470" y="4" height="72" width="421" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="0"border="0" color="33554432" x="3899" y="4" height="72" width="357" format="#,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+
+sparse(names="item_nm	qa")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

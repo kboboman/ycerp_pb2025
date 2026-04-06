@@ -1,0 +1,98 @@
+﻿$PBExportHeader$d_osaroiberep_r11.srd
+$PBExportComments$선매출현황 REPORT(1998/05/15, 정재수)
+release 8;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.documentname="" print.orientation = 1 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 9 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=604 color="536870912" )
+summary(height=88 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(4) updatewhereclause=yes name=aroiinv_cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=datetime updatewhereclause=yes name=do_date dbname="do_date" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_cash dbname="do_cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_rate dbname="do_rate" )
+ column=(type=decimal(0) updatewhereclause=yes name=ship_amount dbname="ship_amount" )
+ column=(type=decimal(4) updatewhereclause=yes name=do_tot dbname="do_tot" )
+ column=(type=char(14) updatewhereclause=yes name=do_no dbname="do_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="item_no" )
+ column=(type=char(60) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(10) updatewhereclause=yes name=sdate dbname="sdate" )
+ column=(type=char(10) updatewhereclause=yes name=edate dbname="edate" )
+ retrieve="  SELECT cust_no     = do.cust_no
+       , cust_name   = c.cust_name
+       , do_date     = do.do_date
+       , do_cash     = do.do_cash
+       , do_rate     = do.do_rate
+       , ship_amount = do.ship_amount
+       , do_tot      = do.do_total
+       , do_no       = do.do_no
+       , item_no     = dodet.item_no
+       , item_name   = g.item_name
+       , sdate       = (case when :as_sdate is null then '          ' else :as_sdate end)
+       , edate       = (case when :as_edate is null then '          ' else :as_edate end)
+    FROM do (nolock)
+         LEFT OUTER JOIN dodet       (nolock) ON do.do_no      = dodet.do_no
+         LEFT OUTER JOIN customer  C (nolock) ON do.cust_no    = c.cust_no
+         LEFT OUTER JOIN groupitem G (nolock) ON dodet.item_no = g.item_no
+   WHERE ( dodet.item_no   IN ('PZZZPB1ZZZ', 'PZZZPB2ZZZ') )	/* 선수금, 선수금 공제 */
+     AND ( do.do_date      >= '2013/05/01' )
+     AND ((:as_zero = 'Y' AND do.cust_no  IN (SELECT cust_no     = do.cust_no
+                                                FROM do (nolock)
+                                                     LEFT OUTER JOIN dodet (nolock) ON do.do_no = dodet.do_no
+                                               WHERE ( dodet.item_no   IN ('PZZZPB1ZZZ', 'PZZZPB2ZZZ') )   /* 선수금, 선수금 공제 */
+                                                 AND ( do.do_date      >= '2013/05/01' )
+                                               GROUP BY do.cust_no
+                                              HAVING sum(do.do_total) > 0
+                                             )
+                          AND do.cust_no  <> 'U824'  /* 은민 매입계산서 금액 회장결재건*/
+          ) OR
+          (:as_zero <> 'Y')
+         )
+" arguments=(("as_sdate", string),("as_edate", string),("as_zero", string)) )
+group(level=1 header.height=0 trailer.height=88 by=("aroiinv_cust_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="비고" border="0" color="0" x="3785" y="528" height="60" width="1106" html.valueishtml="0"  name=aroiinv_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="5" y1="596" x2="4896" y2="596"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'작성일:' + STRING(today(), 'YYYY/MM/DD')"border="0" color="0" x="4343" y="376" height="60" width="549" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="~~" border="0" color="0" x="2528" y="448" height="60" width="32" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="w_osaroibe_r" border="0" color="0" x="9" y="448" height="60" width="384" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=header x1="5" y1="516" x2="4896" y2="516"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="선수금 출고현황" border="0" color="0" x="5" y="76" height="148" width="4891" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-24" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" font.underline="1" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="출고기간:" border="0" color="0" x="1847" y="448" height="60" width="297" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=11 alignment="0" tabsequence=32766 border="0" color="0" x="2190" y="448" height="60" width="320" format="[general]" html.valueishtml="0"  name=sdate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=header id=12 alignment="0" tabsequence=32766 border="0" color="0" x="2583" y="448" height="60" width="320" format="[general]" html.valueishtml="0"  name=edate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="거래처" border="0" color="0" x="9" y="528" height="60" width="613" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=header alignment="0" expression="'페이지:' + page() + ' of ' + pageCount()"border="0" color="0" x="4343" y="448" height="60" width="549" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="출고일자" border="0" color="0" x="1175" y="528" height="60" width="320" html.valueishtml="0"  name=aroiinv_oi_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="품명" border="0" color="0" x="1509" y="528" height="60" width="512" html.valueishtml="0"  name=t_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="매출금액" border="0" color="0" x="2034" y="528" height="60" width="448" html.valueishtml="0"  name=aroiinv_aroiinv_cash_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="운송비" border="0" color="0" x="2496" y="528" height="60" width="320" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="부가세" border="0" color="0" x="2830" y="528" height="60" width="416" html.valueishtml="0"  name=aroiinv_aroiinv_rate_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="합계금액" border="0" color="0" x="3259" y="528" height="60" width="512" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="잔액" border="0" color="0" x="3785" y="528" height="60" width="448" html.valueishtml="0"  name=t_3 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="출고번호" border="0" color="0" x="635" y="528" height="60" width="521" html.valueishtml="0"  name=aroiinv_aroiinv_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1175" y="4" height="60" width="320" format="[shortdate] [time]" html.valueishtml="0"  name=do_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0" x="1509" y="4" height="60" width="512" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="2034" y="4" height="60" width="448" format="#,##0" html.valueishtml="0"  name=do_cash visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="2496" y="4" height="60" width="320" format="#,##0" html.valueishtml="0"  name=ship_amount visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="2830" y="4" height="60" width="416" format="#,##0" html.valueishtml="0"  name=do_rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="3259" y="4" height="60" width="512" format="#,##0" html.valueishtml="0"  name=do_tot visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="635" y="4" height="60" width="521" format="[general]" html.valueishtml="0"  name=do_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if ( item_no = 'PZZZPB1ZZZ', do_tot, 0) + if ( item_no = 'PZZZPB2ZZZ', cumulativeSum( do_tot for all ), 0 )"border="0" color="0" x="3785" y="4" height="60" width="448" format="#,##0" html.valueishtml="0"  name=compute_6 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="9" y="4" height="60" width="613" format="[general]" html.valueishtml="0"  name=cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="631" y1="0" x2="4891" y2="0"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+line(band=trailer.1 x1="5" y1="84" x2="4896" y2="84"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum ( do_tot for group 1 )"border="0" color="0" x="3785" y="12" height="60" width="448" format="#,##0" html.valueishtml="0"  name=compute_9 visible="0"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.1 alignment="1" expression="sum ( do_tot for group 1 )"border="0" color="0" x="3259" y="12" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.1 alignment="1" expression="sum (  do_rate for group 1 )"border="0" color="0" x="2830" y="12" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.1 alignment="1" expression="sum ( ship_amount for group 1 )"border="0" color="0" x="2496" y="12" height="60" width="320" format="#,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=trailer.1 alignment="1" expression="sum ( do_cash for group 1 )"border="0" color="0" x="2034" y="12" height="60" width="448" format="#,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=trailer.1 alignment="2" text="거래처소계" border="2" color="0" x="9" y="12" height="60" width="613" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=summary x1="5" y1="4" x2="4896" y2="4"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum ( do_cash for all )"border="0" color="0" x="2034" y="16" height="60" width="448" format="#,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=summary alignment="1" expression="sum ( ship_amount for all )"border="0" color="0" x="2496" y="16" height="60" width="320" format="#,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=summary alignment="1" expression="sum ( do_rate for all )"border="0" color="0" x="2830" y="16" height="60" width="416" format="#,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+compute(band=summary alignment="1" expression="sum ( do_tot for all )"border="0" color="0" x="3259" y="16" height="60" width="512" format="#,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+line(band=summary x1="5" y1="84" x2="4896" y2="84"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="536870912" )
+text(band=summary alignment="2" text="합      계" border="2" color="0" x="9" y="16" height="60" width="613" html.valueishtml="0"  name=t_9 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="8421504" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

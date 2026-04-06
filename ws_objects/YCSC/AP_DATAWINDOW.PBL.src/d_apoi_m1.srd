@@ -1,0 +1,119 @@
+﻿$PBExportHeader$d_apoi_m1.srd
+$PBExportComments$자재매입관리 DETAIL(1998/05/21, 이인호)
+release 8;
+datawindow(units=0 timer_interval=0 color=79741120 processing=0 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 97 print.margin.bottom = 97 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no )
+header(height=168 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=92 color="8421504" )
+detail(height=172 color="536870912" )
+table(column=(type=char(14) updatewhereclause=yes key=yes name=insp_no dbname="inspdet.insp_no" )
+ column=(type=long updatewhereclause=yes key=yes name=oi_no dbname="inspdet.oi_no" )
+ column=(type=char(10) updatewhereclause=yes name=item_no dbname="inspdet.item_no" )
+ column=(type=char(20) updatewhereclause=yes name=qa dbname="inspdet.qa" )
+ column=(type=decimal(2) updatewhereclause=yes name=rcpt_qty dbname="inspdet.rcpt_qty" )
+ column=(type=char(2) update=yes updatewhereclause=yes name=uom dbname="inspdet.uom" )
+ column=(type=decimal(4) updatewhereclause=yes name=price dbname="inspdet.price" )
+ column=(type=decimal(2) update=yes updatewhereclause=yes name=apoi_qty dbname="inspdet.apoi_qty" )
+ column=(type=decimal(4) updatewhereclause=yes name=rate_cash dbname="inspdet.rate_cash" )
+ column=(type=char(14) updatewhereclause=yes name=pur_no dbname="inspdet.pur_no" )
+ column=(type=long updatewhereclause=yes name=seq_no dbname="inspdet.seq_no" )
+ column=(type=char(50) updatewhereclause=yes name=rem dbname="inspdet.rem" )
+ column=(type=char(10) updatewhereclause=yes name=loc_no dbname="inspdet.loc_no" )
+ column=(type=long updatewhereclause=yes name=cnt dbname="inspdet.cnt" )
+ column=(type=decimal(4) update=yes updatewhereclause=yes name=comqty dbname="inspdet.comqty" )
+ column=(type=char(3) updatewhereclause=yes name=insp_curr_code dbname="insp.curr_code" )
+ column=(type=decimal(2) updatewhereclause=yes name=a_qty dbname="a_qty" )
+ column=(type=char(1) updatewhereclause=yes name=pick dbname="pick" initial="N" values="	Y/	N" )
+ column=(type=decimal(3) updatewhereclause=yes name=a_price dbname="a_price" )
+ column=(type=char(1) updatewhereclause=yes name=class dbname="class" initial="B" values="A	A/B	B/C	C/" )
+ column=(type=char(1) updatewhereclause=yes name=insp_flag dbname="insp.insp_flag" values="상품	S/원자재	W/부자재	B/외주가공	Y/" )
+ column=(type=long updatewhereclause=yes name=amt dbname="amt" )
+ column=(type=char(60) updatewhereclause=yes name=groupitem_item_name dbname="groupitem.item_name" )
+ retrieve="  SELECT inspdet.insp_no                                         
+       , inspdet.oi_no                                           
+       , inspdet.item_no                                         
+       , inspdet.qa                                              
+       , inspdet.rcpt_qty                                        
+       , inspdet.uom                                             
+       , inspdet.price                                           
+       , inspdet.apoi_qty                                        
+       , inspdet.rate_cash                                       
+       , inspdet.pur_no                                          
+       , inspdet.seq_no                                          
+       , inspdet.rem                                             
+       , inspdet.loc_no                                          
+       , inspdet.cnt                                             
+       , inspdet.comqty                                          
+       , insp.curr_code                                          
+       , a_qty     = 0000000.00                                  
+       , pick      = 'N'                                         
+       , a_price   = 0000000.000                                 
+       , class     = 'B'                                         
+       , insp.insp_flag                                          
+       , amt       = 0                                           
+       , groupitem.item_name      
+    FROM inspdet with(nolock) inner join  groupitem with(nolock) on inspdet.item_no = groupitem.item_no                                                
+                                     inner join insp with(nolock) on inspdet.insp_no  = insp.insp_no                                                        
+   WHERE  ( ( insp.supp_no          = :as_supp_no               ) AND  
+           ( insp.insp_date  BETWEEN :ad_sdate AND :ad_edate   ) AND  
+           ( inspdet.apoi_qty     <> inspdet.rcpt_qty          ) AND  
+           ( ( insp.area_no     LIKE :as_area + '%'            ) or 
+             ( :as_area    = 'S' AND inspdet.pur_no LIKE 'PUR%') or 
+             ( :as_area    = 'B' AND insp.area_no   LIKE 'C%'  ) 
+           ) 
+         ) 
+     AND ( insp.insp_flag  = :as_flag )     
+/*                               
+    FROM inspdet,                                                
+         insp,                                                   
+         groupitem                                               
+   WHERE ( inspdet.item_no *= groupitem.item_no )              
+     and ( inspdet.insp_no  = insp.insp_no      )                   
+     and ( ( insp.supp_no          = :as_supp_no               ) AND  
+           ( insp.insp_date  BETWEEN :ad_sdate AND :ad_edate   ) AND  
+           ( inspdet.apoi_qty     <> inspdet.rcpt_qty          ) AND  
+           ( ( insp.area_no     LIKE :as_area + '%'            ) or 
+             ( :as_area    = 'S' AND inspdet.pur_no LIKE 'PUR%') or 
+             ( :as_area    = 'B' AND insp.area_no   LIKE 'C%'  ) 
+           ) 
+         ) 
+     AND ( insp.insp_flag  = :as_flag )                             
+*/" update="inspdet" updatewhere=0 updatekeyinplace=yes arguments=(("as_supp_no", string),("ad_sdate", date),("ad_edate", date),("as_area", string),("as_flag", string))  sort="insp_no A oi_no A " )
+text(band=header alignment="2" text="선정" border="1" color="0" x="14" y="12" height="144" width="128" html.valueishtml="0"  name=t_7 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="입고번호" border="1" color="0" x="160" y="12" height="64" width="480" html.valueishtml="0"  name=do_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="순번" border="1" color="0" x="658" y="12" height="64" width="128" html.valueishtml="0"  name=seq_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입고유형" border="1" color="0" x="805" y="12" height="64" width="320" html.valueishtml="0"  name=item_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="규격" border="1" color="0" x="1143" y="12" height="64" width="608" html.valueishtml="0"  name=qa_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="입고수량" border="1" color="0" x="1769" y="12" height="64" width="384" html.valueishtml="0"  name=ship_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="선매입수량" border="1" color="0" x="2171" y="12" height="64" width="384" html.valueishtml="0"  name=aroi_qty_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="매입수량" border="1" color="0" x="2574" y="12" height="64" width="384" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="매입금액" border="1" color="0" x="2976" y="12" height="64" width="448" html.valueishtml="0"  name=t_5 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="주문번호" border="1" color="0" x="160" y="92" height="64" width="366" html.valueishtml="0"  name=sale_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="급" border="1" color="0" x="544" y="92" height="64" width="96" html.valueishtml="0"  name=t_2 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="일보수량" border="1" color="0" x="2171" y="92" height="64" width="384" html.valueishtml="0"  name=t_3 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="매입단가" border="1" color="0" x="2574" y="92" height="64" width="384" html.valueishtml="0"  name=t_4 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="부가세" border="1" color="0" x="2976" y="92" height="64" width="448" html.valueishtml="0"  name=rate_cash_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="단위" border="1" color="0" x="658" y="92" height="64" width="128" html.valueishtml="0"  name=uom_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="물품명" border="1" color="0" x="805" y="92" height="64" width="1349" html.valueishtml="0"  name=t_6 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="5" color="0" x="1143" y="8" height="60" width="608" format="[general]" html.valueishtml="0"  name=qa visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="5" color="0" x="1769" y="8" height="60" width="384" format="#,##0.000" html.valueishtml="0"  name=rcpt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="5" color="0" x="2171" y="8" height="60" width="384" format="#,##0.000" html.valueishtml="0"  name=apoi_qty visible="1" edit.limit=0 edit.case=any edit.format="#,##0.000" edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="1" tabsequence=20 border="5" color="0" x="2574" y="8" height="60" width="384" format="#,##0.000" html.valueishtml="0" protect="0~tif(pick = 'Y', 0, 1)"  name=a_qty visible="1" edit.limit=0 edit.case=any edit.format="#,##0.000" edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(pick = 'Y',if(getrow()=currentrow(), rgb(254, 252, 175), 1087434968),78682240)" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="5" color="0" x="160" y="88" height="60" width="366" format="[general]" html.valueishtml="0"  name=pur_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="2" tabsequence=40 border="5" color="0" x="544" y="88" height="60" width="96" format="[general]" html.valueishtml="0" protect="0~tif ( mid(item_no , 4, 1) = ~"1~" , 0, 1)"  name=class visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.showlist=yes ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=60 border="5" color="0" x="2171" y="88" height="60" width="384" format="#,##0.000" html.valueishtml="0" protect="0~tif(pick = 'Y', 0, 1)"  name=comqty visible="1" edit.limit=0 edit.case=any edit.format="#,##0.000" edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1090519039~tif(pick = 'Y',if(getrow()=currentrow(), rgb(254, 252, 175), 1087434968),78682240)" )
+column(band=detail id=19 alignment="1" tabsequence=70 border="5" color="0" x="2574" y="88" height="60" width="384" format="#,##0.000" html.valueishtml="0" protect="0~tif(pick = 'Y', 0, 1)"  name=a_price visible="1" edit.limit=0 edit.case=any edit.format="#,##0.000" edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(pick = 'Y',if(getrow()=currentrow(), rgb(254, 252, 175), 1087434968),78682240)" )
+column(band=detail id=6 alignment="2" tabsequence=50 border="5" color="0" x="658" y="88" height="60" width="128" format="[general]" html.valueishtml="0" protect="0~tif(pick = 'Y', 0, 1)"  name=uom visible="1" dddw.name=d_cduomcd_c dddw.displaycolumn=uom_code dddw.datacolumn=uom_code dddw.percentwidth=100 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0 dddw.showlist=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="1090519039~tif(pick = 'Y',if(getrow()=currentrow(), rgb(254, 252, 175), 1087434968),78682240)" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="5" color="0" x="805" y="88" height="60" width="1349" format="[general]" html.valueishtml="0"  name=groupitem_item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=detail x1="5" y1="164" x2="3424" y2="164"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="16711680"  background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="5" color="0" x="160" y="8" height="60" width="480" format="[general]" html.valueishtml="0"  name=insp_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=22 alignment="1" tabsequence=30 border="5" color="0" x="2976" y="8" height="60" width="448" format="#,##0" html.valueishtml="0" protect="0~tif(pick = 'Y', 0, 1)"  name=amt visible="1" edit.limit=0 edit.case=any edit.format="#,##0" edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="16777215~tif(pick = 'Y',if(getrow()=currentrow(), rgb(254, 252, 175), 1087434968),78682240)" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="5" color="0" x="658" y="8" height="60" width="128" format="[General]" html.valueishtml="0"  name=oi_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="5" color="0" x="805" y="8" height="60" width="320" format="[general]" html.valueishtml="0" protect="0~tif(pick = 'Y', 0, 1)"  name=insp_flag visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif(pick = 'Y',if(getrow()=currentrow(), rgb(254, 252, 175), 1087434968),78682240)" )
+column(band=detail id=18 alignment="2" tabsequence=10 border="6" color="0" x="14" y="8" height="60" width="128" format="[general]" html.valueishtml="0"  name=pick visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+line(band=footer x1="5" y1="4" x2="3424" y2="4"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="16711680"  background.mode="2" background.color="16777215" )
+text(band=footer alignment="1" text="합계" border="0" color="0" x="2656" y="24" height="60" width="146" html.valueishtml="0"  name=t_8 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="sum(amt for all)"border="0" color="0" x="2889" y="20" height="68" width="535" format="#,##0" html.valueishtml="0"  name=samt visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="0" x="14" y="20" height="68" width="128" format="#,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )

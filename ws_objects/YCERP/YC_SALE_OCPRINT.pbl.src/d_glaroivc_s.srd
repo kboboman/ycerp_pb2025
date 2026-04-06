@@ -1,0 +1,145 @@
+﻿$PBExportHeader$d_glaroivc_s.srd
+release 8;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.prompt=no print.buttons=no print.preview.buttons=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="8421504" )
+detail(height=92 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N" )
+ column=(type=char(255) updatewhereclause=yes name=register_no dbname="register_no" )
+ column=(type=char(4) updatewhereclause=yes name=cust_no dbname="cust_no" )
+ column=(type=char(50) updatewhereclause=yes name=cust_name dbname="cust_name" )
+ column=(type=char(15) updatewhereclause=yes name=icube_no dbname="icube_no" )
+ column=(type=datetime updatewhereclause=yes name=oi_date dbname="oi_date" )
+ column=(type=char(12) updatewhereclause=yes name=vc_no dbname="vc_no" )
+ column=(type=char(4) updatewhereclause=yes name=vc_type dbname="vc_type" )
+ column=(type=char(11) updatewhereclause=yes name=rcpt_type dbname="rcpt_type" )
+ column=(type=char(6) updatewhereclause=yes name=salesman dbname="salesman" )
+ column=(type=char(6) updatewhereclause=yes name=user_name dbname="user_name" )
+ column=(type=char(5) updatewhereclause=yes name=team_name dbname="team_name" )
+ column=(type=char(10) updatewhereclause=yes name=user_name1 dbname="user_name1" )
+ column=(type=char(30) updatewhereclause=yes name=team_name1 dbname="team_name1" )
+ column=(type=char(6) updatewhereclause=yes name=vc_inseq dbname="vc_inseq" )
+ column=(type=decimal(4) updatewhereclause=yes name=cash dbname="cash" )
+ column=(type=decimal(4) updatewhereclause=yes name=bill dbname="bill" )
+ column=(type=decimal(4) updatewhereclause=yes name=amount dbname="amount" )
+ column=(type=char(20) updatewhereclause=yes name=bank_name dbname="bank_name" )
+ column=(type=char(20) updatewhereclause=yes name=branch dbname="branch" )
+ column=(type=char(20) updatewhereclause=yes name=large dbname="large" )
+ column=(type=char(2) updatewhereclause=yes name=vc_type2 dbname="vc_type2" )
+ column=(type=char(50) updatewhereclause=yes name=rem dbname="rem" )
+ column=(type=datetime updatewhereclause=yes name=cheque_start dbname="cheque_start" )
+ column=(type=datetime updatewhereclause=yes name=cheque_end dbname="cheque_end" )
+ column=(type=char(12) updatewhereclause=yes name=cheque_no dbname="cheque_no" )
+ column=(type=long updatewhereclause=yes name=keysort dbname="keysort" )
+ retrieve="  SELECT chk         = 'N'
+       , register_no = replace(customer.register_no,'-','')
+       , cust_no     = aroivc.cust_no  
+       , cust_name   = customer.cust_name   
+       , icube_no    = customer.icube_no
+       , oi_date     = aroivc.oi_date   
+       , vc_no       = aroivc.vc_no   
+       , vc_type     = (case when aroivc.vc_type = 'R' then '수금' when aroivc.vc_type = 'P' then '지불' end)
+       , rcpt_type   = (case aroivc.rcpt_type 
+                             when 'A' then '01.예금'     when 'C' then '02.현금'     when 'B' then '03.어음'     
+                             when 'D' then '04.잡손실'   when 'E' then '05.잡이익'
+                             when 'F' then '06.하자보수' when 'S' then '07.상계'     
+                             when 'G' then '08.대손상각' when 'P' then '09.처리어음' when 'Z' then '10.기타'                             
+                             when 'R' then '11.대손이익' when 'M' then '12.대손예금' when 'N' then '13.대손어음'
+                             else '99.기타' + aroivc.rcpt_type
+                        end)
+       , salesman    = login.duzon_sabun   
+       , user_name   = isnull(login.duzon_sabun,login.user_name)
+       , team_name   = isnull(login.duzon_dept, team.team_name) + ' '
+       , user_name1  = rtrim(login.user_name)
+       , team_name1  = rtrim(team.team_name)
+       , vc_inseq    = aroivc.vc_inseq   
+       , cash        = (case when aroivc.rcpt_type <> 'B' then
+                                  (case when aroivc.vc_type = 'P' then 0 - aroivc.amount
+                                        else aroivc.amount
+                                   end)
+                             else 0
+                        end) 
+       , bill        = (case when aroivc.rcpt_type  = 'B' then
+                                  (case when aroivc.vc_type = 'P' then 0 - aroivc.amount
+                                        else aroivc.amount
+                                   end)
+                             else 0
+                        end)  
+       , amount      = aroivc.amount   
+       , bank_name   = bank.bank_name   
+       , branch      = aroivc.branch   
+       , large       = aroivc.large   
+       , vc_type2    = aroivc.vc_type2
+       , rem         = aroivc.rem
+       , cheque_start= aroivc.cheque_start   
+       , cheque_end  = aroivc.cheque_end   
+       , cheque_no   = aroivc.cheque_no   
+       , keysort     = 0
+    FROM aroivc 
+         LEFT OUTER JOIN bank     ON aroivc.bank_code  = bank.bank_code   
+         LEFT OUTER JOIN money    ON aroivc.curr_code  = money.curr_type
+         LEFT OUTER JOIN customer ON aroivc.cust_no    = customer.cust_no
+         LEFT OUTER JOIN login    ON customer.salesman = login.user_id
+         LEFT OUTER JOIN team     ON login.team_code   = team.team_code
+   WHERE ( aroivc.delete_key    = 'N' )
+   /*AND ( aroivc.open_close    = 'O' )*/
+     AND ( aroivc.oi_date BETWEEN :ad_sdate AND :ad_edate )
+     AND ((:as_custno    = '%' ) OR
+          (:as_custno   <> '%' AND aroivc.cust_no = :as_custno)
+         )
+     AND ((:as_salesman  = '%' ) OR
+          (:as_salesman <> '%' AND customer.salesman LIKE :as_salesman)
+         )
+" arguments=(("as_custno", string),("ad_sdate", date),("ad_edate", date),("as_salesman", string))  sort="oi_date D vc_no A cust_name A " )
+text(band=header alignment="2" text="수금일자" border="6" color="33554432" x="2766" y="8" height="60" width="421" html.valueishtml="0"  name=aroivc_oi_date_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="담당자" border="6" color="33554432" x="3195" y="8" height="60" width="256" html.valueishtml="0"  name=customer_salesman_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="수금액" border="6" color="33554432" x="3762" y="8" height="60" width="407" html.valueishtml="0"  name=aroivc_amount_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="발행처" border="6" color="33554432" x="4178" y="8" height="60" width="507" html.valueishtml="0"  name=aroivc_large_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="어음마감일" border="6" color="33554432" x="5906" y="8" height="60" width="503" html.valueishtml="0"  name=aroivc_cheque_end_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="선택" border="6" color="33554432" x="183" y="8" height="60" width="160" html.valueishtml="0"  name=chk_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="NO" border="6" color="33554432" x="9" y="8" height="60" width="165" html.valueishtml="0"  name=t_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부서명" border="6" color="33554432" x="3461" y="8" height="60" width="293" html.valueishtml="0"  name=team_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="어음번호" border="6" color="33554432" x="6418" y="8" height="60" width="594" html.valueishtml="0"  name=aroivc_cheque_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="부서명" border="6" color="0" x="7634" y="8" height="60" width="430" html.valueishtml="0"  name=team_name1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수금형태" border="6" color="33554432" x="352" y="8" height="60" width="338" html.valueishtml="0"  name=rcpt_type_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="은행명" border="6" color="33554432" x="699" y="8" height="60" width="416" html.valueishtml="0"  name=bank_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="지점명" border="6" color="33554432" x="1125" y="8" height="60" width="503" html.valueishtml="0"  name=branch_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사업자번호" border="6" color="0" x="8073" y="8" height="60" width="421" html.valueishtml="0"  name=register_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="정렬" border="6" color="0" x="8503" y="8" height="60" width="178" html.valueishtml="0"  name=keysort_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="적요" border="6" color="33554432" x="4695" y="8" height="60" width="681" html.valueishtml="0"  name=aroivc_rem_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="어음발행일" border="6" color="33554432" x="5385" y="8" height="60" width="512" html.valueishtml="0"  name=cheque_start_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="사원명" border="6" color="0" x="7287" y="8" height="60" width="338" html.valueishtml="0"  name=user_name1_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="수취구분" border="6" color="33554432" x="7022" y="8" height="60" width="256" html.valueishtml="0"  name=vc_type2_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="더존코드" border="6" color="33554432" x="1637" y="8" height="60" width="334" html.valueishtml="0"  name=icube_no_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="거래처명" border="6" color="33554432" x="1979" y="8" height="60" width="777" html.valueishtml="0"  name=customer_cust_name_t visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="67108864" )
+column(band=detail id=27 alignment="2" tabsequence=32766 border="0" color="33554432" x="8503" y="8" height="72" width="178" format="[general]" html.valueishtml="0"  name=keysort visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="2" background.color="12639424" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1979" y="8" height="72" width="777" format="[general]" html.valueishtml="0"  name=cust_name  tag="상호" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2766" y="8" height="72" width="421" format="yyyy/mm/dd" html.valueishtml="0"  name=oi_date  tag="수금일자" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="3195" y="8" height="72" width="256" format="[general]" html.valueishtml="0"  name=salesman  tag="판매담당자" visible="1" dddw.name=d_userid_c dddw.displaycolumn=user_id dddw.datacolumn=user_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="33554432" x="183" y="8" height="72" width="160" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=yes checkbox.threed=no  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="3461" y="8" height="72" width="293" format="[general]" html.valueishtml="0"  name=team_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="0" color="33554432" x="6418" y="8" height="72" width="594" format="[general]" html.valueishtml="0"  name=cheque_no  tag="어음/수표번호" visible="1" edit.limit=12 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="7634" y="8" height="72" width="430" format="[general]" html.valueishtml="0"  name=team_name1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1637" y="8" height="72" width="334" format="[general]" html.valueishtml="0"  name=icube_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432" x="699" y="8" height="72" width="416" format="[general]" html.valueishtml="0"  name=bank_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="8" height="72" width="503" format="[general]" html.valueishtml="0"  name=branch visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="352" y="8" height="72" width="338" format="[general]" html.valueishtml="0"  name=rcpt_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="8073" y="8" height="72" width="421" format="[general]" html.valueishtml="0"  name=register_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="33554432" x="3762" y="8" height="72" width="407" format="#,##0" html.valueishtml="0"  name=amount  tag="수금액" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="0" color="33554432" x="4178" y="8" height="72" width="507" format="[general]" html.valueishtml="0"  name=large  tag="발행처" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="0" color="33554432" x="4695" y="8" height="72" width="681" format="[general]" html.valueishtml="0"  name=rem  tag="적요" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=24 alignment="2" tabsequence=32766 border="0" color="33554432" x="5385" y="8" height="72" width="512" format="yyyy/mm/dd" html.valueishtml="0"  name=cheque_start visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=25 alignment="2" tabsequence=32766 border="0" color="33554432" x="5906" y="8" height="72" width="503" format="yyyy/mm/dd" html.valueishtml="0"  name=cheque_end  tag="어음/수표마감일" visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="7287" y="8" height="72" width="338" format="[general]" html.valueishtml="0"  name=user_name1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="33554432" x="7022" y="8" height="72" width="256" format="[general]" html.valueishtml="0"  name=vc_type2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.imemode=0  font.face="굴림체" font.height="-10" font.weight="400"  font.family="1" font.pitch="1" font.charset="129" background.mode="0" background.color="536870912~tif ( getrow() = currentrow(), rgb(254, 252, 175), rgb(255, 255, 255) )" )
+compute(band=footer alignment="2" expression="rowcount()"border="0" color="33554432" x="9" y="4" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( if ( chk = ~"Y~", 1, 0 ) for all )"border="0" color="33554432" x="183" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=tchk visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( if ( isNumber(salesman), 0, 1 ) for all )"border="0" color="255" x="3195" y="4" height="72" width="256" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( if ( isNumber( icube_no ), 0, 1 ) for all )"border="0" color="255" x="1637" y="4" height="72" width="334" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="count( rcpt_type for all DISTINCT rcpt_type )"border="0" color="33554432" x="352" y="4" height="72" width="338" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="2" expression="sum( if ( isNumber( team_name ), 0, 1 ) for all )"border="0" color="255" x="3461" y="4" height="72" width="293" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+compute(band=footer alignment="1" expression="sum( if ( chk = ~"Y~", amount, 0 ) for all )"border="0" color="0" x="3762" y="4" height="72" width="407" format="#,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="굴림체" font.height="-11" font.weight="700"  font.family="1" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" netscapelayers="0" )
